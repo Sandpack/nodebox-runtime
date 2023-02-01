@@ -1,0 +1,372 @@
+Œ²/test/callBound.jsÅ	K'use strict';
+
+var test = require('tape');
+
+var callBound = require('../callBound');
+
+test('callBound', function (t) {
+	// static primitive
+	t.equal(callBound('Array.length'), Array.length, 'Array.length yields itself');
+	t.equal(callBound('%Array.length%'), Array.length, '%Array.length% yields itself');
+
+	// static non-function object
+	t.equal(callBound('Array.prototype'), Array.prototype, 'Array.prototype yields itself');
+	t.equal(callBound('%Array.prototype%'), Array.prototype, '%Array.prototype% yields itself');
+	t.equal(callBound('Array.constructor'), Array.constructor, 'Array.constructor yields itself');
+	t.equal(callBound('%Array.constructor%'), Array.constructor, '%Array.constructor% yields itself');
+
+	// static function
+	t.equal(callBound('Date.parse'), Date.parse, 'Date.parse yields itself');
+	t.equal(callBound('%Date.parse%'), Date.parse, '%Date.parse% yields itself');
+
+	// prototype primitive
+	t.equal(callBound('Error.prototype.message'), Error.prototype.message, 'Error.prototype.message yields itself');
+	t.equal(callBound('%Error.prototype.message%'), Error.prototype.message, '%Error.prototype.message% yields itself');
+
+	// prototype function
+	t.notEqual(callBound('Object.prototype.toString'), Object.prototype.toString, 'Object.prototype.toString does not yield itself');
+	t.notEqual(callBound('%Object.prototype.toString%'), Object.prototype.toString, '%Object.prototype.toString% does not yield itself');
+	t.equal(callBound('Object.prototype.toString')(true), Object.prototype.toString.call(true), 'call-bound Object.prototype.toString calls into the original');
+	t.equal(callBound('%Object.prototype.toString%')(true), Object.prototype.toString.call(true), 'call-bound %Object.prototype.toString% calls into the original');
+
+	t['throws'](
+		function () { callBound('does not exist'); },
+		SyntaxError,
+		'nonexistent intrinsic throws'
+	);
+	t['throws'](
+		function () { callBound('does not exist', true); },
+		SyntaxError,
+		'allowMissing arg still throws for unknown intrinsic'
+	);
+
+	/* globals WeakRef: false */
+	t.test('real but absent intrinsic', { skip: typeof WeakRef !== 'undefined' }, function (st) {
+		st['throws'](
+			function () { callBound('WeakRef'); },
+			TypeError,
+			'real but absent intrinsic throws'
+		);
+		st.equal(callBound('WeakRef', true), undefined, 'allowMissing arg avoids exception');
+		st.end();
+	});
+
+	t.end();
+});
+ª/.eslintrcÄ÷{
+	"root": true,
+
+	"extends": "@ljharb",
+
+	"rules": {
+		"func-name-matching": 0,
+		"id-length": 0,
+		"new-cap": [2, {
+			"capIsNewExceptions": [
+				"GetIntrinsic",
+			],
+		}],
+		"no-magic-numbers": 0,
+		"operator-linebreak": [2, "before"],
+	},
+}
+®/test/index.jsÅ'use strict';
+
+var callBind = require('../');
+var bind = require('function-bind');
+
+var test = require('tape');
+
+/*
+ * older engines have length nonconfigurable
+ * in io.js v3, it is configurable except on bound functions, hence the .bind()
+ */
+var functionsHaveConfigurableLengths = !!(
+	Object.getOwnPropertyDescriptor
+	&& Object.getOwnPropertyDescriptor(bind.call(function () {}), 'length').configurable
+);
+
+test('callBind', function (t) {
+	var sentinel = { sentinel: true };
+	var func = function (a, b) {
+		// eslint-disable-next-line no-invalid-this
+		return [this, a, b];
+	};
+	t.equal(func.length, 2, 'original function length is 2');
+	t.deepEqual(func(), [undefined, undefined, undefined], 'unbound func with too few args');
+	t.deepEqual(func(1, 2), [undefined, 1, 2], 'unbound func with right args');
+	t.deepEqual(func(1, 2, 3), [undefined, 1, 2], 'unbound func with too many args');
+
+	var bound = callBind(func);
+	t.equal(bound.length, func.length + 1, 'function length is preserved', { skip: !functionsHaveConfigurableLengths });
+	t.deepEqual(bound(), [undefined, undefined, undefined], 'bound func with too few args');
+	t.deepEqual(bound(1, 2), [1, 2, undefined], 'bound func with right args');
+	t.deepEqual(bound(1, 2, 3), [1, 2, 3], 'bound func with too many args');
+
+	var boundR = callBind(func, sentinel);
+	t.equal(boundR.length, func.length, 'function length is preserved', { skip: !functionsHaveConfigurableLengths });
+	t.deepEqual(boundR(), [sentinel, undefined, undefined], 'bound func with receiver, with too few args');
+	t.deepEqual(boundR(1, 2), [sentinel, 1, 2], 'bound func with receiver, with right args');
+	t.deepEqual(boundR(1, 2, 3), [sentinel, 1, 2], 'bound func with receiver, with too many args');
+
+	var boundArg = callBind(func, sentinel, 1);
+	t.equal(boundArg.length, func.length - 1, 'function length is preserved', { skip: !functionsHaveConfigurableLengths });
+	t.deepEqual(boundArg(), [sentinel, 1, undefined], 'bound func with receiver and arg, with too few args');
+	t.deepEqual(boundArg(2), [sentinel, 1, 2], 'bound func with receiver and arg, with right arg');
+	t.deepEqual(boundArg(2, 3), [sentinel, 1, 2], 'bound func with receiver and arg, with too many args');
+
+	t.test('callBind.apply', function (st) {
+		var aBound = callBind.apply(func);
+		st.deepEqual(aBound(sentinel), [sentinel, undefined, undefined], 'apply-bound func with no args');
+		st.deepEqual(aBound(sentinel, [1], 4), [sentinel, 1, undefined], 'apply-bound func with too few args');
+		st.deepEqual(aBound(sentinel, [1, 2], 4), [sentinel, 1, 2], 'apply-bound func with right args');
+
+		var aBoundArg = callBind.apply(func);
+		st.deepEqual(aBoundArg(sentinel, [1, 2, 3], 4), [sentinel, 1, 2], 'apply-bound func with too many args');
+		st.deepEqual(aBoundArg(sentinel, [1, 2], 4), [sentinel, 1, 2], 'apply-bound func with right args');
+		st.deepEqual(aBoundArg(sentinel, [1], 4), [sentinel, 1, undefined], 'apply-bound func with too few args');
+
+		var aBoundR = callBind.apply(func, sentinel);
+		st.deepEqual(aBoundR([1, 2, 3], 4), [sentinel, 1, 2], 'apply-bound func with receiver and too many args');
+		st.deepEqual(aBoundR([1, 2], 4), [sentinel, 1, 2], 'apply-bound func with receiver and right args');
+		st.deepEqual(aBoundR([1], 4), [sentinel, 1, undefined], 'apply-bound func with receiver and too few args');
+
+		st.end();
+	});
+
+	t.end();
+});
+´/.github/FUNDING.ymlÅD# These are supported funding model platforms
+
+github: [ljharb]
+patreon: # Replace with a single Patreon username
+open_collective: # Replace with a single Open Collective username
+ko_fi: # Replace with a single Ko-fi username
+tidelift: npm/call-bind
+community_bridge: # Replace with a single Community Bridge project-name e.g., cloud-foundry
+liberapay: # Replace with a single Liberapay username
+issuehunt: # Replace with a single IssueHunt username
+otechie: # Replace with a single Otechie username
+custom: # Replace with up to 4 custom sponsorship URLs e.g., ['link1', 'link2']
+­/callBound.jsÅ'use strict';
+
+var GetIntrinsic = require('get-intrinsic');
+
+var callBind = require('./');
+
+var $indexOf = callBind(GetIntrinsic('String.prototype.indexOf'));
+
+module.exports = function callBoundIntrinsic(name, allowMissing) {
+	var intrinsic = GetIntrinsic(name, !!allowMissing);
+	if (typeof intrinsic === 'function' && $indexOf(name, '.prototype.') > -1) {
+		return callBind(intrinsic);
+	}
+	return intrinsic;
+};
+¨/LICENSEÅ/MIT License
+
+Copyright (c) 2020 Jordan Harband
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+­/CHANGELOG.mdÅ# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [v1.0.2](https://github.com/ljharb/call-bind/compare/v1.0.1...v1.0.2) - 2021-01-11
+
+### Commits
+
+- [Fix] properly include the receiver in the bound length [`dbae7bc`](https://github.com/ljharb/call-bind/commit/dbae7bc676c079a0d33c0a43e9ef92cb7b01345d)
+
+## [v1.0.1](https://github.com/ljharb/call-bind/compare/v1.0.0...v1.0.1) - 2021-01-08
+
+### Commits
+
+- [Tests] migrate tests to Github Actions [`b6db284`](https://github.com/ljharb/call-bind/commit/b6db284c36f8ccd195b88a6764fe84b7223a0da1)
+- [meta] do not publish github action workflow files [`ec7fe46`](https://github.com/ljharb/call-bind/commit/ec7fe46e60cfa4764ee943d2755f5e5a366e578e)
+- [Fix] preserve original functionâ€™s length when possible [`adbceaa`](https://github.com/ljharb/call-bind/commit/adbceaa3cac4b41ea78bb19d7ccdbaaf7e0bdadb)
+- [Tests] gather coverage data on every job [`d69e23c`](https://github.com/ljharb/call-bind/commit/d69e23cc65f101ba1d4c19bb07fa8eb0ec624be8)
+- [Dev Deps] update `eslint`, `@ljharb/eslint-config`, `aud`, `tape` [`2fd3586`](https://github.com/ljharb/call-bind/commit/2fd3586c5d47b335364c14293114c6b625ae1f71)
+- [Deps] update `get-intrinsic` [`f23e931`](https://github.com/ljharb/call-bind/commit/f23e9318cc271c2add8bb38cfded85ee7baf8eee)
+- [Deps] update `get-intrinsic` [`72d9f44`](https://github.com/ljharb/call-bind/commit/72d9f44e184465ba8dd3fb48260bbcff234985f2)
+- [meta] fix FUNDING.yml [`e723573`](https://github.com/ljharb/call-bind/commit/e723573438c5a68dcec31fb5d96ea6b7e4a93be8)
+- [eslint] ignore coverage output [`15e76d2`](https://github.com/ljharb/call-bind/commit/15e76d28a5f43e504696401e5b31ebb78ee1b532)
+- [meta] add Automatic Rebase and Require Allow Edits workflows [`8fa4dab`](https://github.com/ljharb/call-bind/commit/8fa4dabb23ba3dd7bb92c9571c1241c08b56e4b6)
+
+## v1.0.0 - 2020-10-30
+
+### Commits
+
+- Initial commit [`306cf98`](https://github.com/ljharb/call-bind/commit/306cf98c7ec9e7ef66b653ec152277ac1381eb50)
+- Tests [`e10d0bb`](https://github.com/ljharb/call-bind/commit/e10d0bbdadc7a10ecedc9a1c035112d3e368b8df)
+- Implementation [`43852ed`](https://github.com/ljharb/call-bind/commit/43852eda0f187327b7fad2423ca972149a52bd65)
+- npm init [`408f860`](https://github.com/ljharb/call-bind/commit/408f860b773a2f610805fd3613d0d71bac1b6249)
+- [meta] add Automatic Rebase and Require Allow Edits workflows [`fb349b2`](https://github.com/ljharb/call-bind/commit/fb349b2e48defbec8b5ec8a8395cc8f69f220b13)
+- [meta] add `auto-changelog` [`c4001fc`](https://github.com/ljharb/call-bind/commit/c4001fc43031799ef908211c98d3b0fb2b60fde4)
+- [meta] add "funding"; create `FUNDING.yml` [`d4d6d29`](https://github.com/ljharb/call-bind/commit/d4d6d2974a14bc2e98830468eda7fe6d6a776717)
+- [Tests] add `npm run lint` [`dedfb98`](https://github.com/ljharb/call-bind/commit/dedfb98bd0ecefb08ddb9a94061bd10cde4332af)
+- Only apps should have lockfiles [`54ac776`](https://github.com/ljharb/call-bind/commit/54ac77653db45a7361dc153d2f478e743f110650)
+- [meta] add `safe-publish-latest` [`9ea8e43`](https://github.com/ljharb/call-bind/commit/9ea8e435b950ce9b705559cd651039f9bf40140f)
+­/package.jsonÅ{
+	"name": "call-bind",
+	"version": "1.0.2",
+	"description": "Robustly `.call.bind()` a function",
+	"main": "index.js",
+	"exports": {
+		".": [
+			{
+				"default": "./index.js"
+			},
+			"./index.js"
+		],
+		"./callBound": [
+			{
+				"default": "./callBound.js"
+			},
+			"./callBound.js"
+		],
+		"./package.json": "./package.json"
+	},
+	"scripts": {
+		"prepublish": "safe-publish-latest",
+		"lint": "eslint --ext=.js,.mjs .",
+		"pretest": "npm run lint",
+		"tests-only": "nyc tape 'test/*'",
+		"test": "npm run tests-only",
+		"posttest": "aud --production",
+		"version": "auto-changelog && git add CHANGELOG.md",
+		"postversion": "auto-changelog && git add CHANGELOG.md && git commit --no-edit --amend && git tag -f \"v$(node -e \"console.log(require('./package.json').version)\")\""
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ljharb/call-bind.git"
+	},
+	"keywords": [
+		"javascript",
+		"ecmascript",
+		"es",
+		"js",
+		"callbind",
+		"callbound",
+		"call",
+		"bind",
+		"bound",
+		"call-bind",
+		"call-bound",
+		"function",
+		"es-abstract"
+	],
+	"author": "Jordan Harband <ljharb@gmail.com>",
+	"funding": {
+		"url": "https://github.com/sponsors/ljharb"
+	},
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/ljharb/call-bind/issues"
+	},
+	"homepage": "https://github.com/ljharb/call-bind#readme",
+	"devDependencies": {
+		"@ljharb/eslint-config": "^17.3.0",
+		"aud": "^1.1.3",
+		"auto-changelog": "^2.2.1",
+		"eslint": "^7.17.0",
+		"nyc": "^10.3.2",
+		"safe-publish-latest": "^1.1.4",
+		"tape": "^5.1.1"
+	},
+	"dependencies": {
+		"function-bind": "^1.1.1",
+		"get-intrinsic": "^1.0.2"
+	},
+	"auto-changelog": {
+		"output": "CHANGELOG.md",
+		"template": "keepachangelog",
+		"unreleased": false,
+		"commitLimit": false,
+		"backfillLimit": false,
+		"hideCredit": true
+	}
+}
+©/index.jsÅ'use strict';
+
+var bind = require('function-bind');
+var GetIntrinsic = require('get-intrinsic');
+
+var $apply = GetIntrinsic('%Function.prototype.apply%');
+var $call = GetIntrinsic('%Function.prototype.call%');
+var $reflectApply = GetIntrinsic('%Reflect.apply%', true) || bind.call($call, $apply);
+
+var $gOPD = GetIntrinsic('%Object.getOwnPropertyDescriptor%', true);
+var $defineProperty = GetIntrinsic('%Object.defineProperty%', true);
+var $max = GetIntrinsic('%Math.max%');
+
+if ($defineProperty) {
+	try {
+		$defineProperty({}, 'a', { value: 1 });
+	} catch (e) {
+		// IE 8 has a broken defineProperty
+		$defineProperty = null;
+	}
+}
+
+module.exports = function callBind(originalFunction) {
+	var func = $reflectApply(bind, $call, arguments);
+	if ($gOPD && $defineProperty) {
+		var desc = $gOPD(func, 'length');
+		if (desc.configurable) {
+			// original length, plus the receiver, minus any additional arguments (after the receiver)
+			$defineProperty(
+				func,
+				'length',
+				{ value: 1 + $max(0, originalFunction.length - (arguments.length - 1)) }
+			);
+		}
+	}
+	return func;
+};
+
+var applyBind = function applyBind() {
+	return $reflectApply(bind, $apply, arguments);
+};
+
+if ($defineProperty) {
+	$defineProperty(module.exports, 'apply', { value: applyBind });
+} else {
+	module.exports.apply = applyBind;
+}
+ª/README.mdÄ0# call-bind
+Robustly `.call.bind()` a function.
+®/.eslintignoreÄ
+coverage/
+§/.nycrcÄØ{
+	"all": true,
+	"check-coverage": false,
+	"reporter": ["text-summary", "text", "html", "json"],
+	"lines": 86,
+	"statements": 85.93,
+	"functions": 82.43,
+	"branches": 76.06,
+	"exclude": [
+		"coverage",
+		"test"
+	]
+}

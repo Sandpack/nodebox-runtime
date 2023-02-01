@@ -1,0 +1,214 @@
+„¨/LICENSEÅu    MIT License
+
+    Copyright (c) Microsoft Corporation.
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE
+«/index.d.tsÅ¢// Type definitions for Express 4.17
+// Project: http://expressjs.com
+// Definitions by: Boris Yankov <https://github.com/borisyankov>
+//                 China Medical University Hospital <https://github.com/CMUH>
+//                 Puneet Arora <https://github.com/puneetar>
+//                 Dylan Frankland <https://github.com/dfrankland>
+// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
+
+/* =================== USAGE ===================
+
+    import express = require("express");
+    var app = express();
+
+ =============================================== */
+
+/// <reference types="express-serve-static-core" />
+/// <reference types="serve-static" />
+
+import * as bodyParser from 'body-parser';
+import * as serveStatic from 'serve-static';
+import * as core from 'express-serve-static-core';
+import * as qs from 'qs';
+
+/**
+ * Creates an Express application. The express() function is a top-level function exported by the express module.
+ */
+declare function e(): core.Express;
+
+declare namespace e {
+    /**
+     * This is a built-in middleware function in Express. It parses incoming requests with JSON payloads and is based on body-parser.
+     * @since 4.16.0
+     */
+    var json: typeof bodyParser.json;
+
+    /**
+     * This is a built-in middleware function in Express. It parses incoming requests with Buffer payloads and is based on body-parser.
+     * @since 4.17.0
+     */
+    var raw: typeof bodyParser.raw;
+
+    /**
+     * This is a built-in middleware function in Express. It parses incoming requests with text payloads and is based on body-parser.
+     * @since 4.17.0
+     */
+    var text: typeof bodyParser.text;
+
+    /**
+     * These are the exposed prototypes.
+     */
+    var application: Application;
+    var request: Request;
+    var response: Response;
+
+    /**
+     * This is a built-in middleware function in Express. It serves static files and is based on serve-static.
+     */
+    var static: serveStatic.RequestHandlerConstructor<Response>;
+
+    /**
+     * This is a built-in middleware function in Express. It parses incoming requests with urlencoded payloads and is based on body-parser.
+     * @since 4.16.0
+     */
+    var urlencoded: typeof bodyParser.urlencoded;
+
+    /**
+     * This is a built-in middleware function in Express. It parses incoming request query parameters.
+     */
+    export function query(options: qs.IParseOptions | typeof qs.parse): Handler;
+
+    export function Router(options?: RouterOptions): core.Router;
+
+    interface RouterOptions {
+        /**
+         * Enable case sensitivity.
+         */
+        caseSensitive?: boolean | undefined;
+
+        /**
+         * Preserve the req.params values from the parent router.
+         * If the parent and the child have conflicting param names, the childâ€™s value take precedence.
+         *
+         * @default false
+         * @since 4.5.0
+         */
+        mergeParams?: boolean | undefined;
+
+        /**
+         * Enable strict routing.
+         */
+        strict?: boolean | undefined;
+    }
+
+    interface Application extends core.Application {}
+    interface CookieOptions extends core.CookieOptions {}
+    interface Errback extends core.Errback {}
+    interface ErrorRequestHandler<
+        P = core.ParamsDictionary,
+        ResBody = any,
+        ReqBody = any,
+        ReqQuery = core.Query,
+        Locals extends Record<string, any> = Record<string, any>
+    > extends core.ErrorRequestHandler<P, ResBody, ReqBody, ReqQuery, Locals> {}
+    interface Express extends core.Express {}
+    interface Handler extends core.Handler {}
+    interface IRoute extends core.IRoute {}
+    interface IRouter extends core.IRouter {}
+    interface IRouterHandler<T> extends core.IRouterHandler<T> {}
+    interface IRouterMatcher<T> extends core.IRouterMatcher<T> {}
+    interface MediaType extends core.MediaType {}
+    interface NextFunction extends core.NextFunction {}
+    interface Request<
+        P = core.ParamsDictionary,
+        ResBody = any,
+        ReqBody = any,
+        ReqQuery = core.Query,
+        Locals extends Record<string, any> = Record<string, any>
+    > extends core.Request<P, ResBody, ReqBody, ReqQuery, Locals> {}
+    interface RequestHandler<
+        P = core.ParamsDictionary,
+        ResBody = any,
+        ReqBody = any,
+        ReqQuery = core.Query,
+        Locals extends Record<string, any> = Record<string, any>
+    > extends core.RequestHandler<P, ResBody, ReqBody, ReqQuery, Locals> {}
+    interface RequestParamHandler extends core.RequestParamHandler {}
+    export interface Response<ResBody = any, Locals extends Record<string, any> = Record<string, any>>
+        extends core.Response<ResBody, Locals> {}
+    interface Router extends core.Router {}
+    interface Send extends core.Send {}
+}
+
+export = e;
+­/package.jsonÅ‡{
+    "name": "@types/express",
+    "version": "4.17.15",
+    "description": "TypeScript definitions for Express",
+    "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/express",
+    "license": "MIT",
+    "contributors": [
+        {
+            "name": "Boris Yankov",
+            "url": "https://github.com/borisyankov",
+            "githubUsername": "borisyankov"
+        },
+        {
+            "name": "China Medical University Hospital",
+            "url": "https://github.com/CMUH",
+            "githubUsername": "CMUH"
+        },
+        {
+            "name": "Puneet Arora",
+            "url": "https://github.com/puneetar",
+            "githubUsername": "puneetar"
+        },
+        {
+            "name": "Dylan Frankland",
+            "url": "https://github.com/dfrankland",
+            "githubUsername": "dfrankland"
+        }
+    ],
+    "main": "",
+    "types": "index.d.ts",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+        "directory": "types/express"
+    },
+    "scripts": {},
+    "dependencies": {
+        "@types/body-parser": "*",
+        "@types/express-serve-static-core": "^4.17.31",
+        "@types/qs": "*",
+        "@types/serve-static": "*"
+    },
+    "typesPublisherContentHash": "a3b86a7c7eb6f9cd2c24e3ecba223a93a983155d3c2e3bdd1a9d006150af8455",
+    "typeScriptVersion": "4.2"
+}ª/README.mdÅ•# Installation
+> `npm install --save @types/express`
+
+# Summary
+This package contains type definitions for Express (http://expressjs.com).
+
+# Details
+Files were exported from https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/express.
+
+### Additional Details
+ * Last updated: Tue, 13 Dec 2022 23:33:24 GMT
+ * Dependencies: [@types/body-parser](https://npmjs.com/package/@types/body-parser), [@types/express-serve-static-core](https://npmjs.com/package/@types/express-serve-static-core), [@types/qs](https://npmjs.com/package/@types/qs), [@types/serve-static](https://npmjs.com/package/@types/serve-static)
+ * Global values: none
+
+# Credits
+These definitions were written by [Boris Yankov](https://github.com/borisyankov), [China Medical University Hospital](https://github.com/CMUH), [Puneet Arora](https://github.com/puneetar), and [Dylan Frankland](https://github.com/dfrankland).

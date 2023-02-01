@@ -1,0 +1,94 @@
+ä®/LICENSE≈]MIT License
+
+Copyright (c) 2022 Apollo Graph, Inc. (Formerly Meteor Development Group, Inc.)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+º/src/__tests__/tsconfig.jsonƒq{
+  "extends": "../../../../tsconfig.test.base",
+  "include": ["**/*"],
+  "references": [{ "path": "../../" }]
+}
+Æ/dist/index.js≈ó"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.createHash = void 0;
+const utils_isnodelike_1 = require("@apollo/utils.isnodelike");
+function createHash(kind) {
+    if (utils_isnodelike_1.isNodeLike) {
+        return module.require("crypto").createHash(kind);
+    }
+    return require("sha.js")(kind);
+}
+exports.createHash = createHash;
+//# sourceMappingURL=index.js.map¥/dist/index.d.ts.mapƒ´{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":"AAEA,wBAAgB,UAAU,CAAC,IAAI,EAAE,MAAM,GAAG,OAAO,QAAQ,EAAE,IAAI,CAO9D"}Ÿ!/src/__tests__/createHash.test.ts≈import { createHash } from "..";
+
+describe("createHash", () => {
+  it("creates a hash", () => {
+    expect(createHash("sha256").update("foo").digest("hex")).toEqual(
+      "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
+    );
+  });
+});
+≠/package.json≈Ö{
+  "name": "@apollo/utils.createhash",
+  "version": "1.1.0",
+  "description": "Node-agnostic hashing utility",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apollographql/apollo-utils.git",
+    "directory": "createHash/"
+  },
+  "keywords": [
+    "apollo",
+    "graphql",
+    "typescript",
+    "node"
+  ],
+  "author": "Apollo <packages@apollographql.com>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=12.13.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@apollo/utils.isnodelike": "^1.1.0",
+    "sha.js": "^2.4.11"
+  }
+}
+æ/src/__tests__/exports.test.tsƒ∫import * as allExports from "..";
+
+it("exports hashing functions", () => {
+  expect(Object.keys(allExports).length).toBe(1);
+  expect(typeof allExports.createHash).toBe("function");
+});
+≤/dist/index.js.map≈9{"version":3,"file":"index.js","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":";;;AAAA,+DAAsD;AAEtD,SAAgB,UAAU,CAAC,IAAY;IACrC,IAAI,6BAAU,EAAE;QAGd,OAAO,MAAM,CAAC,OAAO,CAAC,QAAQ,CAAC,CAAC,UAAU,CAAC,IAAI,CAAC,CAAC;KAClD;IACD,OAAO,OAAO,CAAC,QAAQ,CAAC,CAAC,IAAI,CAAC,CAAC;AACjC,CAAC;AAPD,gCAOC"}≠/src/index.ts≈ximport { isNodeLike } from "@apollo/utils.isnodelike";
+
+export function createHash(kind: string): import("crypto").Hash {
+  if (isNodeLike) {
+    // Use module.require instead of just require to avoid bundling whatever
+    // crypto polyfills a non-Node bundler might fall back to.
+    return module.require("crypto").createHash(kind);
+  }
+  return require("sha.js")(kind);
+}
+∞/dist/index.d.tsƒlexport declare function createHash(kind: string): import("crypto").Hash;
+//# sourceMappingURL=index.d.ts.map

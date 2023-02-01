@@ -1,0 +1,107 @@
+…«/index.d.tsÅ"/**
+Check if a file path is a binary file.
+
+@example
+```
+import isBinaryPath = require('is-binary-path');
+
+isBinaryPath('source/unicorn.png');
+//=> true
+
+isBinaryPath('source/unicorn.txt');
+//=> false
+```
+*/
+declare function isBinaryPath(filePath: string): boolean;
+
+export = isBinaryPath;
+¨/licenseÅ‡MIT License
+
+Copyright (c) 2019 Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com), Paul Miller (https://paulmillr.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ª/readme.mdÅÝ# is-binary-path [![Build Status](https://travis-ci.org/sindresorhus/is-binary-path.svg?branch=master)](https://travis-ci.org/sindresorhus/is-binary-path)
+
+> Check if a file path is a binary file
+
+
+## Install
+
+```
+$ npm install is-binary-path
+```
+
+
+## Usage
+
+```js
+const isBinaryPath = require('is-binary-path');
+
+isBinaryPath('source/unicorn.png');
+//=> true
+
+isBinaryPath('source/unicorn.txt');
+//=> false
+```
+
+
+## Related
+
+- [binary-extensions](https://github.com/sindresorhus/binary-extensions) - List of binary file extensions
+- [is-text-path](https://github.com/sindresorhus/is-text-path) - Check if a filepath is a text file
+
+
+## License
+
+MIT Â© [Sindre Sorhus](https://sindresorhus.com), [Paul Miller](https://paulmillr.com)
+­/package.jsonÅ‘{
+	"name": "is-binary-path",
+	"version": "2.1.0",
+	"description": "Check if a file path is a binary file",
+	"license": "MIT",
+	"repository": "sindresorhus/is-binary-path",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "sindresorhus.com"
+	},
+	"engines": {
+		"node": ">=8"
+	},
+	"scripts": {
+		"test": "xo && ava && tsd"
+	},
+	"files": [
+		"index.js",
+		"index.d.ts"
+	],
+	"keywords": [
+		"binary",
+		"extensions",
+		"extension",
+		"file",
+		"path",
+		"check",
+		"detect",
+		"is"
+	],
+	"dependencies": {
+		"binary-extensions": "^2.0.0"
+	},
+	"devDependencies": {
+		"ava": "^1.4.1",
+		"tsd": "^0.7.2",
+		"xo": "^0.24.0"
+	}
+}
+©/index.jsÄï'use strict';
+const path = require('path');
+const binaryExtensions = require('binary-extensions');
+
+const extensions = new Set(binaryExtensions);
+
+module.exports = filePath => extensions.has(path.extname(filePath).slice(1).toLowerCase());

@@ -1,0 +1,396 @@
+…ª/README.mdÅ.# fresh
+
+[![NPM Version][npm-image]][npm-url]
+[![NPM Downloads][downloads-image]][downloads-url]
+[![Node.js Version][node-version-image]][node-version-url]
+[![Build Status][travis-image]][travis-url]
+[![Test Coverage][coveralls-image]][coveralls-url]
+
+HTTP response freshness testing
+
+## Installation
+
+This is a [Node.js](https://nodejs.org/en/) module available through the
+[npm registry](https://www.npmjs.com/). Installation is done using the
+[`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
+
+```
+$ npm install fresh
+```
+
+## API
+
+<!-- eslint-disable no-unused-vars -->
+
+```js
+var fresh = require('fresh')
+```
+
+### fresh(reqHeaders, resHeaders)
+
+Check freshness of the response using request and response headers.
+
+When the response is still "fresh" in the client's cache `true` is
+returned, otherwise `false` is returned to indicate that the client
+cache is now stale and the full response should be sent.
+
+When a client sends the `Cache-Control: no-cache` request header to
+indicate an end-to-end reload request, this module will return `false`
+to make handling these requests transparent.
+
+## Known Issues
+
+This module is designed to only follow the HTTP specifications, not
+to work-around all kinda of client bugs (especially since this module
+typically does not recieve enough information to understand what the
+client actually is).
+
+There is a known issue that in certain versions of Safari, Safari
+will incorrectly make a request that allows this module to validate
+freshness of the resource even when Safari does not have a
+representation of the resource in the cache. The module
+[jumanji](https://www.npmjs.com/package/jumanji) can be used in
+an Express application to work-around this issue and also provides
+links to further reading on this Safari bug.
+
+## Example
+
+### API usage
+
+<!-- eslint-disable no-redeclare, no-undef -->
+
+```js
+var reqHeaders = { 'if-none-match': '"foo"' }
+var resHeaders = { 'etag': '"bar"' }
+fresh(reqHeaders, resHeaders)
+// => false
+
+var reqHeaders = { 'if-none-match': '"foo"' }
+var resHeaders = { 'etag': '"foo"' }
+fresh(reqHeaders, resHeaders)
+// => true
+```
+
+### Using with Node.js http server
+
+```js
+var fresh = require('fresh')
+var http = require('http')
+
+var server = http.createServer(function (req, res) {
+  // perform server logic
+  // ... including adding ETag / Last-Modified response headers
+
+  if (isFresh(req, res)) {
+    // client has a fresh copy of resource
+    res.statusCode = 304
+    res.end()
+    return
+  }
+
+  // send the resource
+  res.statusCode = 200
+  res.end('hello, world!')
+})
+
+function isFresh (req, res) {
+  return fresh(req.headers, {
+    'etag': res.getHeader('ETag'),
+    'last-modified': res.getHeader('Last-Modified')
+  })
+}
+
+server.listen(3000)
+```
+
+## License
+
+[MIT](LICENSE)
+
+[npm-image]: https://img.shields.io/npm/v/fresh.svg
+[npm-url]: https://npmjs.org/package/fresh
+[node-version-image]: https://img.shields.io/node/v/fresh.svg
+[node-version-url]: https://nodejs.org/en/
+[travis-image]: https://img.shields.io/travis/jshttp/fresh/master.svg
+[travis-url]: https://travis-ci.org/jshttp/fresh
+[coveralls-image]: https://img.shields.io/coveralls/jshttp/fresh/master.svg
+[coveralls-url]: https://coveralls.io/r/jshttp/fresh?branch=master
+[downloads-image]: https://img.shields.io/npm/dm/fresh.svg
+[downloads-url]: https://npmjs.org/package/fresh
+­/package.jsonÅM{
+  "name": "fresh",
+  "description": "HTTP response freshness testing",
+  "version": "0.5.2",
+  "author": "TJ Holowaychuk <tj@vision-media.ca> (http://tjholowaychuk.com)",
+  "contributors": [
+    "Douglas Christopher Wilson <doug@somethingdoug.com>",
+    "Jonathan Ong <me@jongleberry.com> (http://jongleberry.com)"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "fresh",
+    "http",
+    "conditional",
+    "cache"
+  ],
+  "repository": "jshttp/fresh",
+  "devDependencies": {
+    "beautify-benchmark": "0.2.4",
+    "benchmark": "2.1.4",
+    "eslint": "3.19.0",
+    "eslint-config-standard": "10.2.1",
+    "eslint-plugin-import": "2.7.0",
+    "eslint-plugin-markdown": "1.0.0-beta.6",
+    "eslint-plugin-node": "5.1.1",
+    "eslint-plugin-promise": "3.5.0",
+    "eslint-plugin-standard": "3.0.1",
+    "istanbul": "0.4.5",
+    "mocha": "1.21.5"
+  },
+  "files": [
+    "HISTORY.md",
+    "LICENSE",
+    "index.js"
+  ],
+  "engines": {
+    "node": ">= 0.6"
+  },
+  "scripts": {
+    "bench": "node benchmark/index.js",
+    "lint": "eslint --plugin markdown --ext js,md .",
+    "test": "mocha --reporter spec --bail --check-leaks test/",
+    "test-cov": "istanbul cover node_modules/mocha/bin/_mocha -- --reporter dot --check-leaks test/",
+    "test-travis": "istanbul cover node_modules/mocha/bin/_mocha --report lcovonly -- --reporter spec --check-leaks test/"
+  }
+}
+©/index.jsÅ
+—/*!
+ * fresh
+ * Copyright(c) 2012 TJ Holowaychuk
+ * Copyright(c) 2016-2017 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+'use strict'
+
+/**
+ * RegExp to check for no-cache token in Cache-Control.
+ * @private
+ */
+
+var CACHE_CONTROL_NO_CACHE_REGEXP = /(?:^|,)\s*?no-cache\s*?(?:,|$)/
+
+/**
+ * Module exports.
+ * @public
+ */
+
+module.exports = fresh
+
+/**
+ * Check freshness of the response using request and response headers.
+ *
+ * @param {Object} reqHeaders
+ * @param {Object} resHeaders
+ * @return {Boolean}
+ * @public
+ */
+
+function fresh (reqHeaders, resHeaders) {
+  // fields
+  var modifiedSince = reqHeaders['if-modified-since']
+  var noneMatch = reqHeaders['if-none-match']
+
+  // unconditional request
+  if (!modifiedSince && !noneMatch) {
+    return false
+  }
+
+  // Always return stale when Cache-Control: no-cache
+  // to support end-to-end reload requests
+  // https://tools.ietf.org/html/rfc2616#section-14.9.4
+  var cacheControl = reqHeaders['cache-control']
+  if (cacheControl && CACHE_CONTROL_NO_CACHE_REGEXP.test(cacheControl)) {
+    return false
+  }
+
+  // if-none-match
+  if (noneMatch && noneMatch !== '*') {
+    var etag = resHeaders['etag']
+
+    if (!etag) {
+      return false
+    }
+
+    var etagStale = true
+    var matches = parseTokenList(noneMatch)
+    for (var i = 0; i < matches.length; i++) {
+      var match = matches[i]
+      if (match === etag || match === 'W/' + etag || 'W/' + match === etag) {
+        etagStale = false
+        break
+      }
+    }
+
+    if (etagStale) {
+      return false
+    }
+  }
+
+  // if-modified-since
+  if (modifiedSince) {
+    var lastModified = resHeaders['last-modified']
+    var modifiedStale = !lastModified || !(parseHttpDate(lastModified) <= parseHttpDate(modifiedSince))
+
+    if (modifiedStale) {
+      return false
+    }
+  }
+
+  return true
+}
+
+/**
+ * Parse an HTTP Date into a number.
+ *
+ * @param {string} date
+ * @private
+ */
+
+function parseHttpDate (date) {
+  var timestamp = date && Date.parse(date)
+
+  // istanbul ignore next: guard against date.js Date.parse patching
+  return typeof timestamp === 'number'
+    ? timestamp
+    : NaN
+}
+
+/**
+ * Parse a HTTP token list.
+ *
+ * @param {string} str
+ * @private
+ */
+
+function parseTokenList (str) {
+  var end = 0
+  var list = []
+  var start = 0
+
+  // gather tokens
+  for (var i = 0, len = str.length; i < len; i++) {
+    switch (str.charCodeAt(i)) {
+      case 0x20: /*   */
+        if (start === end) {
+          start = end = i + 1
+        }
+        break
+      case 0x2c: /* , */
+        list.push(str.substring(start, end))
+        start = end = i + 1
+        break
+      default:
+        end = i + 1
+        break
+    }
+  }
+
+  // final token
+  list.push(str.substring(start, end))
+
+  return list
+}
+¨/LICENSEÅ–(The MIT License)
+
+Copyright (c) 2012 TJ Holowaychuk <tj@vision-media.ca>
+Copyright (c) 2016-2017 Douglas Christopher Wilson <doug@somethingdoug.com>
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+«/HISTORY.mdÅÜ0.5.2 / 2017-09-13
+==================
+
+  * Fix regression matching multiple ETags in `If-None-Match`
+  * perf: improve `If-None-Match` token parsing
+
+0.5.1 / 2017-09-11
+==================
+
+  * Fix handling of modified headers with invalid dates
+  * perf: improve ETag match loop
+
+0.5.0 / 2017-02-21
+==================
+
+  * Fix incorrect result when `If-None-Match` has both `*` and ETags
+  * Fix weak `ETag` matching to match spec
+  * perf: delay reading header values until needed
+  * perf: skip checking modified time if ETag check failed
+  * perf: skip parsing `If-None-Match` when no `ETag` header
+  * perf: use `Date.parse` instead of `new Date`
+
+0.4.0 / 2017-02-05
+==================
+
+  * Fix false detection of `no-cache` request directive
+  * perf: enable strict mode
+  * perf: hoist regular expressions
+  * perf: remove duplicate conditional
+  * perf: remove unnecessary boolean coercions
+
+0.3.0 / 2015-05-12
+==================
+
+  * Add weak `ETag` matching support
+
+0.2.4 / 2014-09-07
+==================
+
+  * Support Node.js 0.6
+
+0.2.3 / 2014-09-07
+==================
+
+  * Move repository to jshttp
+
+0.2.2 / 2014-02-19
+==================
+
+  * Revert "Fix for blank page on Safari reload"
+
+0.2.1 / 2014-01-29
+==================
+
+  * Fix for blank page on Safari reload
+
+0.2.0 / 2013-08-11
+==================
+
+  * Return stale for `Cache-Control: no-cache`
+
+0.1.0 / 2012-06-15
+==================
+
+  * Add `If-None-Match: *` support
+
+0.0.1 / 2012-06-10
+==================
+
+  * Initial release

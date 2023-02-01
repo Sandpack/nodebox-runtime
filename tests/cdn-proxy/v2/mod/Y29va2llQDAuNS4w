@@ -1,0 +1,807 @@
+†­/package.jsonÅt{
+  "name": "cookie",
+  "description": "HTTP server cookie parsing and serialization",
+  "version": "0.5.0",
+  "author": "Roman Shtylman <shtylman@gmail.com>",
+  "contributors": [
+    "Douglas Christopher Wilson <doug@somethingdoug.com>"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "cookie",
+    "cookies"
+  ],
+  "repository": "jshttp/cookie",
+  "devDependencies": {
+    "beautify-benchmark": "0.2.4",
+    "benchmark": "2.1.4",
+    "eslint": "7.32.0",
+    "eslint-plugin-markdown": "2.2.1",
+    "mocha": "9.2.2",
+    "nyc": "15.1.0",
+    "safe-buffer": "5.2.1",
+    "top-sites": "1.1.97"
+  },
+  "files": [
+    "HISTORY.md",
+    "LICENSE",
+    "README.md",
+    "SECURITY.md",
+    "index.js"
+  ],
+  "engines": {
+    "node": ">= 0.6"
+  },
+  "scripts": {
+    "bench": "node benchmark/index.js",
+    "lint": "eslint .",
+    "test": "mocha --reporter spec --bail --check-leaks test/",
+    "test-ci": "nyc --reporter=lcov --reporter=text npm test",
+    "test-cov": "nyc --reporter=html --reporter=text npm test",
+    "update-bench": "node scripts/update-benchmark.js",
+    "version": "node scripts/version-history.js && git add HISTORY.md"
+  }
+}
+¨/LICENSEÅ—(The MIT License)
+
+Copyright (c) 2012-2014 Roman Shtylman <shtylman@gmail.com>
+Copyright (c) 2015 Douglas Christopher Wilson <doug@somethingdoug.com>
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+«/HISTORY.mdÅ00.5.0 / 2022-04-11
+==================
+
+  * Add `priority` option
+  * Fix `expires` option to reject invalid dates
+  * pref: improve default decode speed
+  * pref: remove slow string split in parse
+
+0.4.2 / 2022-02-02
+==================
+
+  * pref: read value only when assigning in parse
+  * pref: remove unnecessary regexp in parse
+
+0.4.1 / 2020-04-21
+==================
+
+  * Fix `maxAge` option to reject invalid values
+
+0.4.0 / 2019-05-15
+==================
+
+  * Add `SameSite=None` support
+
+0.3.1 / 2016-05-26
+==================
+
+  * Fix `sameSite: true` to work with draft-7 clients
+    - `true` now sends `SameSite=Strict` instead of `SameSite`
+
+0.3.0 / 2016-05-26
+==================
+
+  * Add `sameSite` option
+    - Replaces `firstPartyOnly` option, never implemented by browsers
+  * Improve error message when `encode` is not a function
+  * Improve error message when `expires` is not a `Date`
+
+0.2.4 / 2016-05-20
+==================
+
+  * perf: enable strict mode
+  * perf: use for loop in parse
+  * perf: use string concatination for serialization
+
+0.2.3 / 2015-10-25
+==================
+
+  * Fix cookie `Max-Age` to never be a floating point number
+
+0.2.2 / 2015-09-17
+==================
+
+  * Fix regression when setting empty cookie value
+    - Ease the new restriction, which is just basic header-level validation
+  * Fix typo in invalid value errors
+
+0.2.1 / 2015-09-17
+==================
+
+  * Throw on invalid values provided to `serialize`
+    - Ensures the resulting string is a valid HTTP header value
+
+0.2.0 / 2015-08-13
+==================
+
+  * Add `firstPartyOnly` option
+  * Throw better error for invalid argument to parse
+  * perf: hoist regular expression
+
+0.1.5 / 2015-09-17
+==================
+
+  * Fix regression when setting empty cookie value
+    - Ease the new restriction, which is just basic header-level validation
+  * Fix typo in invalid value errors
+
+0.1.4 / 2015-09-17
+==================
+
+  * Throw better error for invalid argument to parse
+  * Throw on invalid values provided to `serialize`
+    - Ensures the resulting string is a valid HTTP header value
+
+0.1.3 / 2015-05-19
+==================
+
+  * Reduce the scope of try-catch deopt
+  * Remove argument reassignments
+
+0.1.2 / 2014-04-16
+==================
+
+  * Remove unnecessary files from npm package
+
+0.1.1 / 2014-02-23
+==================
+
+  * Fix bad parse when cookie value contained a comma
+  * Fix support for `maxAge` of `0`
+
+0.1.0 / 2013-05-01
+==================
+
+  * Add `decode` option
+  * Add `encode` option
+
+0.0.6 / 2013-04-08
+==================
+
+  * Ignore cookie parts missing `=`
+
+0.0.5 / 2012-10-29
+==================
+
+  * Return raw cookie value if value unescape errors
+
+0.0.4 / 2012-06-21
+==================
+
+  * Use encode/decodeURIComponent for cookie encoding/decoding
+    - Improve server/client interoperability
+
+0.0.3 / 2012-06-06
+==================
+
+  * Only escape special characters per the cookie RFC
+
+0.0.2 / 2012-06-01
+==================
+
+  * Fix `maxAge` option to not throw error
+
+0.0.1 / 2012-05-28
+==================
+
+  * Add more tests
+
+0.0.0 / 2012-05-28
+==================
+
+  * Initial release
+ª/README.mdÅ,"# cookie
+
+[![NPM Version][npm-version-image]][npm-url]
+[![NPM Downloads][npm-downloads-image]][npm-url]
+[![Node.js Version][node-version-image]][node-version-url]
+[![Build Status][github-actions-ci-image]][github-actions-ci-url]
+[![Test Coverage][coveralls-image]][coveralls-url]
+
+Basic HTTP cookie parser and serializer for HTTP servers.
+
+## Installation
+
+This is a [Node.js](https://nodejs.org/en/) module available through the
+[npm registry](https://www.npmjs.com/). Installation is done using the
+[`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
+
+```sh
+$ npm install cookie
+```
+
+## API
+
+```js
+var cookie = require('cookie');
+```
+
+### cookie.parse(str, options)
+
+Parse an HTTP `Cookie` header string and returning an object of all cookie name-value pairs.
+The `str` argument is the string representing a `Cookie` header value and `options` is an
+optional object containing additional parsing options.
+
+```js
+var cookies = cookie.parse('foo=bar; equation=E%3Dmc%5E2');
+// { foo: 'bar', equation: 'E=mc^2' }
+```
+
+#### Options
+
+`cookie.parse` accepts these properties in the options object.
+
+##### decode
+
+Specifies a function that will be used to decode a cookie's value. Since the value of a cookie
+has a limited character set (and must be a simple string), this function can be used to decode
+a previously-encoded cookie value into a JavaScript string or other object.
+
+The default function is the global `decodeURIComponent`, which will decode any URL-encoded
+sequences into their byte representations.
+
+**note** if an error is thrown from this function, the original, non-decoded cookie value will
+be returned as the cookie's value.
+
+### cookie.serialize(name, value, options)
+
+Serialize a cookie name-value pair into a `Set-Cookie` header string. The `name` argument is the
+name for the cookie, the `value` argument is the value to set the cookie to, and the `options`
+argument is an optional object containing additional serialization options.
+
+```js
+var setCookie = cookie.serialize('foo', 'bar');
+// foo=bar
+```
+
+#### Options
+
+`cookie.serialize` accepts these properties in the options object.
+
+##### domain
+
+Specifies the value for the [`Domain` `Set-Cookie` attribute][rfc-6265-5.2.3]. By default, no
+domain is set, and most clients will consider the cookie to apply to only the current domain.
+
+##### encode
+
+Specifies a function that will be used to encode a cookie's value. Since value of a cookie
+has a limited character set (and must be a simple string), this function can be used to encode
+a value into a string suited for a cookie's value.
+
+The default function is the global `encodeURIComponent`, which will encode a JavaScript string
+into UTF-8 byte sequences and then URL-encode any that fall outside of the cookie range.
+
+##### expires
+
+Specifies the `Date` object to be the value for the [`Expires` `Set-Cookie` attribute][rfc-6265-5.2.1].
+By default, no expiration is set, and most clients will consider this a "non-persistent cookie" and
+will delete it on a condition like exiting a web browser application.
+
+**note** the [cookie storage model specification][rfc-6265-5.3] states that if both `expires` and
+`maxAge` are set, then `maxAge` takes precedence, but it is possible not all clients by obey this,
+so if both are set, they should point to the same date and time.
+
+##### httpOnly
+
+Specifies the `boolean` value for the [`HttpOnly` `Set-Cookie` attribute][rfc-6265-5.2.6]. When truthy,
+the `HttpOnly` attribute is set, otherwise it is not. By default, the `HttpOnly` attribute is not set.
+
+**note** be careful when setting this to `true`, as compliant clients will not allow client-side
+JavaScript to see the cookie in `document.cookie`.
+
+##### maxAge
+
+Specifies the `number` (in seconds) to be the value for the [`Max-Age` `Set-Cookie` attribute][rfc-6265-5.2.2].
+The given number will be converted to an integer by rounding down. By default, no maximum age is set.
+
+**note** the [cookie storage model specification][rfc-6265-5.3] states that if both `expires` and
+`maxAge` are set, then `maxAge` takes precedence, but it is possible not all clients by obey this,
+so if both are set, they should point to the same date and time.
+
+##### path
+
+Specifies the value for the [`Path` `Set-Cookie` attribute][rfc-6265-5.2.4]. By default, the path
+is considered the ["default path"][rfc-6265-5.1.4].
+
+##### priority
+
+Specifies the `string` to be the value for the [`Priority` `Set-Cookie` attribute][rfc-west-cookie-priority-00-4.1].
+
+  - `'low'` will set the `Priority` attribute to `Low`.
+  - `'medium'` will set the `Priority` attribute to `Medium`, the default priority when not set.
+  - `'high'` will set the `Priority` attribute to `High`.
+
+More information about the different priority levels can be found in
+[the specification][rfc-west-cookie-priority-00-4.1].
+
+**note** This is an attribute that has not yet been fully standardized, and may change in the future.
+This also means many clients may ignore this attribute until they understand it.
+
+##### sameSite
+
+Specifies the `boolean` or `string` to be the value for the [`SameSite` `Set-Cookie` attribute][rfc-6265bis-09-5.4.7].
+
+  - `true` will set the `SameSite` attribute to `Strict` for strict same site enforcement.
+  - `false` will not set the `SameSite` attribute.
+  - `'lax'` will set the `SameSite` attribute to `Lax` for lax same site enforcement.
+  - `'none'` will set the `SameSite` attribute to `None` for an explicit cross-site cookie.
+  - `'strict'` will set the `SameSite` attribute to `Strict` for strict same site enforcement.
+
+More information about the different enforcement levels can be found in
+[the specification][rfc-6265bis-09-5.4.7].
+
+**note** This is an attribute that has not yet been fully standardized, and may change in the future.
+This also means many clients may ignore this attribute until they understand it.
+
+##### secure
+
+Specifies the `boolean` value for the [`Secure` `Set-Cookie` attribute][rfc-6265-5.2.5]. When truthy,
+the `Secure` attribute is set, otherwise it is not. By default, the `Secure` attribute is not set.
+
+**note** be careful when setting this to `true`, as compliant clients will not send the cookie back to
+the server in the future if the browser does not have an HTTPS connection.
+
+## Example
+
+The following example uses this module in conjunction with the Node.js core HTTP server
+to prompt a user for their name and display it back on future visits.
+
+```js
+var cookie = require('cookie');
+var escapeHtml = require('escape-html');
+var http = require('http');
+var url = require('url');
+
+function onRequest(req, res) {
+  // Parse the query string
+  var query = url.parse(req.url, true, true).query;
+
+  if (query && query.name) {
+    // Set a new cookie with the name
+    res.setHeader('Set-Cookie', cookie.serialize('name', String(query.name), {
+      httpOnly: true,
+      maxAge: 60 * 60 * 24 * 7 // 1 week
+    }));
+
+    // Redirect back after setting cookie
+    res.statusCode = 302;
+    res.setHeader('Location', req.headers.referer || '/');
+    res.end();
+    return;
+  }
+
+  // Parse the cookies on the request
+  var cookies = cookie.parse(req.headers.cookie || '');
+
+  // Get the visitor name set in the cookie
+  var name = cookies.name;
+
+  res.setHeader('Content-Type', 'text/html; charset=UTF-8');
+
+  if (name) {
+    res.write('<p>Welcome back, <b>' + escapeHtml(name) + '</b>!</p>');
+  } else {
+    res.write('<p>Hello, new visitor!</p>');
+  }
+
+  res.write('<form method="GET">');
+  res.write('<input placeholder="enter your name" name="name"> <input type="submit" value="Set Name">');
+  res.end('</form>');
+}
+
+http.createServer(onRequest).listen(3000);
+```
+
+## Testing
+
+```sh
+$ npm test
+```
+
+## Benchmark
+
+```
+$ npm run bench
+
+> cookie@0.4.2 bench
+> node benchmark/index.js
+
+  node@16.14.0
+  v8@9.4.146.24-node.20
+  uv@1.43.0
+  zlib@1.2.11
+  brotli@1.0.9
+  ares@1.18.1
+  modules@93
+  nghttp2@1.45.1
+  napi@8
+  llhttp@6.0.4
+  openssl@1.1.1m+quic
+  cldr@40.0
+  icu@70.1
+  tz@2021a3
+  unicode@14.0
+  ngtcp2@0.1.0-DEV
+  nghttp3@0.1.0-DEV
+
+> node benchmark/parse-top.js
+
+  cookie.parse - top sites
+
+  15 tests completed.
+
+  parse accounts.google.com x 2,421,245 ops/sec Â±0.80% (188 runs sampled)
+  parse apple.com           x 2,684,710 ops/sec Â±0.59% (189 runs sampled)
+  parse cloudflare.com      x 2,231,418 ops/sec Â±0.76% (186 runs sampled)
+  parse docs.google.com     x 2,316,357 ops/sec Â±1.28% (187 runs sampled)
+  parse drive.google.com    x 2,363,543 ops/sec Â±0.49% (189 runs sampled)
+  parse en.wikipedia.org    x   839,414 ops/sec Â±0.53% (189 runs sampled)
+  parse linkedin.com        x   553,797 ops/sec Â±0.63% (190 runs sampled)
+  parse maps.google.com     x 1,314,779 ops/sec Â±0.72% (189 runs sampled)
+  parse microsoft.com       x   153,783 ops/sec Â±0.53% (190 runs sampled)
+  parse play.google.com     x 2,249,574 ops/sec Â±0.59% (187 runs sampled)
+  parse plus.google.com     x 2,258,682 ops/sec Â±0.60% (188 runs sampled)
+  parse sites.google.com    x 2,247,069 ops/sec Â±0.68% (189 runs sampled)
+  parse support.google.com  x 1,456,840 ops/sec Â±0.70% (187 runs sampled)
+  parse www.google.com      x 1,046,028 ops/sec Â±0.58% (188 runs sampled)
+  parse youtu.be            x   937,428 ops/sec Â±1.47% (190 runs sampled)
+  parse youtube.com         x   963,878 ops/sec Â±0.59% (190 runs sampled)
+
+> node benchmark/parse.js
+
+  cookie.parse - generic
+
+  6 tests completed.
+
+  simple      x 2,745,604 ops/sec Â±0.77% (185 runs sampled)
+  decode      x   557,287 ops/sec Â±0.60% (188 runs sampled)
+  unquote     x 2,498,475 ops/sec Â±0.55% (189 runs sampled)
+  duplicates  x   868,591 ops/sec Â±0.89% (187 runs sampled)
+  10 cookies  x   306,745 ops/sec Â±0.49% (190 runs sampled)
+  100 cookies x    22,414 ops/sec Â±2.38% (182 runs sampled)
+```
+
+## References
+
+- [RFC 6265: HTTP State Management Mechanism][rfc-6265]
+- [Same-site Cookies][rfc-6265bis-09-5.4.7]
+
+[rfc-west-cookie-priority-00-4.1]: https://tools.ietf.org/html/draft-west-cookie-priority-00#section-4.1
+[rfc-6265bis-09-5.4.7]: https://tools.ietf.org/html/draft-ietf-httpbis-rfc6265bis-09#section-5.4.7
+[rfc-6265]: https://tools.ietf.org/html/rfc6265
+[rfc-6265-5.1.4]: https://tools.ietf.org/html/rfc6265#section-5.1.4
+[rfc-6265-5.2.1]: https://tools.ietf.org/html/rfc6265#section-5.2.1
+[rfc-6265-5.2.2]: https://tools.ietf.org/html/rfc6265#section-5.2.2
+[rfc-6265-5.2.3]: https://tools.ietf.org/html/rfc6265#section-5.2.3
+[rfc-6265-5.2.4]: https://tools.ietf.org/html/rfc6265#section-5.2.4
+[rfc-6265-5.2.5]: https://tools.ietf.org/html/rfc6265#section-5.2.5
+[rfc-6265-5.2.6]: https://tools.ietf.org/html/rfc6265#section-5.2.6
+[rfc-6265-5.3]: https://tools.ietf.org/html/rfc6265#section-5.3
+
+## License
+
+[MIT](LICENSE)
+
+[coveralls-image]: https://badgen.net/coveralls/c/github/jshttp/cookie/master
+[coveralls-url]: https://coveralls.io/r/jshttp/cookie?branch=master
+[github-actions-ci-image]: https://img.shields.io/github/workflow/status/jshttp/cookie/ci/master?label=ci
+[github-actions-ci-url]: https://github.com/jshttp/cookie/actions/workflows/ci.yml
+[node-version-image]: https://badgen.net/npm/node/cookie
+[node-version-url]: https://nodejs.org/en/download
+[npm-downloads-image]: https://badgen.net/npm/dm/cookie
+[npm-url]: https://npmjs.org/package/cookie
+[npm-version-image]: https://badgen.net/npm/v/cookie
+¬/SECURITY.mdÅœ# Security Policies and Procedures
+
+## Reporting a Bug
+
+The `cookie` team and community take all security bugs seriously. Thank
+you for improving the security of the project. We appreciate your efforts and
+responsible disclosure and will make every effort to acknowledge your
+contributions.
+
+Report security bugs by emailing the current owner(s) of `cookie`. This
+information can be found in the npm registry using the command
+`npm owner ls cookie`.
+If unsure or unable to get the information from the above, open an issue
+in the [project issue tracker](https://github.com/jshttp/cookie/issues)
+asking for the current contact information.
+
+To ensure the timely response to your report, please ensure that the entirety
+of the report is contained within the email body and not solely behind a web
+link or an attachment.
+
+At least one owner will acknowledge your email within 48 hours, and will send a
+more detailed response within 48 hours indicating the next steps in handling
+your report. After the initial reply to your report, the owners will
+endeavor to keep you informed of the progress towards a fix and full
+announcement, and may ask for additional information or guidance.
+©/index.jsÅh/*!
+ * cookie
+ * Copyright(c) 2012-2014 Roman Shtylman
+ * Copyright(c) 2015 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+'use strict';
+
+/**
+ * Module exports.
+ * @public
+ */
+
+exports.parse = parse;
+exports.serialize = serialize;
+
+/**
+ * Module variables.
+ * @private
+ */
+
+var __toString = Object.prototype.toString
+
+/**
+ * RegExp to match field-content in RFC 7230 sec 3.2
+ *
+ * field-content = field-vchar [ 1*( SP / HTAB ) field-vchar ]
+ * field-vchar   = VCHAR / obs-text
+ * obs-text      = %x80-FF
+ */
+
+var fieldContentRegExp = /^[\u0009\u0020-\u007e\u0080-\u00ff]+$/;
+
+/**
+ * Parse a cookie header.
+ *
+ * Parse the given cookie header string into an object
+ * The object has the various cookies as keys(names) => values
+ *
+ * @param {string} str
+ * @param {object} [options]
+ * @return {object}
+ * @public
+ */
+
+function parse(str, options) {
+  if (typeof str !== 'string') {
+    throw new TypeError('argument str must be a string');
+  }
+
+  var obj = {}
+  var opt = options || {};
+  var dec = opt.decode || decode;
+
+  var index = 0
+  while (index < str.length) {
+    var eqIdx = str.indexOf('=', index)
+
+    // no more cookie pairs
+    if (eqIdx === -1) {
+      break
+    }
+
+    var endIdx = str.indexOf(';', index)
+
+    if (endIdx === -1) {
+      endIdx = str.length
+    } else if (endIdx < eqIdx) {
+      // backtrack on prior semicolon
+      index = str.lastIndexOf(';', eqIdx - 1) + 1
+      continue
+    }
+
+    var key = str.slice(index, eqIdx).trim()
+
+    // only assign once
+    if (undefined === obj[key]) {
+      var val = str.slice(eqIdx + 1, endIdx).trim()
+
+      // quoted values
+      if (val.charCodeAt(0) === 0x22) {
+        val = val.slice(1, -1)
+      }
+
+      obj[key] = tryDecode(val, dec);
+    }
+
+    index = endIdx + 1
+  }
+
+  return obj;
+}
+
+/**
+ * Serialize data into a cookie header.
+ *
+ * Serialize the a name value pair into a cookie string suitable for
+ * http headers. An optional options object specified cookie parameters.
+ *
+ * serialize('foo', 'bar', { httpOnly: true })
+ *   => "foo=bar; httpOnly"
+ *
+ * @param {string} name
+ * @param {string} val
+ * @param {object} [options]
+ * @return {string}
+ * @public
+ */
+
+function serialize(name, val, options) {
+  var opt = options || {};
+  var enc = opt.encode || encode;
+
+  if (typeof enc !== 'function') {
+    throw new TypeError('option encode is invalid');
+  }
+
+  if (!fieldContentRegExp.test(name)) {
+    throw new TypeError('argument name is invalid');
+  }
+
+  var value = enc(val);
+
+  if (value && !fieldContentRegExp.test(value)) {
+    throw new TypeError('argument val is invalid');
+  }
+
+  var str = name + '=' + value;
+
+  if (null != opt.maxAge) {
+    var maxAge = opt.maxAge - 0;
+
+    if (isNaN(maxAge) || !isFinite(maxAge)) {
+      throw new TypeError('option maxAge is invalid')
+    }
+
+    str += '; Max-Age=' + Math.floor(maxAge);
+  }
+
+  if (opt.domain) {
+    if (!fieldContentRegExp.test(opt.domain)) {
+      throw new TypeError('option domain is invalid');
+    }
+
+    str += '; Domain=' + opt.domain;
+  }
+
+  if (opt.path) {
+    if (!fieldContentRegExp.test(opt.path)) {
+      throw new TypeError('option path is invalid');
+    }
+
+    str += '; Path=' + opt.path;
+  }
+
+  if (opt.expires) {
+    var expires = opt.expires
+
+    if (!isDate(expires) || isNaN(expires.valueOf())) {
+      throw new TypeError('option expires is invalid');
+    }
+
+    str += '; Expires=' + expires.toUTCString()
+  }
+
+  if (opt.httpOnly) {
+    str += '; HttpOnly';
+  }
+
+  if (opt.secure) {
+    str += '; Secure';
+  }
+
+  if (opt.priority) {
+    var priority = typeof opt.priority === 'string'
+      ? opt.priority.toLowerCase()
+      : opt.priority
+
+    switch (priority) {
+      case 'low':
+        str += '; Priority=Low'
+        break
+      case 'medium':
+        str += '; Priority=Medium'
+        break
+      case 'high':
+        str += '; Priority=High'
+        break
+      default:
+        throw new TypeError('option priority is invalid')
+    }
+  }
+
+  if (opt.sameSite) {
+    var sameSite = typeof opt.sameSite === 'string'
+      ? opt.sameSite.toLowerCase() : opt.sameSite;
+
+    switch (sameSite) {
+      case true:
+        str += '; SameSite=Strict';
+        break;
+      case 'lax':
+        str += '; SameSite=Lax';
+        break;
+      case 'strict':
+        str += '; SameSite=Strict';
+        break;
+      case 'none':
+        str += '; SameSite=None';
+        break;
+      default:
+        throw new TypeError('option sameSite is invalid');
+    }
+  }
+
+  return str;
+}
+
+/**
+ * URL-decode string value. Optimized to skip native call when no %.
+ *
+ * @param {string} str
+ * @returns {string}
+ */
+
+function decode (str) {
+  return str.indexOf('%') !== -1
+    ? decodeURIComponent(str)
+    : str
+}
+
+/**
+ * URL-encode value.
+ *
+ * @param {string} str
+ * @returns {string}
+ */
+
+function encode (val) {
+  return encodeURIComponent(val)
+}
+
+/**
+ * Determine if value is a Date.
+ *
+ * @param {*} val
+ * @private
+ */
+
+function isDate (val) {
+  return __toString.call(val) === '[object Date]' ||
+    val instanceof Date
+}
+
+/**
+ * Try decoding a string using a decoding function.
+ *
+ * @param {string} str
+ * @param {function} decode
+ * @private
+ */
+
+function tryDecode(str, decode) {
+  try {
+    return decode(str);
+  } catch (e) {
+    return str;
+  }
+}

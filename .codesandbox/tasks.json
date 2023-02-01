@@ -1,0 +1,55 @@
+{
+  // These tasks will run in order when initializing your CodeSandbox project.
+  "setupTasks": [
+    {
+      "name": "Install PNPM",
+      "command": "npm i -g pnpm@~7.4.0 --force"
+    },
+    {
+      "name": "Install Dependencies",
+      "command": "pnpm install"
+    },
+    {
+      "name": "Build Dependencies",
+      "command": "pnpm build"
+    }
+  ],
+
+  // These tasks can be run from CodeSandbox. Running one will open a log in the app.
+  "tasks": {
+    "install": {
+      "name": "Install Dependencies",
+      "command": "pnpm install"
+    },
+    "build": {
+      "name": "Build",
+      "command": "pnpm build"
+    },
+    "build:prod": {
+      "name": "Build:prod",
+      "command": "IS_PROD_BUILD=1 pnpm build"
+    },
+    "start": {
+      "name": "Start",
+      "command": "pnpm start",
+      "runAtStart": true
+    },
+    "watch:consumer": {
+      "name": "Watch consumer",
+      "command": "pnpm watch:consumer",
+      "runAtStart": true
+    },
+    "test:unit": {
+      "name": "Unit tests",
+      "command": "pnpm run test:unit"
+    },
+    "Lint": {
+      "name": "Lint",
+      "command": "pnpm lint"
+    },
+    "Format:write": {
+      "name": "Format:write",
+      "command": "pnpm format:write"
+    }
+  }
+}

@@ -1,0 +1,194 @@
+Š²/dist/index.js.mapÄf{"version":3,"file":"index.js","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":""}­/package.jsonÅ÷{
+  "name": "@apollo/utils.fetcher",
+  "version": "2.0.0",
+  "description": "Minimal web-style fetch TypeScript typings",
+  "main": "",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apollographql/apollo-utils.git",
+    "directory": "packages/fetcher/"
+  },
+  "keywords": [
+    "apollo",
+    "graphql",
+    "typescript",
+    "node"
+  ],
+  "author": "Apollo <packages@apollographql.com>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14"
+  }
+}
+´/dist/index.d.ts.mapÅq{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":";AAAA,MAAM,WAAW,kBAAkB;IACjC,MAAM,CAAC,EAAE,MAAM,CAAC;IAIhB,OAAO,CAAC,EAAE,MAAM,CAAC,MAAM,EAAE,MAAM,CAAC,CAAC;IACjC,IAAI,CAAC,EAAE,MAAM,GAAG,MAAM,CAAC;IAkCvB,MAAM,CAAC,EAAE,GAAG,CAAC;CAId;AAED,MAAM,WAAW,eAAe;IAC9B,QAAQ,CAAC,QAAQ,EAAE,OAAO,CAAC;IAC3B,QAAQ,CAAC,GAAG,EAAE,MAAM,CAAC;IACrB,QAAQ,CAAC,UAAU,EAAE,OAAO,CAAC;IAC7B,QAAQ,CAAC,MAAM,EAAE,MAAM,CAAC;IACxB,QAAQ,CAAC,EAAE,EAAE,OAAO,CAAC;IACrB,QAAQ,CAAC,UAAU,EAAE,MAAM,CAAC;IAC5B,QAAQ,CAAC,OAAO,EAAE,cAAc,CAAC;IAEjC,WAAW,IAAI,OAAO,CAAC,WAAW,CAAC,CAAC;IACpC,IAAI,IAAI,OAAO,CAAC,MAAM,CAAC,CAAC;IACxB,IAAI,IAAI,OAAO,CAAC,GAAG,CAAC,CAAC;IAErB,KAAK,IAAI,eAAe,CAAC;CAC1B;AAED,MAAM,WAAW,cAAe,SAAQ,QAAQ,CAAC,CAAC,MAAM,EAAE,MAAM,CAAC,CAAC;IAChE,MAAM,CAAC,IAAI,EAAE,MAAM,EAAE,KAAK,EAAE,MAAM,GAAG,IAAI,CAAC;IAC1C,MAAM,CAAC,IAAI,EAAE,MAAM,GAAG,IAAI,CAAC;IAC3B,GAAG,CAAC,IAAI,EAAE,MAAM,GAAG,MAAM,GAAG,IAAI,CAAC;IACjC,GAAG,CAAC,IAAI,EAAE,MAAM,GAAG,OAAO,CAAC;IAC3B,GAAG,CAAC,IAAI,EAAE,MAAM,EAAE,KAAK,EAAE,MAAM,GAAG,IAAI,CAAC;IAEvC,OAAO,IAAI,QAAQ,CAAC,CAAC,MAAM,EAAE,MAAM,CAAC,CAAC,CAAC;IACtC,IAAI,IAAI,QAAQ,CAAC,MAAM,CAAC,CAAC;IACzB,MAAM,IAAI,QAAQ,CAAC,MAAM,CAAC,CAAC;IAC3B,CAAC,MAAM,CAAC,QAAQ,CAAC,IAAI,QAAQ,CAAC,CAAC,MAAM,EAAE,MAAM,CAAC,CAAC,CAAC;CACjD;AAED,oBAAY,OAAO,GAAG,CACpB,GAAG,EAAE,MAAM,EAGX,IAAI,CAAC,EAAE,kBAAkB,KACtB,OAAO,CAAC,eAAe,CAAC,CAAC"}ª/README.mdÅ¶# Fetcher interface
+
+This package defines TypeScript typings for a subset of the [web `fetch` API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API).
+
+The goal is for software that wants to be able to make HTTP requests in a configurable fashion to be able to declare an option of this type; users can pass in any valid `fetch` implementation such as `node-fetch`, `make-fetch-happen`, or `undici`.
+
+The actual `fetch` API is very flexible. You can specify requests either as JSON-style objects or as objects of the `Request` and `Headers` classes. However, some `fetch` implementations distinguish between these cases by using (for example) `instanceof Headers`, where `Headers` is the particular class defined by that implementation. So if you want to write portable code that should work with any `fetch` implementation, you need to use JSON-style objects rather than a particular implementation's classes. (For example, a `Headers` object created with `node-fetch` v2 will not be properly recognized by `make-fetch-happen` v10.)
+
+Specifically, the `Fetcher` interface only declares options that are currently required by the software that uses it, such as Apollo Server and Apollo Gateway. If more options are required (and they are implemented with the same types in all `fetch` implementations), we can add them as needed.
+
+This package is validated to be compatible with the typings of `node-fetch` v2, `make-fetch-happen` v10, and `undici` v5.
+®/dist/index.jsÄn"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+//# sourceMappingURL=index.js.map­/src/index.tsÅâexport interface FetcherRequestInit {
+  method?: string;
+  // We explicitly do not allow you to pass in a Headers (or FetcherHeaders)
+  // object here, because not all implementations recognize "foreign" Headers
+  // objects.
+  headers?: Record<string, string>;
+  body?: string | Buffer;
+
+  // A provided `signal` should be an object created by a class named
+  // `AbortSignal` (the constructor name is checked by some implementations like
+  // node-fetch and make-fetch-happen!) which follows the DOM AbortSignal API.
+  // Notably, it should have `aborted: boolean` and methods `addEventListener`
+  // and `removeEventListener`. We do not provide a precise interface for it
+  // because we have found that runtime implementations are more consistent than
+  // TypeScript definitions; for example, the methods such as addEventListener
+  // end up being defined in terms of complex DOM types which vary by
+  // implementation.
+  //
+  // Note that a relatively recent addition to the spec
+  // (https://github.com/whatwg/dom/pull/1027) is the concept of an abort
+  // reason. None of the polyfill Node AbortController/AbortSignal
+  // implementations seems to support this yet (though Node's built-in
+  // implementation does as of v18). It is possible that some Fetch
+  // implementations might rely on the existence of this new functionality, say
+  // by calling signal.throwIfAborted(). If so, you would need to use an
+  // AbortSignal that supports this (such as the Node v18 implementation). As of
+  // now, it does not appear that node-fetch, make-fetch-happen, or undici rely
+  // on throwIfAborted, although undici does look at signal.reason if it is
+  // provided.
+  //
+  // The main motivation for providing this as `any` (rather than, say, an
+  // interface where the functions take `any` arguments to avoid linking in DOM)
+  // is because if we leave out the newer `reason`/`throwIfAborted` fields, then
+  // implementations like undici that use the Node v18 definitions won't
+  // typecheck, but if we include those fields, then `AbortSignal`s from
+  // `AbortController` polyfill libraries such as `node-abort-controller` won't
+  // typecheck because they don't provide those fields. While in a sense that's
+  // correct, we don't want to provide an interface for which there are no
+  // existing implementations for Node v16 or older! (We may later choose to
+  // publish our own polyfill and make this type more exact.)
+  signal?: any;
+
+  // We explicitly do not support non-portable options like `node-fetch`'s
+  // `agent`.
+}
+
+export interface FetcherResponse {
+  readonly bodyUsed: boolean;
+  readonly url: string;
+  readonly redirected: boolean;
+  readonly status: number;
+  readonly ok: boolean;
+  readonly statusText: string;
+  readonly headers: FetcherHeaders;
+
+  arrayBuffer(): Promise<ArrayBuffer>;
+  text(): Promise<string>;
+  json(): Promise<any>;
+
+  clone(): FetcherResponse;
+}
+
+export interface FetcherHeaders extends Iterable<[string, string]> {
+  append(name: string, value: string): void;
+  delete(name: string): void;
+  get(name: string): string | null;
+  has(name: string): boolean;
+  set(name: string, value: string): void;
+
+  entries(): Iterator<[string, string]>;
+  keys(): Iterator<string>;
+  values(): Iterator<string>;
+  [Symbol.iterator](): Iterator<[string, string]>;
+}
+
+export type Fetcher = (
+  url: string,
+  // We explicitly do not allow you to pass in a Request object here, because
+  // not all implementations recognize "foreign" Request objects.
+  init?: FetcherRequestInit,
+) => Promise<FetcherResponse>;
+¼/src/__tests__/index.test.tsÅêimport type { Fetcher } from "..";
+import nodeFetch from "node-fetch";
+import makeFetchHappen from "make-fetch-happen";
+import { fetch as undiciFetch } from "undici";
+
+// This "test suite" actually does all its work at compile time.
+function isAFetcher(_fetcher: Fetcher) {}
+
+it("node-fetch is a Fetcher", () => {
+  isAFetcher(nodeFetch);
+});
+
+it("make-fetch-happen is a Fetcher", () => {
+  isAFetcher(makeFetchHappen);
+});
+
+it("undici is a Fetcher", () => {
+  isAFetcher(undiciFetch);
+});
+°/dist/index.d.tsÅZ/// <reference types="node" />
+export interface FetcherRequestInit {
+    method?: string;
+    headers?: Record<string, string>;
+    body?: string | Buffer;
+    signal?: any;
+}
+export interface FetcherResponse {
+    readonly bodyUsed: boolean;
+    readonly url: string;
+    readonly redirected: boolean;
+    readonly status: number;
+    readonly ok: boolean;
+    readonly statusText: string;
+    readonly headers: FetcherHeaders;
+    arrayBuffer(): Promise<ArrayBuffer>;
+    text(): Promise<string>;
+    json(): Promise<any>;
+    clone(): FetcherResponse;
+}
+export interface FetcherHeaders extends Iterable<[string, string]> {
+    append(name: string, value: string): void;
+    delete(name: string): void;
+    get(name: string): string | null;
+    has(name: string): boolean;
+    set(name: string, value: string): void;
+    entries(): Iterator<[string, string]>;
+    keys(): Iterator<string>;
+    values(): Iterator<string>;
+    [Symbol.iterator](): Iterator<[string, string]>;
+}
+export declare type Fetcher = (url: string, init?: FetcherRequestInit) => Promise<FetcherResponse>;
+//# sourceMappingURL=index.d.ts.map¨/LICENSEÅ]MIT License
+
+Copyright (c) 2022 Apollo Graph, Inc. (Formerly Meteor Development Group, Inc.)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+¼/src/__tests__/tsconfig.jsonÄq{
+  "extends": "../../../../tsconfig.test.base",
+  "include": ["**/*"],
+  "references": [{ "path": "../../" }]
+}

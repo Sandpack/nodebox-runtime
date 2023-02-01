@@ -1,0 +1,715 @@
+‰­/package.jsonÅÞ{
+  "name": "kleur",
+  "version": "4.1.5",
+  "repository": "lukeed/kleur",
+  "description": "The fastest Node.js library for formatting terminal text with ANSI colors~!",
+  "module": "index.mjs",
+  "types": "index.d.ts",
+  "main": "index.js",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.mjs",
+      "require": "./index.js"
+    },
+    "./colors": {
+      "types": "./colors.d.ts",
+      "import": "./colors.mjs",
+      "require": "./colors.js"
+    }
+  },
+  "files": [
+    "*.d.ts",
+    "colors.*",
+    "index.*"
+  ],
+  "author": {
+    "name": "Luke Edwards",
+    "email": "luke.edwards05@gmail.com",
+    "url": "https://lukeed.com"
+  },
+  "scripts": {
+    "build": "node build",
+    "test": "uvu -r esm -i utils -i xyz"
+  },
+  "engines": {
+    "node": ">=6"
+  },
+  "keywords": [
+    "ansi",
+    "cli",
+    "color",
+    "colors",
+    "console",
+    "terminal"
+  ],
+  "devDependencies": {
+    "esm": "3.2.25",
+    "uvu": "0.3.3"
+  }
+}
+«/colors.mjsÅmlet FORCE_COLOR, NODE_DISABLE_COLORS, NO_COLOR, TERM, isTTY=true;
+if (typeof process !== 'undefined') {
+	({ FORCE_COLOR, NODE_DISABLE_COLORS, NO_COLOR, TERM } = process.env || {});
+	isTTY = process.stdout && process.stdout.isTTY;
+}
+
+export const $ = {
+	enabled: !NODE_DISABLE_COLORS && NO_COLOR == null && TERM !== 'dumb' && (
+		FORCE_COLOR != null && FORCE_COLOR !== '0' || isTTY
+	)
+}
+
+function init(x, y) {
+	let rgx = new RegExp(`\\x1b\\[${y}m`, 'g');
+	let open = `\x1b[${x}m`, close = `\x1b[${y}m`;
+
+	return function (txt) {
+		if (!$.enabled || txt == null) return txt;
+		return open + (!!~(''+txt).indexOf(close) ? txt.replace(rgx, close + open) : txt) + close;
+	};
+}
+
+// modifiers
+export const reset = init(0, 0);
+export const bold = init(1, 22);
+export const dim = init(2, 22);
+export const italic = init(3, 23);
+export const underline = init(4, 24);
+export const inverse = init(7, 27);
+export const hidden = init(8, 28);
+export const strikethrough = init(9, 29);
+
+// colors
+export const black = init(30, 39);
+export const red = init(31, 39);
+export const green = init(32, 39);
+export const yellow = init(33, 39);
+export const blue = init(34, 39);
+export const magenta = init(35, 39);
+export const cyan = init(36, 39);
+export const white = init(37, 39);
+export const gray = init(90, 39);
+export const grey = init(90, 39);
+
+// background colors
+export const bgBlack = init(40, 49);
+export const bgRed = init(41, 49);
+export const bgGreen = init(42, 49);
+export const bgYellow = init(43, 49);
+export const bgBlue = init(44, 49);
+export const bgMagenta = init(45, 49);
+export const bgCyan = init(46, 49);
+export const bgWhite = init(47, 49);
+¨/licenseÅZThe MIT License (MIT)
+
+Copyright (c) Luke Edwards <luke.edwards05@gmail.com> (lukeed.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+«/index.d.tsÅ-// Originally by: Rogier Schouten <https://github.com/rogierschouten>
+// Adapted by: Madhav Varshney <https://github.com/madhavarshney>
+declare namespace kleur {
+	interface Color {
+		(x: string | number): string;
+		(): Kleur;
+	}
+
+	interface Kleur {
+		// Colors
+		black: Color;
+		red: Color;
+		green: Color;
+		yellow: Color;
+		blue: Color;
+		magenta: Color;
+		cyan: Color;
+		white: Color;
+		gray: Color;
+		grey: Color;
+
+		// Backgrounds
+		bgBlack: Color;
+		bgRed: Color;
+		bgGreen: Color;
+		bgYellow: Color;
+		bgBlue: Color;
+		bgMagenta: Color;
+		bgCyan: Color;
+		bgWhite: Color;
+
+		// Modifiers
+		reset: Color;
+		bold: Color;
+		dim: Color;
+		italic: Color;
+		underline: Color;
+		inverse: Color;
+		hidden: Color;
+		strikethrough: Color;
+	}
+}
+
+declare let kleur: kleur.Kleur & { enabled: boolean };
+export = kleur;
+©/index.jsÅ
+¹'use strict';
+
+let FORCE_COLOR, NODE_DISABLE_COLORS, NO_COLOR, TERM, isTTY=true;
+if (typeof process !== 'undefined') {
+	({ FORCE_COLOR, NODE_DISABLE_COLORS, NO_COLOR, TERM } = process.env || {});
+	isTTY = process.stdout && process.stdout.isTTY;
+}
+
+const $ = {
+	enabled: !NODE_DISABLE_COLORS && NO_COLOR == null && TERM !== 'dumb' && (
+		FORCE_COLOR != null && FORCE_COLOR !== '0' || isTTY
+	),
+
+	// modifiers
+	reset: init(0, 0),
+	bold: init(1, 22),
+	dim: init(2, 22),
+	italic: init(3, 23),
+	underline: init(4, 24),
+	inverse: init(7, 27),
+	hidden: init(8, 28),
+	strikethrough: init(9, 29),
+
+	// colors
+	black: init(30, 39),
+	red: init(31, 39),
+	green: init(32, 39),
+	yellow: init(33, 39),
+	blue: init(34, 39),
+	magenta: init(35, 39),
+	cyan: init(36, 39),
+	white: init(37, 39),
+	gray: init(90, 39),
+	grey: init(90, 39),
+
+	// background colors
+	bgBlack: init(40, 49),
+	bgRed: init(41, 49),
+	bgGreen: init(42, 49),
+	bgYellow: init(43, 49),
+	bgBlue: init(44, 49),
+	bgMagenta: init(45, 49),
+	bgCyan: init(46, 49),
+	bgWhite: init(47, 49)
+};
+
+function run(arr, str) {
+	let i=0, tmp, beg='', end='';
+	for (; i < arr.length; i++) {
+		tmp = arr[i];
+		beg += tmp.open;
+		end += tmp.close;
+		if (!!~str.indexOf(tmp.close)) {
+			str = str.replace(tmp.rgx, tmp.close + tmp.open);
+		}
+	}
+	return beg + str + end;
+}
+
+function chain(has, keys) {
+	let ctx = { has, keys };
+
+	ctx.reset = $.reset.bind(ctx);
+	ctx.bold = $.bold.bind(ctx);
+	ctx.dim = $.dim.bind(ctx);
+	ctx.italic = $.italic.bind(ctx);
+	ctx.underline = $.underline.bind(ctx);
+	ctx.inverse = $.inverse.bind(ctx);
+	ctx.hidden = $.hidden.bind(ctx);
+	ctx.strikethrough = $.strikethrough.bind(ctx);
+
+	ctx.black = $.black.bind(ctx);
+	ctx.red = $.red.bind(ctx);
+	ctx.green = $.green.bind(ctx);
+	ctx.yellow = $.yellow.bind(ctx);
+	ctx.blue = $.blue.bind(ctx);
+	ctx.magenta = $.magenta.bind(ctx);
+	ctx.cyan = $.cyan.bind(ctx);
+	ctx.white = $.white.bind(ctx);
+	ctx.gray = $.gray.bind(ctx);
+	ctx.grey = $.grey.bind(ctx);
+
+	ctx.bgBlack = $.bgBlack.bind(ctx);
+	ctx.bgRed = $.bgRed.bind(ctx);
+	ctx.bgGreen = $.bgGreen.bind(ctx);
+	ctx.bgYellow = $.bgYellow.bind(ctx);
+	ctx.bgBlue = $.bgBlue.bind(ctx);
+	ctx.bgMagenta = $.bgMagenta.bind(ctx);
+	ctx.bgCyan = $.bgCyan.bind(ctx);
+	ctx.bgWhite = $.bgWhite.bind(ctx);
+
+	return ctx;
+}
+
+function init(open, close) {
+	let blk = {
+		open: `\x1b[${open}m`,
+		close: `\x1b[${close}m`,
+		rgx: new RegExp(`\\x1b\\[${close}m`, 'g')
+	};
+	return function (txt) {
+		if (this !== void 0 && this.has !== void 0) {
+			!!~this.has.indexOf(open) || (this.has.push(open),this.keys.push(blk));
+			return txt === void 0 ? this : $.enabled ? run(this.keys, txt+'') : txt+'';
+		}
+		return txt === void 0 ? chain([open], [blk]) : $.enabled ? run([blk], txt+'') : txt+'';
+	};
+}
+
+module.exports = $;
+ª/readme.mdÅÔ<div align="center">
+  <img src="shots/logo.png" alt="kleur" height="120" />
+</div>
+
+<div align="center">
+  <a href="https://npmjs.org/package/kleur">
+    <img src="https://badgen.now.sh/npm/v/kleur" alt="version" />
+  </a>
+  <a href="https://github.com/lukeed/kleur/actions?query=workflow%3ACI">
+    <img src="https://github.com/lukeed/kleur/workflows/CI/badge.svg?event=push" alt="CI" />
+  </a>
+  <a href="https://npmjs.org/package/kleur">
+    <img src="https://badgen.now.sh/npm/dm/kleur" alt="downloads" />
+  </a>
+  <a href="https://packagephobia.now.sh/result?p=kleur">
+    <img src="https://packagephobia.now.sh/badge?p=kleur" alt="install size" />
+  </a>
+</div>
+
+<div align="center">The fastest Node.js library for formatting terminal text with ANSI colors~!</div>
+
+## Features
+
+* No dependencies
+* Super [lightweight](#load-time) & [performant](#performance)
+* Supports [nested](#nested-methods) & [chained](#chained-methods) colors
+* No `String.prototype` modifications
+* Conditional [color support](#conditional-support)
+* [Fully treeshakable](#individual-colors)
+* Familiar [API](#api)
+
+---
+
+As of `v3.0` the Chalk-style syntax (magical getter) is no longer used.<br>Please visit [History](#history) for migration paths supporting that syntax.
+
+---
+
+
+## Install
+
+```
+$ npm install --save kleur
+```
+
+
+## Usage
+
+```js
+import kleur from 'kleur';
+
+// basic usage
+kleur.red('red text');
+
+// chained methods
+kleur.blue().bold().underline('howdy partner');
+
+// nested methods
+kleur.bold(`${ white().bgRed('[ERROR]') } ${ kleur.red().italic('Something happened')}`);
+```
+
+### Chained Methods
+
+```js
+const { bold, green } = require('kleur');
+
+console.log(bold().red('this is a bold red message'));
+console.log(bold().italic('this is a bold italicized message'));
+console.log(bold().yellow().bgRed().italic('this is a bold yellow italicized message'));
+console.log(green().bold().underline('this is a bold green underlined message'));
+```
+
+<img src="shots/1.png" width="300" />
+
+### Nested Methods
+
+```js
+const { yellow, red, cyan } = require('kleur');
+
+console.log(yellow(`foo ${red().bold('red')} bar ${cyan('cyan')} baz`));
+console.log(yellow('foo ' + red().bold('red') + ' bar ' + cyan('cyan') + ' baz'));
+```
+
+<img src="shots/2.png" width="300" />
+
+
+### Conditional Support
+
+Toggle color support as needed; `kleur` includes simple auto-detection which may not cover all cases.
+
+> **Note:** Both `kleur` and `kleur/colors` share the same detection logic.
+
+```js
+import kleur from 'kleur';
+
+// manually disable
+kleur.enabled = false;
+
+// or use another library to detect support
+kleur.enabled = require('color-support').level > 0;
+
+console.log(kleur.red('I will only be colored red if the terminal supports colors'));
+```
+
+> **Important:** <br>Colors will be disabled automatically in non [TTY contexts](https://nodejs.org/api/process.html#process_a_note_on_process_i_o). For example, spawning another process or piping output into another process will disable colorization automatically. To force colors in your piped output, you may do so with the `FORCE_COLOR=1` environment variable:
+
+```sh
+$ node app.js #=> COLORS
+$ node app.js > log.txt  #=> NO COLORS
+$ FORCE_COLOR=1 node app.js > log.txt #=> COLORS
+$ FORCE_COLOR=0 node app.js > log.txt #=> NO COLORS
+```
+
+## API
+
+Any `kleur` method returns a `String` when invoked with input; otherwise chaining is expected.
+
+> It's up to the developer to pass the output to destinations like `console.log`, `process.stdout.write`, etc.
+
+The methods below are grouped by type for legibility purposes only. They each can be [chained](#chained-methods) or [nested](#nested-methods) with one another.
+
+***Colors:***
+> black &mdash; red &mdash; green &mdash; yellow &mdash; blue &mdash; magenta &mdash; cyan &mdash; white &mdash; gray &mdash; grey
+
+***Backgrounds:***
+> bgBlack &mdash; bgRed &mdash; bgGreen &mdash; bgYellow &mdash; bgBlue &mdash; bgMagenta &mdash; bgCyan &mdash; bgWhite
+
+***Modifiers:***
+> reset &mdash; bold &mdash; dim &mdash; italic* &mdash; underline &mdash; inverse &mdash; hidden &mdash; strikethrough*
+
+<sup>* <em>Not widely supported</em></sup>
+
+
+## Individual Colors
+
+When you only need a few colors, it doesn't make sense to import _all_ of `kleur` because, as small as it is, `kleur` is not treeshakeable, and so most of its code will be doing nothing. In order to fix this, you can import from the `kleur/colors` submodule which _fully_ supports tree-shaking.
+
+The caveat with this approach is that color functions **are not** chainable~!<br>Each function receives and colorizes its input. You may combine colors, backgrounds, and modifiers by nesting function calls within other functions.
+
+```js
+// or: import * as kleur from 'kleur/colors';
+import { red, underline, bgWhite } from 'kleur/colors';
+
+red('red text');
+//~> kleur.red('red text');
+
+underline(red('red underlined text'));
+//~> kleur.underline().red('red underlined text');
+
+bgWhite(underline(red('red underlined text w/ white background')));
+//~> kleur.bgWhite().underline().red('red underlined text w/ white background');
+```
+
+> **Note:** All the same [colors, backgrounds, and modifiers](#api) are available.
+
+***Conditional Support***
+
+The `kleur/colors` submodule also allows you to toggle color support, as needed.<br>
+It includes the same initial assumptions as `kleur`, in an attempt to have colors enabled by default.
+
+Unlike `kleur`, this setting exists as `kleur.$.enabled` instead of `kleur.enabled`:
+
+```js
+import * as kleur from 'kleur/colors';
+// or: import { $, red } from 'kleur/colors';
+
+// manually disabled
+kleur.$.enabled = false;
+
+// or use another library to detect support
+kleur.$.enabled = require('color-support').level > 0;
+
+console.log(red('I will only be colored red if the terminal supports colors'));
+```
+
+
+## Benchmarks
+
+> Using Node v10.13.0
+
+### Load time
+
+```
+chalk        :: 5.303ms
+kleur        :: 0.488ms
+kleur/colors :: 0.369ms
+ansi-colors  :: 1.504ms
+```
+
+### Performance
+
+```
+# All Colors
+  ansi-colors      x 177,625 ops/sec Â±1.47% (92 runs sampled)
+  chalk            x 611,907 ops/sec Â±0.20% (92 runs sampled)
+  kleur            x 742,509 ops/sec Â±1.47% (93 runs sampled)
+  kleur/colors     x 881,742 ops/sec Â±0.19% (98 runs sampled)
+
+# Stacked colors
+  ansi-colors      x  23,331 ops/sec Â±1.81% (94 runs sampled)
+  chalk            x 337,178 ops/sec Â±0.20% (98 runs sampled)
+  kleur            x  78,299 ops/sec Â±1.01% (97 runs sampled)
+  kleur/colors     x 104,431 ops/sec Â±0.22% (97 runs sampled)
+
+# Nested colors
+  ansi-colors      x  67,181 ops/sec Â±1.15% (92 runs sampled)
+  chalk            x 116,361 ops/sec Â±0.63% (94 runs sampled)
+  kleur            x 139,514 ops/sec Â±0.76% (95 runs sampled)
+  kleur/colors     x 145,716 ops/sec Â±0.97% (97 runs sampled)
+```
+
+
+## History
+
+This project originally forked [`ansi-colors`](https://github.com/doowb/ansi-colors).
+
+Beginning with `kleur@3.0`, the Chalk-style syntax (magical getter) has been replaced with function calls per key:
+
+```js
+// Old:
+c.red.bold.underline('old');
+
+// New:
+c.red().bold().underline('new');
+```
+> <sup><em>As I work more with Rust, the newer syntax feels so much better & more natural!</em></sup>
+
+If you prefer the old syntax, you may migrate to `ansi-colors` or newer `chalk` releases.<br>Versions below `kleur@3.0` have been officially deprecated.
+
+
+## License
+
+MIT Â© [Luke Edwards](https://lukeed.com)
+ª/index.mjsÅ
+·'use strict';
+
+let FORCE_COLOR, NODE_DISABLE_COLORS, NO_COLOR, TERM, isTTY=true;
+if (typeof process !== 'undefined') {
+	({ FORCE_COLOR, NODE_DISABLE_COLORS, NO_COLOR, TERM } = process.env || {});
+	isTTY = process.stdout && process.stdout.isTTY;
+}
+
+const $ = {
+	enabled: !NODE_DISABLE_COLORS && NO_COLOR == null && TERM !== 'dumb' && (
+		FORCE_COLOR != null && FORCE_COLOR !== '0' || isTTY
+	),
+
+	// modifiers
+	reset: init(0, 0),
+	bold: init(1, 22),
+	dim: init(2, 22),
+	italic: init(3, 23),
+	underline: init(4, 24),
+	inverse: init(7, 27),
+	hidden: init(8, 28),
+	strikethrough: init(9, 29),
+
+	// colors
+	black: init(30, 39),
+	red: init(31, 39),
+	green: init(32, 39),
+	yellow: init(33, 39),
+	blue: init(34, 39),
+	magenta: init(35, 39),
+	cyan: init(36, 39),
+	white: init(37, 39),
+	gray: init(90, 39),
+	grey: init(90, 39),
+
+	// background colors
+	bgBlack: init(40, 49),
+	bgRed: init(41, 49),
+	bgGreen: init(42, 49),
+	bgYellow: init(43, 49),
+	bgBlue: init(44, 49),
+	bgMagenta: init(45, 49),
+	bgCyan: init(46, 49),
+	bgWhite: init(47, 49)
+};
+
+function run(arr, str) {
+	let i=0, tmp, beg='', end='';
+	for (; i < arr.length; i++) {
+		tmp = arr[i];
+		beg += tmp.open;
+		end += tmp.close;
+		if (!!~str.indexOf(tmp.close)) {
+			str = str.replace(tmp.rgx, tmp.close + tmp.open);
+		}
+	}
+	return beg + str + end;
+}
+
+function chain(has, keys) {
+	let ctx = { has, keys };
+
+	ctx.reset = $.reset.bind(ctx);
+	ctx.bold = $.bold.bind(ctx);
+	ctx.dim = $.dim.bind(ctx);
+	ctx.italic = $.italic.bind(ctx);
+	ctx.underline = $.underline.bind(ctx);
+	ctx.inverse = $.inverse.bind(ctx);
+	ctx.hidden = $.hidden.bind(ctx);
+	ctx.strikethrough = $.strikethrough.bind(ctx);
+
+	ctx.black = $.black.bind(ctx);
+	ctx.red = $.red.bind(ctx);
+	ctx.green = $.green.bind(ctx);
+	ctx.yellow = $.yellow.bind(ctx);
+	ctx.blue = $.blue.bind(ctx);
+	ctx.magenta = $.magenta.bind(ctx);
+	ctx.cyan = $.cyan.bind(ctx);
+	ctx.white = $.white.bind(ctx);
+	ctx.gray = $.gray.bind(ctx);
+	ctx.grey = $.grey.bind(ctx);
+
+	ctx.bgBlack = $.bgBlack.bind(ctx);
+	ctx.bgRed = $.bgRed.bind(ctx);
+	ctx.bgGreen = $.bgGreen.bind(ctx);
+	ctx.bgYellow = $.bgYellow.bind(ctx);
+	ctx.bgBlue = $.bgBlue.bind(ctx);
+	ctx.bgMagenta = $.bgMagenta.bind(ctx);
+	ctx.bgCyan = $.bgCyan.bind(ctx);
+	ctx.bgWhite = $.bgWhite.bind(ctx);
+
+	return ctx;
+}
+
+function init(open, close) {
+	let blk = {
+		open: `\x1b[${open}m`,
+		close: `\x1b[${close}m`,
+		rgx: new RegExp(`\\x1b\\[${close}m`, 'g')
+	};
+	return function (txt) {
+		if (this !== void 0 && this.has !== void 0) {
+			!!~this.has.indexOf(open) || (this.has.push(open),this.keys.push(blk));
+			return txt === void 0 ? this : $.enabled ? run(this.keys, txt+'') : txt+'';
+		}
+		return txt === void 0 ? chain([open], [blk]) : $.enabled ? run([blk], txt+'') : txt+'';
+	};
+}
+
+export default $;
+¬/colors.d.tsÅdeclare function print(input: string | boolean | number): string;
+declare function print(input: undefined | void): undefined;
+declare function print(input: null): null;
+type Colorize = typeof print;
+
+export declare const $: { enabled: boolean };
+
+// Colors
+export declare const black: Colorize;
+export declare const red: Colorize;
+export declare const green: Colorize;
+export declare const yellow: Colorize;
+export declare const blue: Colorize;
+export declare const magenta: Colorize;
+export declare const cyan: Colorize;
+export declare const white: Colorize;
+export declare const gray: Colorize;
+export declare const grey: Colorize;
+
+// Backgrounds
+export declare const bgBlack: Colorize;
+export declare const bgRed: Colorize;
+export declare const bgGreen: Colorize;
+export declare const bgYellow: Colorize;
+export declare const bgBlue: Colorize;
+export declare const bgMagenta: Colorize;
+export declare const bgCyan: Colorize;
+export declare const bgWhite: Colorize;
+
+// Modifiers
+export declare const reset: Colorize;
+export declare const bold: Colorize;
+export declare const dim: Colorize;
+export declare const italic: Colorize;
+export declare const underline: Colorize;
+export declare const inverse: Colorize;
+export declare const hidden: Colorize;
+export declare const strikethrough: Colorize;
+ª/colors.jsÅðlet FORCE_COLOR, NODE_DISABLE_COLORS, NO_COLOR, TERM, isTTY=true;
+if (typeof process !== 'undefined') {
+	({ FORCE_COLOR, NODE_DISABLE_COLORS, NO_COLOR, TERM } = process.env || {});
+	isTTY = process.stdout && process.stdout.isTTY;
+}
+
+const $ = exports.$ = {
+	enabled: !NODE_DISABLE_COLORS && NO_COLOR == null && TERM !== 'dumb' && (
+		FORCE_COLOR != null && FORCE_COLOR !== '0' || isTTY
+	)
+}
+
+function init(x, y) {
+	let rgx = new RegExp(`\\x1b\\[${y}m`, 'g');
+	let open = `\x1b[${x}m`, close = `\x1b[${y}m`;
+
+	return function (txt) {
+		if (!$.enabled || txt == null) return txt;
+		return open + (!!~(''+txt).indexOf(close) ? txt.replace(rgx, close + open) : txt) + close;
+	};
+}
+
+// modifiers
+exports.reset = init(0, 0);
+exports.bold = init(1, 22);
+exports.dim = init(2, 22);
+exports.italic = init(3, 23);
+exports.underline = init(4, 24);
+exports.inverse = init(7, 27);
+exports.hidden = init(8, 28);
+exports.strikethrough = init(9, 29);
+
+// colors
+exports.black = init(30, 39);
+exports.red = init(31, 39);
+exports.green = init(32, 39);
+exports.yellow = init(33, 39);
+exports.blue = init(34, 39);
+exports.magenta = init(35, 39);
+exports.cyan = init(36, 39);
+exports.white = init(37, 39);
+exports.gray = init(90, 39);
+exports.grey = init(90, 39);
+
+// background colors
+exports.bgBlack = init(40, 49);
+exports.bgRed = init(41, 49);
+exports.bgGreen = init(42, 49);
+exports.bgYellow = init(43, 49);
+exports.bgBlue = init(44, 49);
+exports.bgMagenta = init(45, 49);
+exports.bgCyan = init(46, 49);
+exports.bgWhite = init(47, 49);

@@ -1,0 +1,465 @@
+Ö©/index.js≈®// Copyright 2014, 2015, 2016, 2017, 2018 Simon Lydell
+// License: MIT. (See LICENSE.)
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+})
+
+// This regex comes from regex.coffee, and is inserted here by generate-index.js
+// (run `npm run build`).
+exports.default = /((['"])(?:(?!\2|\\).|\\(?:\r\n|[\s\S]))*(\2)?|`(?:[^`\\$]|\\[\s\S]|\$(?!\{)|\$\{(?:[^{}]|\{[^}]*\}?)*\}?)*(`)?)|(\/\/.*)|(\/\*(?:[^*]|\*(?!\/))*(\*\/)?)|(\/(?!\*)(?:\[(?:(?![\]\\]).|\\.)*\]|(?![\/\]\\]).|\\.)+\/(?:(?!\s*(?:\b|[\u0080-\uFFFF$\\'"~({]|[+\-!](?!=)|\.?\d))|[gmiyus]{1,6}\b(?![\u0080-\uFFFF$\\]|\s*(?:[+\-*%&|^<>!=?({]|\/(?![\/*])))))|(0[xX][\da-fA-F]+|0[oO][0-7]+|0[bB][01]+|(?:\d*\.\d+|\d+\.?)(?:[eE][+-]?\d+)?)|((?!\d)(?:(?!\s)[$\w\u0080-\uFFFF]|\\u[\da-fA-F]{4}|\\u\{[\da-fA-F]+\})+)|(--|\+\+|&&|\|\||=>|\.{3}|(?:[+\-\/%&|^]|\*{1,2}|<{1,2}|>{1,3}|!=?|={1,2})=?|[?~.,:;[\](){}])|(\s+)|(^$|[\s\S])/g
+
+exports.matchToToken = function(match) {
+  var token = {type: "invalid", value: match[0], closed: undefined}
+       if (match[ 1]) token.type = "string" , token.closed = !!(match[3] || match[4])
+  else if (match[ 5]) token.type = "comment"
+  else if (match[ 6]) token.type = "comment", token.closed = !!match[7]
+  else if (match[ 8]) token.type = "regex"
+  else if (match[ 9]) token.type = "number"
+  else if (match[10]) token.type = "name"
+  else if (match[11]) token.type = "punctuator"
+  else if (match[12]) token.type = "whitespace"
+  return token
+}
+≠/package.json≈â{
+  "name": "js-tokens",
+  "version": "4.0.0",
+  "author": "Simon Lydell",
+  "license": "MIT",
+  "description": "A regex that tokenizes JavaScript.",
+  "keywords": [
+    "JavaScript",
+    "js",
+    "token",
+    "tokenize",
+    "regex"
+  ],
+  "files": [
+    "index.js"
+  ],
+  "repository": "lydell/js-tokens",
+  "scripts": {
+    "test": "mocha --ui tdd",
+    "esprima-compare": "node esprima-compare ./index.js everything.js/es5.js",
+    "build": "node generate-index.js",
+    "dev": "npm run build && npm test"
+  },
+  "devDependencies": {
+    "coffeescript": "2.1.1",
+    "esprima": "4.0.0",
+    "everything.js": "1.0.3",
+    "mocha": "5.0.0"
+  }
+}
+≠/CHANGELOG.md≈Å### Version 4.0.0 (2018-01-28) ###
+
+- Added: Support for ES2018. The only change needed was recognizing the `s`
+  regex flag.
+- Changed: _All_ tokens returned by the `matchToToken` function now have a
+  `closed` property. It is set to `undefined` for the tokens where ‚Äúclosed‚Äù
+  doesn‚Äôt make sense. This means that all tokens objects have the same shape,
+  which might improve performance.
+
+These are the breaking changes:
+
+- `'/a/s'.match(jsTokens)` no longer returns `['/', 'a', '/', 's']`, but
+  `['/a/s']`. (There are of course other variations of this.)
+- Code that rely on some token objects not having the `closed` property could
+  now behave differently.
+
+
+### Version 3.0.2 (2017-06-28) ###
+
+- No code changes. Just updates to the readme.
+
+
+### Version 3.0.1 (2017-01-30) ###
+
+- Fixed: ES2015 unicode escapes with more than 6 hex digits are now matched
+  correctly.
+
+
+### Version 3.0.0 (2017-01-11) ###
+
+This release contains one breaking change, that should [improve performance in
+V8][v8-perf]:
+
+> So how can you, as a JavaScript developer, ensure that your RegExps are fast?
+> If you are not interested in hooking into RegExp internals, make sure that
+> neither the RegExp instance, nor its prototype is modified in order to get the
+> best performance:
+>
+> ```js
+> var re = /./g;
+> re.exec('');  // Fast path.
+> re.new_property = 'slow';
+> ```
+
+This module used to export a single regex, with `.matchToToken` bolted
+on, just like in the above example. This release changes the exports of
+the module to avoid this issue.
+
+Before:
+
+```js
+import jsTokens from "js-tokens"
+// or:
+var jsTokens = require("js-tokens")
+var matchToToken = jsTokens.matchToToken
+```
+
+After:
+
+```js
+import jsTokens, {matchToToken} from "js-tokens"
+// or:
+var jsTokens = require("js-tokens").default
+var matchToToken = require("js-tokens").matchToToken
+```
+
+[v8-perf]: http://v8project.blogspot.se/2017/01/speeding-up-v8-regular-expressions.html
+
+
+### Version 2.0.0 (2016-06-19) ###
+
+- Added: Support for ES2016. In other words, support for the `**` exponentiation
+  operator.
+
+These are the breaking changes:
+
+- `'**'.match(jsTokens)` no longer returns `['*', '*']`, but `['**']`.
+- `'**='.match(jsTokens)` no longer returns `['*', '*=']`, but `['**=']`.
+
+
+### Version 1.0.3 (2016-03-27) ###
+
+- Improved: Made the regex ever so slightly smaller.
+- Updated: The readme.
+
+
+### Version 1.0.2 (2015-10-18) ###
+
+- Improved: Limited npm package contents for a smaller download. Thanks to
+  @zertosh!
+
+
+### Version 1.0.1 (2015-06-20) ###
+
+- Fixed: Declared an undeclared variable.
+
+
+### Version 1.0.0 (2015-02-26) ###
+
+- Changed: Merged the 'operator' and 'punctuation' types into 'punctuator'. That
+  type is now equivalent to the Punctuator token in the ECMAScript
+  specification. (Backwards-incompatible change.)
+- Fixed: A `-` followed by a number is now correctly matched as a punctuator
+  followed by a number. It used to be matched as just a number, but there is no
+  such thing as negative number literals. (Possibly backwards-incompatible
+  change.)
+
+
+### Version 0.4.1 (2015-02-21) ###
+
+- Added: Support for the regex `u` flag.
+
+
+### Version 0.4.0 (2015-02-21) ###
+
+- Improved: `jsTokens.matchToToken` performance.
+- Added: Support for octal and binary number literals.
+- Added: Support for template strings.
+
+
+### Version 0.3.1 (2015-01-06) ###
+
+- Fixed: Support for unicode spaces. They used to be allowed in names (which is
+  very confusing), and some unicode newlines were wrongly allowed in strings and
+  regexes.
+
+
+### Version 0.3.0 (2014-12-19) ###
+
+- Changed: The `jsTokens.names` array has been replaced with the
+  `jsTokens.matchToToken` function. The capturing groups of `jsTokens` are no
+  longer part of the public API; instead use said function. See this [gist] for
+  an example. (Backwards-incompatible change.)
+- Changed: The empty string is now considered an ‚Äúinvalid‚Äù token, instead an
+  ‚Äúempty‚Äù token (its own group). (Backwards-incompatible change.)
+- Removed: component support. (Backwards-incompatible change.)
+
+[gist]: https://gist.github.com/lydell/be49dbf80c382c473004
+
+
+### Version 0.2.0 (2014-06-19) ###
+
+- Changed: Match ES6 function arrows (`=>`) as an operator, instead of its own
+  category (‚ÄúfunctionArrow‚Äù), for simplicity. (Backwards-incompatible change.)
+- Added: ES6 splats (`...`) are now matched as an operator (instead of three
+  punctuations). (Backwards-incompatible change.)
+
+
+### Version 0.1.0 (2014-03-08) ###
+
+- Initial release.
+®/LICENSE≈OThe MIT License (MIT)
+
+Copyright (c) 2014, 2015, 2016, 2017, 2018 Simon Lydell
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+™/README.md≈‹Overview [![Build Status](https://travis-ci.org/lydell/js-tokens.svg?branch=master)](https://travis-ci.org/lydell/js-tokens)
+========
+
+A regex that tokenizes JavaScript.
+
+```js
+var jsTokens = require("js-tokens").default
+
+var jsString = "var foo=opts.foo;\n..."
+
+jsString.match(jsTokens)
+// ["var", " ", "foo", "=", "opts", ".", "foo", ";", "\n", ...]
+```
+
+
+Installation
+============
+
+`npm install js-tokens`
+
+```js
+import jsTokens from "js-tokens"
+// or:
+var jsTokens = require("js-tokens").default
+```
+
+
+Usage
+=====
+
+### `jsTokens` ###
+
+A regex with the `g` flag that matches JavaScript tokens.
+
+The regex _always_ matches, even invalid JavaScript and the empty string.
+
+The next match is always directly after the previous.
+
+### `var token = matchToToken(match)` ###
+
+```js
+import {matchToToken} from "js-tokens"
+// or:
+var matchToToken = require("js-tokens").matchToToken
+```
+
+Takes a `match` returned by `jsTokens.exec(string)`, and returns a `{type:
+String, value: String}` object. The following types are available:
+
+- string
+- comment
+- regex
+- number
+- name
+- punctuator
+- whitespace
+- invalid
+
+Multi-line comments and strings also have a `closed` property indicating if the
+token was closed or not (see below).
+
+Comments and strings both come in several flavors. To distinguish them, check if
+the token starts with `//`, `/*`, `'`, `"` or `` ` ``.
+
+Names are ECMAScript IdentifierNames, that is, including both identifiers and
+keywords. You may use [is-keyword-js] to tell them apart.
+
+Whitespace includes both line terminators and other whitespace.
+
+[is-keyword-js]: https://github.com/crissdev/is-keyword-js
+
+
+ECMAScript support
+==================
+
+The intention is to always support the latest ECMAScript version whose feature
+set has been finalized.
+
+If adding support for a newer version requires changes, a new version with a
+major verion bump will be released.
+
+Currently, ECMAScript 2018 is supported.
+
+
+Invalid code handling
+=====================
+
+Unterminated strings are still matched as strings. JavaScript strings cannot
+contain (unescaped) newlines, so unterminated strings simply end at the end of
+the line. Unterminated template strings can contain unescaped newlines, though,
+so they go on to the end of input.
+
+Unterminated multi-line comments are also still matched as comments. They
+simply go on to the end of the input.
+
+Unterminated regex literals are likely matched as division and whatever is
+inside the regex.
+
+Invalid ASCII characters have their own capturing group.
+
+Invalid non-ASCII characters are treated as names, to simplify the matching of
+names (except unicode spaces which are treated as whitespace). Note: See also
+the [ES2018](#es2018) section.
+
+Regex literals may contain invalid regex syntax. They are still matched as
+regex literals. They may also contain repeated regex flags, to keep the regex
+simple.
+
+Strings may contain invalid escape sequences.
+
+
+Limitations
+===========
+
+Tokenizing JavaScript using regexes‚Äîin fact, _one single regex_‚Äîwon‚Äôt be
+perfect. But that‚Äôs not the point either.
+
+You may compare jsTokens with [esprima] by using `esprima-compare.js`.
+See `npm run esprima-compare`!
+
+[esprima]: http://esprima.org/
+
+### Template string interpolation ###
+
+Template strings are matched as single tokens, from the starting `` ` `` to the
+ending `` ` ``, including interpolations (whose tokens are not matched
+individually).
+
+Matching template string interpolations requires recursive balancing of `{` and
+`}`‚Äîsomething that JavaScript regexes cannot do. Only one level of nesting is
+supported.
+
+### Division and regex literals collision ###
+
+Consider this example:
+
+```js
+var g = 9.82
+var number = bar / 2/g
+
+var regex = / 2/g
+```
+
+A human can easily understand that in the `number` line we‚Äôre dealing with
+division, and in the `regex` line we‚Äôre dealing with a regex literal. How come?
+Because humans can look at the whole code to put the `/` characters in context.
+A JavaScript regex cannot. It only sees forwards. (Well, ES2018 regexes can also
+look backwards. See the [ES2018](#es2018) section).
+
+When the `jsTokens` regex scans throught the above, it will see the following
+at the end of both the `number` and `regex` rows:
+
+```js
+/ 2/g
+```
+
+It is then impossible to know if that is a regex literal, or part of an
+expression dealing with division.
+
+Here is a similar case:
+
+```js
+foo /= 2/g
+foo(/= 2/g)
+```
+
+The first line divides the `foo` variable with `2/g`. The second line calls the
+`foo` function with the regex literal `/= 2/g`. Again, since `jsTokens` only
+sees forwards, it cannot tell the two cases apart.
+
+There are some cases where we _can_ tell division and regex literals apart,
+though.
+
+First off, we have the simple cases where there‚Äôs only one slash in the line:
+
+```js
+var foo = 2/g
+foo /= 2
+```
+
+Regex literals cannot contain newlines, so the above cases are correctly
+identified as division. Things are only problematic when there are more than
+one non-comment slash in a single line.
+
+Secondly, not every character is a valid regex flag.
+
+```js
+var number = bar / 2/e
+```
+
+The above example is also correctly identified as division, because `e` is not a
+valid regex flag. I initially wanted to future-proof by allowing `[a-zA-Z]*`
+(any letter) as flags, but it is not worth it since it increases the amount of
+ambigous cases. So only the standard `g`, `m`, `i`, `y` and `u` flags are
+allowed. This means that the above example will be identified as division as
+long as you don‚Äôt rename the `e` variable to some permutation of `gmiyus` 1 to 6
+characters long.
+
+Lastly, we can look _forward_ for information.
+
+- If the token following what looks like a regex literal is not valid after a
+  regex literal, but is valid in a division expression, then the regex literal
+  is treated as division instead. For example, a flagless regex cannot be
+  followed by a string, number or name, but all of those three can be the
+  denominator of a division.
+- Generally, if what looks like a regex literal is followed by an operator, the
+  regex literal is treated as division instead. This is because regexes are
+  seldomly used with operators (such as `+`, `*`, `&&` and `==`), but division
+  could likely be part of such an expression.
+
+Please consult the regex source and the test cases for precise information on
+when regex or division is matched (should you need to know). In short, you
+could sum it up as:
+
+If the end of a statement looks like a regex literal (even if it isn‚Äôt), it
+will be treated as one. Otherwise it should work as expected (if you write sane
+code).
+
+### ES2018 ###
+
+ES2018 added some nice regex improvements to the language.
+
+- [Unicode property escapes] should allow telling names and invalid non-ASCII
+  characters apart without blowing up the regex size.
+- [Lookbehind assertions] should allow matching telling division and regex
+  literals apart in more cases.
+- [Named capture groups] might simplify some things.
+
+These things would be nice to do, but are not critical. They probably have to
+wait until the oldest maintained Node.js LTS release supports those features.
+
+[Unicode property escapes]: http://2ality.com/2017/07/regexp-unicode-property-escapes.html
+[Lookbehind assertions]: http://2ality.com/2017/05/regexp-lookbehind-assertions.html
+[Named capture groups]: http://2ality.com/2017/05/regexp-named-capture-groups.html
+
+
+License
+=======
+
+[MIT](LICENSE).

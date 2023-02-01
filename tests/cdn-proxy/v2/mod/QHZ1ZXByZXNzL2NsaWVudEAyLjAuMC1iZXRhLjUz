@@ -1,0 +1,1095 @@
+ä∑/dist/chunk-X6HE2CCA.js≈// src/composables/pagesData.ts
+import { pagesData as pagesDataRaw } from "@internal/pagesData";
+import { ref } from "vue";
+var pagesData = ref(pagesDataRaw);
+var usePagesData = () => pagesData;
+
+// src/composables/pageData.ts
+import { readonly, ref as ref2 } from "vue";
+var pageDataEmpty = readonly({
+  key: "",
+  path: "",
+  title: "",
+  lang: "",
+  frontmatter: {},
+  excerpt: "",
+  headers: []
+});
+var pageData = ref2(pageDataEmpty);
+var usePageData = () => pageData;
+if (__VUEPRESS_DEV__ && (import.meta.webpackHot || import.meta.hot)) {
+  __VUE_HMR_RUNTIME__.updatePageData = (data) => {
+    pagesData.value[data.key] = () => Promise.resolve(data);
+    if (data.key === pageData.value.key) {
+      pageData.value = data;
+    }
+  };
+}
+
+// src/composables/pageFrontmatter.ts
+import { inject } from "vue";
+var pageFrontmatterSymbol = Symbol(
+  __VUEPRESS_DEV__ ? "pageFrontmatter" : ""
+);
+var usePageFrontmatter = () => {
+  const pageFrontmatter = inject(pageFrontmatterSymbol);
+  if (!pageFrontmatter) {
+    throw new Error("usePageFrontmatter() is called without provider.");
+  }
+  return pageFrontmatter;
+};
+
+// src/composables/pageHead.ts
+import { inject as inject2 } from "vue";
+var pageHeadSymbol = Symbol(
+  __VUEPRESS_DEV__ ? "pageHead" : ""
+);
+var usePageHead = () => {
+  const pageHead = inject2(pageHeadSymbol);
+  if (!pageHead) {
+    throw new Error("usePageHead() is called without provider.");
+  }
+  return pageHead;
+};
+
+// src/composables/pageHeadTitle.ts
+import { inject as inject3 } from "vue";
+var pageHeadTitleSymbol = Symbol(
+  __VUEPRESS_DEV__ ? "pageHeadTitle" : ""
+);
+var usePageHeadTitle = () => {
+  const pageHeadTitle = inject3(pageHeadTitleSymbol);
+  if (!pageHeadTitle) {
+    throw new Error("usePageHeadTitle() is called without provider.");
+  }
+  return pageHeadTitle;
+};
+
+// src/composables/pageLang.ts
+import { inject as inject4 } from "vue";
+var pageLangSymbol = Symbol(
+  __VUEPRESS_DEV__ ? "pageLang" : ""
+);
+var usePageLang = () => {
+  const pageLang = inject4(pageLangSymbol);
+  if (!pageLang) {
+    throw new Error("usePageLang() is called without provider.");
+  }
+  return pageLang;
+};
+
+// src/composables/routeLocale.ts
+import { inject as inject5 } from "vue";
+var routeLocaleSymbol = Symbol(
+  __VUEPRESS_DEV__ ? "routeLocale" : ""
+);
+var useRouteLocale = () => {
+  const routeLocale = inject5(routeLocaleSymbol);
+  if (!routeLocale) {
+    throw new Error("useRouteLocale() is called without provider.");
+  }
+  return routeLocale;
+};
+
+// src/composables/siteData.ts
+import { siteData as siteDataRaw } from "@internal/siteData";
+import { ref as ref3 } from "vue";
+var siteData = ref3(siteDataRaw);
+var useSiteData = () => siteData;
+if (__VUEPRESS_DEV__ && (import.meta.webpackHot || import.meta.hot)) {
+  __VUE_HMR_RUNTIME__.updateSiteData = (data) => {
+    siteData.value = data;
+  };
+}
+
+// src/composables/siteLocaleData.ts
+import { inject as inject6 } from "vue";
+var siteLocaleDataSymbol = Symbol(
+  __VUEPRESS_DEV__ ? "siteLocaleData" : ""
+);
+var useSiteLocaleData = () => {
+  const siteLocaleData = inject6(siteLocaleDataSymbol);
+  if (!siteLocaleData) {
+    throw new Error("useSiteLocaleData() is called without provider.");
+  }
+  return siteLocaleData;
+};
+
+// src/composables/updateHead.ts
+import { inject as inject7 } from "vue";
+var updateHeadSymbol = Symbol(
+  __VUEPRESS_DEV__ ? "updateHead" : ""
+);
+var useUpdateHead = () => {
+  const updateHead = inject7(updateHeadSymbol);
+  if (!updateHead) {
+    throw new Error("useUpdateHead() is called without provider.");
+  }
+  return updateHead;
+};
+
+// src/resolvers.ts
+import {
+  dedupeHead,
+  isArray,
+  isString,
+  resolveLocalePath
+} from "@vuepress/shared";
+import { reactive } from "vue";
+var resolvers = reactive({
+  resolvePageData: async (pageKey) => {
+    const pageDataResolver = pagesData.value[pageKey];
+    const pageData2 = await pageDataResolver?.();
+    return pageData2 ?? pageDataEmpty;
+  },
+  resolvePageFrontmatter: (pageData2) => pageData2.frontmatter,
+  resolvePageHead: (headTitle, frontmatter, siteLocale) => {
+    const description = isString(frontmatter.description) ? frontmatter.description : siteLocale.description;
+    const head = [
+      ...isArray(frontmatter.head) ? frontmatter.head : [],
+      ...siteLocale.head,
+      ["title", {}, headTitle],
+      ["meta", { name: "description", content: description }]
+    ];
+    return dedupeHead(head);
+  },
+  resolvePageHeadTitle: (page, siteLocale) => `${page.title ? `${page.title}` : ``}${siteLocale.title ? ` | ${siteLocale.title}` : ``}`,
+  resolvePageLang: (pageData2) => pageData2.lang || "en",
+  resolveRouteLocale: (locales, routePath) => resolveLocalePath(locales, routePath),
+  resolveSiteLocaleData: (site, routeLocale) => ({
+    ...site,
+    ...site.locales[routeLocale]
+  })
+});
+
+// src/components/ClientOnly.ts
+import { defineComponent, onMounted, ref as ref4 } from "vue";
+var ClientOnly = defineComponent({
+  name: "ClientOnly",
+  setup(_, ctx) {
+    const isMounted = ref4(false);
+    onMounted(() => {
+      isMounted.value = true;
+    });
+    return () => isMounted.value ? ctx.slots.default?.() : null;
+  }
+});
+
+// src/components/Content.ts
+import { pagesComponents } from "@internal/pagesComponents";
+import { computed, defineComponent as defineComponent2, h } from "vue";
+var Content = defineComponent2({
+  name: "Content",
+  props: {
+    pageKey: {
+      type: String,
+      required: false,
+      default: ""
+    }
+  },
+  setup(props) {
+    const page = usePageData();
+    const pageComponent = computed(
+      () => pagesComponents[props.pageKey || page.value.key]
+    );
+    return () => pageComponent.value ? h(pageComponent.value) : h(
+      "div",
+      __VUEPRESS_DEV__ ? "Page does not exist. This is a fallback content." : "404 Not Found"
+    );
+  }
+});
+
+// src/components/Vuepress.ts
+import { clientConfigs } from "@internal/clientConfigs";
+import { isString as isString2 } from "@vuepress/shared";
+import { computed as computed2, defineComponent as defineComponent3, h as h2 } from "vue";
+var LAYOUT_NAME_DEFAULT = "Layout";
+var LAYOUT_NAME_NOT_FOUND = "NotFound";
+var layouts = clientConfigs.reduce(
+  (prev, item) => ({
+    ...prev,
+    ...item.layouts
+  }),
+  {}
+);
+var Vuepress = defineComponent3({
+  name: "Vuepress",
+  setup() {
+    const page = usePageData();
+    const layoutComponent = computed2(() => {
+      let layoutName;
+      if (page.value.path) {
+        const frontmatterLayout = page.value.frontmatter.layout;
+        if (isString2(frontmatterLayout)) {
+          layoutName = frontmatterLayout;
+        } else {
+          layoutName = LAYOUT_NAME_DEFAULT;
+        }
+      } else {
+        layoutName = LAYOUT_NAME_NOT_FOUND;
+      }
+      return layouts[layoutName];
+    });
+    return () => h2(layoutComponent.value);
+  }
+});
+
+// src/withBase.ts
+import { isLinkHttp, removeLeadingSlash } from "@vuepress/shared";
+var withBase = (url) => {
+  if (isLinkHttp(url))
+    return url;
+  const base = useSiteData().value.base;
+  return `${base}${removeLeadingSlash(url)}`;
+};
+
+export {
+  pagesData,
+  usePagesData,
+  pageDataEmpty,
+  pageData,
+  usePageData,
+  pageFrontmatterSymbol,
+  usePageFrontmatter,
+  pageHeadSymbol,
+  usePageHead,
+  pageHeadTitleSymbol,
+  usePageHeadTitle,
+  pageLangSymbol,
+  usePageLang,
+  routeLocaleSymbol,
+  useRouteLocale,
+  siteData,
+  useSiteData,
+  siteLocaleDataSymbol,
+  useSiteLocaleData,
+  updateHeadSymbol,
+  useUpdateHead,
+  resolvers,
+  ClientOnly,
+  Content,
+  Vuepress,
+  withBase
+};
+¨/dist/app.js≈≥import {
+  ClientOnly,
+  Content,
+  Vuepress,
+  pageData,
+  pageFrontmatterSymbol,
+  pageHeadSymbol,
+  pageHeadTitleSymbol,
+  pageLangSymbol,
+  resolvers,
+  routeLocaleSymbol,
+  siteData,
+  siteLocaleDataSymbol,
+  updateHeadSymbol,
+  usePageHead,
+  usePageLang,
+  withBase
+} from "./chunk-X6HE2CCA.js";
+
+// src/app.ts
+import { clientConfigs } from "@internal/clientConfigs";
+import { createApp, createSSRApp, h } from "vue";
+import { RouterView } from "vue-router";
+
+// src/router.ts
+import { pagesComponents } from "@internal/pagesComponents";
+import { removeEndingSlash } from "@vuepress/shared";
+import {
+  createMemoryHistory,
+  createRouter,
+  createWebHistory,
+  START_LOCATION
+} from "vue-router";
+
+// src/routes.ts
+import { pagesRoutes } from "@internal/pagesRoutes";
+var createRoutes = () => pagesRoutes.reduce(
+  (result, [name, path, meta, redirects]) => {
+    result.push(
+      {
+        name,
+        path,
+        component: Vuepress,
+        meta
+      },
+      ...redirects.map((item) => ({
+        path: item,
+        redirect: path
+      }))
+    );
+    return result;
+  },
+  [
+    {
+      name: "404",
+      path: "/:catchAll(.*)",
+      component: Vuepress
+    }
+  ]
+);
+
+// src/router.ts
+var historyCreator = __VUEPRESS_SSR__ ? createMemoryHistory : createWebHistory;
+var createVueRouter = () => {
+  const router = createRouter({
+    history: historyCreator(removeEndingSlash(siteData.value.base)),
+    routes: createRoutes(),
+    scrollBehavior: (to, from, savedPosition) => {
+      if (savedPosition)
+        return savedPosition;
+      if (to.hash)
+        return { el: to.hash };
+      return { top: 0 };
+    }
+  });
+  router.beforeResolve(async (to, from) => {
+    if (to.path !== from.path || from === START_LOCATION) {
+      ;
+      [pageData.value] = await Promise.all([
+        resolvers.resolvePageData(to.name),
+        pagesComponents[to.name]?.__asyncLoader()
+      ]);
+    }
+  });
+  return router;
+};
+
+// src/setupGlobalComponents.ts
+var setupGlobalComponents = (app) => {
+  app.component("ClientOnly", ClientOnly);
+  app.component("Content", Content);
+};
+
+// src/setupGlobalComputed.ts
+import { computed } from "vue";
+var setupGlobalComputed = (app, router) => {
+  const routeLocale = computed(
+    () => resolvers.resolveRouteLocale(
+      siteData.value.locales,
+      router.currentRoute.value.path
+    )
+  );
+  const siteLocaleData = computed(
+    () => resolvers.resolveSiteLocaleData(siteData.value, routeLocale.value)
+  );
+  const pageFrontmatter = computed(
+    () => resolvers.resolvePageFrontmatter(pageData.value)
+  );
+  const pageHeadTitle = computed(
+    () => resolvers.resolvePageHeadTitle(pageData.value, siteLocaleData.value)
+  );
+  const pageHead = computed(
+    () => resolvers.resolvePageHead(
+      pageHeadTitle.value,
+      pageFrontmatter.value,
+      siteLocaleData.value
+    )
+  );
+  const pageLang = computed(() => resolvers.resolvePageLang(pageData.value));
+  app.provide(routeLocaleSymbol, routeLocale);
+  app.provide(siteLocaleDataSymbol, siteLocaleData);
+  app.provide(pageFrontmatterSymbol, pageFrontmatter);
+  app.provide(pageHeadTitleSymbol, pageHeadTitle);
+  app.provide(pageHeadSymbol, pageHead);
+  app.provide(pageLangSymbol, pageLang);
+  Object.defineProperties(app.config.globalProperties, {
+    $frontmatter: { get: () => pageFrontmatter.value },
+    $head: { get: () => pageHead.value },
+    $headTitle: { get: () => pageHeadTitle.value },
+    $lang: { get: () => pageLang.value },
+    $page: { get: () => pageData.value },
+    $routeLocale: { get: () => routeLocale.value },
+    $site: { get: () => siteData.value },
+    $siteLocale: { get: () => siteLocaleData.value },
+    $withBase: { get: () => withBase }
+  });
+  return {
+    pageData,
+    pageFrontmatter,
+    pageHead,
+    pageHeadTitle,
+    pageLang,
+    routeLocale,
+    siteData,
+    siteLocaleData
+  };
+};
+
+// src/setupUpdateHead.ts
+import { isPlainObject, isString } from "@vuepress/shared";
+import { onMounted, provide, ref, useSSRContext, watch } from "vue";
+import { useRoute } from "vue-router";
+var setupUpdateHead = () => {
+  const route = useRoute();
+  const head = usePageHead();
+  const lang = usePageLang();
+  if (__VUEPRESS_SSR__) {
+    const ssrContext = useSSRContext();
+    if (ssrContext) {
+      ssrContext.head = head.value;
+      ssrContext.lang = lang.value;
+    }
+    return;
+  }
+  const headTags = ref([]);
+  const loadHead = () => {
+    head.value.forEach((item) => {
+      const tag = queryHeadTag(item);
+      if (tag) {
+        headTags.value.push(tag);
+      }
+    });
+  };
+  const updateHead = () => {
+    document.documentElement.lang = lang.value;
+    headTags.value.forEach((item) => {
+      if (item.parentNode === document.head) {
+        document.head.removeChild(item);
+      }
+    });
+    headTags.value.splice(0, headTags.value.length);
+    head.value.forEach((item) => {
+      const tag = createHeadTag(item);
+      if (tag !== null) {
+        document.head.appendChild(tag);
+        headTags.value.push(tag);
+      }
+    });
+  };
+  provide(updateHeadSymbol, updateHead);
+  onMounted(() => {
+    loadHead();
+    updateHead();
+    watch(
+      () => __VUEPRESS_DEV__ ? head.value : route.path,
+      () => updateHead()
+    );
+  });
+};
+var queryHeadTag = ([
+  tagName,
+  attrs,
+  content = ""
+]) => {
+  const attrsSelector = Object.entries(attrs).map(([key, value]) => {
+    if (isString(value)) {
+      return `[${key}="${value}"]`;
+    }
+    if (value === true) {
+      return `[${key}]`;
+    }
+    return "";
+  }).join("");
+  const selector = `head > ${tagName}${attrsSelector}`;
+  const tags = Array.from(document.querySelectorAll(selector));
+  const matchedTag = tags.find((item) => item.innerText === content);
+  return matchedTag || null;
+};
+var createHeadTag = ([
+  tagName,
+  attrs,
+  content
+]) => {
+  if (!isString(tagName)) {
+    return null;
+  }
+  const tag = document.createElement(tagName);
+  if (isPlainObject(attrs)) {
+    Object.entries(attrs).forEach(([key, value]) => {
+      if (isString(value)) {
+        tag.setAttribute(key, value);
+      } else if (value === true) {
+        tag.setAttribute(key, "");
+      }
+    });
+  }
+  if (isString(content)) {
+    tag.appendChild(document.createTextNode(content));
+  }
+  return tag;
+};
+
+// src/app.ts
+var appCreator = __VUEPRESS_DEV__ ? createApp : createSSRApp;
+var createVueApp = async () => {
+  const app = appCreator({
+    name: "VuepressApp",
+    setup() {
+      setupUpdateHead();
+      for (const clientConfig of clientConfigs) {
+        clientConfig.setup?.();
+      }
+      return () => [
+        h(RouterView),
+        ...clientConfigs.flatMap(
+          ({ rootComponents = [] }) => rootComponents.map((component) => h(component))
+        )
+      ];
+    }
+  });
+  const router = createVueRouter();
+  setupGlobalComponents(app);
+  const globalComputed = setupGlobalComputed(app, router);
+  if (__VUEPRESS_DEV__ || __VUE_PROD_DEVTOOLS__) {
+    const { setupDevtools } = await import("./setupDevtools-EXVHPMXB.js");
+    setupDevtools(app, globalComputed);
+  }
+  for (const clientConfig of clientConfigs) {
+    await clientConfig.enhance?.({ app, router, siteData });
+  }
+  app.use(router);
+  return {
+    app,
+    router
+  };
+};
+if (!__VUEPRESS_SSR__) {
+  createVueApp().then(({ app, router }) => {
+    router.isReady().then(() => {
+      app.mount("#app");
+    });
+  });
+}
+export {
+  createVueApp
+};
+Æ/dist/index.js≈import {
+  ClientOnly,
+  Content,
+  Vuepress,
+  pageData,
+  pageDataEmpty,
+  pageFrontmatterSymbol,
+  pageHeadSymbol,
+  pageHeadTitleSymbol,
+  pageLangSymbol,
+  pagesData,
+  resolvers,
+  routeLocaleSymbol,
+  siteData,
+  siteLocaleDataSymbol,
+  updateHeadSymbol,
+  usePageData,
+  usePageFrontmatter,
+  usePageHead,
+  usePageHeadTitle,
+  usePageLang,
+  usePagesData,
+  useRouteLocale,
+  useSiteData,
+  useSiteLocaleData,
+  useUpdateHead,
+  withBase
+} from "./chunk-X6HE2CCA.js";
+
+// src/helpers/defineClientConfig.ts
+var defineClientConfig = (clientConfig = {}) => clientConfig;
+export {
+  ClientOnly,
+  Content,
+  Vuepress,
+  defineClientConfig,
+  pageData,
+  pageDataEmpty,
+  pageFrontmatterSymbol,
+  pageHeadSymbol,
+  pageHeadTitleSymbol,
+  pageLangSymbol,
+  pagesData,
+  resolvers,
+  routeLocaleSymbol,
+  siteData,
+  siteLocaleDataSymbol,
+  updateHeadSymbol,
+  usePageData,
+  usePageFrontmatter,
+  usePageHead,
+  usePageHeadTitle,
+  usePageLang,
+  usePagesData,
+  useRouteLocale,
+  useSiteData,
+  useSiteLocaleData,
+  useUpdateHead,
+  withBase
+};
+ø/dist/setupDevtools-EXVHPMXB.js≈
+û// src/setupDevtools.ts
+import { setupDevtoolsPlugin } from "@vue/devtools-api";
+import { watch } from "vue";
+var PLUGIN_ID = "org.vuejs.vuepress";
+var PLUGIN_LABEL = "VuePress";
+var PLUGIN_COMPONENT_STATE_TYPE = PLUGIN_LABEL;
+var INSPECTOR_ID = PLUGIN_ID;
+var INSPECTOR_LABEL = PLUGIN_LABEL;
+var INSPECTOR_GLOBAL_COMPUTED_ID = "global-computed";
+var INSPECTOR_GLOBAL_COMPUTED_LABEL = "Global Computed";
+var setupDevtools = (app, globalComputed) => {
+  setupDevtoolsPlugin(
+    {
+      app,
+      id: PLUGIN_ID,
+      label: PLUGIN_LABEL,
+      packageName: "@vuepress/client",
+      homepage: "https://v2.vuepress.vuejs.org",
+      logo: "https://v2.vuepress.vuejs.org/images/hero.png",
+      componentStateTypes: [PLUGIN_COMPONENT_STATE_TYPE]
+    },
+    (api) => {
+      const globalComputedEntries = Object.entries(globalComputed);
+      const globalComputedKeys = Object.keys(globalComputed);
+      const globalComputedValues = Object.values(globalComputed);
+      api.on.inspectComponent((payload) => {
+        payload.instanceData.state.push(
+          ...globalComputedEntries.map(([name, item]) => ({
+            type: PLUGIN_COMPONENT_STATE_TYPE,
+            editable: false,
+            key: name,
+            value: item.value
+          }))
+        );
+      });
+      api.addInspector({
+        id: INSPECTOR_ID,
+        label: INSPECTOR_LABEL,
+        icon: "article"
+      });
+      api.on.getInspectorTree((payload) => {
+        if (payload.inspectorId !== INSPECTOR_ID)
+          return;
+        payload.rootNodes = [
+          {
+            id: INSPECTOR_GLOBAL_COMPUTED_ID,
+            label: INSPECTOR_GLOBAL_COMPUTED_LABEL,
+            children: globalComputedKeys.map((name) => ({
+              id: name,
+              label: name
+            }))
+          }
+        ];
+      });
+      api.on.getInspectorState((payload) => {
+        if (payload.inspectorId !== INSPECTOR_ID)
+          return;
+        if (payload.nodeId === INSPECTOR_GLOBAL_COMPUTED_ID) {
+          payload.state = {
+            [INSPECTOR_GLOBAL_COMPUTED_LABEL]: globalComputedEntries.map(
+              ([name, item]) => ({
+                key: name,
+                value: item.value
+              })
+            )
+          };
+        }
+        if (globalComputedKeys.includes(payload.nodeId)) {
+          payload.state = {
+            [INSPECTOR_GLOBAL_COMPUTED_LABEL]: [
+              {
+                key: payload.nodeId,
+                value: globalComputed[payload.nodeId].value
+              }
+            ]
+          };
+        }
+      });
+      watch(globalComputedValues, () => {
+        api.notifyComponentUpdate();
+        api.sendInspectorState(INSPECTOR_ID);
+      });
+    }
+  );
+};
+export {
+  setupDevtools
+};
+≥/templates/dev.htmlƒÀ<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+  </head>
+  <body>
+    <div id="app"></div>
+  </body>
+</html>
+´/types.d.ts≈
+declare const __VUEPRESS_VERSION__: string
+declare const __VUEPRESS_DEV__: boolean
+declare const __VUEPRESS_SSR__: boolean
+declare const __VUE_HMR_RUNTIME__: Record<string, any>
+declare const __VUE_OPTIONS_API__: boolean
+declare const __VUE_PROD_DEVTOOLS__: boolean
+®/LICENSE≈CThe MIT License (MIT)
+
+Copyright (c) 2018-present, Yuxi (Evan) You
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+∞/dist/index.d.ts≈¿import { PageData, PageFrontmatter, HeadConfig, SiteData } from '@vuepress/shared';
+export { PageData, PageFrontmatter, PageHeader, SiteData } from '@vuepress/shared';
+import * as vue from 'vue';
+import { Ref, ComputedRef, InjectionKey, App, Component } from 'vue';
+import { Router, RouteMeta } from 'vue-router';
+
+declare const ClientOnly: vue.DefineComponent<{}, () => vue.VNode<vue.RendererNode, vue.RendererElement, {
+    [key: string]: any;
+}>[] | null | undefined, {}, {}, {}, vue.ComponentOptionsMixin, vue.ComponentOptionsMixin, {}, string, vue.VNodeProps & vue.AllowedComponentProps & vue.ComponentCustomProps, Readonly<vue.ExtractPropTypes<{}>>, {}>;
+
+/**
+ * Markdown rendered content
+ */
+declare const Content: vue.DefineComponent<{
+    pageKey: {
+        type: StringConstructor;
+        required: false;
+        default: string;
+    };
+}, () => vue.VNode<vue.RendererNode, vue.RendererElement, {
+    [key: string]: any;
+}>, unknown, {}, {}, vue.ComponentOptionsMixin, vue.ComponentOptionsMixin, {}, string, vue.VNodeProps & vue.AllowedComponentProps & vue.ComponentCustomProps, Readonly<vue.ExtractPropTypes<{
+    pageKey: {
+        type: StringConstructor;
+        required: false;
+        default: string;
+    };
+}>>, {
+    pageKey: string;
+}>;
+
+/**
+ * Global Layout
+ */
+declare const Vuepress: vue.DefineComponent<{}, () => vue.VNode<vue.RendererNode, vue.RendererElement, {
+    [key: string]: any;
+}>, {}, {}, {}, vue.ComponentOptionsMixin, vue.ComponentOptionsMixin, {}, string, vue.VNodeProps & vue.AllowedComponentProps & vue.ComponentCustomProps, Readonly<vue.ExtractPropTypes<{}>>, {}>;
+
+/**
+ * Ref wrapper of `PageData`
+ */
+declare type PageDataRef<T extends Record<any, any> = Record<never, never>> = Ref<PageData<T>>;
+/**
+ * Empty page data to be used as the fallback value
+ */
+declare const pageDataEmpty: PageData<Record<never, never>, Record<string, unknown>>;
+/**
+ * Global page data ref
+ */
+declare const pageData: PageDataRef;
+/**
+ * Returns the ref of the data of current page
+ */
+declare const usePageData: <T extends Record<any, any> = Record<never, never>>() => PageDataRef<T>;
+
+/**
+ * Ref wrapper of `PageFrontmatter`
+ */
+declare type PageFrontmatterRef<T extends Record<any, any> = Record<string, unknown>> = ComputedRef<PageFrontmatter<T>>;
+/**
+ * Injection key for page frontmatter
+ */
+declare const pageFrontmatterSymbol: InjectionKey<PageFrontmatterRef>;
+/**
+ * Returns the ref of the frontmatter of current page
+ */
+declare const usePageFrontmatter: <T extends Record<any, any> = Record<string, unknown>>() => PageFrontmatterRef<T>;
+
+/**
+ * Page head config, which would be used for generate html tags in `<head>`
+ */
+declare type PageHead = HeadConfig[];
+/**
+ * Ref wrapper of `PageHead`
+ */
+declare type PageHeadRef = ComputedRef<PageHead>;
+/**
+ * Injection key for page head
+ */
+declare const pageHeadSymbol: InjectionKey<PageHeadRef>;
+/**
+ * Returns the ref of the head config of current page
+ */
+declare const usePageHead: () => PageHeadRef;
+
+/**
+ * Page head title, which would be used as the content of `head > title` tag
+ */
+declare type PageHeadTitle = string;
+/**
+ * Ref wrapper of `PageHeadTitle`
+ */
+declare type PageHeadTitleRef = ComputedRef<PageHeadTitle>;
+/**
+ * Injection key for page head title
+ */
+declare const pageHeadTitleSymbol: InjectionKey<PageHeadTitleRef>;
+/**
+ * Returns the ref of the head title of current page
+ */
+declare const usePageHeadTitle: () => PageHeadTitleRef;
+
+/**
+ * Page language
+ */
+declare type PageLang = string;
+/**
+ * Ref wrapper of `PageLang`
+ */
+declare type PageLangRef = ComputedRef<PageLang>;
+/**
+ * Injection key for page language
+ */
+declare const pageLangSymbol: InjectionKey<PageLangRef>;
+/**
+ * Returns the ref of the language of current page
+ */
+declare const usePageLang: () => PageLangRef;
+
+/**
+ * Data resolvers of all pages
+ *
+ * The key is page key, and the value is an async function that
+ * returns the page data
+ */
+declare type PagesData = Record<string, (() => Promise<PageData>) | undefined>;
+/**
+ * Ref wrapper of `PagesData`
+ */
+declare type PagesDataRef = Ref<PagesData>;
+/**
+ * Global pages data ref
+ */
+declare const pagesData: PagesDataRef;
+/**
+ * Returns the ref of data resolvers of all pages
+ */
+declare const usePagesData: () => PagesDataRef;
+
+/**
+ * Route locale path
+ */
+declare type RouteLocale = string;
+/**
+ * Ref wrapper of `RouteLocale`
+ */
+declare type RouteLocaleRef = ComputedRef<RouteLocale>;
+/**
+ * Injection key for page route locale path
+ */
+declare const routeLocaleSymbol: InjectionKey<RouteLocaleRef>;
+/**
+ * Returns the ref of the route locale path of current page
+ */
+declare const useRouteLocale: () => RouteLocaleRef;
+
+/**
+ * Ref wrapper of `SiteData`
+ */
+declare type SiteDataRef = Ref<SiteData>;
+/**
+ * Global site data ref
+ */
+declare const siteData: SiteDataRef;
+/**
+ * Returns the ref of the site data
+ */
+declare const useSiteData: () => SiteDataRef;
+
+/**
+ * Site data of current locale
+ */
+declare type SiteLocaleData = SiteData;
+/**
+ * Ref wrapper of `SiteLocaleData`
+ */
+declare type SiteLocaleDataRef = ComputedRef<SiteLocaleData>;
+/**
+ * Injection key for site locale data
+ */
+declare const siteLocaleDataSymbol: InjectionKey<SiteLocaleDataRef>;
+/**
+ * Returns the ref of the site data of current locale
+ */
+declare const useSiteLocaleData: () => SiteLocaleDataRef;
+
+/**
+ * A util function to force update `<head>` of current page
+ */
+declare type UpdateHead = () => void;
+/**
+ * Injection key for `updateHead` util
+ */
+declare const updateHeadSymbol: InjectionKey<UpdateHead>;
+/**
+ * Returns the `updateHead` util
+ */
+declare const useUpdateHead: () => UpdateHead;
+
+/**
+ * Configure vuepress client
+ */
+interface ClientConfig {
+    /**
+     * An enhance function to be called after vue app instance and
+     * vue-router instance has been created
+     */
+    enhance?: (context: {
+        app: App;
+        router: Router;
+        siteData: SiteDataRef;
+    }) => void | Promise<void>;
+    /**
+     * A function to be called inside the setup function of vue app
+     */
+    setup?: () => void;
+    /**
+     * Layout components
+     */
+    layouts?: Record<string, Component>;
+    /**
+     * Components to be placed directly into the root node of vue app
+     */
+    rootComponents?: Component[];
+}
+
+declare type CreateVueAppFunction = () => Promise<{
+    app: App;
+    router: Router;
+}>;
+
+declare type PageRouteItem = [
+    name: string,
+    path: string,
+    meta: RouteMeta,
+    redirects: string[]
+];
+
+/**
+ * A helper function to help you define vuepress client config file
+ */
+declare const defineClientConfig: (clientConfig?: ClientConfig) => ClientConfig;
+
+/**
+ * Resolver methods to get global computed
+ *
+ * Users can override corresponding method for advanced customization
+ */
+declare const resolvers: {
+    resolvePageData: (pageKey: string) => Promise<PageData>;
+    resolvePageFrontmatter: (pageData: PageData) => PageFrontmatter;
+    resolvePageHead: (headTitle: PageHeadTitle, frontmatter: PageFrontmatter, siteLocale: SiteLocaleData) => PageHead;
+    resolvePageHeadTitle: (page: PageData, siteLocale: SiteLocaleData) => PageHeadTitle;
+    resolvePageLang: (pageData: PageData) => PageLang;
+    resolveRouteLocale: (locales: SiteData['locales'], routePath: string) => RouteLocale;
+    resolveSiteLocaleData: (site: SiteData, routeLocale: RouteLocale) => SiteLocaleData;
+};
+
+/**
+ * Prefix url with site base
+ */
+declare const withBase: (url: string) => string;
+
+export { ClientConfig, ClientOnly, Content, CreateVueAppFunction, PageDataRef, PageFrontmatterRef, PageHead, PageHeadRef, PageHeadTitle, PageHeadTitleRef, PageLang, PageLangRef, PageRouteItem, PagesData, PagesDataRef, RouteLocale, RouteLocaleRef, SiteDataRef, SiteLocaleData, SiteLocaleDataRef, UpdateHead, Vuepress, defineClientConfig, pageData, pageDataEmpty, pageFrontmatterSymbol, pageHeadSymbol, pageHeadTitleSymbol, pageLangSymbol, pagesData, resolvers, routeLocaleSymbol, siteData, siteLocaleDataSymbol, updateHeadSymbol, usePageData, usePageFrontmatter, usePageHead, usePageHeadTitle, usePageLang, usePagesData, useRouteLocale, useSiteData, useSiteLocaleData, useUpdateHead, withBase };
+≠/package.json≈{
+  "name": "@vuepress/client",
+  "version": "2.0.0-beta.53",
+  "description": "Client package of VuePress",
+  "keywords": [
+    "vuepress",
+    "client"
+  ],
+  "homepage": "https://github.com/vuepress",
+  "bugs": {
+    "url": "https://github.com/vuepress/vuepress-next/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vuepress/vuepress-next.git"
+  },
+  "license": "MIT",
+  "author": "meteorlxy",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./app": "./dist/app.js",
+    "./package.json": "./package.json",
+    "./templates/*": "./templates/*",
+    "./types": "./types.d.ts"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "templates",
+    "types.d.ts"
+  ],
+  "dependencies": {
+    "@vue/devtools-api": "^6.4.5",
+    "@vuepress/shared": "2.0.0-beta.53",
+    "vue": "^3.2.41",
+    "vue-router": "^4.1.6"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "tsup": {
+    "clean": true,
+    "dts": "./src/index.ts",
+    "entry": [
+      "./src/app.ts",
+      "./src/index.ts"
+    ],
+    "external": [
+      "@internal/clientConfigs",
+      "@internal/layoutComponents",
+      "@internal/pagesComponents",
+      "@internal/pagesData",
+      "@internal/pagesRoutes",
+      "@internal/siteData"
+    ],
+    "format": [
+      "esm"
+    ],
+    "outDir": "./dist",
+    "sourcemap": false,
+    "target": "es2020",
+    "tsconfig": "./tsconfig.dts.json"
+  },
+  "scripts": {
+    "build": "tsup",
+    "clean": "rimraf dist"
+  }
+}µ/templates/build.html≈•<!DOCTYPE html>
+<html lang="{{ lang }}">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="generator" content="VuePress {{ version }}">
+    <!--vuepress-ssr-head-->
+    <!--vuepress-ssr-styles-->
+    <!--vuepress-ssr-resources-->
+  </head>
+  <body>
+    <div id="app"><!--vuepress-ssr-app--></div>
+    <!--vuepress-ssr-scripts-->
+  </body>
+</html>

@@ -1,0 +1,267 @@
+…©/index.jsÅWconst copyProperty = (to, from, property, ignoreNonConfigurable) => {
+	// `Function#length` should reflect the parameters of `to` not `from` since we keep its body.
+	// `Function#prototype` is non-writable and non-configurable so can never be modified.
+	if (property === 'length' || property === 'prototype') {
+		return;
+	}
+
+	// `Function#arguments` and `Function#caller` should not be copied. They were reported to be present in `Reflect.ownKeys` for some devices in React Native (#41), so we explicitly ignore them here.
+	if (property === 'arguments' || property === 'caller') {
+		return;
+	}
+
+	const toDescriptor = Object.getOwnPropertyDescriptor(to, property);
+	const fromDescriptor = Object.getOwnPropertyDescriptor(from, property);
+
+	if (!canCopyProperty(toDescriptor, fromDescriptor) && ignoreNonConfigurable) {
+		return;
+	}
+
+	Object.defineProperty(to, property, fromDescriptor);
+};
+
+// `Object.defineProperty()` throws if the property exists, is not configurable and either:
+// - one its descriptors is changed
+// - it is non-writable and its value is changed
+const canCopyProperty = function (toDescriptor, fromDescriptor) {
+	return toDescriptor === undefined || toDescriptor.configurable || (
+		toDescriptor.writable === fromDescriptor.writable &&
+		toDescriptor.enumerable === fromDescriptor.enumerable &&
+		toDescriptor.configurable === fromDescriptor.configurable &&
+		(toDescriptor.writable || toDescriptor.value === fromDescriptor.value)
+	);
+};
+
+const changePrototype = (to, from) => {
+	const fromPrototype = Object.getPrototypeOf(from);
+	if (fromPrototype === Object.getPrototypeOf(to)) {
+		return;
+	}
+
+	Object.setPrototypeOf(to, fromPrototype);
+};
+
+const wrappedToString = (withName, fromBody) => `/* Wrapped ${withName}*/\n${fromBody}`;
+
+const toStringDescriptor = Object.getOwnPropertyDescriptor(Function.prototype, 'toString');
+const toStringName = Object.getOwnPropertyDescriptor(Function.prototype.toString, 'name');
+
+// We call `from.toString()` early (not lazily) to ensure `from` can be garbage collected.
+// We use `bind()` instead of a closure for the same reason.
+// Calling `from.toString()` early also allows caching it in case `to.toString()` is called several times.
+const changeToString = (to, from, name) => {
+	const withName = name === '' ? '' : `with ${name.trim()}() `;
+	const newToString = wrappedToString.bind(null, withName, from.toString());
+	// Ensure `to.toString.toString` is non-enumerable and has the same `same`
+	Object.defineProperty(newToString, 'name', toStringName);
+	Object.defineProperty(to, 'toString', {...toStringDescriptor, value: newToString});
+};
+
+export default function mimicFunction(to, from, {ignoreNonConfigurable = false} = {}) {
+	const {name} = to;
+
+	for (const property of Reflect.ownKeys(from)) {
+		copyProperty(to, from, property, ignoreNonConfigurable);
+	}
+
+	changePrototype(to, from);
+	changeToString(to, from, name);
+
+	return to;
+}
+¨/licenseÅ]MIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ª/readme.mdÅ%<img src="media/logo.svg" alt="mimic-fn" width="400">
+<br>
+
+> Make a function mimic another one
+
+Useful when you wrap a function in another function and like to preserve the original name and other properties.
+
+## Install
+
+```
+$ npm install mimic-fn
+```
+
+## Usage
+
+```js
+import mimicFunction from 'mimic-fn';
+
+function foo() {}
+foo.unicorn = 'ðŸ¦„';
+
+function wrapper() {
+	return foo();
+}
+
+console.log(wrapper.name);
+//=> 'wrapper'
+
+mimicFunction(wrapper, foo);
+
+console.log(wrapper.name);
+//=> 'foo'
+
+console.log(wrapper.unicorn);
+//=> 'ðŸ¦„'
+
+console.log(String(wrapper));
+//=> '/* Wrapped with wrapper() */\nfunction foo() {}'
+```
+
+
+## API
+
+### mimicFunction(to, from, options?)
+
+Modifies the `to` function to mimic the `from` function. Returns the `to` function.
+
+`name`, `displayName`, and any other properties of `from` are copied. The `length` property is not copied. Prototype, class, and inherited properties are copied.
+
+`to.toString()` will return the same as `from.toString()` but prepended with a `Wrapped with to()` comment.
+
+#### to
+
+Type: `Function`
+
+Mimicking function.
+
+#### from
+
+Type: `Function`
+
+Function to mimic.
+
+#### options
+
+Type: `object`
+
+##### ignoreNonConfigurable
+
+Type: `boolean`\
+Default: `false`
+
+Skip modifying [non-configurable properties](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/getOwnPropertyDescriptor#Description) instead of throwing an error.
+
+## Related
+
+- [rename-fn](https://github.com/sindresorhus/rename-fn) - Rename a function
+- [keep-func-props](https://github.com/ehmicky/keep-func-props) - Wrap a function without changing its name and other properties
+
+---
+
+<div align="center">
+	<b>
+		<a href="https://tidelift.com/subscription/pkg/npm-mimic-fn?utm_source=npm-mimic-fn&utm_medium=referral&utm_campaign=readme">Get professional support for this package with a Tidelift subscription</a>
+	</b>
+	<br>
+	<sub>
+		Tidelift helps make open source sustainable for maintainers while giving companies<br>assurances about security, maintenance, and licensing for their dependencies.
+	</sub>
+</div>
+­/package.jsonÅñ{
+	"name": "mimic-fn",
+	"version": "4.0.0",
+	"description": "Make a function mimic another one",
+	"license": "MIT",
+	"repository": "sindresorhus/mimic-fn",
+	"funding": "https://github.com/sponsors/sindresorhus",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "https://sindresorhus.com"
+	},
+	"type": "module",
+	"exports": "./index.js",
+	"engines": {
+		"node": ">=12"
+	},
+	"scripts": {
+		"test": "xo && ava && tsd"
+	},
+	"files": [
+		"index.js",
+		"index.d.ts"
+	],
+	"keywords": [
+		"function",
+		"mimic",
+		"imitate",
+		"rename",
+		"copy",
+		"inherit",
+		"properties",
+		"name",
+		"func",
+		"fn",
+		"set",
+		"infer",
+		"change"
+	],
+	"devDependencies": {
+		"ava": "^3.15.0",
+		"tsd": "^0.14.0",
+		"xo": "^0.38.2"
+	}
+}
+«/index.d.tsÅ)export interface Options {
+	/**
+	Skip modifying [non-configurable properties](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/getOwnPropertyDescriptor#Description) instead of throwing an error.
+
+	@default false
+	*/
+	readonly ignoreNonConfigurable?: boolean;
+}
+
+/**
+Modifies the `to` function to mimic the `from` function. Returns the `to` function.
+
+`name`, `displayName`, and any other properties of `from` are copied. The `length` property is not copied. Prototype, class, and inherited properties are copied.
+
+`to.toString()` will return the same as `from.toString()` but prepended with a `Wrapped with to()` comment.
+
+@param to - Mimicking function.
+@param from - Function to mimic.
+@returns The modified `to` function.
+
+@example
+```
+import mimicFunction from 'mimic-fn';
+
+function foo() {}
+foo.unicorn = 'ðŸ¦„';
+
+function wrapper() {
+	return foo();
+}
+
+console.log(wrapper.name);
+//=> 'wrapper'
+
+mimicFunction(wrapper, foo);
+
+console.log(wrapper.name);
+//=> 'foo'
+
+console.log(wrapper.unicorn);
+//=> 'ðŸ¦„'
+```
+*/
+export default function mimicFunction<
+	ArgumentsType extends unknown[],
+	ReturnType,
+	FunctionType extends (...arguments: ArgumentsType) => ReturnType
+>(
+	to: (...arguments: ArgumentsType) => ReturnType,
+	from: FunctionType,
+	options?: Options,
+): FunctionType;

@@ -1,0 +1,362 @@
+Ü≠/package.json≈{
+  "name": "@mdit-vue/shared",
+  "version": "0.11.0",
+  "description": "Shared utils and types of mdit-vue",
+  "keywords": [
+    "markdown-it",
+    "vue",
+    "utils"
+  ],
+  "homepage": "https://github.com/mdit-vue",
+  "bugs": {
+    "url": "https://github.com/mdit-vue/mdit-vue/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mdit-vue/mdit-vue.git"
+  },
+  "license": "MIT",
+  "author": "meteorlxy <meteor.lxy@foxmail.com>",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "./dist"
+  ],
+  "scripts": {
+    "build": "unbuild",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@mdit-vue/types": "0.11.0",
+    "@types/markdown-it": "^12.2.3",
+    "markdown-it": "^13.0.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "gitHead": "6e4f18dacc06e0aa5d3108df8925f6b0aa885150"
+}
+∞/dist/index.d.ts≈_import { MarkdownItHeader } from '@mdit-vue/types';
+import Token from 'markdown-it/lib/token.js';
+
+/**
+ * Escape html chars
+ */
+declare const htmlEscape: (str: string) => string;
+
+/**
+ * Unescape html chars
+ */
+declare const htmlUnescape: (str: string) => string;
+
+interface ResolveTitleOptions {
+    /**
+     * Should allow inline HTML tags or not.
+     *
+     * If the result is going to be used as Vue template, it should allow inline
+     * HTML tags so that Vue custom components would be kept.
+     */
+    shouldAllowHtml: boolean;
+    /**
+     * Should escape the text content or not.
+     *
+     * If the result is going to be used in HTML directly, it should be escaped
+     * so that the text content won't be wrongly treated as HTML tags.
+     */
+    shouldEscapeText: boolean;
+}
+/**
+ * Resolve header title from markdown-it token
+ *
+ * Typically using the next token of `heading_open` token
+ */
+declare const resolveTitleFromToken: (token: Token, { shouldAllowHtml, shouldEscapeText }: ResolveTitleOptions) => string;
+
+interface ResolveHeadersOptions extends ResolveTitleOptions {
+    /**
+     * Heading level that going to be resolved
+     */
+    level: number[];
+    /**
+     * A custom slugification function
+     *
+     * Would be ignored if the `id` attr of the token is set.
+     */
+    slugify: (str: string) => string;
+    /**
+     * A function for formatting headings
+     */
+    format?: (str: string) => string;
+}
+/**
+ * Resolve headers from markdown-it tokens
+ */
+declare const resolveHeadersFromTokens: (tokens: Token[], { level, shouldAllowHtml, shouldEscapeText, slugify, format, }: ResolveHeadersOptions) => MarkdownItHeader[];
+
+/**
+ * Default slugification function
+ */
+declare const slugify: (str: string) => string;
+
+export { ResolveHeadersOptions, ResolveTitleOptions, htmlEscape, htmlUnescape, resolveHeadersFromTokens, resolveTitleFromToken, slugify };
+®/LICENSE≈IThe MIT License (MIT)
+
+Copyright (c) 2022-present, mdit-vue Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+™/README.mdƒ¡# @mdit-vue/shared
+
+[![npm](https://badgen.net/npm/v/@mdit-vue/shared)](https://www.npmjs.com/package/@mdit-vue/shared)
+
+Shared utils of mdit-vue.
+
+## Install
+
+```sh
+npm i @mdit-vue/shared
+```
+Ø/dist/index.cjs≈‹'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+const htmlEscapeMap = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  "'": "&#39;",
+  '"': "&quot;"
+};
+const htmlEscapeRegexp = /[&<>'"]/g;
+const htmlEscape = (str) => str.replace(
+  htmlEscapeRegexp,
+  (char) => htmlEscapeMap[char]
+);
+
+const htmlUnescapeMap = {
+  "&amp;": "&",
+  "&#38;": "&",
+  "&lt;": "<",
+  "&#60;": "<",
+  "&gt;": ">",
+  "&#62;": ">",
+  "&apos;": "'",
+  "&#39;": "'",
+  "&quot;": '"',
+  "&#34;": '"'
+};
+const htmlUnescapeRegexp = /&(amp|#38|lt|#60|gt|#62|apos|#39|quot|#34);/g;
+const htmlUnescape = (str) => str.replace(
+  htmlUnescapeRegexp,
+  (char) => htmlUnescapeMap[char]
+);
+
+const resolveTitleFromToken = (token, { shouldAllowHtml, shouldEscapeText }) => {
+  const children = token.children ?? [];
+  const titleTokenTypes = ["text", "emoji", "code_inline"];
+  if (shouldAllowHtml) {
+    titleTokenTypes.push("html_inline");
+  }
+  const titleTokens = children.filter(
+    (item) => titleTokenTypes.includes(item.type) && !item.meta?.isPermalinkSymbol
+  );
+  return titleTokens.reduce((result, item) => {
+    if (shouldEscapeText) {
+      if (item.type === "code_inline" || item.type === "text") {
+        return `${result}${htmlEscape(item.content)}`;
+      }
+    }
+    return `${result}${item.content}`;
+  }, "").trim();
+};
+
+const resolveHeadersFromTokens = (tokens, {
+  level,
+  shouldAllowHtml,
+  shouldEscapeText,
+  slugify,
+  format
+}) => {
+  const headers = [];
+  const stack = [];
+  const push = (header) => {
+    while (stack.length !== 0 && header.level <= stack[0].level) {
+      stack.shift();
+    }
+    if (stack.length === 0) {
+      headers.push(header);
+      stack.push(header);
+    } else {
+      stack[0].children.push(header);
+      stack.unshift(header);
+    }
+  };
+  for (let i = 0; i < tokens.length; i += 1) {
+    const token = tokens[i];
+    if (token?.type !== "heading_open") {
+      continue;
+    }
+    const headerLevel = Number.parseInt(token.tag.slice(1), 10);
+    if (!level.includes(headerLevel)) {
+      continue;
+    }
+    const nextToken = tokens[i + 1];
+    if (!nextToken) {
+      continue;
+    }
+    const title = resolveTitleFromToken(nextToken, {
+      shouldAllowHtml,
+      shouldEscapeText
+    });
+    const slug = token.attrGet("id") ?? slugify(title);
+    push({
+      level: headerLevel,
+      title: format?.(title) ?? title,
+      slug,
+      link: `#${slug}`,
+      children: []
+    });
+  }
+  return headers;
+};
+
+const rControl = /[\u0000-\u001f]/g;
+const rSpecial = /[\s~`!@#$%^&*()\-_+=[\]{}|\\;:"'‚Äú‚Äù‚Äò‚Äô<>,.?/]+/g;
+const rCombining = /[\u0300-\u036F]/g;
+const slugify = (str) => str.normalize("NFKD").replace(rCombining, "").replace(rControl, "").replace(rSpecial, "-").replace(/-{2,}/g, "-").replace(/^-+|-+$/g, "").replace(/^(\d)/, "_$1").toLowerCase();
+
+exports.htmlEscape = htmlEscape;
+exports.htmlUnescape = htmlUnescape;
+exports.resolveHeadersFromTokens = resolveHeadersFromTokens;
+exports.resolveTitleFromToken = resolveTitleFromToken;
+exports.slugify = slugify;
+Ø/dist/index.mjs≈const htmlEscapeMap = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  "'": "&#39;",
+  '"': "&quot;"
+};
+const htmlEscapeRegexp = /[&<>'"]/g;
+const htmlEscape = (str) => str.replace(
+  htmlEscapeRegexp,
+  (char) => htmlEscapeMap[char]
+);
+
+const htmlUnescapeMap = {
+  "&amp;": "&",
+  "&#38;": "&",
+  "&lt;": "<",
+  "&#60;": "<",
+  "&gt;": ">",
+  "&#62;": ">",
+  "&apos;": "'",
+  "&#39;": "'",
+  "&quot;": '"',
+  "&#34;": '"'
+};
+const htmlUnescapeRegexp = /&(amp|#38|lt|#60|gt|#62|apos|#39|quot|#34);/g;
+const htmlUnescape = (str) => str.replace(
+  htmlUnescapeRegexp,
+  (char) => htmlUnescapeMap[char]
+);
+
+const resolveTitleFromToken = (token, { shouldAllowHtml, shouldEscapeText }) => {
+  const children = token.children ?? [];
+  const titleTokenTypes = ["text", "emoji", "code_inline"];
+  if (shouldAllowHtml) {
+    titleTokenTypes.push("html_inline");
+  }
+  const titleTokens = children.filter(
+    (item) => titleTokenTypes.includes(item.type) && !item.meta?.isPermalinkSymbol
+  );
+  return titleTokens.reduce((result, item) => {
+    if (shouldEscapeText) {
+      if (item.type === "code_inline" || item.type === "text") {
+        return `${result}${htmlEscape(item.content)}`;
+      }
+    }
+    return `${result}${item.content}`;
+  }, "").trim();
+};
+
+const resolveHeadersFromTokens = (tokens, {
+  level,
+  shouldAllowHtml,
+  shouldEscapeText,
+  slugify,
+  format
+}) => {
+  const headers = [];
+  const stack = [];
+  const push = (header) => {
+    while (stack.length !== 0 && header.level <= stack[0].level) {
+      stack.shift();
+    }
+    if (stack.length === 0) {
+      headers.push(header);
+      stack.push(header);
+    } else {
+      stack[0].children.push(header);
+      stack.unshift(header);
+    }
+  };
+  for (let i = 0; i < tokens.length; i += 1) {
+    const token = tokens[i];
+    if (token?.type !== "heading_open") {
+      continue;
+    }
+    const headerLevel = Number.parseInt(token.tag.slice(1), 10);
+    if (!level.includes(headerLevel)) {
+      continue;
+    }
+    const nextToken = tokens[i + 1];
+    if (!nextToken) {
+      continue;
+    }
+    const title = resolveTitleFromToken(nextToken, {
+      shouldAllowHtml,
+      shouldEscapeText
+    });
+    const slug = token.attrGet("id") ?? slugify(title);
+    push({
+      level: headerLevel,
+      title: format?.(title) ?? title,
+      slug,
+      link: `#${slug}`,
+      children: []
+    });
+  }
+  return headers;
+};
+
+const rControl = /[\u0000-\u001f]/g;
+const rSpecial = /[\s~`!@#$%^&*()\-_+=[\]{}|\\;:"'‚Äú‚Äù‚Äò‚Äô<>,.?/]+/g;
+const rCombining = /[\u0300-\u036F]/g;
+const slugify = (str) => str.normalize("NFKD").replace(rCombining, "").replace(rControl, "").replace(rSpecial, "-").replace(/-{2,}/g, "-").replace(/^-+|-+$/g, "").replace(/^(\d)/, "_$1").toLowerCase();
+
+export { htmlEscape, htmlUnescape, resolveHeadersFromTokens, resolveTitleFromToken, slugify };

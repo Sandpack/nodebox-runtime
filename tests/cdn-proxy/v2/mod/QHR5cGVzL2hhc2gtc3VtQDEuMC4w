@@ -1,0 +1,66 @@
+„ª/README.mdÅ÷# Installation
+> `npm install --save @types/hash-sum`
+
+# Summary
+This package contains type definitions for hash-sum (https://github.com/bevacqua/hash-sum).
+
+# Details
+Files were exported from https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/hash-sum
+
+Additional Details
+ * Last updated: Sat, 25 Aug 2018 01:04:12 GMT
+ * Dependencies: none
+ * Global values: none
+
+# Credits
+These definitions were written by Daniel Rosenwasser <https://github.com/DanielRosenwasser>.
+­/package.jsonÅ‹{
+    "name": "@types/hash-sum",
+    "version": "1.0.0",
+    "description": "TypeScript definitions for hash-sum",
+    "license": "MIT",
+    "contributors": [
+        {
+            "name": "Daniel Rosenwasser",
+            "url": "https://github.com/DanielRosenwasser",
+            "githubUsername": "DanielRosenwasser"
+        }
+    ],
+    "main": "",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git"
+    },
+    "scripts": {},
+    "dependencies": {},
+    "typesPublisherContentHash": "a5aa5eccb50be28ba561fdcc78f1f1f774d5ec7d191405e2481f3088a133b94f",
+    "typeScriptVersion": "2.0"
+}¨/LICENSEÅŠ    MIT License
+
+    Copyright (c) Microsoft Corporation. All rights reserved.
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE
+«/index.d.tsÅ*// Type definitions for hash-sum 1.0
+// Project: https://github.com/bevacqua/hash-sum
+// Definitions by: Daniel Rosenwasser <https://github.com/DanielRosenwasser>
+// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
+
+export = hash_sum;
+
+declare function hash_sum(value: any): string;

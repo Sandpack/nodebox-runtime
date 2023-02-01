@@ -1,0 +1,7 @@
+fixture
+fixtures
+build
+internals/servers/consumer/dist/consumer.js
+/packages/runtime/preview/**/*.js
+/preview
+tmp

@@ -1,0 +1,1291 @@
+å±/modules/index.js≈import tslib from '../tslib.js';
+const {
+    __extends,
+    __assign,
+    __rest,
+    __decorate,
+    __param,
+    __metadata,
+    __awaiter,
+    __generator,
+    __exportStar,
+    __createBinding,
+    __values,
+    __read,
+    __spread,
+    __spreadArrays,
+    __spreadArray,
+    __await,
+    __asyncGenerator,
+    __asyncDelegator,
+    __asyncValues,
+    __makeTemplateObject,
+    __importStar,
+    __importDefault,
+    __classPrivateFieldGet,
+    __classPrivateFieldSet,
+    __classPrivateFieldIn,
+} = tslib;
+export {
+    __extends,
+    __assign,
+    __rest,
+    __decorate,
+    __param,
+    __metadata,
+    __awaiter,
+    __generator,
+    __exportStar,
+    __createBinding,
+    __values,
+    __read,
+    __spread,
+    __spreadArrays,
+    __spreadArray,
+    __await,
+    __asyncGenerator,
+    __asyncDelegator,
+    __asyncValues,
+    __makeTemplateObject,
+    __importStar,
+    __importDefault,
+    __classPrivateFieldGet,
+    __classPrivateFieldSet,
+    __classPrivateFieldIn,
+};
+Ø/tslib.es6.htmlƒ$<script src="tslib.es6.js"></script>¨/LICENSE.txt≈èCopyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.©/tslib.js≈<Ç/******************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+/* global global, define, System, Reflect, Promise */
+var __extends;
+var __assign;
+var __rest;
+var __decorate;
+var __param;
+var __metadata;
+var __awaiter;
+var __generator;
+var __exportStar;
+var __values;
+var __read;
+var __spread;
+var __spreadArrays;
+var __spreadArray;
+var __await;
+var __asyncGenerator;
+var __asyncDelegator;
+var __asyncValues;
+var __makeTemplateObject;
+var __importStar;
+var __importDefault;
+var __classPrivateFieldGet;
+var __classPrivateFieldSet;
+var __classPrivateFieldIn;
+var __createBinding;
+(function (factory) {
+    var root = typeof global === "object" ? global : typeof self === "object" ? self : typeof this === "object" ? this : {};
+    if (typeof define === "function" && define.amd) {
+        define("tslib", ["exports"], function (exports) { factory(createExporter(root, createExporter(exports))); });
+    }
+    else if (typeof module === "object" && typeof module.exports === "object") {
+        factory(createExporter(root, createExporter(module.exports)));
+    }
+    else {
+        factory(createExporter(root));
+    }
+    function createExporter(exports, previous) {
+        if (exports !== root) {
+            if (typeof Object.create === "function") {
+                Object.defineProperty(exports, "__esModule", { value: true });
+            }
+            else {
+                exports.__esModule = true;
+            }
+        }
+        return function (id, v) { return exports[id] = previous ? previous(id, v) : v; };
+    }
+})
+(function (exporter) {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+
+    __extends = function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+
+    __assign = Object.assign || function (t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+        }
+        return t;
+    };
+
+    __rest = function (s, e) {
+        var t = {};
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+            t[p] = s[p];
+        if (s != null && typeof Object.getOwnPropertySymbols === "function")
+            for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+                if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                    t[p[i]] = s[p[i]];
+            }
+        return t;
+    };
+
+    __decorate = function (decorators, target, key, desc) {
+        var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+        if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+        else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+        return c > 3 && r && Object.defineProperty(target, key, r), r;
+    };
+
+    __param = function (paramIndex, decorator) {
+        return function (target, key) { decorator(target, key, paramIndex); }
+    };
+
+    __metadata = function (metadataKey, metadataValue) {
+        if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
+    };
+
+    __awaiter = function (thisArg, _arguments, P, generator) {
+        function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+        return new (P || (P = Promise))(function (resolve, reject) {
+            function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+            function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+            function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+            step((generator = generator.apply(thisArg, _arguments || [])).next());
+        });
+    };
+
+    __generator = function (thisArg, body) {
+        var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+        return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+        function verb(n) { return function (v) { return step([n, v]); }; }
+        function step(op) {
+            if (f) throw new TypeError("Generator is already executing.");
+            while (g && (g = 0, op[0] && (_ = 0)), _) try {
+                if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+                if (y = 0, t) op = [op[0] & 2, t.value];
+                switch (op[0]) {
+                    case 0: case 1: t = op; break;
+                    case 4: _.label++; return { value: op[1], done: false };
+                    case 5: _.label++; y = op[1]; op = [0]; continue;
+                    case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                    default:
+                        if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                        if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                        if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                        if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                        if (t[2]) _.ops.pop();
+                        _.trys.pop(); continue;
+                }
+                op = body.call(thisArg, _);
+            } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+            if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+        }
+    };
+
+    __exportStar = function(m, o) {
+        for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(o, p)) __createBinding(o, m, p);
+    };
+
+    __createBinding = Object.create ? (function(o, m, k, k2) {
+        if (k2 === undefined) k2 = k;
+        var desc = Object.getOwnPropertyDescriptor(m, k);
+        if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+            desc = { enumerable: true, get: function() { return m[k]; } };
+        }
+        Object.defineProperty(o, k2, desc);
+    }) : (function(o, m, k, k2) {
+        if (k2 === undefined) k2 = k;
+        o[k2] = m[k];
+    });
+
+    __values = function (o) {
+        var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+        if (m) return m.call(o);
+        if (o && typeof o.length === "number") return {
+            next: function () {
+                if (o && i >= o.length) o = void 0;
+                return { value: o && o[i++], done: !o };
+            }
+        };
+        throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+    };
+
+    __read = function (o, n) {
+        var m = typeof Symbol === "function" && o[Symbol.iterator];
+        if (!m) return o;
+        var i = m.call(o), r, ar = [], e;
+        try {
+            while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+        }
+        catch (error) { e = { error: error }; }
+        finally {
+            try {
+                if (r && !r.done && (m = i["return"])) m.call(i);
+            }
+            finally { if (e) throw e.error; }
+        }
+        return ar;
+    };
+
+    /** @deprecated */
+    __spread = function () {
+        for (var ar = [], i = 0; i < arguments.length; i++)
+            ar = ar.concat(__read(arguments[i]));
+        return ar;
+    };
+
+    /** @deprecated */
+    __spreadArrays = function () {
+        for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+        for (var r = Array(s), k = 0, i = 0; i < il; i++)
+            for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+                r[k] = a[j];
+        return r;
+    };
+
+    __spreadArray = function (to, from, pack) {
+        if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+            if (ar || !(i in from)) {
+                if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+                ar[i] = from[i];
+            }
+        }
+        return to.concat(ar || Array.prototype.slice.call(from));
+    };
+
+    __await = function (v) {
+        return this instanceof __await ? (this.v = v, this) : new __await(v);
+    };
+
+    __asyncGenerator = function (thisArg, _arguments, generator) {
+        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+        var g = generator.apply(thisArg, _arguments || []), i, q = [];
+        return i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i;
+        function verb(n) { if (g[n]) i[n] = function (v) { return new Promise(function (a, b) { q.push([n, v, a, b]) > 1 || resume(n, v); }); }; }
+        function resume(n, v) { try { step(g[n](v)); } catch (e) { settle(q[0][3], e); } }
+        function step(r) { r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r);  }
+        function fulfill(value) { resume("next", value); }
+        function reject(value) { resume("throw", value); }
+        function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
+    };
+
+    __asyncDelegator = function (o) {
+        var i, p;
+        return i = {}, verb("next"), verb("throw", function (e) { throw e; }), verb("return"), i[Symbol.iterator] = function () { return this; }, i;
+        function verb(n, f) { i[n] = o[n] ? function (v) { return (p = !p) ? { value: __await(o[n](v)), done: n === "return" } : f ? f(v) : v; } : f; }
+    };
+
+    __asyncValues = function (o) {
+        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+        var m = o[Symbol.asyncIterator], i;
+        return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+        function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+        function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+    };
+
+    __makeTemplateObject = function (cooked, raw) {
+        if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
+        return cooked;
+    };
+
+    var __setModuleDefault = Object.create ? (function(o, v) {
+        Object.defineProperty(o, "default", { enumerable: true, value: v });
+    }) : function(o, v) {
+        o["default"] = v;
+    };
+
+    __importStar = function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+
+    __importDefault = function (mod) {
+        return (mod && mod.__esModule) ? mod : { "default": mod };
+    };
+
+    __classPrivateFieldGet = function (receiver, state, kind, f) {
+        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+        return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+    };
+
+    __classPrivateFieldSet = function (receiver, state, value, kind, f) {
+        if (kind === "m") throw new TypeError("Private method is not writable");
+        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+        return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+    };
+
+    __classPrivateFieldIn = function (state, receiver) {
+        if (receiver === null || (typeof receiver !== "object" && typeof receiver !== "function")) throw new TypeError("Cannot use 'in' operator on non-object");
+        return typeof state === "function" ? receiver === state : state.has(receiver);
+    };
+
+    exporter("__extends", __extends);
+    exporter("__assign", __assign);
+    exporter("__rest", __rest);
+    exporter("__decorate", __decorate);
+    exporter("__param", __param);
+    exporter("__metadata", __metadata);
+    exporter("__awaiter", __awaiter);
+    exporter("__generator", __generator);
+    exporter("__exportStar", __exportStar);
+    exporter("__createBinding", __createBinding);
+    exporter("__values", __values);
+    exporter("__read", __read);
+    exporter("__spread", __spread);
+    exporter("__spreadArrays", __spreadArrays);
+    exporter("__spreadArray", __spreadArray);
+    exporter("__await", __await);
+    exporter("__asyncGenerator", __asyncGenerator);
+    exporter("__asyncDelegator", __asyncDelegator);
+    exporter("__asyncValues", __asyncValues);
+    exporter("__makeTemplateObject", __makeTemplateObject);
+    exporter("__importStar", __importStar);
+    exporter("__importDefault", __importDefault);
+    exporter("__classPrivateFieldGet", __classPrivateFieldGet);
+    exporter("__classPrivateFieldSet", __classPrivateFieldSet);
+    exporter("__classPrivateFieldIn", __classPrivateFieldIn);
+});
+¨/SECURITY.md≈
+≈<!-- BEGIN MICROSOFT SECURITY.MD V0.0.7 BLOCK -->
+
+## Security
+
+Microsoft takes the security of our software products and services seriously, which includes all source code repositories managed through our GitHub organizations, which include [Microsoft](https://github.com/Microsoft), [Azure](https://github.com/Azure), [DotNet](https://github.com/dotnet), [AspNet](https://github.com/aspnet), [Xamarin](https://github.com/xamarin), and [our GitHub organizations](https://opensource.microsoft.com/).
+
+If you believe you have found a security vulnerability in any Microsoft-owned repository that meets [Microsoft's definition of a security vulnerability](https://aka.ms/opensource/security/definition), please report it to us as described below.
+
+## Reporting Security Issues
+
+**Please do not report security vulnerabilities through public GitHub issues.**
+
+Instead, please report them to the Microsoft Security Response Center (MSRC) at [https://msrc.microsoft.com/create-report](https://aka.ms/opensource/security/create-report).
+
+If you prefer to submit without logging in, send email to [secure@microsoft.com](mailto:secure@microsoft.com).  If possible, encrypt your message with our PGP key; please download it from the [Microsoft Security Response Center PGP Key page](https://aka.ms/opensource/security/pgpkey).
+
+You should receive a response within 24 hours. If for some reason you do not, please follow up via email to ensure we received your original message. Additional information can be found at [microsoft.com/msrc](https://aka.ms/opensource/security/msrc). 
+
+Please include the requested information listed below (as much as you can provide) to help us better understand the nature and scope of the possible issue:
+
+  * Type of issue (e.g. buffer overflow, SQL injection, cross-site scripting, etc.)
+  * Full paths of source file(s) related to the manifestation of the issue
+  * The location of the affected source code (tag/branch/commit or direct URL)
+  * Any special configuration required to reproduce the issue
+  * Step-by-step instructions to reproduce the issue
+  * Proof-of-concept or exploit code (if possible)
+  * Impact of the issue, including how an attacker might exploit the issue
+
+This information will help us triage your report more quickly.
+
+If you are reporting for a bug bounty, more complete reports can contribute to a higher bounty award. Please visit our [Microsoft Bug Bounty Program](https://aka.ms/opensource/security/bounty) page for more details about our active programs.
+
+## Preferred Languages
+
+We prefer all communications to be in English.
+
+## Policy
+
+Microsoft follows the principle of [Coordinated Vulnerability Disclosure](https://aka.ms/opensource/security/cvd).
+
+<!-- END MICROSOFT SECURITY.MD BLOCK -->
+≠/tslib.es6.js≈0/******************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+/* global Reflect, Promise */
+
+var extendStatics = function(d, b) {
+    extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+    return extendStatics(d, b);
+};
+
+export function __extends(d, b) {
+    if (typeof b !== "function" && b !== null)
+        throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+    extendStatics(d, b);
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+}
+
+export var __assign = function() {
+    __assign = Object.assign || function __assign(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+        }
+        return t;
+    }
+    return __assign.apply(this, arguments);
+}
+
+export function __rest(s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+}
+
+export function __decorate(decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+}
+
+export function __param(paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+}
+
+export function __metadata(metadataKey, metadataValue) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
+}
+
+export function __awaiter(thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+}
+
+export function __generator(thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+}
+
+export var __createBinding = Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+        desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+});
+
+export function __exportStar(m, o) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(o, p)) __createBinding(o, m, p);
+}
+
+export function __values(o) {
+    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+    if (m) return m.call(o);
+    if (o && typeof o.length === "number") return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+}
+
+export function __read(o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+}
+
+/** @deprecated */
+export function __spread() {
+    for (var ar = [], i = 0; i < arguments.length; i++)
+        ar = ar.concat(__read(arguments[i]));
+    return ar;
+}
+
+/** @deprecated */
+export function __spreadArrays() {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+    for (var r = Array(s), k = 0, i = 0; i < il; i++)
+        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+            r[k] = a[j];
+    return r;
+}
+
+export function __spreadArray(to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+}
+
+export function __await(v) {
+    return this instanceof __await ? (this.v = v, this) : new __await(v);
+}
+
+export function __asyncGenerator(thisArg, _arguments, generator) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var g = generator.apply(thisArg, _arguments || []), i, q = [];
+    return i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i;
+    function verb(n) { if (g[n]) i[n] = function (v) { return new Promise(function (a, b) { q.push([n, v, a, b]) > 1 || resume(n, v); }); }; }
+    function resume(n, v) { try { step(g[n](v)); } catch (e) { settle(q[0][3], e); } }
+    function step(r) { r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r); }
+    function fulfill(value) { resume("next", value); }
+    function reject(value) { resume("throw", value); }
+    function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
+}
+
+export function __asyncDelegator(o) {
+    var i, p;
+    return i = {}, verb("next"), verb("throw", function (e) { throw e; }), verb("return"), i[Symbol.iterator] = function () { return this; }, i;
+    function verb(n, f) { i[n] = o[n] ? function (v) { return (p = !p) ? { value: __await(o[n](v)), done: n === "return" } : f ? f(v) : v; } : f; }
+}
+
+export function __asyncValues(o) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var m = o[Symbol.asyncIterator], i;
+    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+}
+
+export function __makeTemplateObject(cooked, raw) {
+    if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
+    return cooked;
+};
+
+var __setModuleDefault = Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+};
+
+export function __importStar(mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+}
+
+export function __importDefault(mod) {
+    return (mod && mod.__esModule) ? mod : { default: mod };
+}
+
+export function __classPrivateFieldGet(receiver, state, kind, f) {
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+}
+
+export function __classPrivateFieldSet(receiver, state, value, kind, f) {
+    if (kind === "m") throw new TypeError("Private method is not writable");
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+}
+
+export function __classPrivateFieldIn(state, receiver) {
+    if (receiver === null || (typeof receiver !== "object" && typeof receiver !== "function")) throw new TypeError("Cannot use 'in' operator on non-object");
+    return typeof state === "function" ? receiver === state : state.has(receiver);
+}
+¥/CopyrightNotice.txt≈6/******************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+
+™/README.md≈¿# tslib
+
+This is a runtime library for [TypeScript](http://www.typescriptlang.org/) that contains all of the TypeScript helper functions.
+
+This library is primarily used by the `--importHelpers` flag in TypeScript.
+When using `--importHelpers`, a module that uses helper functions like `__extends` and `__assign` in the following emitted file:
+
+```ts
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
+};
+exports.x = {};
+exports.y = __assign({}, exports.x);
+
+```
+
+will instead be emitted as something like the following:
+
+```ts
+var tslib_1 = require("tslib");
+exports.x = {};
+exports.y = tslib_1.__assign({}, exports.x);
+```
+
+Because this can avoid duplicate declarations of things like `__extends`, `__assign`, etc., this means delivering users smaller files on average, as well as less runtime overhead.
+For optimized bundles with TypeScript, you should absolutely consider using `tslib` and `--importHelpers`.
+
+# Installing
+
+For the latest stable version, run:
+
+## npm
+
+```sh
+# TypeScript 3.9.2 or later
+npm install tslib
+
+# TypeScript 3.8.4 or earlier
+npm install tslib@^1
+
+# TypeScript 2.3.2 or earlier
+npm install tslib@1.6.1
+```
+
+## yarn
+
+```sh
+# TypeScript 3.9.2 or later
+yarn add tslib
+
+# TypeScript 3.8.4 or earlier
+yarn add tslib@^1
+
+# TypeScript 2.3.2 or earlier
+yarn add tslib@1.6.1
+```
+
+## bower
+
+```sh
+# TypeScript 3.9.2 or later
+bower install tslib
+
+# TypeScript 3.8.4 or earlier
+bower install tslib@^1
+
+# TypeScript 2.3.2 or earlier
+bower install tslib@1.6.1
+```
+
+## JSPM
+
+```sh
+# TypeScript 3.9.2 or later
+jspm install tslib
+
+# TypeScript 3.8.4 or earlier
+jspm install tslib@^1
+
+# TypeScript 2.3.2 or earlier
+jspm install tslib@1.6.1
+```
+
+# Usage
+
+Set the `importHelpers` compiler option on the command line:
+
+```
+tsc --importHelpers file.ts
+```
+
+or in your tsconfig.json:
+
+```json
+{
+    "compilerOptions": {
+        "importHelpers": true
+    }
+}
+```
+
+#### For bower and JSPM users
+
+You will need to add a `paths` mapping for `tslib`, e.g. For Bower users:
+
+```json
+{
+    "compilerOptions": {
+        "module": "amd",
+        "importHelpers": true,
+        "baseUrl": "./",
+        "paths": {
+            "tslib" : ["bower_components/tslib/tslib.d.ts"]
+        }
+    }
+}
+```
+
+For JSPM users:
+
+```json
+{
+    "compilerOptions": {
+        "module": "system",
+        "importHelpers": true,
+        "baseUrl": "./",
+        "paths": {
+            "tslib" : ["jspm_packages/npm/tslib@2.x.y/tslib.d.ts"]
+        }
+    }
+}
+```
+
+## Deployment
+
+- Choose your new version number
+- Set it in `package.json` and `bower.json`
+- Create a tag: `git tag [version]`
+- Push the tag: `git push --tags`
+- Create a [release in GitHub](https://github.com/microsoft/tslib/releases)
+- Run the [publish to npm](https://github.com/microsoft/tslib/actions?query=workflow%3A%22Publish+to+NPM%22) workflow
+
+Done.
+
+# Contribute
+
+There are many ways to [contribute](https://github.com/Microsoft/TypeScript/blob/master/CONTRIBUTING.md) to TypeScript.
+
+* [Submit bugs](https://github.com/Microsoft/TypeScript/issues) and help us verify fixes as they are checked in.
+* Review the [source code changes](https://github.com/Microsoft/TypeScript/pulls).
+* Engage with other TypeScript users and developers on [StackOverflow](http://stackoverflow.com/questions/tagged/typescript).
+* Join the [#typescript](http://twitter.com/#!/search/realtime/%23typescript) discussion on Twitter.
+* [Contribute bug fixes](https://github.com/Microsoft/TypeScript/blob/master/CONTRIBUTING.md).
+
+# Documentation
+
+* [Quick tutorial](http://www.typescriptlang.org/Tutorial)
+* [Programming handbook](http://www.typescriptlang.org/Handbook)
+* [Homepage](http://www.typescriptlang.org/)
+≠/package.json≈®{
+    "name": "tslib",
+    "author": "Microsoft Corp.",
+    "homepage": "https://www.typescriptlang.org/",
+    "version": "2.4.1",
+    "license": "0BSD",
+    "description": "Runtime library for TypeScript helper functions",
+    "keywords": [
+        "TypeScript",
+        "Microsoft",
+        "compiler",
+        "language",
+        "javascript",
+        "tslib",
+        "runtime"
+    ],
+    "bugs": {
+        "url": "https://github.com/Microsoft/TypeScript/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Microsoft/tslib.git"
+    },
+    "main": "tslib.js",
+    "module": "tslib.es6.js",
+    "jsnext:main": "tslib.es6.js",
+    "typings": "tslib.d.ts",
+    "sideEffects": false,
+    "exports": {
+        ".": {
+            "module": "./tslib.es6.js",
+            "import": "./modules/index.js",
+            "default": "./tslib.js"
+        },
+        "./*": "./*",
+        "./": "./"
+    }
+}
+´/tslib.d.ts≈9</******************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+
+/**
+ * Used to shim class extends.
+ *
+ * @param d The derived class.
+ * @param b The base class.
+ */
+export declare function __extends(d: Function, b: Function): void;
+
+/**
+ * Copy the values of all of the enumerable own properties from one or more source objects to a
+ * target object. Returns the target object.
+ *
+ * @param t The target object to copy to.
+ * @param sources One or more source objects from which to copy properties
+ */
+export declare function __assign(t: any, ...sources: any[]): any;
+
+/**
+ * Performs a rest spread on an object.
+ *
+ * @param t The source value.
+ * @param propertyNames The property names excluded from the rest spread.
+ */
+export declare function __rest(t: any, propertyNames: (string | symbol)[]): any;
+
+/**
+ * Applies decorators to a target object
+ *
+ * @param decorators The set of decorators to apply.
+ * @param target The target object.
+ * @param key If specified, the own property to apply the decorators to.
+ * @param desc The property descriptor, defaults to fetching the descriptor from the target object.
+ * @experimental
+ */
+export declare function __decorate(decorators: Function[], target: any, key?: string | symbol, desc?: any): any;
+
+/**
+ * Creates an observing function decorator from a parameter decorator.
+ *
+ * @param paramIndex The parameter index to apply the decorator to.
+ * @param decorator The parameter decorator to apply. Note that the return value is ignored.
+ * @experimental
+ */
+export declare function __param(paramIndex: number, decorator: Function): Function;
+
+/**
+ * Creates a decorator that sets metadata.
+ *
+ * @param metadataKey The metadata key
+ * @param metadataValue The metadata value
+ * @experimental
+ */
+export declare function __metadata(metadataKey: any, metadataValue: any): Function;
+
+/**
+ * Converts a generator function into a pseudo-async function, by treating each `yield` as an `await`.
+ *
+ * @param thisArg The reference to use as the `this` value in the generator function
+ * @param _arguments The optional arguments array
+ * @param P The optional promise constructor argument, defaults to the `Promise` property of the global object.
+ * @param generator The generator function
+ */
+export declare function __awaiter(thisArg: any, _arguments: any, P: Function, generator: Function): any;
+
+/**
+ * Creates an Iterator object using the body as the implementation.
+ *
+ * @param thisArg The reference to use as the `this` value in the function
+ * @param body The generator state-machine based implementation.
+ *
+ * @see [./docs/generator.md]
+ */
+export declare function __generator(thisArg: any, body: Function): any;
+
+/**
+ * Creates bindings for all enumerable properties of `m` on `exports`
+ *
+ * @param m The source object
+ * @param exports The `exports` object.
+ */
+export declare function __exportStar(m: any, o: any): void;
+
+/**
+ * Creates a value iterator from an `Iterable` or `ArrayLike` object.
+ *
+ * @param o The object.
+ * @throws {TypeError} If `o` is neither `Iterable`, nor an `ArrayLike`.
+ */
+export declare function __values(o: any): any;
+
+/**
+ * Reads values from an `Iterable` or `ArrayLike` object and returns the resulting array.
+ *
+ * @param o The object to read from.
+ * @param n The maximum number of arguments to read, defaults to `Infinity`.
+ */
+export declare function __read(o: any, n?: number): any[];
+
+/**
+ * Creates an array from iterable spread.
+ *
+ * @param args The Iterable objects to spread.
+ * @deprecated since TypeScript 4.2 - Use `__spreadArray`
+ */
+export declare function __spread(...args: any[][]): any[];
+
+/**
+ * Creates an array from array spread.
+ *
+ * @param args The ArrayLikes to spread into the resulting array.
+ * @deprecated since TypeScript 4.2 - Use `__spreadArray`
+ */
+export declare function __spreadArrays(...args: any[][]): any[];
+
+/**
+ * Spreads the `from` array into the `to` array.
+ *
+ * @param pack Replace empty elements with `undefined`.
+ */
+export declare function __spreadArray(to: any[], from: any[], pack?: boolean): any[];
+
+/**
+ * Creates an object that signals to `__asyncGenerator` that it shouldn't be yielded,
+ * and instead should be awaited and the resulting value passed back to the generator.
+ *
+ * @param v The value to await.
+ */
+export declare function __await(v: any): any;
+
+/**
+ * Converts a generator function into an async generator function, by using `yield __await`
+ * in place of normal `await`.
+ *
+ * @param thisArg The reference to use as the `this` value in the generator function
+ * @param _arguments The optional arguments array
+ * @param generator The generator function
+ */
+export declare function __asyncGenerator(thisArg: any, _arguments: any, generator: Function): any;
+
+/**
+ * Used to wrap a potentially async iterator in such a way so that it wraps the result
+ * of calling iterator methods of `o` in `__await` instances, and then yields the awaited values.
+ *
+ * @param o The potentially async iterator.
+ * @returns A synchronous iterator yielding `__await` instances on every odd invocation
+ *          and returning the awaited `IteratorResult` passed to `next` every even invocation.
+ */
+export declare function __asyncDelegator(o: any): any;
+
+/**
+ * Creates a value async iterator from an `AsyncIterable`, `Iterable` or `ArrayLike` object.
+ *
+ * @param o The object.
+ * @throws {TypeError} If `o` is neither `AsyncIterable`, `Iterable`, nor an `ArrayLike`.
+ */
+export declare function __asyncValues(o: any): any;
+
+/**
+ * Creates a `TemplateStringsArray` frozen object from the `cooked` and `raw` arrays.
+ *
+ * @param cooked The cooked possibly-sparse array.
+ * @param raw The raw string content.
+ */
+export declare function __makeTemplateObject(cooked: string[], raw: string[]): TemplateStringsArray;
+
+/**
+ * Used to shim default and named imports in ECMAScript Modules transpiled to CommonJS.
+ *
+ * ```js
+ * import Default, { Named, Other } from "mod";
+ * // or
+ * import { default as Default, Named, Other } from "mod";
+ * ```
+ *
+ * @param mod The CommonJS module exports object.
+ */
+export declare function __importStar<T>(mod: T): T;
+
+/**
+ * Used to shim default imports in ECMAScript Modules transpiled to CommonJS.
+ *
+ * ```js
+ * import Default from "mod";
+ * ```
+ *
+ * @param mod The CommonJS module exports object.
+ */
+export declare function __importDefault<T>(mod: T): T | { default: T };
+
+/**
+ * Emulates reading a private instance field.
+ *
+ * @param receiver The instance from which to read the private field.
+ * @param state A WeakMap containing the private field value for an instance.
+ * @param kind Either `"f"` for a field, `"a"` for an accessor, or `"m"` for a method.
+ *
+ * @throws {TypeError} If `state` doesn't have an entry for `receiver`.
+ */
+export declare function __classPrivateFieldGet<T extends object, V>(
+    receiver: T,
+    state: { has(o: T): boolean, get(o: T): V | undefined },
+    kind?: "f"
+): V;
+
+/**
+ * Emulates reading a private static field.
+ *
+ * @param receiver The object from which to read the private static field.
+ * @param state The class constructor containing the definition of the static field.
+ * @param kind Either `"f"` for a field, `"a"` for an accessor, or `"m"` for a method.
+ * @param f The descriptor that holds the static field value.
+ *
+ * @throws {TypeError} If `receiver` is not `state`.
+ */
+export declare function __classPrivateFieldGet<T extends new (...args: any[]) => unknown, V>(
+    receiver: T,
+    state: T,
+    kind: "f",
+    f: { value: V }
+): V;
+
+/**
+ * Emulates evaluating a private instance "get" accessor.
+ *
+ * @param receiver The instance on which to evaluate the private "get" accessor.
+ * @param state A WeakSet used to verify an instance supports the private "get" accessor.
+ * @param kind Either `"f"` for a field, `"a"` for an accessor, or `"m"` for a method.
+ * @param f The "get" accessor function to evaluate.
+ *
+ * @throws {TypeError} If `state` doesn't have an entry for `receiver`.
+ */
+export declare function __classPrivateFieldGet<T extends object, V>(
+    receiver: T,
+    state: { has(o: T): boolean },
+    kind: "a",
+    f: () => V
+): V;
+
+/**
+ * Emulates evaluating a private static "get" accessor.
+ *
+ * @param receiver The object on which to evaluate the private static "get" accessor.
+ * @param state The class constructor containing the definition of the static "get" accessor.
+ * @param kind Either `"f"` for a field, `"a"` for an accessor, or `"m"` for a method.
+ * @param f The "get" accessor function to evaluate.
+ *
+ * @throws {TypeError} If `receiver` is not `state`.
+ */
+export declare function __classPrivateFieldGet<T extends new (...args: any[]) => unknown, V>(
+    receiver: T,
+    state: T,
+    kind: "a",
+    f: () => V
+): V;
+
+/**
+ * Emulates reading a private instance method.
+ *
+ * @param receiver The instance from which to read a private method.
+ * @param state A WeakSet used to verify an instance supports the private method.
+ * @param kind Either `"f"` for a field, `"a"` for an accessor, or `"m"` for a method.
+ * @param f The function to return as the private instance method.
+ *
+ * @throws {TypeError} If `state` doesn't have an entry for `receiver`.
+ */
+export declare function __classPrivateFieldGet<T extends object, V extends (...args: any[]) => unknown>(
+    receiver: T,
+    state: { has(o: T): boolean },
+    kind: "m",
+    f: V
+): V;
+
+/**
+ * Emulates reading a private static method.
+ *
+ * @param receiver The object from which to read the private static method.
+ * @param state The class constructor containing the definition of the static method.
+ * @param kind Either `"f"` for a field, `"a"` for an accessor, or `"m"` for a method.
+ * @param f The function to return as the private static method.
+ *
+ * @throws {TypeError} If `receiver` is not `state`.
+ */
+export declare function __classPrivateFieldGet<T extends new (...args: any[]) => unknown, V extends (...args: any[]) => unknown>(
+    receiver: T,
+    state: T,
+    kind: "m",
+    f: V
+): V;
+
+/**
+ * Emulates writing to a private instance field.
+ *
+ * @param receiver The instance on which to set a private field value.
+ * @param state A WeakMap used to store the private field value for an instance.
+ * @param value The value to store in the private field.
+ * @param kind Either `"f"` for a field, `"a"` for an accessor, or `"m"` for a method.
+ *
+ * @throws {TypeError} If `state` doesn't have an entry for `receiver`.
+ */
+export declare function __classPrivateFieldSet<T extends object, V>(
+    receiver: T,
+    state: { has(o: T): boolean, set(o: T, value: V): unknown },
+    value: V,
+    kind?: "f"
+): V;
+
+/**
+ * Emulates writing to a private static field.
+ *
+ * @param receiver The object on which to set the private static field.
+ * @param state The class constructor containing the definition of the private static field.
+ * @param value The value to store in the private field.
+ * @param kind Either `"f"` for a field, `"a"` for an accessor, or `"m"` for a method.
+ * @param f The descriptor that holds the static field value.
+ *
+ * @throws {TypeError} If `receiver` is not `state`.
+ */
+export declare function __classPrivateFieldSet<T extends new (...args: any[]) => unknown, V>(
+    receiver: T,
+    state: T,
+    value: V,
+    kind: "f",
+    f: { value: V }
+): V;
+
+/**
+ * Emulates writing to a private instance "set" accessor.
+ *
+ * @param receiver The instance on which to evaluate the private instance "set" accessor.
+ * @param state A WeakSet used to verify an instance supports the private "set" accessor.
+ * @param value The value to store in the private accessor.
+ * @param kind Either `"f"` for a field, `"a"` for an accessor, or `"m"` for a method.
+ * @param f The "set" accessor function to evaluate.
+ *
+ * @throws {TypeError} If `state` doesn't have an entry for `receiver`.
+ */
+export declare function __classPrivateFieldSet<T extends object, V>(
+    receiver: T,
+    state: { has(o: T): boolean },
+    value: V,
+    kind: "a",
+    f: (v: V) => void
+): V;
+
+/**
+ * Emulates writing to a private static "set" accessor.
+ *
+ * @param receiver The object on which to evaluate the private static "set" accessor.
+ * @param state The class constructor containing the definition of the static "set" accessor.
+ * @param value The value to store in the private field.
+ * @param kind Either `"f"` for a field, `"a"` for an accessor, or `"m"` for a method.
+ * @param f The "set" accessor function to evaluate.
+ *
+ * @throws {TypeError} If `receiver` is not `state`.
+ */
+export declare function __classPrivateFieldSet<T extends new (...args: any[]) => unknown, V>(
+    receiver: T,
+    state: T,
+    value: V,
+    kind: "a",
+    f: (v: V) => void
+): V;
+
+/**
+ * Checks for the existence of a private field/method/accessor.
+ *
+ * @param state The class constructor containing the static member, or the WeakMap or WeakSet associated with a private instance member.
+ * @param receiver The object for which to test the presence of the private member.
+ */
+export declare function __classPrivateFieldIn(
+    state: (new (...args: any[]) => unknown) | { has(o: any): boolean },
+    receiver: unknown,
+): boolean;
+
+/**
+ * Creates a re-export binding on `object` with key `objectKey` that references `target[key]`.
+ *
+ * @param object The local `exports` object.
+ * @param target The object to re-export from.
+ * @param key The property key of `target` to re-export.
+ * @param objectKey The property key to re-export as. Defaults to `key`.
+ */
+export declare function __createBinding(object: object, target: object, key: PropertyKey, objectKey?: PropertyKey): void;
+´/tslib.htmlƒ <script src="tslib.js"></script>µ/modules/package.jsonƒ{
+    "type": "module"
+}

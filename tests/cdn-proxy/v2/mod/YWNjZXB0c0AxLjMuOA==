@@ -1,0 +1,691 @@
+Ö´/HISTORY.md≈Ë1.3.8 / 2022-02-02
+==================
+
+  * deps: mime-types@~2.1.34
+    - deps: mime-db@~1.51.0
+  * deps: negotiator@0.6.3
+
+1.3.7 / 2019-04-29
+==================
+
+  * deps: negotiator@0.6.2
+    - Fix sorting charset, encoding, and language with extra parameters
+
+1.3.6 / 2019-04-28
+==================
+
+  * deps: mime-types@~2.1.24
+    - deps: mime-db@~1.40.0
+
+1.3.5 / 2018-02-28
+==================
+
+  * deps: mime-types@~2.1.18
+    - deps: mime-db@~1.33.0
+
+1.3.4 / 2017-08-22
+==================
+
+  * deps: mime-types@~2.1.16
+    - deps: mime-db@~1.29.0
+
+1.3.3 / 2016-05-02
+==================
+
+  * deps: mime-types@~2.1.11
+    - deps: mime-db@~1.23.0
+  * deps: negotiator@0.6.1
+    - perf: improve `Accept` parsing speed
+    - perf: improve `Accept-Charset` parsing speed
+    - perf: improve `Accept-Encoding` parsing speed
+    - perf: improve `Accept-Language` parsing speed
+
+1.3.2 / 2016-03-08
+==================
+
+  * deps: mime-types@~2.1.10
+    - Fix extension of `application/dash+xml`
+    - Update primary extension for `audio/mp4`
+    - deps: mime-db@~1.22.0
+
+1.3.1 / 2016-01-19
+==================
+
+  * deps: mime-types@~2.1.9
+    - deps: mime-db@~1.21.0
+
+1.3.0 / 2015-09-29
+==================
+
+  * deps: mime-types@~2.1.7
+    - deps: mime-db@~1.19.0
+  * deps: negotiator@0.6.0
+    - Fix including type extensions in parameters in `Accept` parsing
+    - Fix parsing `Accept` parameters with quoted equals
+    - Fix parsing `Accept` parameters with quoted semicolons
+    - Lazy-load modules from main entry point
+    - perf: delay type concatenation until needed
+    - perf: enable strict mode
+    - perf: hoist regular expressions
+    - perf: remove closures getting spec properties
+    - perf: remove a closure from media type parsing
+    - perf: remove property delete from media type parsing
+
+1.2.13 / 2015-09-06
+===================
+
+  * deps: mime-types@~2.1.6
+    - deps: mime-db@~1.18.0
+
+1.2.12 / 2015-07-30
+===================
+
+  * deps: mime-types@~2.1.4
+    - deps: mime-db@~1.16.0
+
+1.2.11 / 2015-07-16
+===================
+
+  * deps: mime-types@~2.1.3
+    - deps: mime-db@~1.15.0
+
+1.2.10 / 2015-07-01
+===================
+
+  * deps: mime-types@~2.1.2
+    - deps: mime-db@~1.14.0
+
+1.2.9 / 2015-06-08
+==================
+
+  * deps: mime-types@~2.1.1
+    - perf: fix deopt during mapping
+
+1.2.8 / 2015-06-07
+==================
+
+  * deps: mime-types@~2.1.0
+    - deps: mime-db@~1.13.0
+  * perf: avoid argument reassignment & argument slice
+  * perf: avoid negotiator recursive construction
+  * perf: enable strict mode
+  * perf: remove unnecessary bitwise operator
+
+1.2.7 / 2015-05-10
+==================
+
+  * deps: negotiator@0.5.3
+    - Fix media type parameter matching to be case-insensitive
+
+1.2.6 / 2015-05-07
+==================
+
+  * deps: mime-types@~2.0.11
+    - deps: mime-db@~1.9.1
+  * deps: negotiator@0.5.2
+    - Fix comparing media types with quoted values
+    - Fix splitting media types with quoted commas
+
+1.2.5 / 2015-03-13
+==================
+
+  * deps: mime-types@~2.0.10
+    - deps: mime-db@~1.8.0
+
+1.2.4 / 2015-02-14
+==================
+
+  * Support Node.js 0.6
+  * deps: mime-types@~2.0.9
+    - deps: mime-db@~1.7.0
+  * deps: negotiator@0.5.1
+    - Fix preference sorting to be stable for long acceptable lists
+
+1.2.3 / 2015-01-31
+==================
+
+  * deps: mime-types@~2.0.8
+    - deps: mime-db@~1.6.0
+
+1.2.2 / 2014-12-30
+==================
+
+  * deps: mime-types@~2.0.7
+    - deps: mime-db@~1.5.0
+
+1.2.1 / 2014-12-30
+==================
+
+  * deps: mime-types@~2.0.5
+    - deps: mime-db@~1.3.1
+
+1.2.0 / 2014-12-19
+==================
+
+  * deps: negotiator@0.5.0
+    - Fix list return order when large accepted list
+    - Fix missing identity encoding when q=0 exists
+    - Remove dynamic building of Negotiator class
+
+1.1.4 / 2014-12-10
+==================
+
+  * deps: mime-types@~2.0.4
+    - deps: mime-db@~1.3.0
+
+1.1.3 / 2014-11-09
+==================
+
+  * deps: mime-types@~2.0.3
+    - deps: mime-db@~1.2.0
+
+1.1.2 / 2014-10-14
+==================
+
+  * deps: negotiator@0.4.9
+    - Fix error when media type has invalid parameter
+
+1.1.1 / 2014-09-28
+==================
+
+  * deps: mime-types@~2.0.2
+    - deps: mime-db@~1.1.0
+  * deps: negotiator@0.4.8
+    - Fix all negotiations to be case-insensitive
+    - Stable sort preferences of same quality according to client order
+
+1.1.0 / 2014-09-02
+==================
+
+  * update `mime-types`
+
+1.0.7 / 2014-07-04
+==================
+
+  * Fix wrong type returned from `type` when match after unknown extension
+
+1.0.6 / 2014-06-24
+==================
+
+  * deps: negotiator@0.4.7
+
+1.0.5 / 2014-06-20
+==================
+
+ * fix crash when unknown extension given
+
+1.0.4 / 2014-06-19
+==================
+
+  * use `mime-types`
+
+1.0.3 / 2014-06-11
+==================
+
+  * deps: negotiator@0.4.6
+    - Order by specificity when quality is the same
+
+1.0.2 / 2014-05-29
+==================
+
+  * Fix interpretation when header not in request
+  * deps: pin negotiator@0.4.5
+
+1.0.1 / 2014-01-18
+==================
+
+  * Identity encoding isn't always acceptable
+  * deps: negotiator@~0.4.0
+
+1.0.0 / 2013-12-27
+==================
+
+  * Genesis
+™/README.md≈# accepts
+
+[![NPM Version][npm-version-image]][npm-url]
+[![NPM Downloads][npm-downloads-image]][npm-url]
+[![Node.js Version][node-version-image]][node-version-url]
+[![Build Status][github-actions-ci-image]][github-actions-ci-url]
+[![Test Coverage][coveralls-image]][coveralls-url]
+
+Higher level content negotiation based on [negotiator](https://www.npmjs.com/package/negotiator).
+Extracted from [koa](https://www.npmjs.com/package/koa) for general use.
+
+In addition to negotiator, it allows:
+
+- Allows types as an array or arguments list, ie `(['text/html', 'application/json'])`
+  as well as `('text/html', 'application/json')`.
+- Allows type shorthands such as `json`.
+- Returns `false` when no types match
+- Treats non-existent headers as `*`
+
+## Installation
+
+This is a [Node.js](https://nodejs.org/en/) module available through the
+[npm registry](https://www.npmjs.com/). Installation is done using the
+[`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
+
+```sh
+$ npm install accepts
+```
+
+## API
+
+```js
+var accepts = require('accepts')
+```
+
+### accepts(req)
+
+Create a new `Accepts` object for the given `req`.
+
+#### .charset(charsets)
+
+Return the first accepted charset. If nothing in `charsets` is accepted,
+then `false` is returned.
+
+#### .charsets()
+
+Return the charsets that the request accepts, in the order of the client's
+preference (most preferred first).
+
+#### .encoding(encodings)
+
+Return the first accepted encoding. If nothing in `encodings` is accepted,
+then `false` is returned.
+
+#### .encodings()
+
+Return the encodings that the request accepts, in the order of the client's
+preference (most preferred first).
+
+#### .language(languages)
+
+Return the first accepted language. If nothing in `languages` is accepted,
+then `false` is returned.
+
+#### .languages()
+
+Return the languages that the request accepts, in the order of the client's
+preference (most preferred first).
+
+#### .type(types)
+
+Return the first accepted type (and it is returned as the same text as what
+appears in the `types` array). If nothing in `types` is accepted, then `false`
+is returned.
+
+The `types` array can contain full MIME types or file extensions. Any value
+that is not a full MIME types is passed to `require('mime-types').lookup`.
+
+#### .types()
+
+Return the types that the request accepts, in the order of the client's
+preference (most preferred first).
+
+## Examples
+
+### Simple type negotiation
+
+This simple example shows how to use `accepts` to return a different typed
+respond body based on what the client wants to accept. The server lists it's
+preferences in order and will get back the best match between the client and
+server.
+
+```js
+var accepts = require('accepts')
+var http = require('http')
+
+function app (req, res) {
+  var accept = accepts(req)
+
+  // the order of this list is significant; should be server preferred order
+  switch (accept.type(['json', 'html'])) {
+    case 'json':
+      res.setHeader('Content-Type', 'application/json')
+      res.write('{"hello":"world!"}')
+      break
+    case 'html':
+      res.setHeader('Content-Type', 'text/html')
+      res.write('<b>hello, world!</b>')
+      break
+    default:
+      // the fallback is text/plain, so no need to specify it above
+      res.setHeader('Content-Type', 'text/plain')
+      res.write('hello, world!')
+      break
+  }
+
+  res.end()
+}
+
+http.createServer(app).listen(3000)
+```
+
+You can test this out with the cURL program:
+```sh
+curl -I -H'Accept: text/html' http://localhost:3000/
+```
+
+## License
+
+[MIT](LICENSE)
+
+[coveralls-image]: https://badgen.net/coveralls/c/github/jshttp/accepts/master
+[coveralls-url]: https://coveralls.io/r/jshttp/accepts?branch=master
+[github-actions-ci-image]: https://badgen.net/github/checks/jshttp/accepts/master?label=ci
+[github-actions-ci-url]: https://github.com/jshttp/accepts/actions/workflows/ci.yml
+[node-version-image]: https://badgen.net/npm/node/accepts
+[node-version-url]: https://nodejs.org/en/download
+[npm-downloads-image]: https://badgen.net/npm/dm/accepts
+[npm-url]: https://npmjs.org/package/accepts
+[npm-version-image]: https://badgen.net/npm/v/accepts
+≠/package.json≈Ö{
+  "name": "accepts",
+  "description": "Higher-level content negotiation",
+  "version": "1.3.8",
+  "contributors": [
+    "Douglas Christopher Wilson <doug@somethingdoug.com>",
+    "Jonathan Ong <me@jongleberry.com> (http://jongleberry.com)"
+  ],
+  "license": "MIT",
+  "repository": "jshttp/accepts",
+  "dependencies": {
+    "mime-types": "~2.1.34",
+    "negotiator": "0.6.3"
+  },
+  "devDependencies": {
+    "deep-equal": "1.0.1",
+    "eslint": "7.32.0",
+    "eslint-config-standard": "14.1.1",
+    "eslint-plugin-import": "2.25.4",
+    "eslint-plugin-markdown": "2.2.1",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-promise": "4.3.1",
+    "eslint-plugin-standard": "4.1.0",
+    "mocha": "9.2.0",
+    "nyc": "15.1.0"
+  },
+  "files": [
+    "LICENSE",
+    "HISTORY.md",
+    "index.js"
+  ],
+  "engines": {
+    "node": ">= 0.6"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "mocha --reporter spec --check-leaks --bail test/",
+    "test-ci": "nyc --reporter=lcov --reporter=text npm test",
+    "test-cov": "nyc --reporter=html --reporter=text npm test"
+  },
+  "keywords": [
+    "content",
+    "negotiation",
+    "accept",
+    "accepts"
+  ]
+}
+®/LICENSE≈è(The MIT License)
+
+Copyright (c) 2014 Jonathan Ong <me@jongleberry.com>
+Copyright (c) 2015 Douglas Christopher Wilson <doug@somethingdoug.com>
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+©/index.js≈Ñ/*!
+ * accepts
+ * Copyright(c) 2014 Jonathan Ong
+ * Copyright(c) 2015 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+'use strict'
+
+/**
+ * Module dependencies.
+ * @private
+ */
+
+var Negotiator = require('negotiator')
+var mime = require('mime-types')
+
+/**
+ * Module exports.
+ * @public
+ */
+
+module.exports = Accepts
+
+/**
+ * Create a new Accepts object for the given req.
+ *
+ * @param {object} req
+ * @public
+ */
+
+function Accepts (req) {
+  if (!(this instanceof Accepts)) {
+    return new Accepts(req)
+  }
+
+  this.headers = req.headers
+  this.negotiator = new Negotiator(req)
+}
+
+/**
+ * Check if the given `type(s)` is acceptable, returning
+ * the best match when true, otherwise `undefined`, in which
+ * case you should respond with 406 "Not Acceptable".
+ *
+ * The `type` value may be a single mime type string
+ * such as "application/json", the extension name
+ * such as "json" or an array `["json", "html", "text/plain"]`. When a list
+ * or array is given the _best_ match, if any is returned.
+ *
+ * Examples:
+ *
+ *     // Accept: text/html
+ *     this.types('html');
+ *     // => "html"
+ *
+ *     // Accept: text/*, application/json
+ *     this.types('html');
+ *     // => "html"
+ *     this.types('text/html');
+ *     // => "text/html"
+ *     this.types('json', 'text');
+ *     // => "json"
+ *     this.types('application/json');
+ *     // => "application/json"
+ *
+ *     // Accept: text/*, application/json
+ *     this.types('image/png');
+ *     this.types('png');
+ *     // => undefined
+ *
+ *     // Accept: text/*;q=.5, application/json
+ *     this.types(['html', 'json']);
+ *     this.types('html', 'json');
+ *     // => "json"
+ *
+ * @param {String|Array} types...
+ * @return {String|Array|Boolean}
+ * @public
+ */
+
+Accepts.prototype.type =
+Accepts.prototype.types = function (types_) {
+  var types = types_
+
+  // support flattened arguments
+  if (types && !Array.isArray(types)) {
+    types = new Array(arguments.length)
+    for (var i = 0; i < types.length; i++) {
+      types[i] = arguments[i]
+    }
+  }
+
+  // no types, return all requested types
+  if (!types || types.length === 0) {
+    return this.negotiator.mediaTypes()
+  }
+
+  // no accept header, return first given type
+  if (!this.headers.accept) {
+    return types[0]
+  }
+
+  var mimes = types.map(extToMime)
+  var accepts = this.negotiator.mediaTypes(mimes.filter(validMime))
+  var first = accepts[0]
+
+  return first
+    ? types[mimes.indexOf(first)]
+    : false
+}
+
+/**
+ * Return accepted encodings or best fit based on `encodings`.
+ *
+ * Given `Accept-Encoding: gzip, deflate`
+ * an array sorted by quality is returned:
+ *
+ *     ['gzip', 'deflate']
+ *
+ * @param {String|Array} encodings...
+ * @return {String|Array}
+ * @public
+ */
+
+Accepts.prototype.encoding =
+Accepts.prototype.encodings = function (encodings_) {
+  var encodings = encodings_
+
+  // support flattened arguments
+  if (encodings && !Array.isArray(encodings)) {
+    encodings = new Array(arguments.length)
+    for (var i = 0; i < encodings.length; i++) {
+      encodings[i] = arguments[i]
+    }
+  }
+
+  // no encodings, return all requested encodings
+  if (!encodings || encodings.length === 0) {
+    return this.negotiator.encodings()
+  }
+
+  return this.negotiator.encodings(encodings)[0] || false
+}
+
+/**
+ * Return accepted charsets or best fit based on `charsets`.
+ *
+ * Given `Accept-Charset: utf-8, iso-8859-1;q=0.2, utf-7;q=0.5`
+ * an array sorted by quality is returned:
+ *
+ *     ['utf-8', 'utf-7', 'iso-8859-1']
+ *
+ * @param {String|Array} charsets...
+ * @return {String|Array}
+ * @public
+ */
+
+Accepts.prototype.charset =
+Accepts.prototype.charsets = function (charsets_) {
+  var charsets = charsets_
+
+  // support flattened arguments
+  if (charsets && !Array.isArray(charsets)) {
+    charsets = new Array(arguments.length)
+    for (var i = 0; i < charsets.length; i++) {
+      charsets[i] = arguments[i]
+    }
+  }
+
+  // no charsets, return all requested charsets
+  if (!charsets || charsets.length === 0) {
+    return this.negotiator.charsets()
+  }
+
+  return this.negotiator.charsets(charsets)[0] || false
+}
+
+/**
+ * Return accepted languages or best fit based on `langs`.
+ *
+ * Given `Accept-Language: en;q=0.8, es, pt`
+ * an array sorted by quality is returned:
+ *
+ *     ['es', 'pt', 'en']
+ *
+ * @param {String|Array} langs...
+ * @return {Array|String}
+ * @public
+ */
+
+Accepts.prototype.lang =
+Accepts.prototype.langs =
+Accepts.prototype.language =
+Accepts.prototype.languages = function (languages_) {
+  var languages = languages_
+
+  // support flattened arguments
+  if (languages && !Array.isArray(languages)) {
+    languages = new Array(arguments.length)
+    for (var i = 0; i < languages.length; i++) {
+      languages[i] = arguments[i]
+    }
+  }
+
+  // no languages, return all requested languages
+  if (!languages || languages.length === 0) {
+    return this.negotiator.languages()
+  }
+
+  return this.negotiator.languages(languages)[0] || false
+}
+
+/**
+ * Convert extnames to mime.
+ *
+ * @param {String} type
+ * @return {String}
+ * @private
+ */
+
+function extToMime (type) {
+  return type.indexOf('/') === -1
+    ? mime.lookup(type)
+    : type
+}
+
+/**
+ * Check if mime is valid.
+ *
+ * @param {String} type
+ * @return {String}
+ * @private
+ */
+
+function validMime (type) {
+  return typeof type === 'string'
+}

@@ -1,0 +1,343 @@
+Ñ≠/package.json≈h{
+  "name": "destroy",
+  "description": "destroy a stream if possible",
+  "version": "1.2.0",
+  "author": {
+    "name": "Jonathan Ong",
+    "email": "me@jongleberry.com",
+    "url": "http://jongleberry.com",
+    "twitter": "https://twitter.com/jongleberry"
+  },
+  "contributors": [
+    "Douglas Christopher Wilson <doug@somethingdoug.com>"
+  ],
+  "license": "MIT",
+  "repository": "stream-utils/destroy",
+  "devDependencies": {
+    "eslint": "7.32.0",
+    "eslint-config-standard": "14.1.1",
+    "eslint-plugin-import": "2.25.4",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-promise": "5.2.0",
+    "eslint-plugin-standard": "4.1.0",
+    "mocha": "9.2.2",
+    "nyc": "15.1.0"
+  },
+  "engines": {
+    "node": ">= 0.8",
+    "npm": "1.2.8000 || >= 1.4.16"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "mocha --reporter spec",
+    "test-ci": "nyc --reporter=lcovonly --reporter=text npm test",
+    "test-cov": "nyc --reporter=html --reporter=text npm test"
+  },
+  "files": [
+    "index.js",
+    "LICENSE"
+  ],
+  "keywords": [
+    "stream",
+    "streams",
+    "destroy",
+    "cleanup",
+    "leak",
+    "fd"
+  ]
+}
+®/LICENSE≈ï
+The MIT License (MIT)
+
+Copyright (c) 2014 Jonathan Ong me@jongleberry.com
+Copyright (c) 2015-2022 Douglas Christopher Wilson doug@somethingdoug.com
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+©/index.js≈¢/*!
+ * destroy
+ * Copyright(c) 2014 Jonathan Ong
+ * Copyright(c) 2015-2022 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+'use strict'
+
+/**
+ * Module dependencies.
+ * @private
+ */
+
+var EventEmitter = require('events').EventEmitter
+var ReadStream = require('fs').ReadStream
+var Stream = require('stream')
+var Zlib = require('zlib')
+
+/**
+ * Module exports.
+ * @public
+ */
+
+module.exports = destroy
+
+/**
+ * Destroy the given stream, and optionally suppress any future `error` events.
+ *
+ * @param {object} stream
+ * @param {boolean} suppress
+ * @public
+ */
+
+function destroy (stream, suppress) {
+  if (isFsReadStream(stream)) {
+    destroyReadStream(stream)
+  } else if (isZlibStream(stream)) {
+    destroyZlibStream(stream)
+  } else if (hasDestroy(stream)) {
+    stream.destroy()
+  }
+
+  if (isEventEmitter(stream) && suppress) {
+    stream.removeAllListeners('error')
+    stream.addListener('error', noop)
+  }
+
+  return stream
+}
+
+/**
+ * Destroy a ReadStream.
+ *
+ * @param {object} stream
+ * @private
+ */
+
+function destroyReadStream (stream) {
+  stream.destroy()
+
+  if (typeof stream.close === 'function') {
+    // node.js core bug work-around
+    stream.on('open', onOpenClose)
+  }
+}
+
+/**
+ * Close a Zlib stream.
+ *
+ * Zlib streams below Node.js 4.5.5 have a buggy implementation
+ * of .close() when zlib encountered an error.
+ *
+ * @param {object} stream
+ * @private
+ */
+
+function closeZlibStream (stream) {
+  if (stream._hadError === true) {
+    var prop = stream._binding === null
+      ? '_binding'
+      : '_handle'
+
+    stream[prop] = {
+      close: function () { this[prop] = null }
+    }
+  }
+
+  stream.close()
+}
+
+/**
+ * Destroy a Zlib stream.
+ *
+ * Zlib streams don't have a destroy function in Node.js 6. On top of that
+ * simply calling destroy on a zlib stream in Node.js 8+ will result in a
+ * memory leak. So until that is fixed, we need to call both close AND destroy.
+ *
+ * PR to fix memory leak: https://github.com/nodejs/node/pull/23734
+ *
+ * In Node.js 6+8, it's important that destroy is called before close as the
+ * stream would otherwise emit the error 'zlib binding closed'.
+ *
+ * @param {object} stream
+ * @private
+ */
+
+function destroyZlibStream (stream) {
+  if (typeof stream.destroy === 'function') {
+    // node.js core bug work-around
+    // istanbul ignore if: node.js 0.8
+    if (stream._binding) {
+      // node.js < 0.10.0
+      stream.destroy()
+      if (stream._processing) {
+        stream._needDrain = true
+        stream.once('drain', onDrainClearBinding)
+      } else {
+        stream._binding.clear()
+      }
+    } else if (stream._destroy && stream._destroy !== Stream.Transform.prototype._destroy) {
+      // node.js >= 12, ^11.1.0, ^10.15.1
+      stream.destroy()
+    } else if (stream._destroy && typeof stream.close === 'function') {
+      // node.js 7, 8
+      stream.destroyed = true
+      stream.close()
+    } else {
+      // fallback
+      // istanbul ignore next
+      stream.destroy()
+    }
+  } else if (typeof stream.close === 'function') {
+    // node.js < 8 fallback
+    closeZlibStream(stream)
+  }
+}
+
+/**
+ * Determine if stream has destroy.
+ * @private
+ */
+
+function hasDestroy (stream) {
+  return stream instanceof Stream &&
+    typeof stream.destroy === 'function'
+}
+
+/**
+ * Determine if val is EventEmitter.
+ * @private
+ */
+
+function isEventEmitter (val) {
+  return val instanceof EventEmitter
+}
+
+/**
+ * Determine if stream is fs.ReadStream stream.
+ * @private
+ */
+
+function isFsReadStream (stream) {
+  return stream instanceof ReadStream
+}
+
+/**
+ * Determine if stream is Zlib stream.
+ * @private
+ */
+
+function isZlibStream (stream) {
+  return stream instanceof Zlib.Gzip ||
+    stream instanceof Zlib.Gunzip ||
+    stream instanceof Zlib.Deflate ||
+    stream instanceof Zlib.DeflateRaw ||
+    stream instanceof Zlib.Inflate ||
+    stream instanceof Zlib.InflateRaw ||
+    stream instanceof Zlib.Unzip
+}
+
+/**
+ * No-op function.
+ * @private
+ */
+
+function noop () {}
+
+/**
+ * On drain handler to clear binding.
+ * @private
+ */
+
+// istanbul ignore next: node.js 0.8
+function onDrainClearBinding () {
+  this._binding.clear()
+}
+
+/**
+ * On open handler to close stream.
+ * @private
+ */
+
+function onOpenClose () {
+  if (typeof this.fd === 'number') {
+    // actually close down the fd
+    this.close()
+  }
+}
+™/README.md≈	õ# destroy
+
+[![NPM version][npm-image]][npm-url]
+[![Build Status][github-actions-ci-image]][github-actions-ci-url]
+[![Test coverage][coveralls-image]][coveralls-url]
+[![License][license-image]][license-url]
+[![Downloads][downloads-image]][downloads-url]
+
+Destroy a stream.
+
+This module is meant to ensure a stream gets destroyed, handling different APIs
+and Node.js bugs.
+
+## API
+
+```js
+var destroy = require('destroy')
+```
+
+### destroy(stream [, suppress])
+
+Destroy the given stream, and optionally suppress any future `error` events.
+
+In most cases, this is identical to a simple `stream.destroy()` call. The rules
+are as follows for a given stream:
+
+  1. If the `stream` is an instance of `ReadStream`, then call `stream.destroy()`
+     and add a listener to the `open` event to call `stream.close()` if it is
+     fired. This is for a Node.js bug that will leak a file descriptor if
+     `.destroy()` is called before `open`.
+  2. If the `stream` is an instance of a zlib stream, then call `stream.destroy()`
+     and close the underlying zlib handle if open, otherwise call `stream.close()`.
+     This is for consistency across Node.js versions and a Node.js bug that will
+     leak a native zlib handle.
+  3. If the `stream` is not an instance of `Stream`, then nothing happens.
+  4. If the `stream` has a `.destroy()` method, then call it.
+
+The function returns the `stream` passed in as the argument.
+
+## Example
+
+```js
+var destroy = require('destroy')
+
+var fs = require('fs')
+var stream = fs.createReadStream('package.json')
+
+// ... and later
+destroy(stream)
+```
+
+[npm-image]: https://img.shields.io/npm/v/destroy.svg?style=flat-square
+[npm-url]: https://npmjs.org/package/destroy
+[github-tag]: http://img.shields.io/github/tag/stream-utils/destroy.svg?style=flat-square
+[github-url]: https://github.com/stream-utils/destroy/tags
+[coveralls-image]: https://img.shields.io/coveralls/stream-utils/destroy.svg?style=flat-square
+[coveralls-url]: https://coveralls.io/r/stream-utils/destroy?branch=master
+[license-image]: http://img.shields.io/npm/l/destroy.svg?style=flat-square
+[license-url]: LICENSE.md
+[downloads-image]: http://img.shields.io/npm/dm/destroy.svg?style=flat-square
+[downloads-url]: https://npmjs.org/package/destroy
+[github-actions-ci-image]: https://img.shields.io/github/workflow/status/stream-utils/destroy/ci/master?label=ci&style=flat-square
+[github-actions-ci-url]: https://github.com/stream-utils/destroy/actions/workflows/ci.yml

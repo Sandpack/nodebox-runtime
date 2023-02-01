@@ -1,0 +1,1149 @@
+†¨/licenseÅ]MIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+­/package.jsonÅu{
+	"name": "ora",
+	"version": "6.1.2",
+	"description": "Elegant terminal spinner",
+	"license": "MIT",
+	"repository": "sindresorhus/ora",
+	"funding": "https://github.com/sponsors/sindresorhus",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "https://sindresorhus.com"
+	},
+	"type": "module",
+	"exports": "./index.js",
+	"engines": {
+		"node": "^12.20.0 || ^14.13.1 || >=16.0.0"
+	},
+	"scripts": {
+		"test": "xo && ava && tsd"
+	},
+	"files": [
+		"index.js",
+		"index.d.ts",
+		"utilities.js"
+	],
+	"keywords": [
+		"cli",
+		"spinner",
+		"spinners",
+		"terminal",
+		"term",
+		"console",
+		"ascii",
+		"unicode",
+		"loading",
+		"indicator",
+		"progress",
+		"busy",
+		"wait",
+		"idle"
+	],
+	"dependencies": {
+		"bl": "^5.0.0",
+		"chalk": "^5.0.0",
+		"cli-cursor": "^4.0.0",
+		"cli-spinners": "^2.6.1",
+		"is-interactive": "^2.0.0",
+		"is-unicode-supported": "^1.1.0",
+		"log-symbols": "^5.1.0",
+		"strip-ansi": "^7.0.1",
+		"wcwidth": "^1.0.1"
+	},
+	"devDependencies": {
+		"@types/node": "^17.0.18",
+		"ava": "^4.0.1",
+		"get-stream": "^6.0.1",
+		"transform-tty": "^1.0.11",
+		"tsd": "^0.19.1",
+		"xo": "^0.48.0"
+	}
+}
+©/index.jsÅ «import process from 'node:process';
+import chalk from 'chalk';
+import cliCursor from 'cli-cursor';
+import cliSpinners from 'cli-spinners';
+import logSymbols from 'log-symbols';
+import stripAnsi from 'strip-ansi';
+import wcwidth from 'wcwidth';
+import isInteractive from 'is-interactive';
+import isUnicodeSupported from 'is-unicode-supported';
+import {StdinDiscarder} from './utilities.js';
+
+let stdinDiscarder;
+
+class Ora {
+	#linesToClear = 0;
+	#isDiscardingStdin = false;
+	#lineCount = 0;
+	#frameIndex = 0;
+	#options;
+	#spinner;
+	#stream;
+	#id;
+	#initialInterval;
+	#isEnabled;
+	#isSilent;
+	#indent;
+	#text;
+	#prefixText;
+
+	color;
+
+	constructor(options) {
+		if (!stdinDiscarder) {
+			stdinDiscarder = new StdinDiscarder();
+		}
+
+		if (typeof options === 'string') {
+			options = {
+				text: options,
+			};
+		}
+
+		this.#options = {
+			color: 'cyan',
+			stream: process.stderr,
+			discardStdin: true,
+			hideCursor: true,
+			...options,
+		};
+
+		// Public
+		this.color = this.#options.color;
+
+		// It's important that these use the public setters.
+		this.spinner = this.#options.spinner;
+
+		this.#initialInterval = this.#options.interval;
+		this.#stream = this.#options.stream;
+		this.#isEnabled = typeof this.#options.isEnabled === 'boolean' ? this.#options.isEnabled : isInteractive({stream: this.#stream});
+		this.#isSilent = typeof this.#options.isSilent === 'boolean' ? this.#options.isSilent : false;
+
+		// Set *after* `this.#stream`.
+		// It's important that these use the public setters.
+		this.text = this.#options.text;
+		this.prefixText = this.#options.prefixText;
+		this.indent = this.#options.indent;
+
+		if (process.env.NODE_ENV === 'test') {
+			this._stream = this.#stream;
+			this._isEnabled = this.#isEnabled;
+
+			Object.defineProperty(this, '_linesToClear', {
+				get() {
+					return this.#linesToClear;
+				},
+				set(newValue) {
+					this.#linesToClear = newValue;
+				},
+			});
+
+			Object.defineProperty(this, '_frameIndex', {
+				get() {
+					return this.#frameIndex;
+				},
+			});
+
+			Object.defineProperty(this, '_lineCount', {
+				get() {
+					return this.#lineCount;
+				},
+			});
+		}
+	}
+
+	get indent() {
+		return this.#indent;
+	}
+
+	set indent(indent = 0) {
+		if (!(indent >= 0 && Number.isInteger(indent))) {
+			throw new Error('The `indent` option must be an integer from 0 and up');
+		}
+
+		this.#indent = indent;
+		this.updateLineCount();
+	}
+
+	get interval() {
+		return this.#initialInterval || this.#spinner.interval || 100;
+	}
+
+	get spinner() {
+		return this.#spinner;
+	}
+
+	set spinner(spinner) {
+		this.#frameIndex = 0;
+		this.#initialInterval = undefined;
+
+		if (typeof spinner === 'object') {
+			if (spinner.frames === undefined) {
+				throw new Error('The given spinner must have a `frames` property');
+			}
+
+			this.#spinner = spinner;
+		} else if (!isUnicodeSupported()) {
+			this.#spinner = cliSpinners.line;
+		} else if (spinner === undefined) {
+			// Set default spinner
+			this.#spinner = cliSpinners.dots;
+		} else if (spinner !== 'default' && cliSpinners[spinner]) {
+			this.#spinner = cliSpinners[spinner];
+		} else {
+			throw new Error(`There is no built-in spinner named '${spinner}'. See https://github.com/sindresorhus/cli-spinners/blob/main/spinners.json for a full list.`);
+		}
+	}
+
+	get text() {
+		return this.#text;
+	}
+
+	set text(value) {
+		this.#text = value || '';
+		this.updateLineCount();
+	}
+
+	get prefixText() {
+		return this.#prefixText;
+	}
+
+	set prefixText(value) {
+		this.#prefixText = value || '';
+		this.updateLineCount();
+	}
+
+	get isSpinning() {
+		return this.#id !== undefined;
+	}
+
+	// TODO: Use private methods when targeting Node.js 14.
+	getFullPrefixText(prefixText = this.#prefixText, postfix = ' ') {
+		if (typeof prefixText === 'string' && prefixText !== '') {
+			return prefixText + postfix;
+		}
+
+		if (typeof prefixText === 'function') {
+			return prefixText() + postfix;
+		}
+
+		return '';
+	}
+
+	updateLineCount() {
+		const columns = this.#stream.columns || 80;
+		const fullPrefixText = this.getFullPrefixText(this.#prefixText, '-');
+
+		this.#lineCount = 0;
+		for (const line of stripAnsi(' '.repeat(this.#indent) + fullPrefixText + '--' + this.#text).split('\n')) {
+			this.#lineCount += Math.max(1, Math.ceil(wcwidth(line) / columns));
+		}
+	}
+
+	get isEnabled() {
+		return this.#isEnabled && !this.#isSilent;
+	}
+
+	set isEnabled(value) {
+		if (typeof value !== 'boolean') {
+			throw new TypeError('The `isEnabled` option must be a boolean');
+		}
+
+		this.#isEnabled = value;
+	}
+
+	get isSilent() {
+		return this.#isSilent;
+	}
+
+	set isSilent(value) {
+		if (typeof value !== 'boolean') {
+			throw new TypeError('The `isSilent` option must be a boolean');
+		}
+
+		this.#isSilent = value;
+	}
+
+	frame() {
+		const {frames} = this.#spinner;
+		let frame = frames[this.#frameIndex];
+
+		if (this.color) {
+			frame = chalk[this.color](frame);
+		}
+
+		this.#frameIndex = ++this.#frameIndex % frames.length;
+		const fullPrefixText = (typeof this.#prefixText === 'string' && this.#prefixText !== '') ? this.#prefixText + ' ' : '';
+		const fullText = typeof this.text === 'string' ? ' ' + this.text : '';
+
+		return fullPrefixText + frame + fullText;
+	}
+
+	clear() {
+		if (!this.#isEnabled || !this.#stream.isTTY) {
+			return this;
+		}
+
+		this.#stream.cursorTo(0);
+
+		for (let index = 0; index < this.#linesToClear; index++) {
+			if (index > 0) {
+				this.#stream.moveCursor(0, -1);
+			}
+
+			this.#stream.clearLine(1);
+		}
+
+		if (this.#indent || this.lastIndent !== this.#indent) {
+			this.#stream.cursorTo(this.#indent);
+		}
+
+		this.lastIndent = this.#indent;
+		this.#linesToClear = 0;
+
+		return this;
+	}
+
+	render() {
+		if (this.#isSilent) {
+			return this;
+		}
+
+		this.clear();
+		this.#stream.write(this.frame());
+		this.#linesToClear = this.#lineCount;
+
+		return this;
+	}
+
+	start(text) {
+		if (text) {
+			this.text = text;
+		}
+
+		if (this.#isSilent) {
+			return this;
+		}
+
+		if (!this.#isEnabled) {
+			if (this.text) {
+				this.#stream.write(`- ${this.text}\n`);
+			}
+
+			return this;
+		}
+
+		if (this.isSpinning) {
+			return this;
+		}
+
+		if (this.#options.hideCursor) {
+			cliCursor.hide(this.#stream);
+		}
+
+		if (this.#options.discardStdin && process.stdin.isTTY) {
+			this.#isDiscardingStdin = true;
+			stdinDiscarder.start();
+		}
+
+		this.render();
+		this.#id = setInterval(this.render.bind(this), this.interval);
+
+		return this;
+	}
+
+	stop() {
+		if (!this.#isEnabled) {
+			return this;
+		}
+
+		clearInterval(this.#id);
+		this.#id = undefined;
+		this.#frameIndex = 0;
+		this.clear();
+		if (this.#options.hideCursor) {
+			cliCursor.show(this.#stream);
+		}
+
+		if (this.#options.discardStdin && process.stdin.isTTY && this.#isDiscardingStdin) {
+			stdinDiscarder.stop();
+			this.#isDiscardingStdin = false;
+		}
+
+		return this;
+	}
+
+	succeed(text) {
+		return this.stopAndPersist({symbol: logSymbols.success, text});
+	}
+
+	fail(text) {
+		return this.stopAndPersist({symbol: logSymbols.error, text});
+	}
+
+	warn(text) {
+		return this.stopAndPersist({symbol: logSymbols.warning, text});
+	}
+
+	info(text) {
+		return this.stopAndPersist({symbol: logSymbols.info, text});
+	}
+
+	stopAndPersist(options = {}) {
+		if (this.#isSilent) {
+			return this;
+		}
+
+		const prefixText = options.prefixText || this.#prefixText;
+		const text = options.text || this.text;
+		const fullText = (typeof text === 'string') ? ' ' + text : '';
+
+		this.stop();
+		this.#stream.write(`${this.getFullPrefixText(prefixText, ' ')}${options.symbol || ' '}${fullText}\n`);
+
+		return this;
+	}
+}
+
+export default function ora(options) {
+	return new Ora(options);
+}
+
+export async function oraPromise(action, options) {
+	const actionIsFunction = typeof action === 'function';
+	const actionIsPromise = typeof action.then === 'function';
+
+	if (!actionIsFunction && !actionIsPromise) {
+		throw new TypeError('Parameter `action` must be a Function or a Promise');
+	}
+
+	const {successText, failText} = typeof options === 'object'
+		? options
+		: {successText: undefined, failText: undefined};
+
+	const spinner = ora(options).start();
+
+	try {
+		const promise = actionIsFunction ? action(spinner) : action;
+		const result = await promise;
+
+		spinner.succeed(
+			successText === undefined
+				? undefined
+				: (typeof successText === 'string' ? successText : successText(result)),
+		);
+
+		return result;
+	} catch (error) {
+		spinner.fail(
+			failText === undefined
+				? undefined
+				: (typeof failText === 'string' ? failText : failText(error)),
+		);
+
+		throw error;
+	}
+}
+ª/readme.mdÅ# ora
+
+> Elegant terminal spinner
+
+<p align="center">
+	<br>
+	<img src="screenshot.svg" width="500">
+	<br>
+</p>
+
+## Install
+
+```sh
+npm install ora
+```
+
+## Usage
+
+```js
+import ora from 'ora';
+
+const spinner = ora('Loading unicorns').start();
+
+setTimeout(() => {
+	spinner.color = 'yellow';
+	spinner.text = 'Loading rainbows';
+}, 1000);
+```
+
+## API
+
+### ora(text)
+### ora(options)
+
+If a string is provided, it is treated as a shortcut for [`options.text`](#text).
+
+#### options
+
+Type: `object`
+
+##### text
+
+Type: `string`
+
+Text to display after the spinner.
+
+##### prefixText
+
+Type: `string | () => string`
+
+Text or a function that returns text to display before the spinner. No prefix text will be displayed if set to an empty string.
+
+##### spinner
+
+Type: `string | object`\
+Default: `'dots'` <img src="screenshot-spinner.gif" width="14">
+
+Name of one of the [provided spinners](https://github.com/sindresorhus/cli-spinners/blob/main/spinners.json). See `example.js` in this repo if you want to test out different spinners. On Windows, it will always use the `line` spinner as the Windows command-line doesn't have proper Unicode support.
+
+Or an object like:
+
+```js
+{
+	interval: 80, // Optional
+	frames: ['-', '+', '-']
+}
+```
+
+##### color
+
+Type: `string`\
+Default: `'cyan'`\
+Values: `'black' | 'red' | 'green' | 'yellow' | 'blue' | 'magenta' | 'cyan' | 'white' | 'gray'`
+
+The color of the spinner.
+
+##### hideCursor
+
+Type: `boolean`\
+Default: `true`
+
+Set to `false` to stop Ora from hiding the cursor.
+
+##### indent
+
+Type: `number`\
+Default: `0`
+
+Indent the spinner with the given number of spaces.
+
+##### interval
+
+Type: `number`\
+Default: Provided by the spinner or `100`
+
+Interval between each frame.
+
+Spinners provide their own recommended interval, so you don't really need to specify this.
+
+##### stream
+
+Type: `stream.Writable`\
+Default: `process.stderr`
+
+Stream to write the output.
+
+You could for example set this to `process.stdout` instead.
+
+##### isEnabled
+
+Type: `boolean`
+
+Force enable/disable the spinner. If not specified, the spinner will be enabled if the `stream` is being run inside a TTY context (not spawned or piped) and/or not in a CI environment.
+
+Note that `{isEnabled: false}` doesn't mean it won't output anything. It just means it won't output the spinner, colors, and other ansi escape codes. It will still log text.
+
+##### isSilent
+
+Type: `boolean`\
+Default: `false`
+
+Disable the spinner and all log text. All output is suppressed and `isEnabled` will be considered `false`.
+
+##### discardStdin
+
+Type: `boolean`\
+Default: `true`
+
+Discard stdin input (except Ctrl+C) while running if it's TTY. This prevents the spinner from twitching on input, outputting broken lines on <kbd>Enter</kbd> key presses, and prevents buffering of input while the spinner is running.
+
+This has no effect on Windows as there's no good way to implement discarding stdin properly there.
+
+### Instance
+
+#### .text <sup>get/set</sup>
+
+Change the text after the spinner.
+
+#### .prefixText <sup>get/set</sup>
+
+Change the text before the spinner.
+
+No prefix text will be displayed if set to an empty string.
+
+#### .color <sup>get/set</sup>
+
+Change the spinner color.
+
+#### .spinner <sup>get/set</sup>
+
+Change the spinner.
+
+#### .indent <sup>get/set</sup>
+
+Change the spinner indent.
+
+#### .isSpinning <sup>get</sup>
+
+A boolean of whether the instance is currently spinning.
+
+#### .interval <sup>get</sup>
+
+The interval between each frame.
+
+The interval is decided by the chosen spinner.
+
+#### .start(text?)
+
+Start the spinner. Returns the instance. Set the current text if `text` is provided.
+
+#### .stop()
+
+Stop and clear the spinner. Returns the instance.
+
+#### .succeed(text?)
+
+Stop the spinner, change it to a green `âœ”` and persist the current text, or `text` if provided. Returns the instance. See the GIF below.
+
+#### .fail(text?)
+
+Stop the spinner, change it to a red `âœ–` and persist the current text, or `text` if provided. Returns the instance. See the GIF below.
+
+#### .warn(text?)
+
+Stop the spinner, change it to a yellow `âš ` and persist the current text, or `text` if provided. Returns the instance.
+
+#### .info(text?)
+
+Stop the spinner, change it to a blue `â„¹` and persist the current text, or `text` if provided. Returns the instance.
+
+#### .stopAndPersist(options?)
+
+Stop the spinner and change the symbol or text. Returns the instance. See the GIF below.
+
+##### options
+
+Type: `object`
+
+###### symbol
+
+Type: `string`\
+Default: `' '`
+
+Symbol to replace the spinner with.
+
+###### text
+
+Type: `string`\
+Default: Current `'text'`
+
+Text to be persisted after the symbol
+
+###### prefixText
+
+Type: `string`\
+Default: Current `prefixText`
+
+Text to be persisted before the symbol. No prefix text will be displayed if set to an empty string.
+
+<img src="screenshot-2.gif" width="480">
+
+#### .clear()
+
+Clear the spinner. Returns the instance.
+
+#### .render()
+
+Manually render a new frame. Returns the instance.
+
+#### .frame()
+
+Get a new frame.
+
+### oraPromise(action, text)
+### oraPromise(action, options)
+
+Starts a spinner for a promise or promise-returning function. The spinner is stopped with `.succeed()` if the promise fulfills or with `.fail()` if it rejects. Returns the promise.
+
+```js
+import {oraPromise} from 'ora';
+
+await oraPromise(somePromise);
+```
+
+#### action
+
+Type: `Promise | ((spinner: ora.Ora) => Promise)`
+
+#### options
+
+Type: `object`
+
+All of the [options](#options) plus the following:
+
+##### successText
+
+Type: `string | ((result: T) => string) | undefined`
+
+The new text of the spinner when the promise is resolved.
+
+Keeps the existing text if `undefined`.
+
+##### failText
+
+Type: `string | ((error: Error) => string) | undefined`
+
+The new text of the spinner when the promise is rejected.
+
+Keeps the existing text if `undefined`.
+
+## FAQ
+
+### How do I change the color of the text?
+
+Use [Chalk](https://github.com/chalk/chalk):
+
+```js
+import ora from 'ora';
+import chalk from 'chalk';
+
+const spinner = ora(`Loading ${chalk.red('unicorns')}`).start();
+```
+
+### Why does the spinner freeze?
+
+JavaScript is single-threaded, so synchronous operations blocks the thread, including the spinner animation. Prefer asynchronous operations whenever possible.
+
+## Related
+
+- [cli-spinners](https://github.com/sindresorhus/cli-spinners) - Spinners for use in the terminal
+- [listr](https://github.com/SamVerschueren/listr) - Terminal task list
+- [CLISpinner](https://github.com/kiliankoe/CLISpinner) - Terminal spinner library for Swift
+- [halo](https://github.com/ManrajGrover/halo) - Python port
+- [spinners](https://github.com/FGRibreau/spinners) - Terminal spinners for Rust
+- [marquee-ora](https://github.com/joeycozza/marquee-ora) - Scrolling marquee spinner for Ora
+- [briandowns/spinner](https://github.com/briandowns/spinner) - Terminal spinner/progress indicator for Go
+- [tj/go-spin](https://github.com/tj/go-spin) - Terminal spinner package for Go
+- [observablehq.com/@victordidenko/ora](https://observablehq.com/@victordidenko/ora) - Ora port to Observable notebooks
+- [spinnies](https://github.com/jcarpanelli/spinnies) - Terminal multi-spinner library for Node.js
+- [kia](https://github.com/HarryPeach/kia) - Simple terminal spinners for Deno ðŸ¦•
+«/index.d.tsÅimport {SpinnerName} from 'cli-spinners';
+
+export interface Spinner {
+	readonly interval?: number;
+	readonly frames: string[];
+}
+
+export type Color =
+	| 'black'
+	| 'red'
+	| 'green'
+	| 'yellow'
+	| 'blue'
+	| 'magenta'
+	| 'cyan'
+	| 'white'
+	| 'gray';
+
+export type PrefixTextGenerator = () => string;
+
+export interface Options {
+	/**
+	Text to display after the spinner.
+	*/
+	readonly text?: string;
+
+	/**
+	Text or a function that returns text to display before the spinner. No prefix text will be displayed if set to an empty string.
+	*/
+	readonly prefixText?: string | PrefixTextGenerator;
+
+	/**
+	Name of one of the provided spinners. See [`example.js`](https://github.com/BendingBender/ora/blob/main/example.js) in this repo if you want to test out different spinners. On Windows, it will always use the line spinner as the Windows command-line doesn't have proper Unicode support.
+
+	@default 'dots'
+
+	Or an object like:
+
+	@example
+	```
+	{
+		interval: 80, // Optional
+		frames: ['-', '+', '-']
+	}
+	```
+	*/
+	readonly spinner?: SpinnerName | Spinner;
+
+	/**
+	The color of the spinner.
+
+	@default 'cyan'
+	*/
+	readonly color?: Color;
+
+	/**
+	Set to `false` to stop Ora from hiding the cursor.
+
+	@default true
+	*/
+	readonly hideCursor?: boolean;
+
+	/**
+	Indent the spinner with the given number of spaces.
+
+	@default 0
+	*/
+	readonly indent?: number;
+
+	/**
+	Interval between each frame.
+
+	Spinners provide their own recommended interval, so you don't really need to specify this.
+
+	Default: Provided by the spinner or `100`.
+	*/
+	readonly interval?: number;
+
+	/**
+	Stream to write the output.
+
+	You could for example set this to `process.stdout` instead.
+
+	@default process.stderr
+	*/
+	readonly stream?: NodeJS.WritableStream;
+
+	/**
+	Force enable/disable the spinner. If not specified, the spinner will be enabled if the `stream` is being run inside a TTY context (not spawned or piped) and/or not in a CI environment.
+
+	Note that `{isEnabled: false}` doesn't mean it won't output anything. It just means it won't output the spinner, colors, and other ansi escape codes. It will still log text.
+	*/
+	readonly isEnabled?: boolean;
+
+	/**
+	Disable the spinner and all log text. All output is suppressed and `isEnabled` will be considered `false`.
+
+	@default false
+	*/
+	readonly isSilent?: boolean;
+
+	/**
+	Discard stdin input (except Ctrl+C) while running if it's TTY. This prevents the spinner from twitching on input, outputting broken lines on `Enter` key presses, and prevents buffering of input while the spinner is running.
+
+	This has no effect on Windows as there's no good way to implement discarding stdin properly there.
+
+	@default true
+	*/
+	readonly discardStdin?: boolean;
+}
+
+export interface PersistOptions {
+	/**
+	Symbol to replace the spinner with.
+
+	@default ' '
+	*/
+	readonly symbol?: string;
+
+	/**
+	Text to be persisted after the symbol.
+
+	Default: Current `text`.
+	*/
+	readonly text?: string;
+
+	/**
+	Text or a function that returns text to be persisted before the symbol. No prefix text will be displayed if set to an empty string.
+
+	Default: Current `prefixText`.
+	*/
+	readonly prefixText?: string | PrefixTextGenerator;
+}
+
+export interface PromiseOptions<T> extends Options {
+	/**
+	The new text of the spinner when the promise is resolved.
+
+	Keeps the existing text if `undefined`.
+	*/
+	successText?: string | ((result: T) => string) | undefined;
+
+	/**
+	The new text of the spinner when the promise is rejected.
+
+	Keeps the existing text if `undefined`.
+	*/
+	failText?: string | ((error: Error) => string) | undefined;
+}
+
+export interface Ora {
+	/**
+	Change the text after the spinner.
+	*/
+	text: string;
+
+	/**
+	Change the text or function that returns text before the spinner.
+
+	No prefix text will be displayed if set to an empty string.
+	*/
+	prefixText: string;
+
+	/**
+	Change the spinner color.
+	*/
+	color: Color;
+
+	/**
+	Change the spinner indent.
+	*/
+	indent: number;
+
+	/**
+	Get the spinner.
+	*/
+	get spinner(): Spinner;
+
+	/**
+	Set the spinner.
+	*/
+	set spinner(spinner: SpinnerName | Spinner);
+
+	/**
+	A boolean of whether the instance is currently spinning.
+	*/
+	get isSpinning(): boolean;
+
+	/**
+	The interval between each frame.
+
+	The interval is decided by the chosen spinner.
+	*/
+	get interval(): number;
+
+	/**
+	Start the spinner.
+
+	@param text - Set the current text.
+	@returns The spinner instance.
+	*/
+	start(text?: string): this;
+
+	/**
+	Stop and clear the spinner.
+
+	@returns The spinner instance.
+	*/
+	stop(): this;
+
+	/**
+	Stop the spinner, change it to a green `âœ”` and persist the current text, or `text` if provided.
+
+	@param text - Will persist text if provided.
+	@returns The spinner instance.
+	*/
+	succeed(text?: string): this;
+
+	/**
+	Stop the spinner, change it to a red `âœ–` and persist the current text, or `text` if provided.
+
+	@param text - Will persist text if provided.
+	@returns The spinner instance.
+	*/
+	fail(text?: string): this;
+
+	/**
+	Stop the spinner, change it to a yellow `âš ` and persist the current text, or `text` if provided.
+
+	@param text - Will persist text if provided.
+	@returns The spinner instance.
+	*/
+	warn(text?: string): this;
+
+	/**
+	Stop the spinner, change it to a blue `â„¹` and persist the current text, or `text` if provided.
+
+	@param text - Will persist text if provided.
+	@returns The spinner instance.
+	*/
+	info(text?: string): this;
+
+	/**
+	Stop the spinner and change the symbol or text.
+
+	@returns The spinner instance.
+	*/
+	stopAndPersist(options?: PersistOptions): this;
+
+	/**
+	Clear the spinner.
+
+	@returns The spinner instance.
+	*/
+	clear(): this;
+
+	/**
+	Manually render a new frame.
+
+	@returns The spinner instance.
+	*/
+	render(): this;
+
+	/**
+	Get a new frame.
+
+	@returns The spinner instance text.
+	*/
+	frame(): string;
+}
+
+/**
+Elegant terminal spinner.
+
+@param options - If a string is provided, it is treated as a shortcut for `options.text`.
+
+@example
+```
+import ora from 'ora';
+
+const spinner = ora('Loading unicorns').start();
+
+setTimeout(() => {
+	spinner.color = 'yellow';
+	spinner.text = 'Loading rainbows';
+}, 1000);
+```
+*/
+export default function ora(options?: string | Options): Ora;
+
+/**
+Starts a spinner for a promise or promise-returning function. The spinner is stopped with `.succeed()` if the promise fulfills or with `.fail()` if it rejects.
+
+@param action - The promise to start the spinner for or a promise-returning function.
+@param options - If a string is provided, it is treated as a shortcut for `options.text`.
+@returns The given promise.
+
+@example
+```
+import {oraPromise} from 'ora';
+
+await oraPromise(somePromise);
+```
+*/
+export function oraPromise<T>(
+	action: PromiseLike<T> | ((spinner: Ora) => PromiseLike<T>),
+	options?: string | PromiseOptions<T>
+): Promise<T>;
+­/utilities.jsÅÛimport process from 'node:process';
+import readline from 'node:readline';
+import {BufferListStream} from 'bl';
+
+const ASCII_ETX_CODE = 0x03; // Ctrl+C emits this code
+
+export class StdinDiscarder {
+	#requests = 0;
+	#mutedStream = new BufferListStream();
+	#ourEmit;
+	#rl;
+
+	constructor() {
+		this.#mutedStream.pipe(process.stdout);
+
+		const self = this; // eslint-disable-line unicorn/no-this-assignment
+		this.#ourEmit = function (event, data, ...args) {
+			const {stdin} = process;
+			if (self.#requests > 0 || stdin.emit === self.#ourEmit) {
+				if (event === 'keypress') { // Fixes readline behavior
+					return;
+				}
+
+				if (event === 'data' && data.includes(ASCII_ETX_CODE)) {
+					process.emit('SIGINT');
+				}
+
+				Reflect.apply(self.#ourEmit, this, [event, data, ...args]);
+			} else {
+				Reflect.apply(process.stdin.emit, this, [event, data, ...args]);
+			}
+		};
+	}
+
+	start() {
+		this.#requests++;
+
+		if (this.#requests === 1) {
+			this._realStart();
+		}
+	}
+
+	stop() {
+		if (this.#requests <= 0) {
+			throw new Error('`stop` called more times than `start`');
+		}
+
+		this.#requests--;
+
+		if (this.#requests === 0) {
+			this._realStop();
+		}
+	}
+
+	// TODO: Use private methods when targeting Node.js 14.
+	_realStart() {
+		// No known way to make it work reliably on Windows
+		if (process.platform === 'win32') {
+			return;
+		}
+
+		this.#rl = readline.createInterface({
+			input: process.stdin,
+			output: this.#mutedStream,
+		});
+
+		this.#rl.on('SIGINT', () => {
+			if (process.listenerCount('SIGINT') === 0) {
+				process.emit('SIGINT');
+			} else {
+				this.#rl.close();
+				process.kill(process.pid, 'SIGINT');
+			}
+		});
+	}
+
+	_realStop() {
+		if (process.platform === 'win32') {
+			return;
+		}
+
+		this.#rl.close();
+		this.#rl = undefined;
+	}
+}

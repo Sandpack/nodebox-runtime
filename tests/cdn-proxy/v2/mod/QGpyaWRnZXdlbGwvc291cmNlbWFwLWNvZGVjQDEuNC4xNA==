@@ -1,0 +1,839 @@
+‰­/package.jsonÅù{
+  "name": "@jridgewell/sourcemap-codec",
+  "version": "1.4.14",
+  "description": "Encode/decode sourcemap mappings",
+  "keywords": [
+    "sourcemap",
+    "vlq"
+  ],
+  "main": "dist/sourcemap-codec.umd.js",
+  "module": "dist/sourcemap-codec.mjs",
+  "typings": "dist/types/sourcemap-codec.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "exports": {
+    ".": [
+      {
+        "types": "./dist/types/sourcemap-codec.d.ts",
+        "browser": "./dist/sourcemap-codec.umd.js",
+        "import": "./dist/sourcemap-codec.mjs",
+        "require": "./dist/sourcemap-codec.umd.js"
+      },
+      "./dist/sourcemap-codec.umd.js"
+    ],
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "benchmark": "run-s build:rollup benchmark:*",
+    "benchmark:install": "cd benchmark && npm install",
+    "benchmark:only": "node --expose-gc benchmark/index.js",
+    "build": "run-s -n build:*",
+    "build:rollup": "rollup -c rollup.config.js",
+    "build:ts": "tsc --project tsconfig.build.json",
+    "lint": "run-s -n lint:*",
+    "lint:prettier": "npm run test:lint:prettier -- --write",
+    "lint:ts": "npm run test:lint:ts -- --fix",
+    "prebuild": "rm -rf dist",
+    "prepublishOnly": "npm run preversion",
+    "preversion": "run-s test build",
+    "pretest": "run-s build:rollup",
+    "test": "run-s -n test:lint test:only",
+    "test:debug": "mocha --inspect-brk",
+    "test:lint": "run-s -n test:lint:*",
+    "test:lint:prettier": "prettier --check '{src,test}/**/*.ts'",
+    "test:lint:ts": "eslint '{src,test}/**/*.ts'",
+    "test:only": "mocha",
+    "test:coverage": "c8 mocha",
+    "test:watch": "mocha --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jridgewell/sourcemap-codec.git"
+  },
+  "author": "Rich Harris",
+  "license": "MIT",
+  "devDependencies": {
+    "@rollup/plugin-typescript": "8.3.0",
+    "@types/node": "17.0.15",
+    "@typescript-eslint/eslint-plugin": "5.10.0",
+    "@typescript-eslint/parser": "5.10.0",
+    "benchmark": "2.1.4",
+    "c8": "7.11.2",
+    "eslint": "8.7.0",
+    "eslint-config-prettier": "8.3.0",
+    "mocha": "9.2.0",
+    "npm-run-all": "4.1.5",
+    "prettier": "2.5.1",
+    "rollup": "2.64.0",
+    "source-map": "0.6.1",
+    "source-map-js": "1.0.2",
+    "sourcemap-codec": "1.4.8",
+    "typescript": "4.5.4"
+  }
+}
+½/dist/sourcemap-codec.mjs.mapÅÓ{"version":3,"file":"sourcemap-codec.mjs","sources":["../src/sourcemap-codec.ts"],"sourcesContent":[null],"names":[],"mappings":"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"}·/src/sourcemap-codec.tsÅ4export type SourceMapSegment =
+  | [number]
+  | [number, number, number, number]
+  | [number, number, number, number, number];
+export type SourceMapLine = SourceMapSegment[];
+export type SourceMapMappings = SourceMapLine[];
+
+const comma = ','.charCodeAt(0);
+const semicolon = ';'.charCodeAt(0);
+const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+const intToChar = new Uint8Array(64); // 64 possible chars.
+const charToInt = new Uint8Array(128); // z is 122 in ASCII
+
+for (let i = 0; i < chars.length; i++) {
+  const c = chars.charCodeAt(i);
+  intToChar[i] = c;
+  charToInt[c] = i;
+}
+
+// Provide a fallback for older environments.
+const td =
+  typeof TextDecoder !== 'undefined'
+    ? /* #__PURE__ */ new TextDecoder()
+    : typeof Buffer !== 'undefined'
+    ? {
+        decode(buf: Uint8Array) {
+          const out = Buffer.from(buf.buffer, buf.byteOffset, buf.byteLength);
+          return out.toString();
+        },
+      }
+    : {
+        decode(buf: Uint8Array) {
+          let out = '';
+          for (let i = 0; i < buf.length; i++) {
+            out += String.fromCharCode(buf[i]);
+          }
+          return out;
+        },
+      };
+
+export function decode(mappings: string): SourceMapMappings {
+  const state: [number, number, number, number, number] = new Int32Array(5) as any;
+  const decoded: SourceMapMappings = [];
+
+  let index = 0;
+  do {
+    const semi = indexOf(mappings, index);
+    const line: SourceMapLine = [];
+    let sorted = true;
+    let lastCol = 0;
+    state[0] = 0;
+
+    for (let i = index; i < semi; i++) {
+      let seg: SourceMapSegment;
+
+      i = decodeInteger(mappings, i, state, 0); // genColumn
+      const col = state[0];
+      if (col < lastCol) sorted = false;
+      lastCol = col;
+
+      if (hasMoreVlq(mappings, i, semi)) {
+        i = decodeInteger(mappings, i, state, 1); // sourcesIndex
+        i = decodeInteger(mappings, i, state, 2); // sourceLine
+        i = decodeInteger(mappings, i, state, 3); // sourceColumn
+
+        if (hasMoreVlq(mappings, i, semi)) {
+          i = decodeInteger(mappings, i, state, 4); // namesIndex
+          seg = [col, state[1], state[2], state[3], state[4]];
+        } else {
+          seg = [col, state[1], state[2], state[3]];
+        }
+      } else {
+        seg = [col];
+      }
+
+      line.push(seg);
+    }
+
+    if (!sorted) sort(line);
+    decoded.push(line);
+    index = semi + 1;
+  } while (index <= mappings.length);
+
+  return decoded;
+}
+
+function indexOf(mappings: string, index: number): number {
+  const idx = mappings.indexOf(';', index);
+  return idx === -1 ? mappings.length : idx;
+}
+
+function decodeInteger(mappings: string, pos: number, state: SourceMapSegment, j: number): number {
+  let value = 0;
+  let shift = 0;
+  let integer = 0;
+
+  do {
+    const c = mappings.charCodeAt(pos++);
+    integer = charToInt[c];
+    value |= (integer & 31) << shift;
+    shift += 5;
+  } while (integer & 32);
+
+  const shouldNegate = value & 1;
+  value >>>= 1;
+
+  if (shouldNegate) {
+    value = -0x80000000 | -value;
+  }
+
+  state[j] += value;
+  return pos;
+}
+
+function hasMoreVlq(mappings: string, i: number, length: number): boolean {
+  if (i >= length) return false;
+  return mappings.charCodeAt(i) !== comma;
+}
+
+function sort(line: SourceMapSegment[]) {
+  line.sort(sortComparator);
+}
+
+function sortComparator(a: SourceMapSegment, b: SourceMapSegment): number {
+  return a[0] - b[0];
+}
+
+export function encode(decoded: SourceMapMappings): string;
+export function encode(decoded: Readonly<SourceMapMappings>): string;
+export function encode(decoded: Readonly<SourceMapMappings>): string {
+  const state: [number, number, number, number, number] = new Int32Array(5) as any;
+  const bufLength = 1024 * 16;
+  const subLength = bufLength - 36;
+  const buf = new Uint8Array(bufLength);
+  const sub = buf.subarray(0, subLength);
+  let pos = 0;
+  let out = '';
+
+  for (let i = 0; i < decoded.length; i++) {
+    const line = decoded[i];
+    if (i > 0) {
+      if (pos === bufLength) {
+        out += td.decode(buf);
+        pos = 0;
+      }
+      buf[pos++] = semicolon;
+    }
+    if (line.length === 0) continue;
+
+    state[0] = 0;
+
+    for (let j = 0; j < line.length; j++) {
+      const segment = line[j];
+      // We can push up to 5 ints, each int can take at most 7 chars, and we
+      // may push a comma.
+      if (pos > subLength) {
+        out += td.decode(sub);
+        buf.copyWithin(0, subLength, pos);
+        pos -= subLength;
+      }
+      if (j > 0) buf[pos++] = comma;
+
+      pos = encodeInteger(buf, pos, state, segment, 0); // genColumn
+
+      if (segment.length === 1) continue;
+      pos = encodeInteger(buf, pos, state, segment, 1); // sourcesIndex
+      pos = encodeInteger(buf, pos, state, segment, 2); // sourceLine
+      pos = encodeInteger(buf, pos, state, segment, 3); // sourceColumn
+
+      if (segment.length === 4) continue;
+      pos = encodeInteger(buf, pos, state, segment, 4); // namesIndex
+    }
+  }
+
+  return out + td.decode(buf.subarray(0, pos));
+}
+
+function encodeInteger(
+  buf: Uint8Array,
+  pos: number,
+  state: SourceMapSegment,
+  segment: SourceMapSegment,
+  j: number,
+): number {
+  const next = segment[j];
+  let num = next - state[j];
+  state[j] = next;
+
+  num = num < 0 ? (-num << 1) | 1 : num << 1;
+  do {
+    let clamped = num & 0b011111;
+    num >>>= 5;
+    if (num > 0) clamped |= 0b100000;
+    buf[pos++] = intToChar[clamped];
+  } while (num > 0);
+
+  return pos;
+}
+¹/dist/sourcemap-codec.mjsÅŸconst comma = ','.charCodeAt(0);
+const semicolon = ';'.charCodeAt(0);
+const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+const intToChar = new Uint8Array(64); // 64 possible chars.
+const charToInt = new Uint8Array(128); // z is 122 in ASCII
+for (let i = 0; i < chars.length; i++) {
+    const c = chars.charCodeAt(i);
+    intToChar[i] = c;
+    charToInt[c] = i;
+}
+// Provide a fallback for older environments.
+const td = typeof TextDecoder !== 'undefined'
+    ? /* #__PURE__ */ new TextDecoder()
+    : typeof Buffer !== 'undefined'
+        ? {
+            decode(buf) {
+                const out = Buffer.from(buf.buffer, buf.byteOffset, buf.byteLength);
+                return out.toString();
+            },
+        }
+        : {
+            decode(buf) {
+                let out = '';
+                for (let i = 0; i < buf.length; i++) {
+                    out += String.fromCharCode(buf[i]);
+                }
+                return out;
+            },
+        };
+function decode(mappings) {
+    const state = new Int32Array(5);
+    const decoded = [];
+    let index = 0;
+    do {
+        const semi = indexOf(mappings, index);
+        const line = [];
+        let sorted = true;
+        let lastCol = 0;
+        state[0] = 0;
+        for (let i = index; i < semi; i++) {
+            let seg;
+            i = decodeInteger(mappings, i, state, 0); // genColumn
+            const col = state[0];
+            if (col < lastCol)
+                sorted = false;
+            lastCol = col;
+            if (hasMoreVlq(mappings, i, semi)) {
+                i = decodeInteger(mappings, i, state, 1); // sourcesIndex
+                i = decodeInteger(mappings, i, state, 2); // sourceLine
+                i = decodeInteger(mappings, i, state, 3); // sourceColumn
+                if (hasMoreVlq(mappings, i, semi)) {
+                    i = decodeInteger(mappings, i, state, 4); // namesIndex
+                    seg = [col, state[1], state[2], state[3], state[4]];
+                }
+                else {
+                    seg = [col, state[1], state[2], state[3]];
+                }
+            }
+            else {
+                seg = [col];
+            }
+            line.push(seg);
+        }
+        if (!sorted)
+            sort(line);
+        decoded.push(line);
+        index = semi + 1;
+    } while (index <= mappings.length);
+    return decoded;
+}
+function indexOf(mappings, index) {
+    const idx = mappings.indexOf(';', index);
+    return idx === -1 ? mappings.length : idx;
+}
+function decodeInteger(mappings, pos, state, j) {
+    let value = 0;
+    let shift = 0;
+    let integer = 0;
+    do {
+        const c = mappings.charCodeAt(pos++);
+        integer = charToInt[c];
+        value |= (integer & 31) << shift;
+        shift += 5;
+    } while (integer & 32);
+    const shouldNegate = value & 1;
+    value >>>= 1;
+    if (shouldNegate) {
+        value = -0x80000000 | -value;
+    }
+    state[j] += value;
+    return pos;
+}
+function hasMoreVlq(mappings, i, length) {
+    if (i >= length)
+        return false;
+    return mappings.charCodeAt(i) !== comma;
+}
+function sort(line) {
+    line.sort(sortComparator);
+}
+function sortComparator(a, b) {
+    return a[0] - b[0];
+}
+function encode(decoded) {
+    const state = new Int32Array(5);
+    const bufLength = 1024 * 16;
+    const subLength = bufLength - 36;
+    const buf = new Uint8Array(bufLength);
+    const sub = buf.subarray(0, subLength);
+    let pos = 0;
+    let out = '';
+    for (let i = 0; i < decoded.length; i++) {
+        const line = decoded[i];
+        if (i > 0) {
+            if (pos === bufLength) {
+                out += td.decode(buf);
+                pos = 0;
+            }
+            buf[pos++] = semicolon;
+        }
+        if (line.length === 0)
+            continue;
+        state[0] = 0;
+        for (let j = 0; j < line.length; j++) {
+            const segment = line[j];
+            // We can push up to 5 ints, each int can take at most 7 chars, and we
+            // may push a comma.
+            if (pos > subLength) {
+                out += td.decode(sub);
+                buf.copyWithin(0, subLength, pos);
+                pos -= subLength;
+            }
+            if (j > 0)
+                buf[pos++] = comma;
+            pos = encodeInteger(buf, pos, state, segment, 0); // genColumn
+            if (segment.length === 1)
+                continue;
+            pos = encodeInteger(buf, pos, state, segment, 1); // sourcesIndex
+            pos = encodeInteger(buf, pos, state, segment, 2); // sourceLine
+            pos = encodeInteger(buf, pos, state, segment, 3); // sourceColumn
+            if (segment.length === 4)
+                continue;
+            pos = encodeInteger(buf, pos, state, segment, 4); // namesIndex
+        }
+    }
+    return out + td.decode(buf.subarray(0, pos));
+}
+function encodeInteger(buf, pos, state, segment, j) {
+    const next = segment[j];
+    let num = next - state[j];
+    state[j] = next;
+    num = num < 0 ? (-num << 1) | 1 : num << 1;
+    do {
+        let clamped = num & 0b011111;
+        num >>>= 5;
+        if (num > 0)
+            clamped |= 0b100000;
+        buf[pos++] = intToChar[clamped];
+    } while (num > 0);
+    return pos;
+}
+
+export { decode, encode };
+//# sourceMappingURL=sourcemap-codec.mjs.map
+Ù /dist/sourcemap-codec.umd.js.mapÅ{"version":3,"file":"sourcemap-codec.umd.js","sources":["../src/sourcemap-codec.ts"],"sourcesContent":[null],"names":[],"mappings":"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"}ª/README.mdÅÉ# sourcemap-codec
+
+Encode/decode the `mappings` property of a [sourcemap](https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit).
+
+
+## Why?
+
+Sourcemaps are difficult to generate and manipulate, because the `mappings` property â€“ the part that actually links the generated code back to the original source â€“ is encoded using an obscure method called [Variable-length quantity](https://en.wikipedia.org/wiki/Variable-length_quantity). On top of that, each segment in the mapping contains offsets rather than absolute indices, which means that you can't look at a segment in isolation â€“ you have to understand the whole sourcemap.
+
+This package makes the process slightly easier.
+
+
+## Installation
+
+```bash
+npm install sourcemap-codec
+```
+
+
+## Usage
+
+```js
+import { encode, decode } from 'sourcemap-codec';
+
+var decoded = decode( ';EAEEA,EAAE,EAAC,CAAE;ECQY,UACC' );
+
+assert.deepEqual( decoded, [
+	// the first line (of the generated code) has no mappings,
+	// as shown by the starting semi-colon (which separates lines)
+	[],
+
+	// the second line contains four (comma-separated) segments
+	[
+		// segments are encoded as you'd expect:
+		// [ generatedCodeColumn, sourceIndex, sourceCodeLine, sourceCodeColumn, nameIndex ]
+
+		// i.e. the first segment begins at column 2, and maps back to the second column
+		// of the second line (both zero-based) of the 0th source, and uses the 0th
+		// name in the `map.names` array
+		[ 2, 0, 2, 2, 0 ],
+
+		// the remaining segments are 4-length rather than 5-length,
+		// because they don't map a name
+		[ 4, 0, 2, 4 ],
+		[ 6, 0, 2, 5 ],
+		[ 7, 0, 2, 7 ]
+	],
+
+	// the final line contains two segments
+	[
+		[ 2, 1, 10, 19 ],
+		[ 12, 1, 11, 20 ]
+	]
+]);
+
+var encoded = encode( decoded );
+assert.equal( encoded, ';EAEEA,EAAE,EAAC,CAAE;ECQY,UACC' );
+```
+
+## Benchmarks
+
+```
+node v18.0.0
+
+amp.js.map - 45120 segments
+
+Decode Memory Usage:
+@jridgewell/sourcemap-codec       5479160 bytes
+sourcemap-codec                   5659336 bytes
+source-map-0.6.1                 17144440 bytes
+source-map-0.8.0                  6867424 bytes
+Smallest memory usage is @jridgewell/sourcemap-codec
+
+Decode speed:
+decode: @jridgewell/sourcemap-codec x 502 ops/sec Â±1.03% (90 runs sampled)
+decode: sourcemap-codec x 445 ops/sec Â±0.97% (92 runs sampled)
+decode: source-map-0.6.1 x 36.01 ops/sec Â±1.64% (49 runs sampled)
+decode: source-map-0.8.0 x 367 ops/sec Â±0.04% (95 runs sampled)
+Fastest is decode: @jridgewell/sourcemap-codec
+
+Encode Memory Usage:
+@jridgewell/sourcemap-codec       1261620 bytes
+sourcemap-codec                   9119248 bytes
+source-map-0.6.1                  8968560 bytes
+source-map-0.8.0                  8952952 bytes
+Smallest memory usage is @jridgewell/sourcemap-codec
+
+Encode speed:
+encode: @jridgewell/sourcemap-codec x 738 ops/sec Â±0.42% (98 runs sampled)
+encode: sourcemap-codec x 238 ops/sec Â±0.73% (88 runs sampled)
+encode: source-map-0.6.1 x 162 ops/sec Â±0.43% (84 runs sampled)
+encode: source-map-0.8.0 x 191 ops/sec Â±0.34% (90 runs sampled)
+Fastest is encode: @jridgewell/sourcemap-codec
+
+
+***
+
+
+babel.min.js.map - 347793 segments
+
+Decode Memory Usage:
+@jridgewell/sourcemap-codec      35338184 bytes
+sourcemap-codec                  35922736 bytes
+source-map-0.6.1                 62366360 bytes
+source-map-0.8.0                 44337416 bytes
+Smallest memory usage is @jridgewell/sourcemap-codec
+
+Decode speed:
+decode: @jridgewell/sourcemap-codec x 40.35 ops/sec Â±4.47% (54 runs sampled)
+decode: sourcemap-codec x 36.76 ops/sec Â±3.67% (51 runs sampled)
+decode: source-map-0.6.1 x 4.44 ops/sec Â±2.15% (16 runs sampled)
+decode: source-map-0.8.0 x 59.35 ops/sec Â±0.05% (78 runs sampled)
+Fastest is decode: source-map-0.8.0
+
+Encode Memory Usage:
+@jridgewell/sourcemap-codec       7212604 bytes
+sourcemap-codec                  21421456 bytes
+source-map-0.6.1                 25286888 bytes
+source-map-0.8.0                 25498744 bytes
+Smallest memory usage is @jridgewell/sourcemap-codec
+
+Encode speed:
+encode: @jridgewell/sourcemap-codec x 112 ops/sec Â±0.13% (84 runs sampled)
+encode: sourcemap-codec x 30.23 ops/sec Â±2.76% (53 runs sampled)
+encode: source-map-0.6.1 x 19.43 ops/sec Â±3.70% (37 runs sampled)
+encode: source-map-0.8.0 x 19.40 ops/sec Â±3.26% (37 runs sampled)
+Fastest is encode: @jridgewell/sourcemap-codec
+
+
+***
+
+
+preact.js.map - 1992 segments
+
+Decode Memory Usage:
+@jridgewell/sourcemap-codec        500272 bytes
+sourcemap-codec                    516864 bytes
+source-map-0.6.1                  1596672 bytes
+source-map-0.8.0                   517272 bytes
+Smallest memory usage is @jridgewell/sourcemap-codec
+
+Decode speed:
+decode: @jridgewell/sourcemap-codec x 16,137 ops/sec Â±0.17% (99 runs sampled)
+decode: sourcemap-codec x 12,139 ops/sec Â±0.13% (99 runs sampled)
+decode: source-map-0.6.1 x 1,264 ops/sec Â±0.12% (100 runs sampled)
+decode: source-map-0.8.0 x 9,894 ops/sec Â±0.08% (101 runs sampled)
+Fastest is decode: @jridgewell/sourcemap-codec
+
+Encode Memory Usage:
+@jridgewell/sourcemap-codec        321026 bytes
+sourcemap-codec                    830832 bytes
+source-map-0.6.1                   586608 bytes
+source-map-0.8.0                   586680 bytes
+Smallest memory usage is @jridgewell/sourcemap-codec
+
+Encode speed:
+encode: @jridgewell/sourcemap-codec x 19,876 ops/sec Â±0.78% (95 runs sampled)
+encode: sourcemap-codec x 6,983 ops/sec Â±0.15% (100 runs sampled)
+encode: source-map-0.6.1 x 5,070 ops/sec Â±0.12% (102 runs sampled)
+encode: source-map-0.8.0 x 5,641 ops/sec Â±0.17% (100 runs sampled)
+Fastest is encode: @jridgewell/sourcemap-codec
+
+
+***
+
+
+react.js.map - 5726 segments
+
+Decode Memory Usage:
+@jridgewell/sourcemap-codec        734848 bytes
+sourcemap-codec                    954200 bytes
+source-map-0.6.1                  2276432 bytes
+source-map-0.8.0                   955488 bytes
+Smallest memory usage is @jridgewell/sourcemap-codec
+
+Decode speed:
+decode: @jridgewell/sourcemap-codec x 5,723 ops/sec Â±0.12% (98 runs sampled)
+decode: sourcemap-codec x 4,555 ops/sec Â±0.09% (101 runs sampled)
+decode: source-map-0.6.1 x 437 ops/sec Â±0.11% (93 runs sampled)
+decode: source-map-0.8.0 x 3,441 ops/sec Â±0.15% (100 runs sampled)
+Fastest is decode: @jridgewell/sourcemap-codec
+
+Encode Memory Usage:
+@jridgewell/sourcemap-codec        638672 bytes
+sourcemap-codec                   1109840 bytes
+source-map-0.6.1                  1321224 bytes
+source-map-0.8.0                  1324448 bytes
+Smallest memory usage is @jridgewell/sourcemap-codec
+
+Encode speed:
+encode: @jridgewell/sourcemap-codec x 6,801 ops/sec Â±0.48% (98 runs sampled)
+encode: sourcemap-codec x 2,533 ops/sec Â±0.13% (101 runs sampled)
+encode: source-map-0.6.1 x 2,248 ops/sec Â±0.08% (100 runs sampled)
+encode: source-map-0.8.0 x 2,303 ops/sec Â±0.15% (100 runs sampled)
+Fastest is encode: @jridgewell/sourcemap-codec
+```
+
+# License
+
+MIT
+¨/LICENSEÅ0The MIT License
+
+Copyright (c) 2015 Rich Harris
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+Ù /dist/types/sourcemap-codec.d.tsÅÇexport declare type SourceMapSegment = [number] | [number, number, number, number] | [number, number, number, number, number];
+export declare type SourceMapLine = SourceMapSegment[];
+export declare type SourceMapMappings = SourceMapLine[];
+export declare function decode(mappings: string): SourceMapMappings;
+export declare function encode(decoded: SourceMapMappings): string;
+export declare function encode(decoded: Readonly<SourceMapMappings>): string;
+¼/dist/sourcemap-codec.umd.jsÅö(function (global, factory) {
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+    typeof define === 'function' && define.amd ? define(['exports'], factory) :
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.sourcemapCodec = {}));
+})(this, (function (exports) { 'use strict';
+
+    const comma = ','.charCodeAt(0);
+    const semicolon = ';'.charCodeAt(0);
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    const intToChar = new Uint8Array(64); // 64 possible chars.
+    const charToInt = new Uint8Array(128); // z is 122 in ASCII
+    for (let i = 0; i < chars.length; i++) {
+        const c = chars.charCodeAt(i);
+        intToChar[i] = c;
+        charToInt[c] = i;
+    }
+    // Provide a fallback for older environments.
+    const td = typeof TextDecoder !== 'undefined'
+        ? /* #__PURE__ */ new TextDecoder()
+        : typeof Buffer !== 'undefined'
+            ? {
+                decode(buf) {
+                    const out = Buffer.from(buf.buffer, buf.byteOffset, buf.byteLength);
+                    return out.toString();
+                },
+            }
+            : {
+                decode(buf) {
+                    let out = '';
+                    for (let i = 0; i < buf.length; i++) {
+                        out += String.fromCharCode(buf[i]);
+                    }
+                    return out;
+                },
+            };
+    function decode(mappings) {
+        const state = new Int32Array(5);
+        const decoded = [];
+        let index = 0;
+        do {
+            const semi = indexOf(mappings, index);
+            const line = [];
+            let sorted = true;
+            let lastCol = 0;
+            state[0] = 0;
+            for (let i = index; i < semi; i++) {
+                let seg;
+                i = decodeInteger(mappings, i, state, 0); // genColumn
+                const col = state[0];
+                if (col < lastCol)
+                    sorted = false;
+                lastCol = col;
+                if (hasMoreVlq(mappings, i, semi)) {
+                    i = decodeInteger(mappings, i, state, 1); // sourcesIndex
+                    i = decodeInteger(mappings, i, state, 2); // sourceLine
+                    i = decodeInteger(mappings, i, state, 3); // sourceColumn
+                    if (hasMoreVlq(mappings, i, semi)) {
+                        i = decodeInteger(mappings, i, state, 4); // namesIndex
+                        seg = [col, state[1], state[2], state[3], state[4]];
+                    }
+                    else {
+                        seg = [col, state[1], state[2], state[3]];
+                    }
+                }
+                else {
+                    seg = [col];
+                }
+                line.push(seg);
+            }
+            if (!sorted)
+                sort(line);
+            decoded.push(line);
+            index = semi + 1;
+        } while (index <= mappings.length);
+        return decoded;
+    }
+    function indexOf(mappings, index) {
+        const idx = mappings.indexOf(';', index);
+        return idx === -1 ? mappings.length : idx;
+    }
+    function decodeInteger(mappings, pos, state, j) {
+        let value = 0;
+        let shift = 0;
+        let integer = 0;
+        do {
+            const c = mappings.charCodeAt(pos++);
+            integer = charToInt[c];
+            value |= (integer & 31) << shift;
+            shift += 5;
+        } while (integer & 32);
+        const shouldNegate = value & 1;
+        value >>>= 1;
+        if (shouldNegate) {
+            value = -0x80000000 | -value;
+        }
+        state[j] += value;
+        return pos;
+    }
+    function hasMoreVlq(mappings, i, length) {
+        if (i >= length)
+            return false;
+        return mappings.charCodeAt(i) !== comma;
+    }
+    function sort(line) {
+        line.sort(sortComparator);
+    }
+    function sortComparator(a, b) {
+        return a[0] - b[0];
+    }
+    function encode(decoded) {
+        const state = new Int32Array(5);
+        const bufLength = 1024 * 16;
+        const subLength = bufLength - 36;
+        const buf = new Uint8Array(bufLength);
+        const sub = buf.subarray(0, subLength);
+        let pos = 0;
+        let out = '';
+        for (let i = 0; i < decoded.length; i++) {
+            const line = decoded[i];
+            if (i > 0) {
+                if (pos === bufLength) {
+                    out += td.decode(buf);
+                    pos = 0;
+                }
+                buf[pos++] = semicolon;
+            }
+            if (line.length === 0)
+                continue;
+            state[0] = 0;
+            for (let j = 0; j < line.length; j++) {
+                const segment = line[j];
+                // We can push up to 5 ints, each int can take at most 7 chars, and we
+                // may push a comma.
+                if (pos > subLength) {
+                    out += td.decode(sub);
+                    buf.copyWithin(0, subLength, pos);
+                    pos -= subLength;
+                }
+                if (j > 0)
+                    buf[pos++] = comma;
+                pos = encodeInteger(buf, pos, state, segment, 0); // genColumn
+                if (segment.length === 1)
+                    continue;
+                pos = encodeInteger(buf, pos, state, segment, 1); // sourcesIndex
+                pos = encodeInteger(buf, pos, state, segment, 2); // sourceLine
+                pos = encodeInteger(buf, pos, state, segment, 3); // sourceColumn
+                if (segment.length === 4)
+                    continue;
+                pos = encodeInteger(buf, pos, state, segment, 4); // namesIndex
+            }
+        }
+        return out + td.decode(buf.subarray(0, pos));
+    }
+    function encodeInteger(buf, pos, state, segment, j) {
+        const next = segment[j];
+        let num = next - state[j];
+        state[j] = next;
+        num = num < 0 ? (-num << 1) | 1 : num << 1;
+        do {
+            let clamped = num & 0b011111;
+            num >>>= 5;
+            if (num > 0)
+                clamped |= 0b100000;
+            buf[pos++] = intToChar[clamped];
+        } while (num > 0);
+        return pos;
+    }
+
+    exports.decode = decode;
+    exports.encode = encode;
+
+    Object.defineProperty(exports, '__esModule', { value: true });
+
+}));
+//# sourceMappingURL=sourcemap-codec.umd.js.map

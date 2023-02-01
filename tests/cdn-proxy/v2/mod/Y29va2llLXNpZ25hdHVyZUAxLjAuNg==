@@ -1,0 +1,153 @@
+…©/index.jsÅÎ/**
+ * Module dependencies.
+ */
+
+var crypto = require('crypto');
+
+/**
+ * Sign the given `val` with `secret`.
+ *
+ * @param {String} val
+ * @param {String} secret
+ * @return {String}
+ * @api private
+ */
+
+exports.sign = function(val, secret){
+  if ('string' != typeof val) throw new TypeError("Cookie value must be provided as a string.");
+  if ('string' != typeof secret) throw new TypeError("Secret string must be provided.");
+  return val + '.' + crypto
+    .createHmac('sha256', secret)
+    .update(val)
+    .digest('base64')
+    .replace(/\=+$/, '');
+};
+
+/**
+ * Unsign and decode the given `val` with `secret`,
+ * returning `false` if the signature is invalid.
+ *
+ * @param {String} val
+ * @param {String} secret
+ * @return {String|Boolean}
+ * @api private
+ */
+
+exports.unsign = function(val, secret){
+  if ('string' != typeof val) throw new TypeError("Signed cookie string must be provided.");
+  if ('string' != typeof secret) throw new TypeError("Secret string must be provided.");
+  var str = val.slice(0, val.lastIndexOf('.'))
+    , mac = exports.sign(str, secret);
+  
+  return sha1(mac) == sha1(val) ? str : false;
+};
+
+/**
+ * Private
+ */
+
+function sha1(str){
+  return crypto.createHash('sha1').update(str).digest('hex');
+}
+­/package.jsonÅì{
+  "name": "cookie-signature",
+  "version": "1.0.6",
+  "description": "Sign and unsign cookies",
+  "keywords": ["cookie", "sign", "unsign"],
+  "author": "TJ Holowaychuk <tj@learnboost.com>",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/visionmedia/node-cookie-signature.git"},
+  "dependencies": {},
+  "devDependencies": {
+    "mocha": "*",
+    "should": "*"
+  },
+  "scripts": {
+    "test": "mocha --require should --reporter spec"
+  },
+  "main": "index"
+}
+«/.npmignoreÄsupport
+test
+examples
+*.sock
+«/History.mdÅ·1.0.6 / 2015-02-03
+==================
+
+* use `npm test` instead of `make test` to run tests
+* clearer assertion messages when checking input
+
+
+1.0.5 / 2014-09-05
+==================
+
+* add license to package.json
+
+1.0.4 / 2014-06-25
+==================
+
+ * corrected avoidance of timing attacks (thanks @tenbits!)
+
+1.0.3 / 2014-01-28
+==================
+
+ * [incorrect] fix for timing attacks
+
+1.0.2 / 2014-01-28
+==================
+
+ * fix missing repository warning
+ * fix typo in test
+
+1.0.1 / 2013-04-15
+==================
+
+  * Revert "Changed underlying HMAC algo. to sha512."
+  * Revert "Fix for timing attacks on MAC verification."
+
+0.0.1 / 2010-01-03
+==================
+
+  * Initial release
+ª/Readme.mdÅÒ
+# cookie-signature
+
+  Sign and unsign cookies.
+
+## Example
+
+```js
+var cookie = require('cookie-signature');
+
+var val = cookie.sign('hello', 'tobiiscool');
+val.should.equal('hello.DGDUkGlIkCzPz+C0B064FNgHdEjox7ch8tOBGslZ5QI');
+
+var val = cookie.sign('hello', 'tobiiscool');
+cookie.unsign(val, 'tobiiscool').should.equal('hello');
+cookie.unsign(val, 'luna').should.be.false;
+```
+
+## License 
+
+(The MIT License)
+
+Copyright (c) 2012 LearnBoost &lt;tj@learnboost.com&gt;
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

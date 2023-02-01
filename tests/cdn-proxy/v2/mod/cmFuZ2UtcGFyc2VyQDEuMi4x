@@ -1,0 +1,369 @@
+…«/HISTORY.mdÅ•1.2.1 / 2019-05-10
+==================
+
+  * Improve error when `str` is not a string
+
+1.2.0 / 2016-06-01
+==================
+
+  * Add `combine` option to combine overlapping ranges
+
+1.1.0 / 2016-05-13
+==================
+
+  * Fix incorrectly returning -1 when there is at least one valid range
+  * perf: remove internal function
+
+1.0.3 / 2015-10-29
+==================
+
+  * perf: enable strict mode
+
+1.0.2 / 2014-09-08
+==================
+
+  * Support Node.js 0.6
+
+1.0.1 / 2014-09-07
+==================
+
+  * Move repository to jshttp
+
+1.0.0 / 2013-12-11
+==================
+
+  * Add repository to package.json
+  * Add MIT license
+
+0.0.4 / 2012-06-17
+==================
+
+  * Change ret -1 for unsatisfiable and -2 when invalid
+
+0.0.3 / 2012-06-17
+==================
+
+  * Fix last-byte-pos default to len - 1
+
+0.0.2 / 2012-06-14
+==================
+
+  * Add `.type`
+
+0.0.1 / 2012-06-11
+==================
+
+  * Initial release
+©/index.jsÅT/*!
+ * range-parser
+ * Copyright(c) 2012-2014 TJ Holowaychuk
+ * Copyright(c) 2015-2016 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+'use strict'
+
+/**
+ * Module exports.
+ * @public
+ */
+
+module.exports = rangeParser
+
+/**
+ * Parse "Range" header `str` relative to the given file `size`.
+ *
+ * @param {Number} size
+ * @param {String} str
+ * @param {Object} [options]
+ * @return {Array}
+ * @public
+ */
+
+function rangeParser (size, str, options) {
+  if (typeof str !== 'string') {
+    throw new TypeError('argument str must be a string')
+  }
+
+  var index = str.indexOf('=')
+
+  if (index === -1) {
+    return -2
+  }
+
+  // split the range string
+  var arr = str.slice(index + 1).split(',')
+  var ranges = []
+
+  // add ranges type
+  ranges.type = str.slice(0, index)
+
+  // parse all ranges
+  for (var i = 0; i < arr.length; i++) {
+    var range = arr[i].split('-')
+    var start = parseInt(range[0], 10)
+    var end = parseInt(range[1], 10)
+
+    // -nnn
+    if (isNaN(start)) {
+      start = size - end
+      end = size - 1
+    // nnn-
+    } else if (isNaN(end)) {
+      end = size - 1
+    }
+
+    // limit last-byte-pos to current length
+    if (end > size - 1) {
+      end = size - 1
+    }
+
+    // invalid or unsatisifiable
+    if (isNaN(start) || isNaN(end) || start > end || start < 0) {
+      continue
+    }
+
+    // add range
+    ranges.push({
+      start: start,
+      end: end
+    })
+  }
+
+  if (ranges.length < 1) {
+    // unsatisifiable
+    return -1
+  }
+
+  return options && options.combine
+    ? combineRanges(ranges)
+    : ranges
+}
+
+/**
+ * Combine overlapping & adjacent ranges.
+ * @private
+ */
+
+function combineRanges (ranges) {
+  var ordered = ranges.map(mapWithIndex).sort(sortByRangeStart)
+
+  for (var j = 0, i = 1; i < ordered.length; i++) {
+    var range = ordered[i]
+    var current = ordered[j]
+
+    if (range.start > current.end + 1) {
+      // next range
+      ordered[++j] = range
+    } else if (range.end > current.end) {
+      // extend range
+      current.end = range.end
+      current.index = Math.min(current.index, range.index)
+    }
+  }
+
+  // trim ordered array
+  ordered.length = j + 1
+
+  // generate combined range
+  var combined = ordered.sort(sortByRangeIndex).map(mapWithoutIndex)
+
+  // copy ranges type
+  combined.type = ranges.type
+
+  return combined
+}
+
+/**
+ * Map function to add index value to ranges.
+ * @private
+ */
+
+function mapWithIndex (range, index) {
+  return {
+    start: range.start,
+    end: range.end,
+    index: index
+  }
+}
+
+/**
+ * Map function to remove index value from ranges.
+ * @private
+ */
+
+function mapWithoutIndex (range) {
+  return {
+    start: range.start,
+    end: range.end
+  }
+}
+
+/**
+ * Sort function to sort ranges by index.
+ * @private
+ */
+
+function sortByRangeIndex (a, b) {
+  return a.index - b.index
+}
+
+/**
+ * Sort function to sort ranges by start position.
+ * @private
+ */
+
+function sortByRangeStart (a, b) {
+  return a.start - b.start
+}
+ª/README.mdÅæ# range-parser
+
+[![NPM Version][npm-version-image]][npm-url]
+[![NPM Downloads][npm-downloads-image]][npm-url]
+[![Node.js Version][node-image]][node-url]
+[![Build Status][travis-image]][travis-url]
+[![Test Coverage][coveralls-image]][coveralls-url]
+
+Range header field parser.
+
+## Installation
+
+This is a [Node.js](https://nodejs.org/en/) module available through the
+[npm registry](https://www.npmjs.com/). Installation is done using the
+[`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
+
+```sh
+$ npm install range-parser
+```
+
+## API
+
+<!-- eslint-disable no-unused-vars -->
+
+```js
+var parseRange = require('range-parser')
+```
+
+### parseRange(size, header, options)
+
+Parse the given `header` string where `size` is the maximum size of the resource.
+An array of ranges will be returned or negative numbers indicating an error parsing.
+
+  * `-2` signals a malformed header string
+  * `-1` signals an unsatisfiable range
+
+<!-- eslint-disable no-undef -->
+
+```js
+// parse header from request
+var range = parseRange(size, req.headers.range)
+
+// the type of the range
+if (range.type === 'bytes') {
+  // the ranges
+  range.forEach(function (r) {
+    // do something with r.start and r.end
+  })
+}
+```
+
+#### Options
+
+These properties are accepted in the options object.
+
+##### combine
+
+Specifies if overlapping & adjacent ranges should be combined, defaults to `false`.
+When `true`, ranges will be combined and returned as if they were specified that
+way in the header.
+
+<!-- eslint-disable no-undef -->
+
+```js
+parseRange(100, 'bytes=50-55,0-10,5-10,56-60', { combine: true })
+// => [
+//      { start: 0,  end: 10 },
+//      { start: 50, end: 60 }
+//    ]
+```
+
+## License
+
+[MIT](LICENSE)
+
+[coveralls-image]: https://badgen.net/coveralls/c/github/jshttp/range-parser/master
+[coveralls-url]: https://coveralls.io/r/jshttp/range-parser?branch=master
+[node-image]: https://badgen.net/npm/node/range-parser
+[node-url]: https://nodejs.org/en/download
+[npm-downloads-image]: https://badgen.net/npm/dm/range-parser
+[npm-url]: https://npmjs.org/package/range-parser
+[npm-version-image]: https://badgen.net/npm/v/range-parser
+[travis-image]: https://badgen.net/travis/jshttp/range-parser/master
+[travis-url]: https://travis-ci.org/jshttp/range-parser
+­/package.jsonÅ {
+  "name": "range-parser",
+  "author": "TJ Holowaychuk <tj@vision-media.ca> (http://tjholowaychuk.com)",
+  "description": "Range header field string parser",
+  "version": "1.2.1",
+  "contributors": [
+    "Douglas Christopher Wilson <doug@somethingdoug.com>",
+    "James Wyatt Cready <wyatt.cready@lanetix.com>",
+    "Jonathan Ong <me@jongleberry.com> (http://jongleberry.com)"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "range",
+    "parser",
+    "http"
+  ],
+  "repository": "jshttp/range-parser",
+  "devDependencies": {
+    "deep-equal": "1.0.1",
+    "eslint": "5.16.0",
+    "eslint-config-standard": "12.0.0",
+    "eslint-plugin-markdown": "1.0.0",
+    "eslint-plugin-import": "2.17.2",
+    "eslint-plugin-node": "8.0.1",
+    "eslint-plugin-promise": "4.1.1",
+    "eslint-plugin-standard": "4.0.0",
+    "mocha": "6.1.4",
+    "nyc": "14.1.1"
+  },
+  "files": [
+    "HISTORY.md",
+    "LICENSE",
+    "index.js"
+  ],
+  "engines": {
+    "node": ">= 0.6"
+  },
+  "scripts": {
+    "lint": "eslint --plugin markdown --ext js,md .",
+    "test": "mocha --reporter spec",
+    "test-cov": "nyc --reporter=html --reporter=text npm test",
+    "test-travis": "nyc --reporter=text npm test"
+  }
+}
+¨/LICENSEÅš(The MIT License)
+
+Copyright (c) 2012-2014 TJ Holowaychuk <tj@vision-media.ca>
+Copyright (c) 2015-2016 Douglas Christopher Wilson <doug@somethingdoug.com
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

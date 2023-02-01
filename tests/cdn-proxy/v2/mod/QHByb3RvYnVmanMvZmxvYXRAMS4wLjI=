@@ -1,0 +1,803 @@
+à®/LICENSE≈·Copyright (c) 2016, Daniel Wirtz  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+* Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution.
+* Neither the name of its author, nor the names of its contributors
+  may be used to endorse or promote products derived from this software
+  without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Ø/tests/index.js≈var tape = require("tape");
+
+var float = require("..");
+
+tape.test("float", function(test) {
+
+    // default
+    test.test(test.name + " - typed array", function(test) {
+        runTest(float, test);
+    });
+
+    // ieee754
+    test.test(test.name + " - fallback", function(test) {
+        var F32 = global.Float32Array,
+            F64 = global.Float64Array;
+        delete global.Float32Array;
+        delete global.Float64Array;
+        runTest(float({}), test);
+        global.Float32Array = F32;
+        global.Float64Array = F64;
+    });
+});
+
+function runTest(float, test) {
+
+    var common = [
+        0,
+        -0,
+        Infinity,
+        -Infinity,
+        0.125,
+        1024.5,
+        -4096.5,
+        NaN
+    ];
+
+    test.test(test.name + " - using 32 bits", function(test) {
+        common.concat([
+            3.4028234663852886e+38,
+            1.1754943508222875e-38,
+            1.1754946310819804e-39
+        ])
+        .forEach(function(value) {
+            var strval = value === 0 && 1 / value < 0 ? "-0" : value.toString();
+            test.ok(
+                checkValue(value, 4, float.readFloatLE, float.writeFloatLE, Buffer.prototype.writeFloatLE),
+                "should write and read back " + strval + " (32 bit LE)"
+            );
+            test.ok(
+                checkValue(value, 4, float.readFloatBE, float.writeFloatBE, Buffer.prototype.writeFloatBE),
+                "should write and read back " + strval + " (32 bit BE)"
+            );
+        });
+        test.end();
+    });
+
+    test.test(test.name + " - using 64 bits", function(test) {
+        common.concat([
+            1.7976931348623157e+308,
+            2.2250738585072014e-308,
+            2.2250738585072014e-309
+        ])
+        .forEach(function(value) {
+            var strval = value === 0 && 1 / value < 0 ? "-0" : value.toString();
+            test.ok(
+                checkValue(value, 8, float.readDoubleLE, float.writeDoubleLE, Buffer.prototype.writeDoubleLE),
+                "should write and read back " + strval + " (64 bit LE)"
+            );
+            test.ok(
+                checkValue(value, 8, float.readDoubleBE, float.writeDoubleBE, Buffer.prototype.writeDoubleBE),
+                "should write and read back " + strval + " (64 bit BE)"
+            );
+        });
+        test.end();
+    });
+
+    test.end();
+}
+
+function checkValue(value, size, read, write, write_comp) {
+    var buffer = new Buffer(size);
+    write(value, buffer, 0);
+    var value_comp = read(buffer, 0);
+    var strval = value === 0 && 1 / value < 0 ? "-0" : value.toString();
+    if (value !== value) {
+        if (value_comp === value_comp)
+            return false;
+    } else if (value_comp !== value)
+        return false;
+
+    var buffer_comp = new Buffer(size);
+    write_comp.call(buffer_comp, value, 0);
+    for (var i = 0; i < size; ++i)
+        if (buffer[i] !== buffer_comp[i]) {
+            console.error(">", buffer, buffer_comp);
+            return false;
+        }
+
+    return true;
+}Ø/bench/index.js≈Æ"use strict";
+
+var float = require(".."),
+    ieee754 = require("ieee754"),
+    newSuite = require("./suite");
+
+var F32 = Float32Array;
+var F64 = Float64Array;
+delete global.Float32Array;
+delete global.Float64Array;
+var floatFallback = float({});
+global.Float32Array = F32;
+global.Float64Array = F64;
+
+var buf = new Buffer(8);
+
+newSuite("writeFloat")
+.add("float", function() {
+    float.writeFloatLE(0.1, buf, 0);
+})
+.add("float (fallback)", function() {
+    floatFallback.writeFloatLE(0.1, buf, 0);
+})
+.add("ieee754", function() {
+    ieee754.write(buf, 0.1, 0, true, 23, 4);
+})
+.add("buffer", function() {
+    buf.writeFloatLE(0.1, 0);
+})
+.add("buffer (noAssert)", function() {
+    buf.writeFloatLE(0.1, 0, true);
+})
+.run();
+
+newSuite("readFloat")
+.add("float", function() {
+    float.readFloatLE(buf, 0);
+})
+.add("float (fallback)", function() {
+    floatFallback.readFloatLE(buf, 0);
+})
+.add("ieee754", function() {
+    ieee754.read(buf, 0, true, 23, 4);
+})
+.add("buffer", function() {
+    buf.readFloatLE(0);
+})
+.add("buffer (noAssert)", function() {
+    buf.readFloatLE(0, true);
+})
+.run();
+
+newSuite("writeDouble")
+.add("float", function() {
+    float.writeDoubleLE(0.1, buf, 0);
+})
+.add("float (fallback)", function() {
+    floatFallback.writeDoubleLE(0.1, buf, 0);
+})
+.add("ieee754", function() {
+    ieee754.write(buf, 0.1, 0, true, 52, 8);
+})
+.add("buffer", function() {
+    buf.writeDoubleLE(0.1, 0);
+})
+.add("buffer (noAssert)", function() {
+    buf.writeDoubleLE(0.1, 0, true);
+})
+.run();
+
+newSuite("readDouble")
+.add("float", function() {
+    float.readDoubleLE(buf, 0);
+})
+.add("float (fallback)", function() {
+    floatFallback.readDoubleLE(buf, 0);
+})
+.add("ieee754", function() {
+    ieee754.read(buf, 0, true, 52, 8);
+})
+.add("buffer", function() {
+    buf.readDoubleLE(0);
+})
+.add("buffer (noAssert)", function() {
+    buf.readDoubleLE(0, true);
+})
+.run();
+©/index.js≈,∏"use strict";
+
+module.exports = factory(factory);
+
+/**
+ * Reads / writes floats / doubles from / to buffers.
+ * @name util.float
+ * @namespace
+ */
+
+/**
+ * Writes a 32 bit float to a buffer using little endian byte order.
+ * @name util.float.writeFloatLE
+ * @function
+ * @param {number} val Value to write
+ * @param {Uint8Array} buf Target buffer
+ * @param {number} pos Target buffer offset
+ * @returns {undefined}
+ */
+
+/**
+ * Writes a 32 bit float to a buffer using big endian byte order.
+ * @name util.float.writeFloatBE
+ * @function
+ * @param {number} val Value to write
+ * @param {Uint8Array} buf Target buffer
+ * @param {number} pos Target buffer offset
+ * @returns {undefined}
+ */
+
+/**
+ * Reads a 32 bit float from a buffer using little endian byte order.
+ * @name util.float.readFloatLE
+ * @function
+ * @param {Uint8Array} buf Source buffer
+ * @param {number} pos Source buffer offset
+ * @returns {number} Value read
+ */
+
+/**
+ * Reads a 32 bit float from a buffer using big endian byte order.
+ * @name util.float.readFloatBE
+ * @function
+ * @param {Uint8Array} buf Source buffer
+ * @param {number} pos Source buffer offset
+ * @returns {number} Value read
+ */
+
+/**
+ * Writes a 64 bit double to a buffer using little endian byte order.
+ * @name util.float.writeDoubleLE
+ * @function
+ * @param {number} val Value to write
+ * @param {Uint8Array} buf Target buffer
+ * @param {number} pos Target buffer offset
+ * @returns {undefined}
+ */
+
+/**
+ * Writes a 64 bit double to a buffer using big endian byte order.
+ * @name util.float.writeDoubleBE
+ * @function
+ * @param {number} val Value to write
+ * @param {Uint8Array} buf Target buffer
+ * @param {number} pos Target buffer offset
+ * @returns {undefined}
+ */
+
+/**
+ * Reads a 64 bit double from a buffer using little endian byte order.
+ * @name util.float.readDoubleLE
+ * @function
+ * @param {Uint8Array} buf Source buffer
+ * @param {number} pos Source buffer offset
+ * @returns {number} Value read
+ */
+
+/**
+ * Reads a 64 bit double from a buffer using big endian byte order.
+ * @name util.float.readDoubleBE
+ * @function
+ * @param {Uint8Array} buf Source buffer
+ * @param {number} pos Source buffer offset
+ * @returns {number} Value read
+ */
+
+// Factory function for the purpose of node-based testing in modified global environments
+function factory(exports) {
+
+    // float: typed array
+    if (typeof Float32Array !== "undefined") (function() {
+
+        var f32 = new Float32Array([ -0 ]),
+            f8b = new Uint8Array(f32.buffer),
+            le  = f8b[3] === 128;
+
+        function writeFloat_f32_cpy(val, buf, pos) {
+            f32[0] = val;
+            buf[pos    ] = f8b[0];
+            buf[pos + 1] = f8b[1];
+            buf[pos + 2] = f8b[2];
+            buf[pos + 3] = f8b[3];
+        }
+
+        function writeFloat_f32_rev(val, buf, pos) {
+            f32[0] = val;
+            buf[pos    ] = f8b[3];
+            buf[pos + 1] = f8b[2];
+            buf[pos + 2] = f8b[1];
+            buf[pos + 3] = f8b[0];
+        }
+
+        /* istanbul ignore next */
+        exports.writeFloatLE = le ? writeFloat_f32_cpy : writeFloat_f32_rev;
+        /* istanbul ignore next */
+        exports.writeFloatBE = le ? writeFloat_f32_rev : writeFloat_f32_cpy;
+
+        function readFloat_f32_cpy(buf, pos) {
+            f8b[0] = buf[pos    ];
+            f8b[1] = buf[pos + 1];
+            f8b[2] = buf[pos + 2];
+            f8b[3] = buf[pos + 3];
+            return f32[0];
+        }
+
+        function readFloat_f32_rev(buf, pos) {
+            f8b[3] = buf[pos    ];
+            f8b[2] = buf[pos + 1];
+            f8b[1] = buf[pos + 2];
+            f8b[0] = buf[pos + 3];
+            return f32[0];
+        }
+
+        /* istanbul ignore next */
+        exports.readFloatLE = le ? readFloat_f32_cpy : readFloat_f32_rev;
+        /* istanbul ignore next */
+        exports.readFloatBE = le ? readFloat_f32_rev : readFloat_f32_cpy;
+
+    // float: ieee754
+    })(); else (function() {
+
+        function writeFloat_ieee754(writeUint, val, buf, pos) {
+            var sign = val < 0 ? 1 : 0;
+            if (sign)
+                val = -val;
+            if (val === 0)
+                writeUint(1 / val > 0 ? /* positive */ 0 : /* negative 0 */ 2147483648, buf, pos);
+            else if (isNaN(val))
+                writeUint(2143289344, buf, pos);
+            else if (val > 3.4028234663852886e+38) // +-Infinity
+                writeUint((sign << 31 | 2139095040) >>> 0, buf, pos);
+            else if (val < 1.1754943508222875e-38) // denormal
+                writeUint((sign << 31 | Math.round(val / 1.401298464324817e-45)) >>> 0, buf, pos);
+            else {
+                var exponent = Math.floor(Math.log(val) / Math.LN2),
+                    mantissa = Math.round(val * Math.pow(2, -exponent) * 8388608) & 8388607;
+                writeUint((sign << 31 | exponent + 127 << 23 | mantissa) >>> 0, buf, pos);
+            }
+        }
+
+        exports.writeFloatLE = writeFloat_ieee754.bind(null, writeUintLE);
+        exports.writeFloatBE = writeFloat_ieee754.bind(null, writeUintBE);
+
+        function readFloat_ieee754(readUint, buf, pos) {
+            var uint = readUint(buf, pos),
+                sign = (uint >> 31) * 2 + 1,
+                exponent = uint >>> 23 & 255,
+                mantissa = uint & 8388607;
+            return exponent === 255
+                ? mantissa
+                ? NaN
+                : sign * Infinity
+                : exponent === 0 // denormal
+                ? sign * 1.401298464324817e-45 * mantissa
+                : sign * Math.pow(2, exponent - 150) * (mantissa + 8388608);
+        }
+
+        exports.readFloatLE = readFloat_ieee754.bind(null, readUintLE);
+        exports.readFloatBE = readFloat_ieee754.bind(null, readUintBE);
+
+    })();
+
+    // double: typed array
+    if (typeof Float64Array !== "undefined") (function() {
+
+        var f64 = new Float64Array([-0]),
+            f8b = new Uint8Array(f64.buffer),
+            le  = f8b[7] === 128;
+
+        function writeDouble_f64_cpy(val, buf, pos) {
+            f64[0] = val;
+            buf[pos    ] = f8b[0];
+            buf[pos + 1] = f8b[1];
+            buf[pos + 2] = f8b[2];
+            buf[pos + 3] = f8b[3];
+            buf[pos + 4] = f8b[4];
+            buf[pos + 5] = f8b[5];
+            buf[pos + 6] = f8b[6];
+            buf[pos + 7] = f8b[7];
+        }
+
+        function writeDouble_f64_rev(val, buf, pos) {
+            f64[0] = val;
+            buf[pos    ] = f8b[7];
+            buf[pos + 1] = f8b[6];
+            buf[pos + 2] = f8b[5];
+            buf[pos + 3] = f8b[4];
+            buf[pos + 4] = f8b[3];
+            buf[pos + 5] = f8b[2];
+            buf[pos + 6] = f8b[1];
+            buf[pos + 7] = f8b[0];
+        }
+
+        /* istanbul ignore next */
+        exports.writeDoubleLE = le ? writeDouble_f64_cpy : writeDouble_f64_rev;
+        /* istanbul ignore next */
+        exports.writeDoubleBE = le ? writeDouble_f64_rev : writeDouble_f64_cpy;
+
+        function readDouble_f64_cpy(buf, pos) {
+            f8b[0] = buf[pos    ];
+            f8b[1] = buf[pos + 1];
+            f8b[2] = buf[pos + 2];
+            f8b[3] = buf[pos + 3];
+            f8b[4] = buf[pos + 4];
+            f8b[5] = buf[pos + 5];
+            f8b[6] = buf[pos + 6];
+            f8b[7] = buf[pos + 7];
+            return f64[0];
+        }
+
+        function readDouble_f64_rev(buf, pos) {
+            f8b[7] = buf[pos    ];
+            f8b[6] = buf[pos + 1];
+            f8b[5] = buf[pos + 2];
+            f8b[4] = buf[pos + 3];
+            f8b[3] = buf[pos + 4];
+            f8b[2] = buf[pos + 5];
+            f8b[1] = buf[pos + 6];
+            f8b[0] = buf[pos + 7];
+            return f64[0];
+        }
+
+        /* istanbul ignore next */
+        exports.readDoubleLE = le ? readDouble_f64_cpy : readDouble_f64_rev;
+        /* istanbul ignore next */
+        exports.readDoubleBE = le ? readDouble_f64_rev : readDouble_f64_cpy;
+
+    // double: ieee754
+    })(); else (function() {
+
+        function writeDouble_ieee754(writeUint, off0, off1, val, buf, pos) {
+            var sign = val < 0 ? 1 : 0;
+            if (sign)
+                val = -val;
+            if (val === 0) {
+                writeUint(0, buf, pos + off0);
+                writeUint(1 / val > 0 ? /* positive */ 0 : /* negative 0 */ 2147483648, buf, pos + off1);
+            } else if (isNaN(val)) {
+                writeUint(0, buf, pos + off0);
+                writeUint(2146959360, buf, pos + off1);
+            } else if (val > 1.7976931348623157e+308) { // +-Infinity
+                writeUint(0, buf, pos + off0);
+                writeUint((sign << 31 | 2146435072) >>> 0, buf, pos + off1);
+            } else {
+                var mantissa;
+                if (val < 2.2250738585072014e-308) { // denormal
+                    mantissa = val / 5e-324;
+                    writeUint(mantissa >>> 0, buf, pos + off0);
+                    writeUint((sign << 31 | mantissa / 4294967296) >>> 0, buf, pos + off1);
+                } else {
+                    var exponent = Math.floor(Math.log(val) / Math.LN2);
+                    if (exponent === 1024)
+                        exponent = 1023;
+                    mantissa = val * Math.pow(2, -exponent);
+                    writeUint(mantissa * 4503599627370496 >>> 0, buf, pos + off0);
+                    writeUint((sign << 31 | exponent + 1023 << 20 | mantissa * 1048576 & 1048575) >>> 0, buf, pos + off1);
+                }
+            }
+        }
+
+        exports.writeDoubleLE = writeDouble_ieee754.bind(null, writeUintLE, 0, 4);
+        exports.writeDoubleBE = writeDouble_ieee754.bind(null, writeUintBE, 4, 0);
+
+        function readDouble_ieee754(readUint, off0, off1, buf, pos) {
+            var lo = readUint(buf, pos + off0),
+                hi = readUint(buf, pos + off1);
+            var sign = (hi >> 31) * 2 + 1,
+                exponent = hi >>> 20 & 2047,
+                mantissa = 4294967296 * (hi & 1048575) + lo;
+            return exponent === 2047
+                ? mantissa
+                ? NaN
+                : sign * Infinity
+                : exponent === 0 // denormal
+                ? sign * 5e-324 * mantissa
+                : sign * Math.pow(2, exponent - 1075) * (mantissa + 4503599627370496);
+        }
+
+        exports.readDoubleLE = readDouble_ieee754.bind(null, readUintLE, 0, 4);
+        exports.readDoubleBE = readDouble_ieee754.bind(null, readUintBE, 4, 0);
+
+    })();
+
+    return exports;
+}
+
+// uint helpers
+
+function writeUintLE(val, buf, pos) {
+    buf[pos    ] =  val        & 255;
+    buf[pos + 1] =  val >>> 8  & 255;
+    buf[pos + 2] =  val >>> 16 & 255;
+    buf[pos + 3] =  val >>> 24;
+}
+
+function writeUintBE(val, buf, pos) {
+    buf[pos    ] =  val >>> 24;
+    buf[pos + 1] =  val >>> 16 & 255;
+    buf[pos + 2] =  val >>> 8  & 255;
+    buf[pos + 3] =  val        & 255;
+}
+
+function readUintLE(buf, pos) {
+    return (buf[pos    ]
+          | buf[pos + 1] << 8
+          | buf[pos + 2] << 16
+          | buf[pos + 3] << 24) >>> 0;
+}
+
+function readUintBE(buf, pos) {
+    return (buf[pos    ] << 24
+          | buf[pos + 1] << 16
+          | buf[pos + 2] << 8
+          | buf[pos + 3]) >>> 0;
+}
+Ø/bench/suite.js≈Ú"use strict";
+module.exports = newSuite;
+
+var benchmark = require("benchmark"),
+    chalk     = require("chalk");
+
+var padSize = 27;
+
+function newSuite(name) {
+    var benches = [];
+    return new benchmark.Suite(name)
+    .on("add", function(event) {
+        benches.push(event.target);
+    })
+    .on("start", function() {
+        process.stdout.write("benchmarking " + name + " performance ...\n\n");
+    })
+    .on("cycle", function(event) {
+        process.stdout.write(String(event.target) + "\n");
+    })
+    .on("complete", function() {
+        if (benches.length > 1) {
+            var fastest = this.filter("fastest"), // eslint-disable-line no-invalid-this
+                fastestHz = getHz(fastest[0]);
+            process.stdout.write("\n" + chalk.white(pad(fastest[0].name, padSize)) + " was " + chalk.green("fastest") + "\n");
+            benches.forEach(function(bench) {
+                if (fastest.indexOf(bench) === 0)
+                    return;
+                var hz = hz = getHz(bench);
+                var percent = (1 - hz / fastestHz) * 100;
+                process.stdout.write(chalk.white(pad(bench.name, padSize)) + " was " + chalk.red(percent.toFixed(1) + "% slower") + "\n");
+            });
+        }
+        process.stdout.write("\n");
+    });
+}
+
+function getHz(bench) {
+    return 1 / (bench.stats.mean + bench.stats.moe);
+}
+
+function pad(str, len, l) {
+    while (str.length < len)
+        str = l ? str + " " : " " + str;
+    return str;
+}
+´/index.d.ts≈	Ô/**
+ * Writes a 32 bit float to a buffer using little endian byte order.
+ * @name writeFloatLE
+ * @function
+ * @param {number} val Value to write
+ * @param {Uint8Array} buf Target buffer
+ * @param {number} pos Target buffer offset
+ * @returns {undefined}
+ */
+export function writeFloatLE(val: number, buf: Uint8Array, pos: number): void;
+
+/**
+ * Writes a 32 bit float to a buffer using big endian byte order.
+ * @name writeFloatBE
+ * @function
+ * @param {number} val Value to write
+ * @param {Uint8Array} buf Target buffer
+ * @param {number} pos Target buffer offset
+ * @returns {undefined}
+ */
+export function writeFloatBE(val: number, buf: Uint8Array, pos: number): void;
+
+/**
+ * Reads a 32 bit float from a buffer using little endian byte order.
+ * @name readFloatLE
+ * @function
+ * @param {Uint8Array} buf Source buffer
+ * @param {number} pos Source buffer offset
+ * @returns {number} Value read
+ */
+export function readFloatLE(buf: Uint8Array, pos: number): number;
+
+/**
+ * Reads a 32 bit float from a buffer using big endian byte order.
+ * @name readFloatBE
+ * @function
+ * @param {Uint8Array} buf Source buffer
+ * @param {number} pos Source buffer offset
+ * @returns {number} Value read
+ */
+export function readFloatBE(buf: Uint8Array, pos: number): number;
+
+/**
+ * Writes a 64 bit double to a buffer using little endian byte order.
+ * @name writeDoubleLE
+ * @function
+ * @param {number} val Value to write
+ * @param {Uint8Array} buf Target buffer
+ * @param {number} pos Target buffer offset
+ * @returns {undefined}
+ */
+export function writeDoubleLE(val: number, buf: Uint8Array, pos: number): void;
+
+/**
+ * Writes a 64 bit double to a buffer using big endian byte order.
+ * @name writeDoubleBE
+ * @function
+ * @param {number} val Value to write
+ * @param {Uint8Array} buf Target buffer
+ * @param {number} pos Target buffer offset
+ * @returns {undefined}
+ */
+export function writeDoubleBE(val: number, buf: Uint8Array, pos: number): void;
+
+/**
+ * Reads a 64 bit double from a buffer using little endian byte order.
+ * @name readDoubleLE
+ * @function
+ * @param {Uint8Array} buf Source buffer
+ * @param {number} pos Source buffer offset
+ * @returns {number} Value read
+ */
+export function readDoubleLE(buf: Uint8Array, pos: number): number;
+
+/**
+ * Reads a 64 bit double from a buffer using big endian byte order.
+ * @name readDoubleBE
+ * @function
+ * @param {Uint8Array} buf Source buffer
+ * @param {number} pos Source buffer offset
+ * @returns {number} Value read
+ */
+export function readDoubleBE(buf: Uint8Array, pos: number): number;
+≠/package.json≈‚{
+  "name": "@protobufjs/float",
+  "description": "Reads / writes floats / doubles from / to buffers in both modern and ancient browsers.",
+  "version": "1.0.2",
+  "author": "Daniel Wirtz <dcode+protobufjs@dcode.io>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dcodeIO/protobuf.js.git"
+  },
+  "dependencies": {},
+  "license": "BSD-3-Clause",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "devDependencies": {
+    "benchmark": "^2.1.4",
+    "chalk": "^1.1.3",
+    "ieee754": "^1.1.8",
+    "istanbul": "^0.4.5",
+    "tape": "^4.6.3"
+  },
+  "scripts": {
+    "test": "tape tests/*.js",
+    "coverage": "istanbul cover node_modules/tape/bin/tape tests/*.js",
+    "bench": "node bench"
+  }
+}™/README.md≈0@protobufjs/float
+=================
+[![npm](https://img.shields.io/npm/v/@protobufjs/float.svg)](https://www.npmjs.com/package/@protobufjs/float)
+
+Reads / writes floats / doubles from / to buffers in both modern and ancient browsers. Fast.
+
+API
+---
+
+* **writeFloatLE(val: `number`, buf: `Uint8Array`, pos: `number`)**<br />
+  Writes a 32 bit float to a buffer using little endian byte order.
+
+* **writeFloatBE(val: `number`, buf: `Uint8Array`, pos: `number`)**<br />
+  Writes a 32 bit float to a buffer using big endian byte order.
+
+* **readFloatLE(buf: `Uint8Array`, pos: `number`): `number`**<br />
+  Reads a 32 bit float from a buffer using little endian byte order.
+
+* **readFloatBE(buf: `Uint8Array`, pos: `number`): `number`**<br />
+  Reads a 32 bit float from a buffer using big endian byte order.
+
+* **writeDoubleLE(val: `number`, buf: `Uint8Array`, pos: `number`)**<br />
+  Writes a 64 bit double to a buffer using little endian byte order.
+
+* **writeDoubleBE(val: `number`, buf: `Uint8Array`, pos: `number`)**<br />
+  Writes a 64 bit double to a buffer using big endian byte order.
+
+* **readDoubleLE(buf: `Uint8Array`, pos: `number`): `number`**<br />
+  Reads a 64 bit double from a buffer using little endian byte order.
+
+* **readDoubleBE(buf: `Uint8Array`, pos: `number`): `number`**<br />
+  Reads a 64 bit double from a buffer using big endian byte order.
+
+Performance
+-----------
+There is a simple benchmark included comparing raw read/write performance of this library (float), float's fallback for old browsers, the [ieee754](https://www.npmjs.com/package/ieee754) module and node's [buffer](https://nodejs.org/api/buffer.html). On an i7-2600k running node 6.9.1 it yields:
+
+```
+benchmarking writeFloat performance ...
+
+float x 42,741,625 ops/sec ¬±1.75% (81 runs sampled)
+float (fallback) x 11,272,532 ops/sec ¬±1.12% (85 runs sampled)
+ieee754 x 8,653,337 ops/sec ¬±1.18% (84 runs sampled)
+buffer x 12,412,414 ops/sec ¬±1.41% (83 runs sampled)
+buffer (noAssert) x 13,471,149 ops/sec ¬±1.09% (84 runs sampled)
+
+                      float was fastest
+           float (fallback) was 73.5% slower
+                    ieee754 was 79.6% slower
+                     buffer was 70.9% slower
+          buffer (noAssert) was 68.3% slower
+
+benchmarking readFloat performance ...
+
+float x 44,382,729 ops/sec ¬±1.70% (84 runs sampled)
+float (fallback) x 20,925,938 ops/sec ¬±0.86% (87 runs sampled)
+ieee754 x 17,189,009 ops/sec ¬±1.01% (87 runs sampled)
+buffer x 10,518,437 ops/sec ¬±1.04% (83 runs sampled)
+buffer (noAssert) x 11,031,636 ops/sec ¬±1.15% (87 runs sampled)
+
+                      float was fastest
+           float (fallback) was 52.5% slower
+                    ieee754 was 61.0% slower
+                     buffer was 76.1% slower
+          buffer (noAssert) was 75.0% slower
+
+benchmarking writeDouble performance ...
+
+float x 38,624,906 ops/sec ¬±0.93% (83 runs sampled)
+float (fallback) x 10,457,811 ops/sec ¬±1.54% (85 runs sampled)
+ieee754 x 7,681,130 ops/sec ¬±1.11% (83 runs sampled)
+buffer x 12,657,876 ops/sec ¬±1.03% (83 runs sampled)
+buffer (noAssert) x 13,372,795 ops/sec ¬±0.84% (85 runs sampled)
+
+                      float was fastest
+           float (fallback) was 73.1% slower
+                    ieee754 was 80.1% slower
+                     buffer was 67.3% slower
+          buffer (noAssert) was 65.3% slower
+
+benchmarking readDouble performance ...
+
+float x 40,527,888 ops/sec ¬±1.05% (84 runs sampled)
+float (fallback) x 18,696,480 ops/sec ¬±0.84% (86 runs sampled)
+ieee754 x 14,074,028 ops/sec ¬±1.04% (87 runs sampled)
+buffer x 10,092,367 ops/sec ¬±1.15% (84 runs sampled)
+buffer (noAssert) x 10,623,793 ops/sec ¬±0.96% (84 runs sampled)
+
+                      float was fastest
+           float (fallback) was 53.8% slower
+                    ieee754 was 65.3% slower
+                     buffer was 75.1% slower
+          buffer (noAssert) was 73.8% slower
+```
+
+To run it yourself:
+
+```
+$> npm run bench
+```
+
+**License:** [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause)

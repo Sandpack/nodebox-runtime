@@ -1,0 +1,503 @@
+†«/HISTORY.mdÅ
+2.0.1 / 2021-01-03
+==================
+
+  * Fix returning values from `Object.prototype`
+
+2.0.0 / 2020-04-19
+==================
+
+  * Drop support for Node.js 0.6
+  * Fix messaging casing of `418 I'm a Teapot`
+  * Remove code 306
+  * Remove `status[code]` exports; use `status.message[code]`
+  * Remove `status[msg]` exports; use `status.code[msg]`
+  * Rename `425 Unordered Collection` to standard `425 Too Early`
+  * Rename `STATUS_CODES` export to `message`
+  * Return status message for `statuses(code)` when given code
+
+1.5.0 / 2018-03-27
+==================
+
+  * Add `103 Early Hints`
+
+1.4.0 / 2017-10-20
+==================
+
+  * Add `STATUS_CODES` export
+
+1.3.1 / 2016-11-11
+==================
+
+  * Fix return type in JSDoc
+
+1.3.0 / 2016-05-17
+==================
+
+  * Add `421 Misdirected Request`
+  * perf: enable strict mode
+
+1.2.1 / 2015-02-01
+==================
+
+  * Fix message for status 451
+    - `451 Unavailable For Legal Reasons`
+
+1.2.0 / 2014-09-28
+==================
+
+  * Add `208 Already Repored`
+  * Add `226 IM Used`
+  * Add `306 (Unused)`
+  * Add `415 Unable For Legal Reasons`
+  * Add `508 Loop Detected`
+
+1.1.1 / 2014-09-24
+==================
+
+  * Add missing 308 to `codes.json`
+
+1.1.0 / 2014-09-21
+==================
+
+  * Add `codes.json` for universal support
+
+1.0.4 / 2014-08-20
+==================
+
+  * Package cleanup
+
+1.0.3 / 2014-06-08
+==================
+
+  * Add 308 to `.redirect` category
+
+1.0.2 / 2014-03-13
+==================
+
+  * Add `.retry` category
+
+1.0.1 / 2014-03-12
+==================
+
+  * Initial release
+«/codes.jsonÅý{
+  "100": "Continue",
+  "101": "Switching Protocols",
+  "102": "Processing",
+  "103": "Early Hints",
+  "200": "OK",
+  "201": "Created",
+  "202": "Accepted",
+  "203": "Non-Authoritative Information",
+  "204": "No Content",
+  "205": "Reset Content",
+  "206": "Partial Content",
+  "207": "Multi-Status",
+  "208": "Already Reported",
+  "226": "IM Used",
+  "300": "Multiple Choices",
+  "301": "Moved Permanently",
+  "302": "Found",
+  "303": "See Other",
+  "304": "Not Modified",
+  "305": "Use Proxy",
+  "307": "Temporary Redirect",
+  "308": "Permanent Redirect",
+  "400": "Bad Request",
+  "401": "Unauthorized",
+  "402": "Payment Required",
+  "403": "Forbidden",
+  "404": "Not Found",
+  "405": "Method Not Allowed",
+  "406": "Not Acceptable",
+  "407": "Proxy Authentication Required",
+  "408": "Request Timeout",
+  "409": "Conflict",
+  "410": "Gone",
+  "411": "Length Required",
+  "412": "Precondition Failed",
+  "413": "Payload Too Large",
+  "414": "URI Too Long",
+  "415": "Unsupported Media Type",
+  "416": "Range Not Satisfiable",
+  "417": "Expectation Failed",
+  "418": "I'm a Teapot",
+  "421": "Misdirected Request",
+  "422": "Unprocessable Entity",
+  "423": "Locked",
+  "424": "Failed Dependency",
+  "425": "Too Early",
+  "426": "Upgrade Required",
+  "428": "Precondition Required",
+  "429": "Too Many Requests",
+  "431": "Request Header Fields Too Large",
+  "451": "Unavailable For Legal Reasons",
+  "500": "Internal Server Error",
+  "501": "Not Implemented",
+  "502": "Bad Gateway",
+  "503": "Service Unavailable",
+  "504": "Gateway Timeout",
+  "505": "HTTP Version Not Supported",
+  "506": "Variant Also Negotiates",
+  "507": "Insufficient Storage",
+  "508": "Loop Detected",
+  "509": "Bandwidth Limit Exceeded",
+  "510": "Not Extended",
+  "511": "Network Authentication Required"
+}
+¨/LICENSEÅ”
+The MIT License (MIT)
+
+Copyright (c) 2014 Jonathan Ong <me@jongleberry.com>
+Copyright (c) 2016 Douglas Christopher Wilson <doug@somethingdoug.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+­/package.jsonÅ {
+  "name": "statuses",
+  "description": "HTTP status utility",
+  "version": "2.0.1",
+  "contributors": [
+    "Douglas Christopher Wilson <doug@somethingdoug.com>",
+    "Jonathan Ong <me@jongleberry.com> (http://jongleberry.com)"
+  ],
+  "repository": "jshttp/statuses",
+  "license": "MIT",
+  "keywords": [
+    "http",
+    "status",
+    "code"
+  ],
+  "files": [
+    "HISTORY.md",
+    "index.js",
+    "codes.json",
+    "LICENSE"
+  ],
+  "devDependencies": {
+    "csv-parse": "4.14.2",
+    "eslint": "7.17.0",
+    "eslint-config-standard": "14.1.1",
+    "eslint-plugin-import": "2.22.1",
+    "eslint-plugin-markdown": "1.0.2",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-promise": "4.2.1",
+    "eslint-plugin-standard": "4.1.0",
+    "mocha": "8.2.1",
+    "nyc": "15.1.0",
+    "raw-body": "2.4.1",
+    "stream-to-array": "2.3.0"
+  },
+  "engines": {
+    "node": ">= 0.8"
+  },
+  "scripts": {
+    "build": "node scripts/build.js",
+    "fetch": "node scripts/fetch-apache.js && node scripts/fetch-iana.js && node scripts/fetch-nginx.js && node scripts/fetch-node.js",
+    "lint": "eslint --plugin markdown --ext js,md .",
+    "test": "mocha --reporter spec --check-leaks --bail test/",
+    "test-ci": "nyc --reporter=lcov --reporter=text npm test",
+    "test-cov": "nyc --reporter=html --reporter=text npm test",
+    "update": "npm run fetch && npm run build",
+    "version": "node scripts/version-history.js && git add HISTORY.md"
+  }
+}
+ª/README.mdÅç# statuses
+
+[![NPM Version][npm-version-image]][npm-url]
+[![NPM Downloads][npm-downloads-image]][npm-url]
+[![Node.js Version][node-version-image]][node-version-url]
+[![Build Status][ci-image]][ci-url]
+[![Test Coverage][coveralls-image]][coveralls-url]
+
+HTTP status utility for node.
+
+This module provides a list of status codes and messages sourced from
+a few different projects:
+
+  * The [IANA Status Code Registry](https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml)
+  * The [Node.js project](https://nodejs.org/)
+  * The [NGINX project](https://www.nginx.com/)
+  * The [Apache HTTP Server project](https://httpd.apache.org/)
+
+## Installation
+
+This is a [Node.js](https://nodejs.org/en/) module available through the
+[npm registry](https://www.npmjs.com/). Installation is done using the
+[`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
+
+```sh
+$ npm install statuses
+```
+
+## API
+
+<!-- eslint-disable no-unused-vars -->
+
+```js
+var status = require('statuses')
+```
+
+### status(code)
+
+Returns the status message string for a known HTTP status code. The code
+may be a number or a string. An error is thrown for an unknown status code.
+
+<!-- eslint-disable no-undef -->
+
+```js
+status(403) // => 'Forbidden'
+status('403') // => 'Forbidden'
+status(306) // throws
+```
+
+### status(msg)
+
+Returns the numeric status code for a known HTTP status message. The message
+is case-insensitive. An error is thrown for an unknown status message.
+
+<!-- eslint-disable no-undef -->
+
+```js
+status('forbidden') // => 403
+status('Forbidden') // => 403
+status('foo') // throws
+```
+
+### status.codes
+
+Returns an array of all the status codes as `Integer`s.
+
+### status.code[msg]
+
+Returns the numeric status code for a known status message (in lower-case),
+otherwise `undefined`.
+
+<!-- eslint-disable no-undef, no-unused-expressions -->
+
+```js
+status['not found'] // => 404
+```
+
+### status.empty[code]
+
+Returns `true` if a status code expects an empty body.
+
+<!-- eslint-disable no-undef, no-unused-expressions -->
+
+```js
+status.empty[200] // => undefined
+status.empty[204] // => true
+status.empty[304] // => true
+```
+
+### status.message[code]
+
+Returns the string message for a known numeric status code, otherwise
+`undefined`. This object is the same format as the
+[Node.js http module `http.STATUS_CODES`](https://nodejs.org/dist/latest/docs/api/http.html#http_http_status_codes).
+
+<!-- eslint-disable no-undef, no-unused-expressions -->
+
+```js
+status.message[404] // => 'Not Found'
+```
+
+### status.redirect[code]
+
+Returns `true` if a status code is a valid redirect status.
+
+<!-- eslint-disable no-undef, no-unused-expressions -->
+
+```js
+status.redirect[200] // => undefined
+status.redirect[301] // => true
+```
+
+### status.retry[code]
+
+Returns `true` if you should retry the rest.
+
+<!-- eslint-disable no-undef, no-unused-expressions -->
+
+```js
+status.retry[501] // => undefined
+status.retry[503] // => true
+```
+
+## License
+
+[MIT](LICENSE)
+
+[ci-image]: https://badgen.net/github/checks/jshttp/statuses/master?label=ci
+[ci-url]: https://github.com/jshttp/statuses/actions?query=workflow%3Aci
+[coveralls-image]: https://badgen.net/coveralls/c/github/jshttp/statuses/master
+[coveralls-url]: https://coveralls.io/r/jshttp/statuses?branch=master
+[node-version-image]: https://badgen.net/npm/node/statuses
+[node-version-url]: https://nodejs.org/en/download
+[npm-downloads-image]: https://badgen.net/npm/dm/statuses
+[npm-url]: https://npmjs.org/package/statuses
+[npm-version-image]: https://badgen.net/npm/v/statuses
+©/index.jsÅ
+2/*!
+ * statuses
+ * Copyright(c) 2014 Jonathan Ong
+ * Copyright(c) 2016 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+'use strict'
+
+/**
+ * Module dependencies.
+ * @private
+ */
+
+var codes = require('./codes.json')
+
+/**
+ * Module exports.
+ * @public
+ */
+
+module.exports = status
+
+// status code to message map
+status.message = codes
+
+// status message (lower-case) to code map
+status.code = createMessageToStatusCodeMap(codes)
+
+// array of status codes
+status.codes = createStatusCodeList(codes)
+
+// status codes for redirects
+status.redirect = {
+  300: true,
+  301: true,
+  302: true,
+  303: true,
+  305: true,
+  307: true,
+  308: true
+}
+
+// status codes for empty bodies
+status.empty = {
+  204: true,
+  205: true,
+  304: true
+}
+
+// status codes for when you should retry the request
+status.retry = {
+  502: true,
+  503: true,
+  504: true
+}
+
+/**
+ * Create a map of message to status code.
+ * @private
+ */
+
+function createMessageToStatusCodeMap (codes) {
+  var map = {}
+
+  Object.keys(codes).forEach(function forEachCode (code) {
+    var message = codes[code]
+    var status = Number(code)
+
+    // populate map
+    map[message.toLowerCase()] = status
+  })
+
+  return map
+}
+
+/**
+ * Create a list of all status codes.
+ * @private
+ */
+
+function createStatusCodeList (codes) {
+  return Object.keys(codes).map(function mapCode (code) {
+    return Number(code)
+  })
+}
+
+/**
+ * Get the status code for given message.
+ * @private
+ */
+
+function getStatusCode (message) {
+  var msg = message.toLowerCase()
+
+  if (!Object.prototype.hasOwnProperty.call(status.code, msg)) {
+    throw new Error('invalid status message: "' + message + '"')
+  }
+
+  return status.code[msg]
+}
+
+/**
+ * Get the status message for given code.
+ * @private
+ */
+
+function getStatusMessage (code) {
+  if (!Object.prototype.hasOwnProperty.call(status.message, code)) {
+    throw new Error('invalid status code: ' + code)
+  }
+
+  return status.message[code]
+}
+
+/**
+ * Get the status code.
+ *
+ * Given a number, this will throw if it is not a known status
+ * code, otherwise the code will be returned. Given a string,
+ * the string will be parsed for a number and return the code
+ * if valid, otherwise will lookup the code assuming this is
+ * the status message.
+ *
+ * @param {string|number} code
+ * @returns {number}
+ * @public
+ */
+
+function status (code) {
+  if (typeof code === 'number') {
+    return getStatusMessage(code)
+  }
+
+  if (typeof code !== 'string') {
+    throw new TypeError('code must be a number or string')
+  }
+
+  // '403'
+  var n = parseInt(code, 10)
+  if (!isNaN(n)) {
+    return getStatusMessage(n)
+  }
+
+  return getStatusCode(code)
+}

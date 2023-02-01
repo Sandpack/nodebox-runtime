@@ -1,0 +1,1798 @@
+‡­/package.jsonÅ {
+  "name": "functional-red-black-tree",
+  "version": "1.0.1",
+  "description": "A fully persistent balanced binary search tree",
+  "main": "rbtree.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "iota-array": "^0.0.1",
+    "tape": "^2.12.0"
+  },
+  "scripts": {
+    "test": "tape test/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mikolalysenko/functional-red-black-tree.git"
+  },
+  "keywords": [
+    "functional",
+    "red",
+    "black",
+    "tree",
+    "binary",
+    "search",
+    "balance",
+    "persistent",
+    "fully",
+    "dynamic",
+    "data",
+    "structure"
+  ],
+  "author": "Mikola Lysenko",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mikolalysenko/functional-red-black-tree/issues"
+  }
+}
+«/.npmignoreÄmlib-cov
+*.seed
+*.log
+*.csv
+*.dat
+*.out
+*.pid
+*.gz
+
+pids
+logs
+results
+
+npm-debug.log
+node_modules/*
+*.DS_Store¨/LICENSEÅ:
+The MIT License (MIT)
+
+Copyright (c) 2013 Mikola Lysenko
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+ª/rbtree.jsÅW4"use strict"
+
+module.exports = createRBTree
+
+var RED   = 0
+var BLACK = 1
+
+function RBNode(color, key, value, left, right, count) {
+  this._color = color
+  this.key = key
+  this.value = value
+  this.left = left
+  this.right = right
+  this._count = count
+}
+
+function cloneNode(node) {
+  return new RBNode(node._color, node.key, node.value, node.left, node.right, node._count)
+}
+
+function repaint(color, node) {
+  return new RBNode(color, node.key, node.value, node.left, node.right, node._count)
+}
+
+function recount(node) {
+  node._count = 1 + (node.left ? node.left._count : 0) + (node.right ? node.right._count : 0)
+}
+
+function RedBlackTree(compare, root) {
+  this._compare = compare
+  this.root = root
+}
+
+var proto = RedBlackTree.prototype
+
+Object.defineProperty(proto, "keys", {
+  get: function() {
+    var result = []
+    this.forEach(function(k,v) {
+      result.push(k)
+    })
+    return result
+  }
+})
+
+Object.defineProperty(proto, "values", {
+  get: function() {
+    var result = []
+    this.forEach(function(k,v) {
+      result.push(v)
+    })
+    return result
+  }
+})
+
+//Returns the number of nodes in the tree
+Object.defineProperty(proto, "length", {
+  get: function() {
+    if(this.root) {
+      return this.root._count
+    }
+    return 0
+  }
+})
+
+//Insert a new item into the tree
+proto.insert = function(key, value) {
+  var cmp = this._compare
+  //Find point to insert new node at
+  var n = this.root
+  var n_stack = []
+  var d_stack = []
+  while(n) {
+    var d = cmp(key, n.key)
+    n_stack.push(n)
+    d_stack.push(d)
+    if(d <= 0) {
+      n = n.left
+    } else {
+      n = n.right
+    }
+  }
+  //Rebuild path to leaf node
+  n_stack.push(new RBNode(RED, key, value, null, null, 1))
+  for(var s=n_stack.length-2; s>=0; --s) {
+    var n = n_stack[s]
+    if(d_stack[s] <= 0) {
+      n_stack[s] = new RBNode(n._color, n.key, n.value, n_stack[s+1], n.right, n._count+1)
+    } else {
+      n_stack[s] = new RBNode(n._color, n.key, n.value, n.left, n_stack[s+1], n._count+1)
+    }
+  }
+  //Rebalance tree using rotations
+  //console.log("start insert", key, d_stack)
+  for(var s=n_stack.length-1; s>1; --s) {
+    var p = n_stack[s-1]
+    var n = n_stack[s]
+    if(p._color === BLACK || n._color === BLACK) {
+      break
+    }
+    var pp = n_stack[s-2]
+    if(pp.left === p) {
+      if(p.left === n) {
+        var y = pp.right
+        if(y && y._color === RED) {
+          //console.log("LLr")
+          p._color = BLACK
+          pp.right = repaint(BLACK, y)
+          pp._color = RED
+          s -= 1
+        } else {
+          //console.log("LLb")
+          pp._color = RED
+          pp.left = p.right
+          p._color = BLACK
+          p.right = pp
+          n_stack[s-2] = p
+          n_stack[s-1] = n
+          recount(pp)
+          recount(p)
+          if(s >= 3) {
+            var ppp = n_stack[s-3]
+            if(ppp.left === pp) {
+              ppp.left = p
+            } else {
+              ppp.right = p
+            }
+          }
+          break
+        }
+      } else {
+        var y = pp.right
+        if(y && y._color === RED) {
+          //console.log("LRr")
+          p._color = BLACK
+          pp.right = repaint(BLACK, y)
+          pp._color = RED
+          s -= 1
+        } else {
+          //console.log("LRb")
+          p.right = n.left
+          pp._color = RED
+          pp.left = n.right
+          n._color = BLACK
+          n.left = p
+          n.right = pp
+          n_stack[s-2] = n
+          n_stack[s-1] = p
+          recount(pp)
+          recount(p)
+          recount(n)
+          if(s >= 3) {
+            var ppp = n_stack[s-3]
+            if(ppp.left === pp) {
+              ppp.left = n
+            } else {
+              ppp.right = n
+            }
+          }
+          break
+        }
+      }
+    } else {
+      if(p.right === n) {
+        var y = pp.left
+        if(y && y._color === RED) {
+          //console.log("RRr", y.key)
+          p._color = BLACK
+          pp.left = repaint(BLACK, y)
+          pp._color = RED
+          s -= 1
+        } else {
+          //console.log("RRb")
+          pp._color = RED
+          pp.right = p.left
+          p._color = BLACK
+          p.left = pp
+          n_stack[s-2] = p
+          n_stack[s-1] = n
+          recount(pp)
+          recount(p)
+          if(s >= 3) {
+            var ppp = n_stack[s-3]
+            if(ppp.right === pp) {
+              ppp.right = p
+            } else {
+              ppp.left = p
+            }
+          }
+          break
+        }
+      } else {
+        var y = pp.left
+        if(y && y._color === RED) {
+          //console.log("RLr")
+          p._color = BLACK
+          pp.left = repaint(BLACK, y)
+          pp._color = RED
+          s -= 1
+        } else {
+          //console.log("RLb")
+          p.left = n.right
+          pp._color = RED
+          pp.right = n.left
+          n._color = BLACK
+          n.right = p
+          n.left = pp
+          n_stack[s-2] = n
+          n_stack[s-1] = p
+          recount(pp)
+          recount(p)
+          recount(n)
+          if(s >= 3) {
+            var ppp = n_stack[s-3]
+            if(ppp.right === pp) {
+              ppp.right = n
+            } else {
+              ppp.left = n
+            }
+          }
+          break
+        }
+      }
+    }
+  }
+  //Return new tree
+  n_stack[0]._color = BLACK
+  return new RedBlackTree(cmp, n_stack[0])
+}
+
+
+//Visit all nodes inorder
+function doVisitFull(visit, node) {
+  if(node.left) {
+    var v = doVisitFull(visit, node.left)
+    if(v) { return v }
+  }
+  var v = visit(node.key, node.value)
+  if(v) { return v }
+  if(node.right) {
+    return doVisitFull(visit, node.right)
+  }
+}
+
+//Visit half nodes in order
+function doVisitHalf(lo, compare, visit, node) {
+  var l = compare(lo, node.key)
+  if(l <= 0) {
+    if(node.left) {
+      var v = doVisitHalf(lo, compare, visit, node.left)
+      if(v) { return v }
+    }
+    var v = visit(node.key, node.value)
+    if(v) { return v }
+  }
+  if(node.right) {
+    return doVisitHalf(lo, compare, visit, node.right)
+  }
+}
+
+//Visit all nodes within a range
+function doVisit(lo, hi, compare, visit, node) {
+  var l = compare(lo, node.key)
+  var h = compare(hi, node.key)
+  var v
+  if(l <= 0) {
+    if(node.left) {
+      v = doVisit(lo, hi, compare, visit, node.left)
+      if(v) { return v }
+    }
+    if(h > 0) {
+      v = visit(node.key, node.value)
+      if(v) { return v }
+    }
+  }
+  if(h > 0 && node.right) {
+    return doVisit(lo, hi, compare, visit, node.right)
+  }
+}
+
+
+proto.forEach = function rbTreeForEach(visit, lo, hi) {
+  if(!this.root) {
+    return
+  }
+  switch(arguments.length) {
+    case 1:
+      return doVisitFull(visit, this.root)
+    break
+
+    case 2:
+      return doVisitHalf(lo, this._compare, visit, this.root)
+    break
+
+    case 3:
+      if(this._compare(lo, hi) >= 0) {
+        return
+      }
+      return doVisit(lo, hi, this._compare, visit, this.root)
+    break
+  }
+}
+
+//First item in list
+Object.defineProperty(proto, "begin", {
+  get: function() {
+    var stack = []
+    var n = this.root
+    while(n) {
+      stack.push(n)
+      n = n.left
+    }
+    return new RedBlackTreeIterator(this, stack)
+  }
+})
+
+//Last item in list
+Object.defineProperty(proto, "end", {
+  get: function() {
+    var stack = []
+    var n = this.root
+    while(n) {
+      stack.push(n)
+      n = n.right
+    }
+    return new RedBlackTreeIterator(this, stack)
+  }
+})
+
+//Find the ith item in the tree
+proto.at = function(idx) {
+  if(idx < 0) {
+    return new RedBlackTreeIterator(this, [])
+  }
+  var n = this.root
+  var stack = []
+  while(true) {
+    stack.push(n)
+    if(n.left) {
+      if(idx < n.left._count) {
+        n = n.left
+        continue
+      }
+      idx -= n.left._count
+    }
+    if(!idx) {
+      return new RedBlackTreeIterator(this, stack)
+    }
+    idx -= 1
+    if(n.right) {
+      if(idx >= n.right._count) {
+        break
+      }
+      n = n.right
+    } else {
+      break
+    }
+  }
+  return new RedBlackTreeIterator(this, [])
+}
+
+proto.ge = function(key) {
+  var cmp = this._compare
+  var n = this.root
+  var stack = []
+  var last_ptr = 0
+  while(n) {
+    var d = cmp(key, n.key)
+    stack.push(n)
+    if(d <= 0) {
+      last_ptr = stack.length
+    }
+    if(d <= 0) {
+      n = n.left
+    } else {
+      n = n.right
+    }
+  }
+  stack.length = last_ptr
+  return new RedBlackTreeIterator(this, stack)
+}
+
+proto.gt = function(key) {
+  var cmp = this._compare
+  var n = this.root
+  var stack = []
+  var last_ptr = 0
+  while(n) {
+    var d = cmp(key, n.key)
+    stack.push(n)
+    if(d < 0) {
+      last_ptr = stack.length
+    }
+    if(d < 0) {
+      n = n.left
+    } else {
+      n = n.right
+    }
+  }
+  stack.length = last_ptr
+  return new RedBlackTreeIterator(this, stack)
+}
+
+proto.lt = function(key) {
+  var cmp = this._compare
+  var n = this.root
+  var stack = []
+  var last_ptr = 0
+  while(n) {
+    var d = cmp(key, n.key)
+    stack.push(n)
+    if(d > 0) {
+      last_ptr = stack.length
+    }
+    if(d <= 0) {
+      n = n.left
+    } else {
+      n = n.right
+    }
+  }
+  stack.length = last_ptr
+  return new RedBlackTreeIterator(this, stack)
+}
+
+proto.le = function(key) {
+  var cmp = this._compare
+  var n = this.root
+  var stack = []
+  var last_ptr = 0
+  while(n) {
+    var d = cmp(key, n.key)
+    stack.push(n)
+    if(d >= 0) {
+      last_ptr = stack.length
+    }
+    if(d < 0) {
+      n = n.left
+    } else {
+      n = n.right
+    }
+  }
+  stack.length = last_ptr
+  return new RedBlackTreeIterator(this, stack)
+}
+
+//Finds the item with key if it exists
+proto.find = function(key) {
+  var cmp = this._compare
+  var n = this.root
+  var stack = []
+  while(n) {
+    var d = cmp(key, n.key)
+    stack.push(n)
+    if(d === 0) {
+      return new RedBlackTreeIterator(this, stack)
+    }
+    if(d <= 0) {
+      n = n.left
+    } else {
+      n = n.right
+    }
+  }
+  return new RedBlackTreeIterator(this, [])
+}
+
+//Removes item with key from tree
+proto.remove = function(key) {
+  var iter = this.find(key)
+  if(iter) {
+    return iter.remove()
+  }
+  return this
+}
+
+//Returns the item at `key`
+proto.get = function(key) {
+  var cmp = this._compare
+  var n = this.root
+  while(n) {
+    var d = cmp(key, n.key)
+    if(d === 0) {
+      return n.value
+    }
+    if(d <= 0) {
+      n = n.left
+    } else {
+      n = n.right
+    }
+  }
+  return
+}
+
+//Iterator for red black tree
+function RedBlackTreeIterator(tree, stack) {
+  this.tree = tree
+  this._stack = stack
+}
+
+var iproto = RedBlackTreeIterator.prototype
+
+//Test if iterator is valid
+Object.defineProperty(iproto, "valid", {
+  get: function() {
+    return this._stack.length > 0
+  }
+})
+
+//Node of the iterator
+Object.defineProperty(iproto, "node", {
+  get: function() {
+    if(this._stack.length > 0) {
+      return this._stack[this._stack.length-1]
+    }
+    return null
+  },
+  enumerable: true
+})
+
+//Makes a copy of an iterator
+iproto.clone = function() {
+  return new RedBlackTreeIterator(this.tree, this._stack.slice())
+}
+
+//Swaps two nodes
+function swapNode(n, v) {
+  n.key = v.key
+  n.value = v.value
+  n.left = v.left
+  n.right = v.right
+  n._color = v._color
+  n._count = v._count
+}
+
+//Fix up a double black node in a tree
+function fixDoubleBlack(stack) {
+  var n, p, s, z
+  for(var i=stack.length-1; i>=0; --i) {
+    n = stack[i]
+    if(i === 0) {
+      n._color = BLACK
+      return
+    }
+    //console.log("visit node:", n.key, i, stack[i].key, stack[i-1].key)
+    p = stack[i-1]
+    if(p.left === n) {
+      //console.log("left child")
+      s = p.right
+      if(s.right && s.right._color === RED) {
+        //console.log("case 1: right sibling child red")
+        s = p.right = cloneNode(s)
+        z = s.right = cloneNode(s.right)
+        p.right = s.left
+        s.left = p
+        s.right = z
+        s._color = p._color
+        n._color = BLACK
+        p._color = BLACK
+        z._color = BLACK
+        recount(p)
+        recount(s)
+        if(i > 1) {
+          var pp = stack[i-2]
+          if(pp.left === p) {
+            pp.left = s
+          } else {
+            pp.right = s
+          }
+        }
+        stack[i-1] = s
+        return
+      } else if(s.left && s.left._color === RED) {
+        //console.log("case 1: left sibling child red")
+        s = p.right = cloneNode(s)
+        z = s.left = cloneNode(s.left)
+        p.right = z.left
+        s.left = z.right
+        z.left = p
+        z.right = s
+        z._color = p._color
+        p._color = BLACK
+        s._color = BLACK
+        n._color = BLACK
+        recount(p)
+        recount(s)
+        recount(z)
+        if(i > 1) {
+          var pp = stack[i-2]
+          if(pp.left === p) {
+            pp.left = z
+          } else {
+            pp.right = z
+          }
+        }
+        stack[i-1] = z
+        return
+      }
+      if(s._color === BLACK) {
+        if(p._color === RED) {
+          //console.log("case 2: black sibling, red parent", p.right.value)
+          p._color = BLACK
+          p.right = repaint(RED, s)
+          return
+        } else {
+          //console.log("case 2: black sibling, black parent", p.right.value)
+          p.right = repaint(RED, s)
+          continue  
+        }
+      } else {
+        //console.log("case 3: red sibling")
+        s = cloneNode(s)
+        p.right = s.left
+        s.left = p
+        s._color = p._color
+        p._color = RED
+        recount(p)
+        recount(s)
+        if(i > 1) {
+          var pp = stack[i-2]
+          if(pp.left === p) {
+            pp.left = s
+          } else {
+            pp.right = s
+          }
+        }
+        stack[i-1] = s
+        stack[i] = p
+        if(i+1 < stack.length) {
+          stack[i+1] = n
+        } else {
+          stack.push(n)
+        }
+        i = i+2
+      }
+    } else {
+      //console.log("right child")
+      s = p.left
+      if(s.left && s.left._color === RED) {
+        //console.log("case 1: left sibling child red", p.value, p._color)
+        s = p.left = cloneNode(s)
+        z = s.left = cloneNode(s.left)
+        p.left = s.right
+        s.right = p
+        s.left = z
+        s._color = p._color
+        n._color = BLACK
+        p._color = BLACK
+        z._color = BLACK
+        recount(p)
+        recount(s)
+        if(i > 1) {
+          var pp = stack[i-2]
+          if(pp.right === p) {
+            pp.right = s
+          } else {
+            pp.left = s
+          }
+        }
+        stack[i-1] = s
+        return
+      } else if(s.right && s.right._color === RED) {
+        //console.log("case 1: right sibling child red")
+        s = p.left = cloneNode(s)
+        z = s.right = cloneNode(s.right)
+        p.left = z.right
+        s.right = z.left
+        z.right = p
+        z.left = s
+        z._color = p._color
+        p._color = BLACK
+        s._color = BLACK
+        n._color = BLACK
+        recount(p)
+        recount(s)
+        recount(z)
+        if(i > 1) {
+          var pp = stack[i-2]
+          if(pp.right === p) {
+            pp.right = z
+          } else {
+            pp.left = z
+          }
+        }
+        stack[i-1] = z
+        return
+      }
+      if(s._color === BLACK) {
+        if(p._color === RED) {
+          //console.log("case 2: black sibling, red parent")
+          p._color = BLACK
+          p.left = repaint(RED, s)
+          return
+        } else {
+          //console.log("case 2: black sibling, black parent")
+          p.left = repaint(RED, s)
+          continue  
+        }
+      } else {
+        //console.log("case 3: red sibling")
+        s = cloneNode(s)
+        p.left = s.right
+        s.right = p
+        s._color = p._color
+        p._color = RED
+        recount(p)
+        recount(s)
+        if(i > 1) {
+          var pp = stack[i-2]
+          if(pp.right === p) {
+            pp.right = s
+          } else {
+            pp.left = s
+          }
+        }
+        stack[i-1] = s
+        stack[i] = p
+        if(i+1 < stack.length) {
+          stack[i+1] = n
+        } else {
+          stack.push(n)
+        }
+        i = i+2
+      }
+    }
+  }
+}
+
+//Removes item at iterator from tree
+iproto.remove = function() {
+  var stack = this._stack
+  if(stack.length === 0) {
+    return this.tree
+  }
+  //First copy path to node
+  var cstack = new Array(stack.length)
+  var n = stack[stack.length-1]
+  cstack[cstack.length-1] = new RBNode(n._color, n.key, n.value, n.left, n.right, n._count)
+  for(var i=stack.length-2; i>=0; --i) {
+    var n = stack[i]
+    if(n.left === stack[i+1]) {
+      cstack[i] = new RBNode(n._color, n.key, n.value, cstack[i+1], n.right, n._count)
+    } else {
+      cstack[i] = new RBNode(n._color, n.key, n.value, n.left, cstack[i+1], n._count)
+    }
+  }
+
+  //Get node
+  n = cstack[cstack.length-1]
+  //console.log("start remove: ", n.value)
+
+  //If not leaf, then swap with previous node
+  if(n.left && n.right) {
+    //console.log("moving to leaf")
+
+    //First walk to previous leaf
+    var split = cstack.length
+    n = n.left
+    while(n.right) {
+      cstack.push(n)
+      n = n.right
+    }
+    //Copy path to leaf
+    var v = cstack[split-1]
+    cstack.push(new RBNode(n._color, v.key, v.value, n.left, n.right, n._count))
+    cstack[split-1].key = n.key
+    cstack[split-1].value = n.value
+
+    //Fix up stack
+    for(var i=cstack.length-2; i>=split; --i) {
+      n = cstack[i]
+      cstack[i] = new RBNode(n._color, n.key, n.value, n.left, cstack[i+1], n._count)
+    }
+    cstack[split-1].left = cstack[split]
+  }
+  //console.log("stack=", cstack.map(function(v) { return v.value }))
+
+  //Remove leaf node
+  n = cstack[cstack.length-1]
+  if(n._color === RED) {
+    //Easy case: removing red leaf
+    //console.log("RED leaf")
+    var p = cstack[cstack.length-2]
+    if(p.left === n) {
+      p.left = null
+    } else if(p.right === n) {
+      p.right = null
+    }
+    cstack.pop()
+    for(var i=0; i<cstack.length; ++i) {
+      cstack[i]._count--
+    }
+    return new RedBlackTree(this.tree._compare, cstack[0])
+  } else {
+    if(n.left || n.right) {
+      //Second easy case:  Single child black parent
+      //console.log("BLACK single child")
+      if(n.left) {
+        swapNode(n, n.left)
+      } else if(n.right) {
+        swapNode(n, n.right)
+      }
+      //Child must be red, so repaint it black to balance color
+      n._color = BLACK
+      for(var i=0; i<cstack.length-1; ++i) {
+        cstack[i]._count--
+      }
+      return new RedBlackTree(this.tree._compare, cstack[0])
+    } else if(cstack.length === 1) {
+      //Third easy case: root
+      //console.log("ROOT")
+      return new RedBlackTree(this.tree._compare, null)
+    } else {
+      //Hard case: Repaint n, and then do some nasty stuff
+      //console.log("BLACK leaf no children")
+      for(var i=0; i<cstack.length; ++i) {
+        cstack[i]._count--
+      }
+      var parent = cstack[cstack.length-2]
+      fixDoubleBlack(cstack)
+      //Fix up links
+      if(parent.left === n) {
+        parent.left = null
+      } else {
+        parent.right = null
+      }
+    }
+  }
+  return new RedBlackTree(this.tree._compare, cstack[0])
+}
+
+//Returns key
+Object.defineProperty(iproto, "key", {
+  get: function() {
+    if(this._stack.length > 0) {
+      return this._stack[this._stack.length-1].key
+    }
+    return
+  },
+  enumerable: true
+})
+
+//Returns value
+Object.defineProperty(iproto, "value", {
+  get: function() {
+    if(this._stack.length > 0) {
+      return this._stack[this._stack.length-1].value
+    }
+    return
+  },
+  enumerable: true
+})
+
+
+//Returns the position of this iterator in the sorted list
+Object.defineProperty(iproto, "index", {
+  get: function() {
+    var idx = 0
+    var stack = this._stack
+    if(stack.length === 0) {
+      var r = this.tree.root
+      if(r) {
+        return r._count
+      }
+      return 0
+    } else if(stack[stack.length-1].left) {
+      idx = stack[stack.length-1].left._count
+    }
+    for(var s=stack.length-2; s>=0; --s) {
+      if(stack[s+1] === stack[s].right) {
+        ++idx
+        if(stack[s].left) {
+          idx += stack[s].left._count
+        }
+      }
+    }
+    return idx
+  },
+  enumerable: true
+})
+
+//Advances iterator to next element in list
+iproto.next = function() {
+  var stack = this._stack
+  if(stack.length === 0) {
+    return
+  }
+  var n = stack[stack.length-1]
+  if(n.right) {
+    n = n.right
+    while(n) {
+      stack.push(n)
+      n = n.left
+    }
+  } else {
+    stack.pop()
+    while(stack.length > 0 && stack[stack.length-1].right === n) {
+      n = stack[stack.length-1]
+      stack.pop()
+    }
+  }
+}
+
+//Checks if iterator is at end of tree
+Object.defineProperty(iproto, "hasNext", {
+  get: function() {
+    var stack = this._stack
+    if(stack.length === 0) {
+      return false
+    }
+    if(stack[stack.length-1].right) {
+      return true
+    }
+    for(var s=stack.length-1; s>0; --s) {
+      if(stack[s-1].left === stack[s]) {
+        return true
+      }
+    }
+    return false
+  }
+})
+
+//Update value
+iproto.update = function(value) {
+  var stack = this._stack
+  if(stack.length === 0) {
+    throw new Error("Can't update empty node!")
+  }
+  var cstack = new Array(stack.length)
+  var n = stack[stack.length-1]
+  cstack[cstack.length-1] = new RBNode(n._color, n.key, value, n.left, n.right, n._count)
+  for(var i=stack.length-2; i>=0; --i) {
+    n = stack[i]
+    if(n.left === stack[i+1]) {
+      cstack[i] = new RBNode(n._color, n.key, n.value, cstack[i+1], n.right, n._count)
+    } else {
+      cstack[i] = new RBNode(n._color, n.key, n.value, n.left, cstack[i+1], n._count)
+    }
+  }
+  return new RedBlackTree(this.tree._compare, cstack[0])
+}
+
+//Moves iterator backward one element
+iproto.prev = function() {
+  var stack = this._stack
+  if(stack.length === 0) {
+    return
+  }
+  var n = stack[stack.length-1]
+  if(n.left) {
+    n = n.left
+    while(n) {
+      stack.push(n)
+      n = n.right
+    }
+  } else {
+    stack.pop()
+    while(stack.length > 0 && stack[stack.length-1].left === n) {
+      n = stack[stack.length-1]
+      stack.pop()
+    }
+  }
+}
+
+//Checks if iterator is at start of tree
+Object.defineProperty(iproto, "hasPrev", {
+  get: function() {
+    var stack = this._stack
+    if(stack.length === 0) {
+      return false
+    }
+    if(stack[stack.length-1].left) {
+      return true
+    }
+    for(var s=stack.length-1; s>0; --s) {
+      if(stack[s-1].right === stack[s]) {
+        return true
+      }
+    }
+    return false
+  }
+})
+
+//Default comparison function
+function defaultCompare(a, b) {
+  if(a < b) {
+    return -1
+  }
+  if(a > b) {
+    return 1
+  }
+  return 0
+}
+
+//Build a tree
+function createRBTree(compare) {
+  return new RedBlackTree(compare || defaultCompare, null)
+}®/bench/test.jsÄÉ"use strict"
+
+var createTree = require("../rbtree.js")
+
+var t = createTree()
+
+var s = Date.now()
+for(var i=0; i<100000; ++i) {
+  t = t.insert(Math.random(), Math.random())
+}
+console.log(Date.now() - s)­/test/test.jsÅ."use strict"
+
+var makeTree = require("../rbtree.js")
+var tape = require("tape")
+var util = require("util")
+var iota = require("iota-array")
+
+var COLORS = [ "r", "b", "bb" ]
+
+function printTree(tree) {
+  if(!tree) {
+    return []
+  }
+  return [ COLORS[tree._color], tree.key, printTree(tree.left), printTree(tree.right) ]
+}
+
+function print(t) {
+  console.log(util.inspect(printTree(t.root), {depth:12}))
+}
+
+//Ensures the red black axioms are satisfied by tree
+function checkTree(tree, t) {
+  if(!tree.root) {
+    return
+  }
+  t.equals(tree.root._color, 1, "root is black")
+  function checkNode(node) {
+    if(!node) {
+      return [1, 0]
+    }
+    if(node._color === 0) {
+      t.assert(!node.left || node.left._color === 1, "children of red node must be black")
+      t.assert(!node.right || node.right._color === 1, "children of red node must be black")
+    } else {
+      t.equals(node._color, 1, "node color must be red or black")
+    }
+    if(node.left) {
+      t.assert(tree._compare(node.left.key, node.key) <= 0, "left tree order invariant")
+    }
+    if(node.right) {
+      t.assert(tree._compare(node.right.key, node.key) >= 0, "right tree order invariant")
+    }
+    var cl = checkNode(node.left)
+    var cr = checkNode(node.right)
+    t.equals(cl[0], cr[0], "number of black nodes along all paths to root must be constant")
+    t.equals(cl[1] + cr[1] + 1, node._count, "item count consistency")
+    return [cl[0] + node._color,  cl[1] + cr[1] + 1]
+  }
+  var r = checkNode(tree.root)
+  t.equals(r[1], tree.length, "tree length")
+}
+
+tape("insert()", function(t) {
+  var t1 = makeTree()
+  
+  var u = t1
+  var arr = []
+  for(var i=20; i>=0; --i) {
+    var x = i
+    var next = u.insert(x, true)
+    checkTree(u, t)
+    checkTree(next, t)
+    t.equals(u.length, arr.length)
+    arr.push(x)
+    u = next
+  }
+  for(var i=-20; i<0; ++i) {
+    var x = i
+    var next = u.insert(x, true)
+    checkTree(u, t)
+    checkTree(next, t)
+    arr.sort(function(a,b) { return a-b })
+    var ptr = 0
+    u.forEach(function(k,v) {
+      t.equals(k, arr[ptr++])
+    })
+    t.equals(ptr, arr.length)
+    arr.push(x)
+    u = next
+  }
+
+  var start = u.begin
+  for(var i=-20, j=0; j<=40; ++i, ++j) {
+    t.equals(u.at(j).key, i, "checking at()")
+    t.equals(start.key, i, "checking iter")
+    t.equals(start.index, j, "checking index")
+    t.assert(start.valid, "checking valid")
+    if(j < 40) {
+      t.assert(start.hasNext, "hasNext()")
+    } else {
+      t.assert(!start.hasNext, "eof hasNext()")
+    }
+    start.next()
+  }
+  t.assert(!start.valid, "invalid eof iterator")
+  t.assert(!start.hasNext, "hasNext() at eof fail")
+  t.equals(start.index, 41, "eof index")
+
+  t.end()
+})
+
+tape("foreach", function(t) {
+  var u = iota(31).reduce(function(u, k, v) {
+    return u.insert(k, v)
+  }, makeTree())
+
+  //Check basic foreach
+  var visit_keys = []
+  var visit_vals = []
+  u.forEach(function(k,v) {
+    visit_keys.push(k)
+    visit_vals.push(v)
+  })
+  t.same(visit_keys, u.keys)
+  t.same(visit_vals, u.values)
+
+  //Check foreach with termination
+  visit_keys = []
+  visit_vals = []
+  t.equals(u.forEach(function(k,v) {
+    if(k === 5) {
+      return 1000
+    }
+    visit_keys.push(k)
+    visit_vals.push(v)
+  }), 1000)
+  t.same(visit_keys, u.keys.slice(0, 5))
+  t.same(visit_vals, u.values.slice(0, 5))
+
+  //Check half interval foreach
+  visit_keys = []
+  visit_vals = []
+  u.forEach(function(k,v) {
+    visit_keys.push(k)
+    visit_vals.push(v)
+  }, 3)
+  t.same(visit_keys, u.keys.slice(3))
+  t.same(visit_vals, u.values.slice(3))
+
+  //Check half interval foreach with termination
+  visit_keys = []
+  visit_vals = []
+  t.equals(u.forEach(function(k,v) {
+    if(k === 12) {
+      return 1000
+    }
+    visit_keys.push(k)
+    visit_vals.push(v)
+  }, 3), 1000)
+  t.same(visit_keys, u.keys.slice(3, 12))
+  t.same(visit_vals, u.values.slice(3, 12))
+
+
+  //Check interval foreach
+  visit_keys = []
+  visit_vals = []
+  u.forEach(function(k,v) {
+    visit_keys.push(k)
+    visit_vals.push(v)
+  }, 3, 15)
+  t.same(visit_keys, u.keys.slice(3, 15))
+  t.same(visit_vals, u.values.slice(3, 15))
+
+  //Check interval foreach with termination
+  visit_keys = []
+  visit_vals = []
+  t.equals(u.forEach(function(k,v) {
+    if(k === 12) {
+      return 1000
+    }
+    visit_keys.push(k)
+    visit_vals.push(v)
+  }, 3, 15), 1000)
+  t.same(visit_keys, u.keys.slice(3, 12))
+  t.same(visit_vals, u.values.slice(3, 12))
+
+  t.end()
+})
+
+function compareIterators(a, b, t) {
+  t.equals(a.tree, b.tree, "iter trees")
+  t.equals(a.valid, b.valid, "iter validity")
+  if(!b.valid) {
+    return
+  }
+  t.equals(a.node, b.node, "iter node")
+  t.equals(a.key, b.key, "iter key")
+  t.equals(a.value, b.value, "iter value")
+  t.equals(a.index, b.index, "iter index")
+}
+
+tape("iterators", function(t) {
+  var u = iota(20).reduce(function(u, k, v) {
+    return u.insert(k, v)
+  }, makeTree())
+
+  //Try walking forward
+  var iter = u.begin
+  var c = iter.clone()
+  t.ok(iter.hasNext, "must have next at beginneing")
+  t.ok(!iter.hasPrev, "must not have predecessor")
+  for(var i=0; i<20; ++i) {
+    var v = u.at(i)
+    compareIterators(iter, v, t)
+    t.equals(iter.index, i)
+    iter.next()
+  }
+  t.ok(!iter.valid, "must be eof iterator")
+
+  //Check if the clone worked
+  compareIterators(c, u.begin, t)
+
+  //Try walking backward
+  var iter = u.end
+  t.ok(!iter.hasNext, "must not have next")
+  t.ok(iter.hasPrev, "must have predecessor")
+  for(var i=19; i>=0; --i) {
+    var v = u.at(i)
+    compareIterators(iter, v, t)
+    t.equals(iter.index, i)
+    iter.prev()
+  }
+  t.ok(!iter.valid, "must be eof iterator")
+
+  t.end()
+})
+
+
+tape("remove()", function(t) {
+
+  var sz = [1, 2,  10, 20, 23, 31, 32, 33]
+  for(var n=0; n<sz.length; ++n) {
+    var c = sz[n]
+    var u = iota(c).reduce(function(u, k, v) {
+      return u.insert(k, v)
+    }, makeTree())
+    for(var i=0; i<c; ++i) {
+      checkTree(u.remove(i), t)
+    }
+  }
+
+  t.end()
+})
+
+tape("update()", function(t) {
+  var arr = [0, 1, 2, 3, 4, 5, 6 ]
+  var u = arr.reduce(function(u, k, v) {
+    return u.insert(k, v)
+  }, makeTree())
+  for(var iter=u.begin; iter.hasNext; iter.next()) {
+    var p = iter.value
+    var updated = iter.update(1000)
+    t.equals(iter.value, iter.key, "ensure no mutation")
+    t.equals(updated.find(iter.key).value, 1000, "ensure update applied")
+    checkTree(updated, t)
+    checkTree(u, t)
+  }
+  t.end()
+})
+
+
+tape("keys and values", function(t) {
+
+  var original_keys = [ "potato", "sock", "foot", "apple", "newspaper", "gameboy" ]
+  var original_values = [ 42, 10, false, "!!!", {}, null ]
+
+  var u = makeTree()
+  for(var i=0; i<original_keys.length; ++i) {
+    u = u.insert(original_keys[i], original_values[i])
+  }
+
+  var zipped = iota(6).map(function(i) {
+    return [ original_keys[i], original_values[i] ]
+  })
+
+  zipped.sort(function(a,b) {
+    if(a[0] < b[0]) { return -1 }
+    if(a[0] > b[0]) { return 1 }
+    return 0
+  })
+
+  var keys = zipped.map(function(v) { return v[0] })
+  var values = zipped.map(function(v) { return v[1] })
+
+  t.same(u.keys, keys)
+  t.same(u.values, values)
+
+  t.end()
+})
+
+tape("searching", function(t) {
+
+  var arr = [0, 1, 1, 1, 1, 2, 3, 4, 5, 6, 6 ]
+  var u = arr.reduce(function(u, k, v) {
+    return u.insert(k, v)
+  }, makeTree())
+
+
+  for(var i=0; i<arr.length; ++i) {
+    if(arr[i] !== arr[i-1] && arr[i] !== arr[i+1]) {
+      t.equals(u.get(arr[i]), i, "get " + arr[i])
+    }
+  }
+  t.equals(u.get(-1), undefined, "get missing")
+
+  t.equals(u.ge(3).index, 6, "ge simple")
+  t.equals(u.ge(0.9).index, 1, "ge run start")
+  t.equals(u.ge(1).index, 1, "ge run mid")
+  t.equals(u.ge(1.1).index, 5, "ge run end")
+  t.equals(u.ge(0).index, 0, "ge first")
+  t.equals(u.ge(6).index, 9, "ge last")
+  t.equals(u.ge(100).valid, false, "ge big")
+  t.equals(u.ge(-1).index, 0, "ge small")
+
+  t.equals(u.gt(3).index, 7, "gt simple")
+  t.equals(u.gt(0.9).index, 1, "gt run start")
+  t.equals(u.gt(1).index, 5, "gt run mid")
+  t.equals(u.gt(1.1).index, 5, "gt run end")
+  t.equals(u.gt(0).index, 1, "gt first")
+  t.equals(u.gt(6).valid, false, "gt last")
+  t.equals(u.gt(100).valid, false, "gt big")
+  t.equals(u.gt(-1).index, 0, "ge small")
+
+  t.equals(u.le(3).index, 6, "le simple")
+  t.equals(u.le(0.9).index, 0, "le run start")
+  t.equals(u.le(1).index, 4, "le run mid")
+  t.equals(u.le(1.1).index, 4, "le run end")
+  t.equals(u.le(0).index, 0, "le first")
+  t.equals(u.le(6).index, 10, "le last")
+  t.equals(u.le(100).index, 10, "le big")
+  t.equals(u.le(-1).valid, false, "le small")
+  
+  t.equals(u.lt(3).index, 5, "lt simple")
+  t.equals(u.lt(0.9).index, 0, "lt run start")
+  t.equals(u.lt(1).index, 0, "lt run mid")
+  t.equals(u.lt(1.1).index, 4, "lt run end")
+  t.equals(u.lt(0).valid, false, "lt first")
+  t.equals(u.lt(6).index, 8, "lt last")
+  t.equals(u.lt(100).index, 10, "lt big")
+  t.equals(u.lt(-1).valid, false, "lt small")
+
+  t.equals(u.find(-1).valid, false, "find missing small")
+  t.equals(u.find(10000).valid, false, "find missing big")
+  t.equals(u.find(3).index, 6, "find simple")
+  t.ok(u.find(1).index > 0, "find repeat")
+  t.ok(u.find(1).index < 5, "find repeat")
+  
+  for(var i=0; i<arr.length; ++i) {
+    t.equals(u.find(arr[i]).key, arr[i], "find " + i)
+  }
+
+  for(var i=0; i<arr.length; ++i) {
+    t.equals(u.at(i).key, arr[i], "at " + i)
+  }
+  t.equals(u.at(-1).valid, false, "at missing small")
+  t.equals(u.at(1000).valid, false, "at missing big")
+
+
+  t.end()
+})
+
+tape("slab-sequence", function(t) {
+
+  var tree = makeTree()
+
+  tree=tree.insert(0, 0)
+  checkTree(tree, t)
+  t.same(tree.values, [0])
+
+  tree=tree.insert(1, 1)
+  checkTree(tree, t)
+  t.same(tree.values, [0,1])
+
+  tree=tree.insert(0.5, 2)
+  checkTree(tree, t)
+  t.same(tree.values, [0,2,1])
+
+  tree=tree.insert(0.25, 3)
+  checkTree(tree, t)
+  t.same(tree.values, [0,3,2,1])
+
+  tree=tree.remove(0)
+  checkTree(tree, t)
+  t.same(tree.values, [3,2,1])
+
+  tree=tree.insert(0.375, 4)
+  checkTree(tree, t)
+  t.same(tree.values, [3, 4, 2, 1])
+
+  tree=tree.remove(1)
+  checkTree(tree, t)
+  t.same(tree.values, [3,4,2])
+  
+  tree=tree.remove(0.5)
+  checkTree(tree, t)
+  t.same(tree.values, [3,4])
+
+  tree=tree.remove(0.375)
+  checkTree(tree, t)
+  t.same(tree.values, [3])
+
+  tree=tree.remove(0.25)
+  checkTree(tree, t)
+  t.same(tree.values, [])
+  
+  t.end()
+})
+
+tape("slab-sequence-2", function(t) {
+
+  var u = makeTree()
+
+  u=u.insert( 12 , 22 )
+  u=u.insert( 11 , 3 )
+  u=u.insert( 10 , 28 )
+  u=u.insert( 13 , 16 )
+  u=u.insert( 9 , 9 )
+  u=u.insert( 14 , 10 )
+  u=u.insert( 8 , 15 )
+  u=u.insert( 15 , 29 )
+  u=u.insert( 16 , 4 )
+  u=u.insert( 7 , 21 )
+  u=u.insert( 17 , 23 )
+  u=u.insert( 6 , 2 )
+  u=u.insert( 5 , 27 )
+  u=u.insert( 18 , 17 )
+  u=u.insert( 4 , 8 )
+  u=u.insert( 31 , 11 )
+  u=u.insert( 30 , 30 )
+  u=u.insert( 29 , 5 )
+  u=u.insert( 28 , 24 )
+  u=u.insert( 27 , 18 )
+  u=u.insert( 26 , 12 )
+  u=u.insert( 25 , 31 )
+  u=u.insert( 24 , 6 )
+  u=u.insert( 23 , 25 )
+  u=u.insert( 19 , 7 )
+  u=u.insert( 20 , 13 )
+  u=u.insert( 1 , 20 )
+  u=u.insert( 0 , 14 )
+  u=u.insert( 22 , 0 )
+  u=u.insert( 2 , 1 )
+  u=u.insert( 3 , 26 )
+  u=u.insert( 21 , 19 )
+  u=u.remove( 18 , 17 )
+  u=u.remove( 17 , 23 )
+  u=u.remove( 16 , 4 )
+  u=u.remove( 15 , 29 )
+  u=u.remove( 14 , 10 )
+  u=u.remove( 13 , 16 )
+  u=u.remove( 12 , 22 )
+  u=u.remove( 6 , 2 )
+  u=u.remove( 7 , 21 )
+  u=u.remove( 8 , 15 )
+  u=u.remove( 11 , 3 )
+  u=u.remove( 4 , 8 )
+  u=u.remove( 9 , 9 )
+  u=u.remove( 10 , 28 )
+  u=u.remove( 5 , 27 )
+  u=u.remove( 31 , 11 )
+  u=u.remove( 0 , 14 )
+  u=u.remove( 30 , 30 )
+  u=u.remove( 29 , 5 )
+  u=u.remove( 1 , 20 )
+  u=u.remove( 28 , 24 )
+  u=u.remove( 2 , 1 )
+  u=u.remove( 3 , 26 )
+  u=u.remove( 27 , 18 )
+  u=u.remove( 19 , 7 )
+  u=u.remove( 26 , 12 )
+  u=u.remove( 20 , 13 )
+  u=u.remove( 25 , 31 )
+  u=u.remove( 24 , 6 )
+  u=u.remove( 21 , 19 )
+  u=u.remove( 23 , 25 )
+  u=u.remove( 22 , 0 )
+
+  t.end()
+})
+ª/README.mdÅ÷functional-red-black-tree
+=========================
+A [fully persistent](http://en.wikipedia.org/wiki/Persistent_data_structure) [red-black tree](http://en.wikipedia.org/wiki/Red%E2%80%93black_tree) written 100% in JavaScript.  Works both in node.js and in the browser via [browserify](http://browserify.org/).
+
+Functional (or fully presistent) data structures allow for non-destructive updates.  So if you insert an element into the tree, it returns a new tree with the inserted element rather than destructively updating the existing tree in place.  Doing this requires using extra memory, and if one were naive it could cost as much as reallocating the entire tree.  Instead, this data structure saves some memory by recycling references to previously allocated subtrees.  This requires using only O(log(n)) additional memory per update instead of a full O(n) copy.
+
+Some advantages of this is that it is possible to apply insertions and removals to the tree while still iterating over previous versions of the tree.  Functional and persistent data structures can also be useful in many geometric algorithms like point location within triangulations or ray queries, and can be used to analyze the history of executing various algorithms.  This added power though comes at a cost, since it is generally a bit slower to use a functional data structure than an imperative version.  However, if your application needs this behavior then you may consider using this module.
+
+# Install
+
+    npm install functional-red-black-tree
+
+# Example
+
+Here is an example of some basic usage:
+
+```javascript
+//Load the library
+var createTree = require("functional-red-black-tree")
+
+//Create a tree
+var t1 = createTree()
+
+//Insert some items into the tree
+var t2 = t1.insert(1, "foo")
+var t3 = t2.insert(2, "bar")
+
+//Remove something
+var t4 = t3.remove(1)
+```
+
+
+# API
+
+```javascript
+var createTree = require("functional-red-black-tree")
+```
+
+## Overview
+
+- [Tree methods](#tree-methods)
+  - [`var tree = createTree([compare])`](#var-tree-=-createtreecompare)
+  - [`tree.keys`](#treekeys)
+  - [`tree.values`](#treevalues)
+  - [`tree.length`](#treelength)
+  - [`tree.get(key)`](#treegetkey)
+  - [`tree.insert(key, value)`](#treeinsertkey-value)
+  - [`tree.remove(key)`](#treeremovekey)
+  - [`tree.find(key)`](#treefindkey)
+  - [`tree.ge(key)`](#treegekey)
+  - [`tree.gt(key)`](#treegtkey)
+  - [`tree.lt(key)`](#treeltkey)
+  - [`tree.le(key)`](#treelekey)
+  - [`tree.at(position)`](#treeatposition)
+  - [`tree.begin`](#treebegin)
+  - [`tree.end`](#treeend)
+  - [`tree.forEach(visitor(key,value)[, lo[, hi]])`](#treeforEachvisitorkeyvalue-lo-hi)
+  - [`tree.root`](#treeroot)
+- [Node properties](#node-properties)
+  - [`node.key`](#nodekey)
+  - [`node.value`](#nodevalue)
+  - [`node.left`](#nodeleft)
+  - [`node.right`](#noderight)
+- [Iterator methods](#iterator-methods)
+  - [`iter.key`](#iterkey)
+  - [`iter.value`](#itervalue)
+  - [`iter.node`](#iternode)
+  - [`iter.tree`](#itertree)
+  - [`iter.index`](#iterindex)
+  - [`iter.valid`](#itervalid)
+  - [`iter.clone()`](#iterclone)
+  - [`iter.remove()`](#iterremove)
+  - [`iter.update(value)`](#iterupdatevalue)
+  - [`iter.next()`](#iternext)
+  - [`iter.prev()`](#iterprev)
+  - [`iter.hasNext`](#iterhasnext)
+  - [`iter.hasPrev`](#iterhasprev)
+
+## Tree methods
+
+### `var tree = createTree([compare])`
+Creates an empty functional tree
+
+* `compare` is an optional comparison function, same semantics as array.sort()
+
+**Returns** An empty tree ordered by `compare`
+
+### `tree.keys`
+A sorted array of all the keys in the tree
+
+### `tree.values`
+An array array of all the values in the tree
+
+### `tree.length`
+The number of items in the tree
+
+### `tree.get(key)`
+Retrieves the value associated to the given key
+
+* `key` is the key of the item to look up
+
+**Returns** The value of the first node associated to `key`
+
+### `tree.insert(key, value)`
+Creates a new tree with the new pair inserted.
+
+* `key` is the key of the item to insert
+* `value` is the value of the item to insert
+
+**Returns** A new tree with `key` and `value` inserted
+
+### `tree.remove(key)`
+Removes the first item with `key` in the tree
+
+* `key` is the key of the item to remove
+
+**Returns** A new tree with the given item removed if it exists
+
+### `tree.find(key)`
+Returns an iterator pointing to the first item in the tree with `key`, otherwise `null`.
+
+### `tree.ge(key)`
+Find the first item in the tree whose key is `>= key`
+
+* `key` is the key to search for
+
+**Returns** An iterator at the given element.
+
+### `tree.gt(key)`
+Finds the first item in the tree whose key is `> key`
+
+* `key` is the key to search for
+
+**Returns** An iterator at the given element
+
+### `tree.lt(key)`
+Finds the last item in the tree whose key is `< key`
+
+* `key` is the key to search for
+
+**Returns** An iterator at the given element
+
+### `tree.le(key)`
+Finds the last item in the tree whose key is `<= key`
+
+* `key` is the key to search for
+
+**Returns** An iterator at the given element
+
+### `tree.at(position)`
+Finds an iterator starting at the given element
+
+* `position` is the index at which the iterator gets created
+
+**Returns** An iterator starting at position
+
+### `tree.begin`
+An iterator pointing to the first element in the tree
+
+### `tree.end`
+An iterator pointing to the last element in the tree
+
+### `tree.forEach(visitor(key,value)[, lo[, hi]])`
+Walks a visitor function over the nodes of the tree in order.
+
+* `visitor(key,value)` is a callback that gets executed on each node.  If a truthy value is returned from the visitor, then iteration is stopped.
+* `lo` is an optional start of the range to visit (inclusive)
+* `hi` is an optional end of the range to visit (non-inclusive)
+
+**Returns** The last value returned by the callback
+
+### `tree.root`
+Returns the root node of the tree
+
+
+## Node properties
+Each node of the tree has the following properties:
+
+### `node.key`
+The key associated to the node
+
+### `node.value`
+The value associated to the node
+
+### `node.left`
+The left subtree of the node
+
+### `node.right`
+The right subtree of the node
+
+## Iterator methods
+
+### `iter.key`
+The key of the item referenced by the iterator
+
+### `iter.value`
+The value of the item referenced by the iterator
+
+### `iter.node`
+The value of the node at the iterator's current position.  `null` is iterator is node valid.
+
+### `iter.tree`
+The tree associated to the iterator
+
+### `iter.index`
+Returns the position of this iterator in the sequence.
+
+### `iter.valid`
+Checks if the iterator is valid
+
+### `iter.clone()`
+Makes a copy of the iterator
+
+### `iter.remove()`
+Removes the item at the position of the iterator
+
+**Returns** A new binary search tree with `iter`'s item removed
+
+### `iter.update(value)`
+Updates the value of the node in the tree at this iterator
+
+**Returns** A new binary search tree with the corresponding node updated
+
+### `iter.next()`
+Advances the iterator to the next position
+
+### `iter.prev()`
+Moves the iterator backward one element
+
+### `iter.hasNext`
+If true, then the iterator is not at the end of the sequence
+
+### `iter.hasPrev`
+If true, then the iterator is not at the beginning of the sequence
+
+# Credits
+(c) 2013 Mikola Lysenko. MIT License

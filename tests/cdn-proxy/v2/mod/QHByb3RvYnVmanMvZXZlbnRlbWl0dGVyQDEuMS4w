@@ -1,0 +1,234 @@
+†©/index.jsÅ("use strict";
+module.exports = EventEmitter;
+
+/**
+ * Constructs a new event emitter instance.
+ * @classdesc A minimal event emitter.
+ * @memberof util
+ * @constructor
+ */
+function EventEmitter() {
+
+    /**
+     * Registered listeners.
+     * @type {Object.<string,*>}
+     * @private
+     */
+    this._listeners = {};
+}
+
+/**
+ * Registers an event listener.
+ * @param {string} evt Event name
+ * @param {function} fn Listener
+ * @param {*} [ctx] Listener context
+ * @returns {util.EventEmitter} `this`
+ */
+EventEmitter.prototype.on = function on(evt, fn, ctx) {
+    (this._listeners[evt] || (this._listeners[evt] = [])).push({
+        fn  : fn,
+        ctx : ctx || this
+    });
+    return this;
+};
+
+/**
+ * Removes an event listener or any matching listeners if arguments are omitted.
+ * @param {string} [evt] Event name. Removes all listeners if omitted.
+ * @param {function} [fn] Listener to remove. Removes all listeners of `evt` if omitted.
+ * @returns {util.EventEmitter} `this`
+ */
+EventEmitter.prototype.off = function off(evt, fn) {
+    if (evt === undefined)
+        this._listeners = {};
+    else {
+        if (fn === undefined)
+            this._listeners[evt] = [];
+        else {
+            var listeners = this._listeners[evt];
+            for (var i = 0; i < listeners.length;)
+                if (listeners[i].fn === fn)
+                    listeners.splice(i, 1);
+                else
+                    ++i;
+        }
+    }
+    return this;
+};
+
+/**
+ * Emits an event by calling its listeners with the specified arguments.
+ * @param {string} evt Event name
+ * @param {...*} args Arguments
+ * @returns {util.EventEmitter} `this`
+ */
+EventEmitter.prototype.emit = function emit(evt) {
+    var listeners = this._listeners[evt];
+    if (listeners) {
+        var args = [],
+            i = 1;
+        for (; i < arguments.length;)
+            args.push(arguments[i++]);
+        for (i = 0; i < listeners.length;)
+            listeners[i].fn.apply(listeners[i++].ctx, args);
+    }
+    return this;
+};
+¯/tests/index.jsÅĞvar tape = require("tape");
+
+var EventEmitter = require("..");
+
+tape.test("eventemitter", function(test) {
+
+    var ee = new EventEmitter();
+    var fn;
+    var ctx = {};
+
+    test.doesNotThrow(function() {
+        ee.emit("a", 1);
+        ee.off();
+        ee.off("a");
+        ee.off("a", function() {});
+    }, "should not throw if no listeners are registered");
+    
+    test.equal(ee.on("a", function(arg1) {
+        test.equal(this, ctx, "should be called with this = ctx");
+        test.equal(arg1, 1, "should be called with arg1 = 1");
+    }, ctx), ee, "should return itself when registering events");
+    ee.emit("a", 1);
+
+    ee.off("a");
+    test.same(ee._listeners, { a: [] }, "should remove all listeners of the respective event when calling off(evt)");
+
+    ee.off();
+    test.same(ee._listeners, {}, "should remove all listeners when just calling off()");
+
+    ee.on("a", fn = function(arg1) {
+        test.equal(this, ctx, "should be called with this = ctx");
+        test.equal(arg1, 1, "should be called with arg1 = 1");
+    }, ctx).emit("a", 1);
+
+    ee.off("a", fn);
+    test.same(ee._listeners, { a: [] }, "should remove the exact listener when calling off(evt, fn)");
+
+    ee.on("a", function() {
+        test.equal(this, ee, "should be called with this = ee");
+    }).emit("a");
+
+    test.doesNotThrow(function() {
+        ee.off("a", fn);
+    }, "should not throw if no such listener is found");
+
+    test.end();
+});
+¨/LICENSEÅáCopyright (c) 2016, Daniel Wirtz  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+* Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution.
+* Neither the name of its author, nor the names of its contributors
+  may be used to endorse or promote products derived from this software
+  without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+«/index.d.tsÅexport = EventEmitter;
+
+/**
+ * Constructs a new event emitter instance.
+ * @classdesc A minimal event emitter.
+ * @memberof util
+ * @constructor
+ */
+declare class EventEmitter {
+
+    /**
+     * Constructs a new event emitter instance.
+     * @classdesc A minimal event emitter.
+     * @memberof util
+     * @constructor
+     */
+    constructor();
+
+    /**
+     * Registers an event listener.
+     * @param {string} evt Event name
+     * @param {function} fn Listener
+     * @param {*} [ctx] Listener context
+     * @returns {util.EventEmitter} `this`
+     */
+    on(evt: string, fn: () => any, ctx?: any): EventEmitter;
+
+    /**
+     * Removes an event listener or any matching listeners if arguments are omitted.
+     * @param {string} [evt] Event name. Removes all listeners if omitted.
+     * @param {function} [fn] Listener to remove. Removes all listeners of `evt` if omitted.
+     * @returns {util.EventEmitter} `this`
+     */
+    off(evt?: string, fn?: () => any): EventEmitter;
+
+    /**
+     * Emits an event by calling its listeners with the specified arguments.
+     * @param {string} evt Event name
+     * @param {...*} args Arguments
+     * @returns {util.EventEmitter} `this`
+     */
+    emit(evt: string, ...args: any[]): EventEmitter;
+}
+­/package.jsonÅ*{
+  "name": "@protobufjs/eventemitter",
+  "description": "A minimal event emitter.",
+  "version": "1.1.0",
+  "author": "Daniel Wirtz <dcode+protobufjs@dcode.io>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dcodeIO/protobuf.js.git"
+  },
+  "license": "BSD-3-Clause",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "devDependencies": {
+    "istanbul": "^0.4.5",
+    "tape": "^4.6.3"
+  },
+  "scripts": {
+    "test": "tape tests/*.js",
+    "coverage": "istanbul cover node_modules/tape/bin/tape tests/*.js"
+  }
+}ª/README.mdÅ6@protobufjs/eventemitter
+========================
+[![npm](https://img.shields.io/npm/v/@protobufjs/eventemitter.svg)](https://www.npmjs.com/package/@protobufjs/eventemitter)
+
+A minimal event emitter.
+
+API
+---
+
+* **new EventEmitter()**<br />
+  Constructs a new event emitter instance.
+
+* **EventEmitter#on(evt: `string`, fn: `function`, [ctx: `Object`]): `EventEmitter`**<br />
+  Registers an event listener.
+
+* **EventEmitter#off([evt: `string`], [fn: `function`]): `EventEmitter`**<br />
+  Removes an event listener or any matching listeners if arguments are omitted.
+
+* **EventEmitter#emit(evt: `string`, ...args: `*`): `EventEmitter`**<br />
+  Emits an event by calling its listeners with the specified arguments.
+
+**License:** [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause)

@@ -1,0 +1,595 @@
+…¨/LICENSEÅZMIT License
+
+Copyright (c) 2012-2019 Thorsten Lorenz, Paul Miller (https://paulmillr.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+­/package.jsonÅ	Ú{
+  "name": "readdirp",
+  "description": "Recursive version of fs.readdir with streaming API.",
+  "version": "3.6.0",
+  "homepage": "https://github.com/paulmillr/readdirp",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/paulmillr/readdirp.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/paulmillr/readdirp/issues"
+  },
+  "author": "Thorsten Lorenz <thlorenz@gmx.de> (thlorenz.com)",
+  "contributors": [
+    "Thorsten Lorenz <thlorenz@gmx.de> (thlorenz.com)",
+    "Paul Miller (https://paulmillr.com)"
+  ],
+  "main": "index.js",
+  "engines": {
+    "node": ">=8.10.0"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts"
+  ],
+  "keywords": [
+    "recursive",
+    "fs",
+    "stream",
+    "streams",
+    "readdir",
+    "filesystem",
+    "find",
+    "filter"
+  ],
+  "scripts": {
+    "dtslint": "dtslint",
+    "nyc": "nyc",
+    "mocha": "mocha --exit",
+    "lint": "eslint --report-unused-disable-directives --ignore-path .gitignore .",
+    "test": "npm run lint && nyc npm run mocha"
+  },
+  "dependencies": {
+    "picomatch": "^2.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^14",
+    "chai": "^4.2",
+    "chai-subset": "^1.6",
+    "dtslint": "^3.3.0",
+    "eslint": "^7.0.0",
+    "mocha": "^7.1.1",
+    "nyc": "^15.0.0",
+    "rimraf": "^3.0.0",
+    "typescript": "^4.0.3"
+  },
+  "nyc": {
+    "reporter": [
+      "html",
+      "text"
+    ]
+  },
+  "eslintConfig": {
+    "root": true,
+    "extends": "eslint:recommended",
+    "parserOptions": {
+      "ecmaVersion": 9,
+      "sourceType": "script"
+    },
+    "env": {
+      "node": true,
+      "es6": true
+    },
+    "rules": {
+      "array-callback-return": "error",
+      "no-empty": [
+        "error",
+        {
+          "allowEmptyCatch": true
+        }
+      ],
+      "no-else-return": [
+        "error",
+        {
+          "allowElseIf": false
+        }
+      ],
+      "no-lonely-if": "error",
+      "no-var": "error",
+      "object-shorthand": "error",
+      "prefer-arrow-callback": [
+        "error",
+        {
+          "allowNamedFunctions": true
+        }
+      ],
+      "prefer-const": [
+        "error",
+        {
+          "ignoreReadBeforeAssign": true
+        }
+      ],
+      "prefer-destructuring": [
+        "error",
+        {
+          "object": true,
+          "array": false
+        }
+      ],
+      "prefer-spread": "error",
+      "prefer-template": "error",
+      "radix": "error",
+      "semi": "error",
+      "strict": "error",
+      "quotes": [
+        "error",
+        "single"
+      ]
+    }
+  }
+}
+«/index.d.tsÅú// TypeScript Version: 3.2
+
+/// <reference types="node" lib="esnext" />
+
+import * as fs from 'fs';
+import { Readable } from 'stream';
+
+declare namespace readdir {
+  interface EntryInfo {
+    path: string;
+    fullPath: string;
+    basename: string;
+    stats?: fs.Stats;
+    dirent?: fs.Dirent;
+  }
+
+  interface ReaddirpOptions {
+    root?: string;
+    fileFilter?: string | string[] | ((entry: EntryInfo) => boolean);
+    directoryFilter?: string | string[] | ((entry: EntryInfo) => boolean);
+    type?: 'files' | 'directories' | 'files_directories' | 'all';
+    lstat?: boolean;
+    depth?: number;
+    alwaysStat?: boolean;
+  }
+
+  interface ReaddirpStream extends Readable, AsyncIterable<EntryInfo> {
+    read(): EntryInfo;
+    [Symbol.asyncIterator](): AsyncIterableIterator<EntryInfo>;
+  }
+
+  function promise(
+    root: string,
+    options?: ReaddirpOptions
+  ): Promise<EntryInfo[]>;
+}
+
+declare function readdir(
+  root: string,
+  options?: readdir.ReaddirpOptions
+): readdir.ReaddirpStream;
+
+export = readdir;
+ª/README.mdÅ# readdirp [![Weekly downloads](https://img.shields.io/npm/dw/readdirp.svg)](https://github.com/paulmillr/readdirp)
+
+Recursive version of [fs.readdir](https://nodejs.org/api/fs.html#fs_fs_readdir_path_options_callback). Exposes a **stream API** and a **promise API**.
+
+
+```sh
+npm install readdirp
+```
+
+```javascript
+const readdirp = require('readdirp');
+
+// Use streams to achieve small RAM & CPU footprint.
+// 1) Streams example with for-await.
+for await (const entry of readdirp('.')) {
+  const {path} = entry;
+  console.log(`${JSON.stringify({path})}`);
+}
+
+// 2) Streams example, non for-await.
+// Print out all JS files along with their size within the current folder & subfolders.
+readdirp('.', {fileFilter: '*.js', alwaysStat: true})
+  .on('data', (entry) => {
+    const {path, stats: {size}} = entry;
+    console.log(`${JSON.stringify({path, size})}`);
+  })
+  // Optionally call stream.destroy() in `warn()` in order to abort and cause 'close' to be emitted
+  .on('warn', error => console.error('non-fatal error', error))
+  .on('error', error => console.error('fatal error', error))
+  .on('end', () => console.log('done'));
+
+// 3) Promise example. More RAM and CPU than streams / for-await.
+const files = await readdirp.promise('.');
+console.log(files.map(file => file.path));
+
+// Other options.
+readdirp('test', {
+  fileFilter: '*.js',
+  directoryFilter: ['!.git', '!*modules']
+  // directoryFilter: (di) => di.basename.length === 9
+  type: 'files_directories',
+  depth: 1
+});
+```
+
+For more examples, check out `examples` directory.
+
+## API
+
+`const stream = readdirp(root[, options])` â€” **Stream API**
+
+- Reads given root recursively and returns a `stream` of [entry infos](#entryinfo)
+- Optionally can be used like `for await (const entry of stream)` with node.js 10+ (`asyncIterator`).
+- `on('data', (entry) => {})` [entry info](#entryinfo) for every file / dir.
+- `on('warn', (error) => {})` non-fatal `Error` that prevents a file / dir from being processed. Example: inaccessible to the user.
+- `on('error', (error) => {})` fatal `Error` which also ends the stream. Example: illegal options where passed.
+- `on('end')` â€” we are done. Called when all entries were found and no more will be emitted.
+- `on('close')` â€” stream is destroyed via `stream.destroy()`.
+  Could be useful if you want to manually abort even on a non fatal error.
+  At that point the stream is no longer `readable` and no more entries, warning or errors are emitted
+- To learn more about streams, consult the very detailed [nodejs streams documentation](https://nodejs.org/api/stream.html)
+  or the [stream-handbook](https://github.com/substack/stream-handbook)
+
+`const entries = await readdirp.promise(root[, options])` â€” **Promise API**. Returns a list of [entry infos](#entryinfo).
+
+First argument is awalys `root`, path in which to start reading and recursing into subdirectories.
+
+### options
+
+- `fileFilter: ["*.js"]`: filter to include or exclude files. A `Function`, Glob string or Array of glob strings.
+    - **Function**: a function that takes an entry info as a parameter and returns true to include or false to exclude the entry
+    - **Glob string**: a string (e.g., `*.js`) which is matched using [picomatch](https://github.com/micromatch/picomatch), so go there for more
+        information. Globstars (`**`) are not supported since specifying a recursive pattern for an already recursive function doesn't make sense. Negated globs (as explained in the minimatch documentation) are allowed, e.g., `!*.txt` matches everything but text files.
+    - **Array of glob strings**: either need to be all inclusive or all exclusive (negated) patterns otherwise an error is thrown.
+        `['*.json', '*.js']` includes all JavaScript and Json files.
+        `['!.git', '!node_modules']` includes all directories except the '.git' and 'node_modules'.
+    - Directories that do not pass a filter will not be recursed into.
+- `directoryFilter: ['!.git']`: filter to include/exclude directories found and to recurse into. Directories that do not pass a filter will not be recursed into.
+- `depth: 5`: depth at which to stop recursing even if more subdirectories are found
+- `type: 'files'`: determines if data events on the stream should be emitted for `'files'` (default), `'directories'`, `'files_directories'`, or `'all'`. Setting to `'all'` will also include entries for other types of file descriptors like character devices, unix sockets and named pipes.
+- `alwaysStat: false`: always return `stats` property for every file. Default is `false`, readdirp will return `Dirent` entries. Setting it to `true` can double readdir execution time - use it only when you need file `size`, `mtime` etc. Cannot be enabled on node <10.10.0.
+- `lstat: false`: include symlink entries in the stream along with files. When `true`, `fs.lstat` would be used instead of `fs.stat`
+
+### `EntryInfo`
+
+Has the following properties:
+
+- `path: 'assets/javascripts/react.js'`: path to the file/directory (relative to given root)
+- `fullPath: '/Users/dev/projects/app/assets/javascripts/react.js'`: full path to the file/directory found
+- `basename: 'react.js'`: name of the file/directory
+- `dirent: fs.Dirent`: built-in [dir entry object](https://nodejs.org/api/fs.html#fs_class_fs_dirent) - only with `alwaysStat: false`
+- `stats: fs.Stats`: built in [stat object](https://nodejs.org/api/fs.html#fs_class_fs_stats) - only with `alwaysStat: true`
+
+## Changelog
+
+- 3.5 (Oct 13, 2020) disallows recursive directory-based symlinks.
+  Before, it could have entered infinite loop.
+- 3.4 (Mar 19, 2020) adds support for directory-based symlinks.
+- 3.3 (Dec 6, 2019) stabilizes RAM consumption and enables perf management with `highWaterMark` option. Fixes race conditions related to `for-await` looping.
+- 3.2 (Oct 14, 2019) improves performance by 250% and makes streams implementation more idiomatic.
+- 3.1 (Jul 7, 2019) brings `bigint` support to `stat` output on Windows. This is backwards-incompatible for some cases. Be careful. It you use it incorrectly, you'll see "TypeError: Cannot mix BigInt and other types, use explicit conversions".
+- 3.0 brings huge performance improvements and stream backpressure support.
+- Upgrading 2.x to 3.x:
+    - Signature changed from `readdirp(options)` to `readdirp(root, options)`
+    - Replaced callback API with promise API.
+    - Renamed `entryType` option to `type`
+    - Renamed `entryType: 'both'` to `'files_directories'`
+    - `EntryInfo`
+        - Renamed `stat` to `stats`
+            - Emitted only when `alwaysStat: true`
+            - `dirent` is emitted instead of `stats` by default with `alwaysStat: false`
+        - Renamed `name` to `basename`
+        - Removed `parentDir` and `fullParentDir` properties
+- Supported node.js versions:
+    - 3.x: node 8+
+    - 2.x: node 0.6+
+
+## License
+
+Copyright (c) 2012-2019 Thorsten Lorenz, Paul Miller (<https://paulmillr.com>)
+
+MIT License, see [LICENSE](LICENSE) file.
+©/index.jsÅ"¬'use strict';
+
+const fs = require('fs');
+const { Readable } = require('stream');
+const sysPath = require('path');
+const { promisify } = require('util');
+const picomatch = require('picomatch');
+
+const readdir = promisify(fs.readdir);
+const stat = promisify(fs.stat);
+const lstat = promisify(fs.lstat);
+const realpath = promisify(fs.realpath);
+
+/**
+ * @typedef {Object} EntryInfo
+ * @property {String} path
+ * @property {String} fullPath
+ * @property {fs.Stats=} stats
+ * @property {fs.Dirent=} dirent
+ * @property {String} basename
+ */
+
+const BANG = '!';
+const RECURSIVE_ERROR_CODE = 'READDIRP_RECURSIVE_ERROR';
+const NORMAL_FLOW_ERRORS = new Set(['ENOENT', 'EPERM', 'EACCES', 'ELOOP', RECURSIVE_ERROR_CODE]);
+const FILE_TYPE = 'files';
+const DIR_TYPE = 'directories';
+const FILE_DIR_TYPE = 'files_directories';
+const EVERYTHING_TYPE = 'all';
+const ALL_TYPES = [FILE_TYPE, DIR_TYPE, FILE_DIR_TYPE, EVERYTHING_TYPE];
+
+const isNormalFlowError = error => NORMAL_FLOW_ERRORS.has(error.code);
+const [maj, min] = process.versions.node.split('.').slice(0, 2).map(n => Number.parseInt(n, 10));
+const wantBigintFsStats = process.platform === 'win32' && (maj > 10 || (maj === 10 && min >= 5));
+
+const normalizeFilter = filter => {
+  if (filter === undefined) return;
+  if (typeof filter === 'function') return filter;
+
+  if (typeof filter === 'string') {
+    const glob = picomatch(filter.trim());
+    return entry => glob(entry.basename);
+  }
+
+  if (Array.isArray(filter)) {
+    const positive = [];
+    const negative = [];
+    for (const item of filter) {
+      const trimmed = item.trim();
+      if (trimmed.charAt(0) === BANG) {
+        negative.push(picomatch(trimmed.slice(1)));
+      } else {
+        positive.push(picomatch(trimmed));
+      }
+    }
+
+    if (negative.length > 0) {
+      if (positive.length > 0) {
+        return entry =>
+          positive.some(f => f(entry.basename)) && !negative.some(f => f(entry.basename));
+      }
+      return entry => !negative.some(f => f(entry.basename));
+    }
+    return entry => positive.some(f => f(entry.basename));
+  }
+};
+
+class ReaddirpStream extends Readable {
+  static get defaultOptions() {
+    return {
+      root: '.',
+      /* eslint-disable no-unused-vars */
+      fileFilter: (path) => true,
+      directoryFilter: (path) => true,
+      /* eslint-enable no-unused-vars */
+      type: FILE_TYPE,
+      lstat: false,
+      depth: 2147483648,
+      alwaysStat: false
+    };
+  }
+
+  constructor(options = {}) {
+    super({
+      objectMode: true,
+      autoDestroy: true,
+      highWaterMark: options.highWaterMark || 4096
+    });
+    const opts = { ...ReaddirpStream.defaultOptions, ...options };
+    const { root, type } = opts;
+
+    this._fileFilter = normalizeFilter(opts.fileFilter);
+    this._directoryFilter = normalizeFilter(opts.directoryFilter);
+
+    const statMethod = opts.lstat ? lstat : stat;
+    // Use bigint stats if it's windows and stat() supports options (node 10+).
+    if (wantBigintFsStats) {
+      this._stat = path => statMethod(path, { bigint: true });
+    } else {
+      this._stat = statMethod;
+    }
+
+    this._maxDepth = opts.depth;
+    this._wantsDir = [DIR_TYPE, FILE_DIR_TYPE, EVERYTHING_TYPE].includes(type);
+    this._wantsFile = [FILE_TYPE, FILE_DIR_TYPE, EVERYTHING_TYPE].includes(type);
+    this._wantsEverything = type === EVERYTHING_TYPE;
+    this._root = sysPath.resolve(root);
+    this._isDirent = ('Dirent' in fs) && !opts.alwaysStat;
+    this._statsProp = this._isDirent ? 'dirent' : 'stats';
+    this._rdOptions = { encoding: 'utf8', withFileTypes: this._isDirent };
+
+    // Launch stream with one parent, the root dir.
+    this.parents = [this._exploreDir(root, 1)];
+    this.reading = false;
+    this.parent = undefined;
+  }
+
+  async _read(batch) {
+    if (this.reading) return;
+    this.reading = true;
+
+    try {
+      while (!this.destroyed && batch > 0) {
+        const { path, depth, files = [] } = this.parent || {};
+
+        if (files.length > 0) {
+          const slice = files.splice(0, batch).map(dirent => this._formatEntry(dirent, path));
+          for (const entry of await Promise.all(slice)) {
+            if (this.destroyed) return;
+
+            const entryType = await this._getEntryType(entry);
+            if (entryType === 'directory' && this._directoryFilter(entry)) {
+              if (depth <= this._maxDepth) {
+                this.parents.push(this._exploreDir(entry.fullPath, depth + 1));
+              }
+
+              if (this._wantsDir) {
+                this.push(entry);
+                batch--;
+              }
+            } else if ((entryType === 'file' || this._includeAsFile(entry)) && this._fileFilter(entry)) {
+              if (this._wantsFile) {
+                this.push(entry);
+                batch--;
+              }
+            }
+          }
+        } else {
+          const parent = this.parents.pop();
+          if (!parent) {
+            this.push(null);
+            break;
+          }
+          this.parent = await parent;
+          if (this.destroyed) return;
+        }
+      }
+    } catch (error) {
+      this.destroy(error);
+    } finally {
+      this.reading = false;
+    }
+  }
+
+  async _exploreDir(path, depth) {
+    let files;
+    try {
+      files = await readdir(path, this._rdOptions);
+    } catch (error) {
+      this._onError(error);
+    }
+    return { files, depth, path };
+  }
+
+  async _formatEntry(dirent, path) {
+    let entry;
+    try {
+      const basename = this._isDirent ? dirent.name : dirent;
+      const fullPath = sysPath.resolve(sysPath.join(path, basename));
+      entry = { path: sysPath.relative(this._root, fullPath), fullPath, basename };
+      entry[this._statsProp] = this._isDirent ? dirent : await this._stat(fullPath);
+    } catch (err) {
+      this._onError(err);
+    }
+    return entry;
+  }
+
+  _onError(err) {
+    if (isNormalFlowError(err) && !this.destroyed) {
+      this.emit('warn', err);
+    } else {
+      this.destroy(err);
+    }
+  }
+
+  async _getEntryType(entry) {
+    // entry may be undefined, because a warning or an error were emitted
+    // and the statsProp is undefined
+    const stats = entry && entry[this._statsProp];
+    if (!stats) {
+      return;
+    }
+    if (stats.isFile()) {
+      return 'file';
+    }
+    if (stats.isDirectory()) {
+      return 'directory';
+    }
+    if (stats && stats.isSymbolicLink()) {
+      const full = entry.fullPath;
+      try {
+        const entryRealPath = await realpath(full);
+        const entryRealPathStats = await lstat(entryRealPath);
+        if (entryRealPathStats.isFile()) {
+          return 'file';
+        }
+        if (entryRealPathStats.isDirectory()) {
+          const len = entryRealPath.length;
+          if (full.startsWith(entryRealPath) && full.substr(len, 1) === sysPath.sep) {
+            const recursiveError = new Error(
+              `Circular symlink detected: "${full}" points to "${entryRealPath}"`
+            );
+            recursiveError.code = RECURSIVE_ERROR_CODE;
+            return this._onError(recursiveError);
+          }
+          return 'directory';
+        }
+      } catch (error) {
+        this._onError(error);
+      }
+    }
+  }
+
+  _includeAsFile(entry) {
+    const stats = entry && entry[this._statsProp];
+
+    return stats && this._wantsEverything && !stats.isDirectory();
+  }
+}
+
+/**
+ * @typedef {Object} ReaddirpArguments
+ * @property {Function=} fileFilter
+ * @property {Function=} directoryFilter
+ * @property {String=} type
+ * @property {Number=} depth
+ * @property {String=} root
+ * @property {Boolean=} lstat
+ * @property {Boolean=} bigint
+ */
+
+/**
+ * Main function which ends up calling readdirRec and reads all files and directories in given root recursively.
+ * @param {String} root Root directory
+ * @param {ReaddirpArguments=} options Options to specify root (start directory), filters and recursion depth
+ */
+const readdirp = (root, options = {}) => {
+  let type = options.entryType || options.type;
+  if (type === 'both') type = FILE_DIR_TYPE; // backwards-compatibility
+  if (type) options.type = type;
+  if (!root) {
+    throw new Error('readdirp: root argument is required. Usage: readdirp(root, options)');
+  } else if (typeof root !== 'string') {
+    throw new TypeError('readdirp: root argument must be a string. Usage: readdirp(root, options)');
+  } else if (type && !ALL_TYPES.includes(type)) {
+    throw new Error(`readdirp: Invalid type passed. Use one of ${ALL_TYPES.join(', ')}`);
+  }
+
+  options.root = root;
+  return new ReaddirpStream(options);
+};
+
+const readdirpPromise = (root, options = {}) => {
+  return new Promise((resolve, reject) => {
+    const files = [];
+    readdirp(root, options)
+      .on('data', entry => files.push(entry))
+      .on('end', () => resolve(files))
+      .on('error', error => reject(error));
+  });
+};
+
+readdirp.promise = readdirpPromise;
+readdirp.ReaddirpStream = ReaddirpStream;
+readdirp.default = readdirp;
+
+module.exports = readdirp;

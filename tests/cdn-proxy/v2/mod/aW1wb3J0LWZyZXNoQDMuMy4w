@@ -1,0 +1,163 @@
+Ö™/readme.md≈•# import-fresh
+
+> Import a module while bypassing the [cache](https://nodejs.org/api/modules.html#modules_caching)
+
+Useful for testing purposes when you need to freshly import a module.
+
+## Install
+
+```
+$ npm install import-fresh
+```
+
+## Usage
+
+```js
+// foo.js
+let i = 0;
+module.exports = () => ++i;
+```
+
+```js
+const importFresh = require('import-fresh');
+
+require('./foo')();
+//=> 1
+
+require('./foo')();
+//=> 2
+
+importFresh('./foo')();
+//=> 1
+
+importFresh('./foo')();
+//=> 1
+```
+
+## import-fresh for enterprise
+
+Available as part of the Tidelift Subscription.
+
+The maintainers of import-fresh and thousands of other packages are working with Tidelift to deliver commercial support and maintenance for the open source dependencies you use to build your applications. Save time, reduce risk, and improve code health, while paying the maintainers of the exact dependencies you use. [Learn more.](https://tidelift.com/subscription/pkg/npm-import-fresh?utm_source=npm-import-fresh&utm_medium=referral&utm_campaign=enterprise&utm_term=repo)
+
+## Related
+
+- [clear-module](https://github.com/sindresorhus/clear-module) - Clear a module from the import cache
+- [import-from](https://github.com/sindresorhus/import-from) - Import a module from a given path
+- [import-cwd](https://github.com/sindresorhus/import-cwd) - Import a module from the current working directory
+- [import-lazy](https://github.com/sindresorhus/import-lazy) - Import modules lazily
+©/index.js≈4'use strict';
+const path = require('path');
+const resolveFrom = require('resolve-from');
+const parentModule = require('parent-module');
+
+module.exports = moduleId => {
+	if (typeof moduleId !== 'string') {
+		throw new TypeError('Expected a string');
+	}
+
+	const parentPath = parentModule(__filename);
+
+	const cwd = parentPath ? path.dirname(parentPath) : __dirname;
+	const filePath = resolveFrom(cwd, moduleId);
+
+	const oldModule = require.cache[filePath];
+	// Delete itself from module parent
+	if (oldModule && oldModule.parent) {
+		let i = oldModule.parent.children.length;
+
+		while (i--) {
+			if (oldModule.parent.children[i].id === filePath) {
+				oldModule.parent.children.splice(i, 1);
+			}
+		}
+	}
+
+	delete require.cache[filePath]; // Delete module from cache
+
+	const parent = require.cache[parentPath]; // If `filePath` and `parentPath` are the same, cache will already be deleted so we won't get a memory leak in next step
+
+	return parent === undefined ? require(filePath) : parent.require(filePath); // In case cache doesn't have parent, fall back to normal require
+};
+´/index.d.ts≈∞/**
+Import a module while bypassing the cache.
+
+@example
+```
+// foo.js
+let i = 0;
+module.exports = () => ++i;
+
+// index.js
+import importFresh = require('import-fresh');
+
+require('./foo')();
+//=> 1
+
+require('./foo')();
+//=> 2
+
+importFresh('./foo')();
+//=> 1
+
+importFresh('./foo')();
+//=> 1
+
+const foo = importFresh<typeof import('./foo')>('./foo');
+```
+*/
+declare function importFresh<T>(moduleId: string): T;
+
+export = importFresh;
+≠/package.json≈{
+	"name": "import-fresh",
+	"version": "3.3.0",
+	"description": "Import a module while bypassing the cache",
+	"license": "MIT",
+	"repository": "sindresorhus/import-fresh",
+	"funding": "https://github.com/sponsors/sindresorhus",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "https://sindresorhus.com"
+	},
+	"engines": {
+		"node": ">=6"
+	},
+	"scripts": {
+		"test": "xo && ava && tsd",
+		"heapdump": "node heapdump.js"
+	},
+	"files": [
+		"index.js",
+		"index.d.ts"
+	],
+	"keywords": [
+		"require",
+		"cache",
+		"uncache",
+		"uncached",
+		"module",
+		"fresh",
+		"bypass"
+	],
+	"dependencies": {
+		"parent-module": "^1.0.0",
+		"resolve-from": "^4.0.0"
+	},
+	"devDependencies": {
+		"ava": "^1.0.1",
+		"heapdump": "^0.3.12",
+		"tsd": "^0.7.3",
+		"xo": "^0.23.0"
+	}
+}
+®/license≈]MIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

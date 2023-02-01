@@ -1,0 +1,187 @@
+…¨/licenseÅUMIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+­/package.jsonÅ{
+	"name": "mimic-fn",
+	"version": "2.1.0",
+	"description": "Make a function mimic another one",
+	"license": "MIT",
+	"repository": "sindresorhus/mimic-fn",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "sindresorhus.com"
+	},
+	"engines": {
+		"node": ">=6"
+	},
+	"scripts": {
+		"test": "xo && ava && tsd"
+	},
+	"files": [
+		"index.js",
+		"index.d.ts"
+	],
+	"keywords": [
+		"function",
+		"mimic",
+		"imitate",
+		"rename",
+		"copy",
+		"inherit",
+		"properties",
+		"name",
+		"func",
+		"fn",
+		"set",
+		"infer",
+		"change"
+	],
+	"devDependencies": {
+		"ava": "^1.4.1",
+		"tsd": "^0.7.1",
+		"xo": "^0.24.0"
+	}
+}
+ª/readme.mdÅ¬# mimic-fn [![Build Status](https://travis-ci.org/sindresorhus/mimic-fn.svg?branch=master)](https://travis-ci.org/sindresorhus/mimic-fn)
+
+> Make a function mimic another one
+
+Useful when you wrap a function in another function and like to preserve the original name and other properties.
+
+
+## Install
+
+```
+$ npm install mimic-fn
+```
+
+
+## Usage
+
+```js
+const mimicFn = require('mimic-fn');
+
+function foo() {}
+foo.unicorn = 'ðŸ¦„';
+
+function wrapper() {
+	return foo();
+}
+
+console.log(wrapper.name);
+//=> 'wrapper'
+
+mimicFn(wrapper, foo);
+
+console.log(wrapper.name);
+//=> 'foo'
+
+console.log(wrapper.unicorn);
+//=> 'ðŸ¦„'
+```
+
+
+## API
+
+It will copy over the properties `name`, `length`, `displayName`, and any custom properties you may have set.
+
+### mimicFn(to, from)
+
+Modifies the `to` function and returns it.
+
+#### to
+
+Type: `Function`
+
+Mimicking function.
+
+#### from
+
+Type: `Function`
+
+Function to mimic.
+
+
+## Related
+
+- [rename-fn](https://github.com/sindresorhus/rename-fn) - Rename a function
+- [keep-func-props](https://github.com/ehmicky/keep-func-props) - Wrap a function without changing its name, length and other properties
+
+
+## License
+
+MIT Â© [Sindre Sorhus](https://sindresorhus.com)
+«/index.d.tsÅ»declare const mimicFn: {
+	/**
+	Make a function mimic another one. It will copy over the properties `name`, `length`, `displayName`, and any custom properties you may have set.
+
+	@param to - Mimicking function.
+	@param from - Function to mimic.
+	@returns The modified `to` function.
+
+	@example
+	```
+	import mimicFn = require('mimic-fn');
+
+	function foo() {}
+	foo.unicorn = 'ðŸ¦„';
+
+	function wrapper() {
+		return foo();
+	}
+
+	console.log(wrapper.name);
+	//=> 'wrapper'
+
+	mimicFn(wrapper, foo);
+
+	console.log(wrapper.name);
+	//=> 'foo'
+
+	console.log(wrapper.unicorn);
+	//=> 'ðŸ¦„'
+	```
+	*/
+	<
+		ArgumentsType extends unknown[],
+		ReturnType,
+		FunctionType extends (...arguments: ArgumentsType) => ReturnType
+	>(
+		to: (...arguments: ArgumentsType) => ReturnType,
+		from: FunctionType
+	): FunctionType;
+
+	// TODO: Remove this for the next major release, refactor the whole definition to:
+	// declare function mimicFn<
+	//	ArgumentsType extends unknown[],
+	//	ReturnType,
+	//	FunctionType extends (...arguments: ArgumentsType) => ReturnType
+	// >(
+	//	to: (...arguments: ArgumentsType) => ReturnType,
+	//	from: FunctionType
+	// ): FunctionType;
+	// export = mimicFn;
+	default: typeof mimicFn;
+};
+
+export = mimicFn;
+©/index.jsÅ,'use strict';
+
+const mimicFn = (to, from) => {
+	for (const prop of Reflect.ownKeys(from)) {
+		Object.defineProperty(to, prop, Object.getOwnPropertyDescriptor(from, prop));
+	}
+
+	return to;
+};
+
+module.exports = mimicFn;
+// TODO: Remove this for the next major release
+module.exports.default = mimicFn;

@@ -1,0 +1,534 @@
+Ö≠/package.json≈@{
+  "name": "v8-compile-cache",
+  "version": "2.3.0",
+  "description": "Require hook for automatic V8 compile cache persistence",
+  "main": "v8-compile-cache.js",
+  "scripts": {
+    "bench": "bench/run.sh",
+    "eslint": "eslint --max-warnings=0 .",
+    "tap": "tap test/*-test.js",
+    "test": "npm run tap",
+    "posttest": "npm run eslint"
+  },
+  "author": "Andres Suarez <zertosh@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zertosh/v8-compile-cache.git"
+  },
+  "files": [
+    "v8-compile-cache.js"
+  ],
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "babel-core": "6.26.3",
+    "eslint": "^7.12.1",
+    "flow-parser": "0.136.0",
+    "rimraf": "^2.5.4",
+    "rxjs": "6.6.3",
+    "semver": "^5.3.0",
+    "tap": "^9.0.0",
+    "temp": "^0.8.3",
+    "yarn": "1.22.10"
+  }
+}
+≠/CHANGELOG.md≈‘# `v8-module-cache` Changelog
+
+## 2021-03-05, Version 2.3.0
+
+* Fix use require.main instead of module.parent [#34](https://github.com/zertosh/v8-compile-cache/pull/34).
+
+## 2020-10-28, Version 2.2.0
+
+* Added `V8_COMPILE_CACHE_CACHE_DIR` option [#23](https://github.com/zertosh/v8-compile-cache/pull/23).
+
+## 2020-05-30, Version 2.1.1
+
+* Stop using process.umask() [#28](https://github.com/zertosh/v8-compile-cache/pull/28).
+
+## 2019-08-04, Version 2.1.0
+
+* Fix Electron by calling the module wrapper with `Buffer` [#10](https://github.com/zertosh/v8-compile-cache/pull/10).
+
+## 2019-05-10, Version 2.0.3
+
+* Add `LICENSE` file [#19](https://github.com/zertosh/v8-compile-cache/pull/19).
+* Add "repository" to `package.json` (see [eea336e](https://github.com/zertosh/v8-compile-cache/commit/eea336eaa8360f9ded9342b8aa928e56ac6a7529)).
+* Support `require.resolve.paths` (added in Node v8.9.0) [#20](https://github.com/zertosh/v8-compile-cache/pull/20)/[#22](https://github.com/zertosh/v8-compile-cache/pull/22).
+
+## 2018-08-06, Version 2.0.2
+
+* Re-publish.
+
+## 2018-08-06, Version 2.0.1
+
+* Support `require.resolve` options (added in Node v8.9.0).
+
+## 2018-04-30, Version 2.0.0
+
+* Use `Buffer.alloc` instead of `new Buffer()`.
+* Drop support for Node 5.x.
+
+## 2018-01-23, Version 1.1.2
+
+* Instead of checking for `process.versions.v8`, check that `script.cachedDataProduced` is `true` (rather than `null`/`undefined`) for support to be considered existent.
+
+## 2018-01-23, Version 1.1.1
+
+* Check for the existence of `process.versions.v8` before attaching hook (see [f8b0388](https://github.com/zertosh/v8-compile-cache/commit/f8b038848be94bc2c905880dd50447c73393f364)).
+
+## 2017-03-27, Version 1.1.0
+
+* Safer cache directory creation (see [bcb3b12](https://github.com/zertosh/v8-compile-cache/commit/bcb3b12c819ab0927ec4408e70f612a6d50a9617)).
+  - The cache is now suffixed with the user's uid on POSIX systems (i.e. `/path/to/tmp/v8-compile-cache-1234`).
+
+## 2017-02-21, Version 1.0.0
+
+* Initial release.
+™/README.md≈p# v8-compile-cache
+
+[![Build Status](https://travis-ci.org/zertosh/v8-compile-cache.svg?branch=master)](https://travis-ci.org/zertosh/v8-compile-cache)
+
+`v8-compile-cache` attaches a `require` hook to use [V8's code cache](https://v8project.blogspot.com/2015/07/code-caching.html) to speed up instantiation time. The "code cache" is the work of parsing and compiling done by V8.
+
+The ability to tap into V8 to produce/consume this cache was introduced in [Node v5.7.0](https://nodejs.org/en/blog/release/v5.7.0/).
+
+## Usage
+
+1. Add the dependency:
+
+  ```sh
+  $ npm install --save v8-compile-cache
+  ```
+
+2. Then, in your entry module add:
+
+  ```js
+  require('v8-compile-cache');
+  ```
+
+**Requiring `v8-compile-cache` in Node <5.7.0 is a noop ‚Äì but you need at least Node 4.0.0 to support the ES2015 syntax used by `v8-compile-cache`.**
+
+## Options
+
+Set the environment variable `DISABLE_V8_COMPILE_CACHE=1` to disable the cache.
+
+Cache directory is defined by environment variable `V8_COMPILE_CACHE_CACHE_DIR` or defaults to `<os.tmpdir()>/v8-compile-cache-<V8_VERSION>`.
+
+## Internals
+
+Cache files are suffixed `.BLOB` and `.MAP` corresponding to the entry module that required `v8-compile-cache`. The cache is _entry module specific_ because it is faster to load the entire code cache into memory at once, than it is to read it from disk on a file-by-file basis.
+
+## Benchmarks
+
+See https://github.com/zertosh/v8-compile-cache/tree/master/bench.
+
+**Load Times:**
+
+| Module           | Without Cache | With Cache |
+| ---------------- | -------------:| ----------:|
+| `babel-core`     | `218ms`       | `185ms`    |
+| `yarn`           | `153ms`       | `113ms`    |
+| `yarn` (bundled) | `228ms`       | `105ms`    |
+
+_^ Includes the overhead of loading the cache itself._
+
+## Acknowledgements
+
+* `FileSystemBlobStore` and `NativeCompileCache` are based on Atom's implementation of their v8 compile cache: 
+  - https://github.com/atom/atom/blob/b0d7a8a/src/file-system-blob-store.js
+  - https://github.com/atom/atom/blob/b0d7a8a/src/native-compile-cache.js
+* `mkdirpSync` is based on:
+  - https://github.com/substack/node-mkdirp/blob/f2003bb/index.js#L55-L98
+¥/v8-compile-cache.js≈)Î'use strict';
+
+const Module = require('module');
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+const os = require('os');
+
+const hasOwnProperty = Object.prototype.hasOwnProperty;
+
+//------------------------------------------------------------------------------
+// FileSystemBlobStore
+//------------------------------------------------------------------------------
+
+class FileSystemBlobStore {
+  constructor(directory, prefix) {
+    const name = prefix ? slashEscape(prefix + '.') : '';
+    this._blobFilename = path.join(directory, name + 'BLOB');
+    this._mapFilename = path.join(directory, name + 'MAP');
+    this._lockFilename = path.join(directory, name + 'LOCK');
+    this._directory = directory;
+    this._load();
+  }
+
+  has(key, invalidationKey) {
+    if (hasOwnProperty.call(this._memoryBlobs, key)) {
+      return this._invalidationKeys[key] === invalidationKey;
+    } else if (hasOwnProperty.call(this._storedMap, key)) {
+      return this._storedMap[key][0] === invalidationKey;
+    }
+    return false;
+  }
+
+  get(key, invalidationKey) {
+    if (hasOwnProperty.call(this._memoryBlobs, key)) {
+      if (this._invalidationKeys[key] === invalidationKey) {
+        return this._memoryBlobs[key];
+      }
+    } else if (hasOwnProperty.call(this._storedMap, key)) {
+      const mapping = this._storedMap[key];
+      if (mapping[0] === invalidationKey) {
+        return this._storedBlob.slice(mapping[1], mapping[2]);
+      }
+    }
+  }
+
+  set(key, invalidationKey, buffer) {
+    this._invalidationKeys[key] = invalidationKey;
+    this._memoryBlobs[key] = buffer;
+    this._dirty = true;
+  }
+
+  delete(key) {
+    if (hasOwnProperty.call(this._memoryBlobs, key)) {
+      this._dirty = true;
+      delete this._memoryBlobs[key];
+    }
+    if (hasOwnProperty.call(this._invalidationKeys, key)) {
+      this._dirty = true;
+      delete this._invalidationKeys[key];
+    }
+    if (hasOwnProperty.call(this._storedMap, key)) {
+      this._dirty = true;
+      delete this._storedMap[key];
+    }
+  }
+
+  isDirty() {
+    return this._dirty;
+  }
+
+  save() {
+    const dump = this._getDump();
+    const blobToStore = Buffer.concat(dump[0]);
+    const mapToStore = JSON.stringify(dump[1]);
+
+    try {
+      mkdirpSync(this._directory);
+      fs.writeFileSync(this._lockFilename, 'LOCK', {flag: 'wx'});
+    } catch (error) {
+      // Swallow the exception if we fail to acquire the lock.
+      return false;
+    }
+
+    try {
+      fs.writeFileSync(this._blobFilename, blobToStore);
+      fs.writeFileSync(this._mapFilename, mapToStore);
+    } finally {
+      fs.unlinkSync(this._lockFilename);
+    }
+
+    return true;
+  }
+
+  _load() {
+    try {
+      this._storedBlob = fs.readFileSync(this._blobFilename);
+      this._storedMap = JSON.parse(fs.readFileSync(this._mapFilename));
+    } catch (e) {
+      this._storedBlob = Buffer.alloc(0);
+      this._storedMap = {};
+    }
+    this._dirty = false;
+    this._memoryBlobs = {};
+    this._invalidationKeys = {};
+  }
+
+  _getDump() {
+    const buffers = [];
+    const newMap = {};
+    let offset = 0;
+
+    function push(key, invalidationKey, buffer) {
+      buffers.push(buffer);
+      newMap[key] = [invalidationKey, offset, offset + buffer.length];
+      offset += buffer.length;
+    }
+
+    for (const key of Object.keys(this._memoryBlobs)) {
+      const buffer = this._memoryBlobs[key];
+      const invalidationKey = this._invalidationKeys[key];
+      push(key, invalidationKey, buffer);
+    }
+
+    for (const key of Object.keys(this._storedMap)) {
+      if (hasOwnProperty.call(newMap, key)) continue;
+      const mapping = this._storedMap[key];
+      const buffer = this._storedBlob.slice(mapping[1], mapping[2]);
+      push(key, mapping[0], buffer);
+    }
+
+    return [buffers, newMap];
+  }
+}
+
+//------------------------------------------------------------------------------
+// NativeCompileCache
+//------------------------------------------------------------------------------
+
+class NativeCompileCache {
+  constructor() {
+    this._cacheStore = null;
+    this._previousModuleCompile = null;
+  }
+
+  setCacheStore(cacheStore) {
+    this._cacheStore = cacheStore;
+  }
+
+  install() {
+    const self = this;
+    const hasRequireResolvePaths = typeof require.resolve.paths === 'function';
+    this._previousModuleCompile = Module.prototype._compile;
+    Module.prototype._compile = function(content, filename) {
+      const mod = this;
+
+      function require(id) {
+        return mod.require(id);
+      }
+
+      // https://github.com/nodejs/node/blob/v10.15.3/lib/internal/modules/cjs/helpers.js#L28
+      function resolve(request, options) {
+        return Module._resolveFilename(request, mod, false, options);
+      }
+      require.resolve = resolve;
+
+      // https://github.com/nodejs/node/blob/v10.15.3/lib/internal/modules/cjs/helpers.js#L37
+      // resolve.resolve.paths was added in v8.9.0
+      if (hasRequireResolvePaths) {
+        resolve.paths = function paths(request) {
+          return Module._resolveLookupPaths(request, mod, true);
+        };
+      }
+
+      require.main = process.mainModule;
+
+      // Enable support to add extra extension types
+      require.extensions = Module._extensions;
+      require.cache = Module._cache;
+
+      const dirname = path.dirname(filename);
+
+      const compiledWrapper = self._moduleCompile(filename, content);
+
+      // We skip the debugger setup because by the time we run, node has already
+      // done that itself.
+
+      // `Buffer` is included for Electron.
+      // See https://github.com/zertosh/v8-compile-cache/pull/10#issuecomment-518042543
+      const args = [mod.exports, require, mod, filename, dirname, process, global, Buffer];
+      return compiledWrapper.apply(mod.exports, args);
+    };
+  }
+
+  uninstall() {
+    Module.prototype._compile = this._previousModuleCompile;
+  }
+
+  _moduleCompile(filename, content) {
+    // https://github.com/nodejs/node/blob/v7.5.0/lib/module.js#L511
+
+    // Remove shebang
+    var contLen = content.length;
+    if (contLen >= 2) {
+      if (content.charCodeAt(0) === 35/*#*/ &&
+          content.charCodeAt(1) === 33/*!*/) {
+        if (contLen === 2) {
+          // Exact match
+          content = '';
+        } else {
+          // Find end of shebang line and slice it off
+          var i = 2;
+          for (; i < contLen; ++i) {
+            var code = content.charCodeAt(i);
+            if (code === 10/*\n*/ || code === 13/*\r*/) break;
+          }
+          if (i === contLen) {
+            content = '';
+          } else {
+            // Note that this actually includes the newline character(s) in the
+            // new output. This duplicates the behavior of the regular
+            // expression that was previously used to replace the shebang line
+            content = content.slice(i);
+          }
+        }
+      }
+    }
+
+    // create wrapper function
+    var wrapper = Module.wrap(content);
+
+    var invalidationKey = crypto
+      .createHash('sha1')
+      .update(content, 'utf8')
+      .digest('hex');
+
+    var buffer = this._cacheStore.get(filename, invalidationKey);
+
+    var script = new vm.Script(wrapper, {
+      filename: filename,
+      lineOffset: 0,
+      displayErrors: true,
+      cachedData: buffer,
+      produceCachedData: true,
+    });
+
+    if (script.cachedDataProduced) {
+      this._cacheStore.set(filename, invalidationKey, script.cachedData);
+    } else if (script.cachedDataRejected) {
+      this._cacheStore.delete(filename);
+    }
+
+    var compiledWrapper = script.runInThisContext({
+      filename: filename,
+      lineOffset: 0,
+      columnOffset: 0,
+      displayErrors: true,
+    });
+
+    return compiledWrapper;
+  }
+}
+
+//------------------------------------------------------------------------------
+// utilities
+//
+// https://github.com/substack/node-mkdirp/blob/f2003bb/index.js#L55-L98
+// https://github.com/zertosh/slash-escape/blob/e7ebb99/slash-escape.js
+//------------------------------------------------------------------------------
+
+function mkdirpSync(p_) {
+  _mkdirpSync(path.resolve(p_), 0o777);
+}
+
+function _mkdirpSync(p, mode) {
+  try {
+    fs.mkdirSync(p, mode);
+  } catch (err0) {
+    if (err0.code === 'ENOENT') {
+      _mkdirpSync(path.dirname(p));
+      _mkdirpSync(p);
+    } else {
+      try {
+        const stat = fs.statSync(p);
+        if (!stat.isDirectory()) { throw err0; }
+      } catch (err1) {
+        throw err0;
+      }
+    }
+  }
+}
+
+function slashEscape(str) {
+  const ESCAPE_LOOKUP = {
+    '\\': 'zB',
+    ':': 'zC',
+    '/': 'zS',
+    '\x00': 'z0',
+    'z': 'zZ',
+  };
+  const ESCAPE_REGEX = /[\\:/\x00z]/g; // eslint-disable-line no-control-regex
+  return str.replace(ESCAPE_REGEX, match => ESCAPE_LOOKUP[match]);
+}
+
+function supportsCachedData() {
+  const script = new vm.Script('""', {produceCachedData: true});
+  // chakracore, as of v1.7.1.0, returns `false`.
+  return script.cachedDataProduced === true;
+}
+
+function getCacheDir() {
+  const v8_compile_cache_cache_dir = process.env.V8_COMPILE_CACHE_CACHE_DIR;
+  if (v8_compile_cache_cache_dir) {
+    return v8_compile_cache_cache_dir;
+  }
+
+  // Avoid cache ownership issues on POSIX systems.
+  const dirname = typeof process.getuid === 'function'
+    ? 'v8-compile-cache-' + process.getuid()
+    : 'v8-compile-cache';
+  const version = typeof process.versions.v8 === 'string'
+    ? process.versions.v8
+    : typeof process.versions.chakracore === 'string'
+      ? 'chakracore-' + process.versions.chakracore
+      : 'node-' + process.version;
+  const cacheDir = path.join(os.tmpdir(), dirname, version);
+  return cacheDir;
+}
+
+function getMainName() {
+  // `require.main.filename` is undefined or null when:
+  //    * node -e 'require("v8-compile-cache")'
+  //    * node -r 'v8-compile-cache'
+  //    * Or, requiring from the REPL.
+  const mainName = require.main && typeof require.main.filename === 'string'
+    ? require.main.filename
+    : process.cwd();
+  return mainName;
+}
+
+//------------------------------------------------------------------------------
+// main
+//------------------------------------------------------------------------------
+
+if (!process.env.DISABLE_V8_COMPILE_CACHE && supportsCachedData()) {
+  const cacheDir = getCacheDir();
+  const prefix = getMainName();
+  const blobStore = new FileSystemBlobStore(cacheDir, prefix);
+
+  const nativeCompileCache = new NativeCompileCache();
+  nativeCompileCache.setCacheStore(blobStore);
+  nativeCompileCache.install();
+
+  process.once('exit', () => {
+    if (blobStore.isDirty()) {
+      blobStore.save();
+    }
+    nativeCompileCache.uninstall();
+  });
+}
+
+module.exports.__TEST__ = {
+  FileSystemBlobStore,
+  NativeCompileCache,
+  mkdirpSync,
+  slashEscape,
+  supportsCachedData,
+  getCacheDir,
+  getMainName,
+};
+®/LICENSE≈8The MIT License (MIT)
+
+Copyright (c) 2019 Andres Suarez
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

@@ -1,0 +1,442 @@
+…©/index.jsÅ	¯/*!
+ * etag
+ * Copyright(c) 2014-2016 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+'use strict'
+
+/**
+ * Module exports.
+ * @public
+ */
+
+module.exports = etag
+
+/**
+ * Module dependencies.
+ * @private
+ */
+
+var crypto = require('crypto')
+var Stats = require('fs').Stats
+
+/**
+ * Module variables.
+ * @private
+ */
+
+var toString = Object.prototype.toString
+
+/**
+ * Generate an entity tag.
+ *
+ * @param {Buffer|string} entity
+ * @return {string}
+ * @private
+ */
+
+function entitytag (entity) {
+  if (entity.length === 0) {
+    // fast-path empty
+    return '"0-2jmj7l5rSw0yVb/vlWAYkK/YBwk"'
+  }
+
+  // compute hash of entity
+  var hash = crypto
+    .createHash('sha1')
+    .update(entity, 'utf8')
+    .digest('base64')
+    .substring(0, 27)
+
+  // compute length of entity
+  var len = typeof entity === 'string'
+    ? Buffer.byteLength(entity, 'utf8')
+    : entity.length
+
+  return '"' + len.toString(16) + '-' + hash + '"'
+}
+
+/**
+ * Create a simple ETag.
+ *
+ * @param {string|Buffer|Stats} entity
+ * @param {object} [options]
+ * @param {boolean} [options.weak]
+ * @return {String}
+ * @public
+ */
+
+function etag (entity, options) {
+  if (entity == null) {
+    throw new TypeError('argument entity is required')
+  }
+
+  // support fs.Stats object
+  var isStats = isstats(entity)
+  var weak = options && typeof options.weak === 'boolean'
+    ? options.weak
+    : isStats
+
+  // validate argument
+  if (!isStats && typeof entity !== 'string' && !Buffer.isBuffer(entity)) {
+    throw new TypeError('argument entity must be string, Buffer, or fs.Stats')
+  }
+
+  // generate entity tag
+  var tag = isStats
+    ? stattag(entity)
+    : entitytag(entity)
+
+  return weak
+    ? 'W/' + tag
+    : tag
+}
+
+/**
+ * Determine if object is a Stats object.
+ *
+ * @param {object} obj
+ * @return {boolean}
+ * @api private
+ */
+
+function isstats (obj) {
+  // genuine fs.Stats
+  if (typeof Stats === 'function' && obj instanceof Stats) {
+    return true
+  }
+
+  // quack quack
+  return obj && typeof obj === 'object' &&
+    'ctime' in obj && toString.call(obj.ctime) === '[object Date]' &&
+    'mtime' in obj && toString.call(obj.mtime) === '[object Date]' &&
+    'ino' in obj && typeof obj.ino === 'number' &&
+    'size' in obj && typeof obj.size === 'number'
+}
+
+/**
+ * Generate a tag for a stat.
+ *
+ * @param {object} stat
+ * @return {string}
+ * @private
+ */
+
+function stattag (stat) {
+  var mtime = stat.mtime.getTime().toString(16)
+  var size = stat.size.toString(16)
+
+  return '"' + size + '-' + mtime + '"'
+}
+­/package.jsonÅ{
+  "name": "etag",
+  "description": "Create simple HTTP ETags",
+  "version": "1.8.1",
+  "contributors": [
+    "Douglas Christopher Wilson <doug@somethingdoug.com>",
+    "David BjÃ¶rklund <david.bjorklund@gmail.com>"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "etag",
+    "http",
+    "res"
+  ],
+  "repository": "jshttp/etag",
+  "devDependencies": {
+    "beautify-benchmark": "0.2.4",
+    "benchmark": "2.1.4",
+    "eslint": "3.19.0",
+    "eslint-config-standard": "10.2.1",
+    "eslint-plugin-import": "2.7.0",
+    "eslint-plugin-markdown": "1.0.0-beta.6",
+    "eslint-plugin-node": "5.1.1",
+    "eslint-plugin-promise": "3.5.0",
+    "eslint-plugin-standard": "3.0.1",
+    "istanbul": "0.4.5",
+    "mocha": "1.21.5",
+    "safe-buffer": "5.1.1",
+    "seedrandom": "2.4.3"
+  },
+  "files": [
+    "LICENSE",
+    "HISTORY.md",
+    "README.md",
+    "index.js"
+  ],
+  "engines": {
+    "node": ">= 0.6"
+  },
+  "scripts": {
+    "bench": "node benchmark/index.js",
+    "lint": "eslint --plugin markdown --ext js,md .",
+    "test": "mocha --reporter spec --bail --check-leaks test/",
+    "test-cov": "istanbul cover node_modules/mocha/bin/_mocha -- --reporter dot --check-leaks test/",
+    "test-travis": "istanbul cover node_modules/mocha/bin/_mocha --report lcovonly -- --reporter spec --check-leaks test/"
+  }
+}
+¨/LICENSEÅF(The MIT License)
+
+Copyright (c) 2014-2016 Douglas Christopher Wilson
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+«/HISTORY.mdÅÄ1.8.1 / 2017-09-12
+==================
+
+  * perf: replace regular expression with substring
+
+1.8.0 / 2017-02-18
+==================
+
+  * Use SHA1 instead of MD5 for ETag hashing
+    - Improves performance for larger entities
+    - Works with FIPS 140-2 OpenSSL configuration
+
+1.7.0 / 2015-06-08
+==================
+
+  * Always include entity length in ETags for hash length extensions
+  * Generate non-Stats ETags using MD5 only (no longer CRC32)
+  * Improve stat performance by removing hashing
+  * Remove base64 padding in ETags to shorten
+  * Use MD5 instead of MD4 in weak ETags over 1KB
+
+1.6.0 / 2015-05-10
+==================
+
+  * Improve support for JXcore
+  * Remove requirement of `atime` in the stats object
+  * Support "fake" stats objects in environments without `fs`
+
+1.5.1 / 2014-11-19
+==================
+
+  * deps: crc@3.2.1
+    - Minor fixes
+
+1.5.0 / 2014-10-14
+==================
+
+  * Improve string performance
+  * Slightly improve speed for weak ETags over 1KB
+
+1.4.0 / 2014-09-21
+==================
+
+  * Support "fake" stats objects
+  * Support Node.js 0.6
+
+1.3.1 / 2014-09-14
+==================
+
+  * Use the (new and improved) `crc` for crc32
+
+1.3.0 / 2014-08-29
+==================
+
+  * Default strings to strong ETags
+  * Improve speed for weak ETags over 1KB
+
+1.2.1 / 2014-08-29
+==================
+
+  * Use the (much faster) `buffer-crc32` for crc32
+
+1.2.0 / 2014-08-24
+==================
+
+  * Add support for file stat objects
+
+1.1.0 / 2014-08-24
+==================
+
+  * Add fast-path for empty entity
+  * Add weak ETag generation
+  * Shrink size of generated ETags
+
+1.0.1 / 2014-08-24
+==================
+
+  * Fix behavior of string containing Unicode
+
+1.0.0 / 2014-05-18
+==================
+
+  * Initial release
+ª/README.mdÅf# etag
+
+[![NPM Version][npm-image]][npm-url]
+[![NPM Downloads][downloads-image]][downloads-url]
+[![Node.js Version][node-version-image]][node-version-url]
+[![Build Status][travis-image]][travis-url]
+[![Test Coverage][coveralls-image]][coveralls-url]
+
+Create simple HTTP ETags
+
+This module generates HTTP ETags (as defined in RFC 7232) for use in
+HTTP responses.
+
+## Installation
+
+This is a [Node.js](https://nodejs.org/en/) module available through the
+[npm registry](https://www.npmjs.com/). Installation is done using the
+[`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
+
+```sh
+$ npm install etag
+```
+
+## API
+
+<!-- eslint-disable no-unused-vars -->
+
+```js
+var etag = require('etag')
+```
+
+### etag(entity, [options])
+
+Generate a strong ETag for the given entity. This should be the complete
+body of the entity. Strings, `Buffer`s, and `fs.Stats` are accepted. By
+default, a strong ETag is generated except for `fs.Stats`, which will
+generate a weak ETag (this can be overwritten by `options.weak`).
+
+<!-- eslint-disable no-undef -->
+
+```js
+res.setHeader('ETag', etag(body))
+```
+
+#### Options
+
+`etag` accepts these properties in the options object.
+
+##### weak
+
+Specifies if the generated ETag will include the weak validator mark (that
+is, the leading `W/`). The actual entity tag is the same. The default value
+is `false`, unless the `entity` is `fs.Stats`, in which case it is `true`.
+
+## Testing
+
+```sh
+$ npm test
+```
+
+## Benchmark
+
+```bash
+$ npm run-script bench
+
+> etag@1.8.1 bench nodejs-etag
+> node benchmark/index.js
+
+  http_parser@2.7.0
+  node@6.11.1
+  v8@5.1.281.103
+  uv@1.11.0
+  zlib@1.2.11
+  ares@1.10.1-DEV
+  icu@58.2
+  modules@48
+  openssl@1.0.2k
+
+> node benchmark/body0-100b.js
+
+  100B body
+
+  4 tests completed.
+
+  buffer - strong x 258,647 ops/sec Â±1.07% (180 runs sampled)
+  buffer - weak   x 263,812 ops/sec Â±0.61% (184 runs sampled)
+  string - strong x 259,955 ops/sec Â±1.19% (185 runs sampled)
+  string - weak   x 264,356 ops/sec Â±1.09% (184 runs sampled)
+
+> node benchmark/body1-1kb.js
+
+  1KB body
+
+  4 tests completed.
+
+  buffer - strong x 189,018 ops/sec Â±1.12% (182 runs sampled)
+  buffer - weak   x 190,586 ops/sec Â±0.81% (186 runs sampled)
+  string - strong x 144,272 ops/sec Â±0.96% (188 runs sampled)
+  string - weak   x 145,380 ops/sec Â±1.43% (187 runs sampled)
+
+> node benchmark/body2-5kb.js
+
+  5KB body
+
+  4 tests completed.
+
+  buffer - strong x 92,435 ops/sec Â±0.42% (188 runs sampled)
+  buffer - weak   x 92,373 ops/sec Â±0.58% (189 runs sampled)
+  string - strong x 48,850 ops/sec Â±0.56% (186 runs sampled)
+  string - weak   x 49,380 ops/sec Â±0.56% (190 runs sampled)
+
+> node benchmark/body3-10kb.js
+
+  10KB body
+
+  4 tests completed.
+
+  buffer - strong x 55,989 ops/sec Â±0.93% (188 runs sampled)
+  buffer - weak   x 56,148 ops/sec Â±0.55% (190 runs sampled)
+  string - strong x 27,345 ops/sec Â±0.43% (188 runs sampled)
+  string - weak   x 27,496 ops/sec Â±0.45% (190 runs sampled)
+
+> node benchmark/body4-100kb.js
+
+  100KB body
+
+  4 tests completed.
+
+  buffer - strong x 7,083 ops/sec Â±0.22% (190 runs sampled)
+  buffer - weak   x 7,115 ops/sec Â±0.26% (191 runs sampled)
+  string - strong x 3,068 ops/sec Â±0.34% (190 runs sampled)
+  string - weak   x 3,096 ops/sec Â±0.35% (190 runs sampled)
+
+> node benchmark/stats.js
+
+  stat
+
+  4 tests completed.
+
+  real - strong x 871,642 ops/sec Â±0.34% (189 runs sampled)
+  real - weak   x 867,613 ops/sec Â±0.39% (190 runs sampled)
+  fake - strong x 401,051 ops/sec Â±0.40% (189 runs sampled)
+  fake - weak   x 400,100 ops/sec Â±0.47% (188 runs sampled)
+```
+
+## License
+
+[MIT](LICENSE)
+
+[npm-image]: https://img.shields.io/npm/v/etag.svg
+[npm-url]: https://npmjs.org/package/etag
+[node-version-image]: https://img.shields.io/node/v/etag.svg
+[node-version-url]: https://nodejs.org/en/download/
+[travis-image]: https://img.shields.io/travis/jshttp/etag/master.svg
+[travis-url]: https://travis-ci.org/jshttp/etag
+[coveralls-image]: https://img.shields.io/coveralls/jshttp/etag/master.svg
+[coveralls-url]: https://coveralls.io/r/jshttp/etag?branch=master
+[downloads-image]: https://img.shields.io/npm/dm/etag.svg
+[downloads-url]: https://npmjs.org/package/etag

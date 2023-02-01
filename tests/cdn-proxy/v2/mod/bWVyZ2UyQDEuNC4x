@@ -1,0 +1,352 @@
+„¨/LICENSEÅ:The MIT License (MIT)
+
+Copyright (c) 2014-2020 Teambition
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ª/README.mdÅ # merge2
+
+Merge multiple streams into one stream in sequence or parallel.
+
+[![NPM version][npm-image]][npm-url]
+[![Build Status][travis-image]][travis-url]
+[![Downloads][downloads-image]][downloads-url]
+
+## Install
+
+Install with [npm](https://npmjs.org/package/merge2)
+
+```sh
+npm install merge2
+```
+
+## Usage
+
+```js
+const gulp = require('gulp')
+const merge2 = require('merge2')
+const concat = require('gulp-concat')
+const minifyHtml = require('gulp-minify-html')
+const ngtemplate = require('gulp-ngtemplate')
+
+gulp.task('app-js', function () {
+  return merge2(
+      gulp.src('static/src/tpl/*.html')
+        .pipe(minifyHtml({empty: true}))
+        .pipe(ngtemplate({
+          module: 'genTemplates',
+          standalone: true
+        })
+      ), gulp.src([
+        'static/src/js/app.js',
+        'static/src/js/locale_zh-cn.js',
+        'static/src/js/router.js',
+        'static/src/js/tools.js',
+        'static/src/js/services.js',
+        'static/src/js/filters.js',
+        'static/src/js/directives.js',
+        'static/src/js/controllers.js'
+      ])
+    )
+    .pipe(concat('app.js'))
+    .pipe(gulp.dest('static/dist/js/'))
+})
+```
+
+```js
+const stream = merge2([stream1, stream2], stream3, {end: false})
+//...
+stream.add(stream4, stream5)
+//..
+stream.end()
+```
+
+```js
+// equal to merge2([stream1, stream2], stream3)
+const stream = merge2()
+stream.add([stream1, stream2])
+stream.add(stream3)
+```
+
+```js
+// merge order:
+//   1. merge `stream1`;
+//   2. merge `stream2` and `stream3` in parallel after `stream1` merged;
+//   3. merge 'stream4' after `stream2` and `stream3` merged;
+const stream = merge2(stream1, [stream2, stream3], stream4)
+
+// merge order:
+//   1. merge `stream5` and `stream6` in parallel after `stream4` merged;
+//   2. merge 'stream7' after `stream5` and `stream6` merged;
+stream.add([stream5, stream6], stream7)
+```
+
+```js
+// nest merge
+// equal to merge2(stream1, stream2, stream6, stream3, [stream4, stream5]);
+const streamA = merge2(stream1, stream2)
+const streamB = merge2(stream3, [stream4, stream5])
+const stream = merge2(streamA, streamB)
+streamA.add(stream6)
+```
+
+## API
+
+```js
+const merge2 = require('merge2')
+```
+
+### merge2()
+
+### merge2(options)
+
+### merge2(stream1, stream2, ..., streamN)
+
+### merge2(stream1, stream2, ..., streamN, options)
+
+### merge2(stream1, [stream2, stream3, ...], streamN, options)
+
+return a duplex stream (mergedStream). streams in array will be merged in parallel.
+
+### mergedStream.add(stream)
+
+### mergedStream.add(stream1, [stream2, stream3, ...], ...)
+
+return the mergedStream.
+
+### mergedStream.on('queueDrain', function() {})
+
+It will emit 'queueDrain' when all streams merged. If you set `end === false` in options, this event give you a notice that should add more streams to merge or end the mergedStream.
+
+#### stream
+
+*option*
+Type: `Readable` or `Duplex` or `Transform` stream.
+
+#### options
+
+*option*
+Type: `Object`.
+
+* **end** - `Boolean` - if `end === false` then mergedStream will not be auto ended, you should end by yourself. **Default:** `undefined`
+
+* **pipeError** - `Boolean` - if `pipeError === true` then mergedStream will emit `error` event from source streams. **Default:** `undefined`
+
+* **objectMode** - `Boolean` . **Default:** `true`
+
+`objectMode` and other options(`highWaterMark`, `defaultEncoding` ...) is same as Node.js `Stream`.
+
+## License
+
+MIT Â© [Teambition](https://www.teambition.com)
+
+[npm-url]: https://npmjs.org/package/merge2
+[npm-image]: http://img.shields.io/npm/v/merge2.svg
+
+[travis-url]: https://travis-ci.org/teambition/merge2
+[travis-image]: http://img.shields.io/travis/teambition/merge2.svg
+
+[downloads-url]: https://npmjs.org/package/merge2
+[downloads-image]: http://img.shields.io/npm/dm/merge2.svg?style=flat-square
+©/index.jsÅ©'use strict'
+/*
+ * merge2
+ * https://github.com/teambition/merge2
+ *
+ * Copyright (c) 2014-2020 Teambition
+ * Licensed under the MIT license.
+ */
+const Stream = require('stream')
+const PassThrough = Stream.PassThrough
+const slice = Array.prototype.slice
+
+module.exports = merge2
+
+function merge2 () {
+  const streamsQueue = []
+  const args = slice.call(arguments)
+  let merging = false
+  let options = args[args.length - 1]
+
+  if (options && !Array.isArray(options) && options.pipe == null) {
+    args.pop()
+  } else {
+    options = {}
+  }
+
+  const doEnd = options.end !== false
+  const doPipeError = options.pipeError === true
+  if (options.objectMode == null) {
+    options.objectMode = true
+  }
+  if (options.highWaterMark == null) {
+    options.highWaterMark = 64 * 1024
+  }
+  const mergedStream = PassThrough(options)
+
+  function addStream () {
+    for (let i = 0, len = arguments.length; i < len; i++) {
+      streamsQueue.push(pauseStreams(arguments[i], options))
+    }
+    mergeStream()
+    return this
+  }
+
+  function mergeStream () {
+    if (merging) {
+      return
+    }
+    merging = true
+
+    let streams = streamsQueue.shift()
+    if (!streams) {
+      process.nextTick(endStream)
+      return
+    }
+    if (!Array.isArray(streams)) {
+      streams = [streams]
+    }
+
+    let pipesCount = streams.length + 1
+
+    function next () {
+      if (--pipesCount > 0) {
+        return
+      }
+      merging = false
+      mergeStream()
+    }
+
+    function pipe (stream) {
+      function onend () {
+        stream.removeListener('merge2UnpipeEnd', onend)
+        stream.removeListener('end', onend)
+        if (doPipeError) {
+          stream.removeListener('error', onerror)
+        }
+        next()
+      }
+      function onerror (err) {
+        mergedStream.emit('error', err)
+      }
+      // skip ended stream
+      if (stream._readableState.endEmitted) {
+        return next()
+      }
+
+      stream.on('merge2UnpipeEnd', onend)
+      stream.on('end', onend)
+
+      if (doPipeError) {
+        stream.on('error', onerror)
+      }
+
+      stream.pipe(mergedStream, { end: false })
+      // compatible for old stream
+      stream.resume()
+    }
+
+    for (let i = 0; i < streams.length; i++) {
+      pipe(streams[i])
+    }
+
+    next()
+  }
+
+  function endStream () {
+    merging = false
+    // emit 'queueDrain' when all streams merged.
+    mergedStream.emit('queueDrain')
+    if (doEnd) {
+      mergedStream.end()
+    }
+  }
+
+  mergedStream.setMaxListeners(0)
+  mergedStream.add = addStream
+  mergedStream.on('unpipe', function (stream) {
+    stream.emit('merge2UnpipeEnd')
+  })
+
+  if (args.length) {
+    addStream.apply(null, args)
+  }
+  return mergedStream
+}
+
+// check and pause streams for pipe.
+function pauseStreams (streams, options) {
+  if (!Array.isArray(streams)) {
+    // Backwards-compat with old-style streams
+    if (!streams._readableState && streams.pipe) {
+      streams = streams.pipe(PassThrough(options))
+    }
+    if (!streams._readableState || !streams.pause || !streams.pipe) {
+      throw new Error('Only readable stream can be merged.')
+    }
+    streams.pause()
+  } else {
+    for (let i = 0, len = streams.length; i < len; i++) {
+      streams[i] = pauseStreams(streams[i], options)
+    }
+  }
+  return streams
+}
+­/package.jsonÅ>{
+  "name": "merge2",
+  "description": "Merge multiple streams into one stream in sequence or parallel.",
+  "authors": [
+    "Yan Qing <admin@zensh.com>"
+  ],
+  "license": "MIT",
+  "version": "1.4.1",
+  "main": "./index.js",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:teambition/merge2.git"
+  },
+  "homepage": "https://github.com/teambition/merge2",
+  "keywords": [
+    "merge2",
+    "multiple",
+    "sequence",
+    "parallel",
+    "merge",
+    "stream",
+    "merge stream",
+    "sync"
+  ],
+  "engines": {
+    "node": ">= 8"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "standard": "^14.3.4",
+    "through2": "^3.0.1",
+    "thunks": "^4.9.6",
+    "tman": "^1.10.0",
+    "to-through": "^2.0.0"
+  },
+  "scripts": {
+    "test": "standard && tman"
+  },
+  "files": [
+    "README.md",
+    "index.js"
+  ]
+}

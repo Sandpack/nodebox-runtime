@@ -1,0 +1,2100 @@
+啱/HISTORY.md򴏤.18.0 / 2022-03-23
+===================
+
+  * Fix emitted 416 error missing headers property
+  * Limit the headers removed for 304 response
+  * deps: depd@2.0.0
+    - Replace internal `eval` usage with `Function` constructor
+    - Use instance methods on `process` to check for listeners
+  * deps: destroy@1.2.0
+  * deps: http-errors@2.0.0
+    - deps: depd@2.0.0
+    - deps: statuses@2.0.1
+  * deps: on-finished@2.4.1
+  * deps: statuses@2.0.1
+
+0.17.2 / 2021-12-11
+===================
+
+  * pref: ignore empty http tokens
+  * deps: http-errors@1.8.1
+    - deps: inherits@2.0.4
+    - deps: toidentifier@1.0.1
+    - deps: setprototypeof@1.2.0
+  * deps: ms@2.1.3
+
+0.17.1 / 2019-05-10
+===================
+
+  * Set stricter CSP header in redirect & error responses
+  * deps: range-parser@~1.2.1
+
+0.17.0 / 2019-05-03
+===================
+
+  * deps: http-errors@~1.7.2
+    - Set constructor name when possible
+    - Use `toidentifier` module to make class names
+    - deps: depd@~1.1.2
+    - deps: setprototypeof@1.1.1
+    - deps: statuses@'>= 1.5.0 < 2'
+  * deps: mime@1.6.0
+    - Add extensions for JPEG-2000 images
+    - Add new `font/*` types from IANA
+    - Add WASM mapping
+    - Update `.bdoc` to `application/bdoc`
+    - Update `.bmp` to `image/bmp`
+    - Update `.m4a` to `audio/mp4`
+    - Update `.rtf` to `application/rtf`
+    - Update `.wav` to `audio/wav`
+    - Update `.xml` to `application/xml`
+    - Update generic extensions to `application/octet-stream`:
+      `.deb`, `.dll`, `.dmg`, `.exe`, `.iso`, `.msi`
+    - Use mime-score module to resolve extension conflicts
+  * deps: ms@2.1.1
+    - Add `week`/`w` support
+    - Fix negative number handling
+  * deps: statuses@~1.5.0
+  * perf: remove redundant `path.normalize` call
+
+0.16.2 / 2018-02-07
+===================
+
+  * Fix incorrect end tag in default error & redirects
+  * deps: depd@~1.1.2
+    - perf: remove argument reassignment
+  * deps: encodeurl@~1.0.2
+    - Fix encoding `%` as last character
+  * deps: statuses@~1.4.0
+
+0.16.1 / 2017-09-29
+===================
+
+  * Fix regression in edge-case behavior for empty `path`
+
+0.16.0 / 2017-09-27
+===================
+
+  * Add `immutable` option
+  * Fix missing `</html>` in default error & redirects
+  * Use instance methods on steam to check for listeners
+  * deps: mime@1.4.1
+    - Add 70 new types for file extensions
+    - Set charset as "UTF-8" for .js and .json
+  * perf: improve path validation speed
+
+0.15.6 / 2017-09-22
+===================
+
+  * deps: debug@2.6.9
+  * perf: improve `If-Match` token parsing
+
+0.15.5 / 2017-09-20
+===================
+
+  * deps: etag@~1.8.1
+    - perf: replace regular expression with substring
+  * deps: fresh@0.5.2
+    - Fix handling of modified headers with invalid dates
+    - perf: improve ETag match loop
+    - perf: improve `If-None-Match` token parsing
+
+0.15.4 / 2017-08-05
+===================
+
+  * deps: debug@2.6.8
+  * deps: depd@~1.1.1
+    - Remove unnecessary `Buffer` loading
+  * deps: http-errors@~1.6.2
+    - deps: depd@1.1.1
+
+0.15.3 / 2017-05-16
+===================
+
+  * deps: debug@2.6.7
+    - deps: ms@2.0.0
+  * deps: ms@2.0.0
+
+0.15.2 / 2017-04-26
+===================
+
+  * deps: debug@2.6.4
+    - Fix `DEBUG_MAX_ARRAY_LENGTH`
+    - deps: ms@0.7.3
+  * deps: ms@1.0.0
+
+0.15.1 / 2017-03-04
+===================
+
+  * Fix issue when `Date.parse` does not return `NaN` on invalid date
+  * Fix strict violation in broken environments
+
+0.15.0 / 2017-02-25
+===================
+
+  * Support `If-Match` and `If-Unmodified-Since` headers
+  * Add `res` and `path` arguments to `directory` event
+  * Remove usage of `res._headers` private field
+    - Improves compatibility with Node.js 8 nightly
+  * Send complete HTML document in redirect & error responses
+  * Set default CSP header in redirect & error responses
+  * Use `res.getHeaderNames()` when available
+  * Use `res.headersSent` when available
+  * deps: debug@2.6.1
+    - Allow colors in workers
+    - Deprecated `DEBUG_FD` environment variable set to `3` or higher
+    - Fix error when running under React Native
+    - Use same color for same namespace
+    - deps: ms@0.7.2
+  * deps: etag@~1.8.0
+  * deps: fresh@0.5.0
+    - Fix false detection of `no-cache` request directive
+    - Fix incorrect result when `If-None-Match` has both `*` and ETags
+    - Fix weak `ETag` matching to match spec
+    - perf: delay reading header values until needed
+    - perf: enable strict mode
+    - perf: hoist regular expressions
+    - perf: remove duplicate conditional
+    - perf: remove unnecessary boolean coercions
+    - perf: skip checking modified time if ETag check failed
+    - perf: skip parsing `If-None-Match` when no `ETag` header
+    - perf: use `Date.parse` instead of `new Date`
+  * deps: http-errors@~1.6.1
+    - Make `message` property enumerable for `HttpError`s
+    - deps: setprototypeof@1.0.3
+
+0.14.2 / 2017-01-23
+===================
+
+  * deps: http-errors@~1.5.1
+    - deps: inherits@2.0.3
+    - deps: setprototypeof@1.0.2
+    - deps: statuses@'>= 1.3.1 < 2'
+  * deps: ms@0.7.2
+  * deps: statuses@~1.3.1
+
+0.14.1 / 2016-06-09
+===================
+
+  * Fix redirect error when `path` contains raw non-URL characters
+  * Fix redirect when `path` starts with multiple forward slashes
+
+0.14.0 / 2016-06-06
+===================
+
+  * Add `acceptRanges` option
+  * Add `cacheControl` option
+  * Attempt to combine multiple ranges into single range
+  * Correctly inherit from `Stream` class
+  * Fix `Content-Range` header in 416 responses when using `start`/`end` options
+  * Fix `Content-Range` header missing from default 416 responses
+  * Ignore non-byte `Range` headers
+  * deps: http-errors@~1.5.0
+    - Add `HttpError` export, for `err instanceof createError.HttpError`
+    - Support new code `421 Misdirected Request`
+    - Use `setprototypeof` module to replace `__proto__` setting
+    - deps: inherits@2.0.1
+    - deps: statuses@'>= 1.3.0 < 2'
+    - perf: enable strict mode
+  * deps: range-parser@~1.2.0
+    - Fix incorrectly returning -1 when there is at least one valid range
+    - perf: remove internal function
+  * deps: statuses@~1.3.0
+    - Add `421 Misdirected Request`
+    - perf: enable strict mode
+  * perf: remove argument reassignment
+
+0.13.2 / 2016-03-05
+===================
+
+  * Fix invalid `Content-Type` header when `send.mime.default_type` unset
+
+0.13.1 / 2016-01-16
+===================
+
+  * deps: depd@~1.1.0
+    - Support web browser loading
+    - perf: enable strict mode
+  * deps: destroy@~1.0.4
+    - perf: enable strict mode
+  * deps: escape-html@~1.0.3
+    - perf: enable strict mode
+    - perf: optimize string replacement
+    - perf: use faster string coercion
+  * deps: range-parser@~1.0.3
+    - perf: enable strict mode
+
+0.13.0 / 2015-06-16
+===================
+
+  * Allow Node.js HTTP server to set `Date` response header
+  * Fix incorrectly removing `Content-Location` on 304 response
+  * Improve the default redirect response headers
+  * Send appropriate headers on default error response
+  * Use `http-errors` for standard emitted errors
+  * Use `statuses` instead of `http` module for status messages
+  * deps: escape-html@1.0.2
+  * deps: etag@~1.7.0
+    - Improve stat performance by removing hashing
+  * deps: fresh@0.3.0
+    - Add weak `ETag` matching support
+  * deps: on-finished@~2.3.0
+    - Add defined behavior for HTTP `CONNECT` requests
+    - Add defined behavior for HTTP `Upgrade` requests
+    - deps: ee-first@1.1.1
+  * perf: enable strict mode
+  * perf: remove unnecessary array allocations
+
+0.12.3 / 2015-05-13
+===================
+
+  * deps: debug@~2.2.0
+    - deps: ms@0.7.1
+  * deps: depd@~1.0.1
+  * deps: etag@~1.6.0
+   - Improve support for JXcore
+   - Support "fake" stats objects in environments without `fs`
+  * deps: ms@0.7.1
+    - Prevent extraordinarily long inputs
+  * deps: on-finished@~2.2.1
+
+0.12.2 / 2015-03-13
+===================
+
+  * Throw errors early for invalid `extensions` or `index` options
+  * deps: debug@~2.1.3
+    - Fix high intensity foreground color for bold
+    - deps: ms@0.7.0
+
+0.12.1 / 2015-02-17
+===================
+
+  * Fix regression sending zero-length files
+
+0.12.0 / 2015-02-16
+===================
+
+  * Always read the stat size from the file
+  * Fix mutating passed-in `options`
+  * deps: mime@1.3.4
+
+0.11.1 / 2015-01-20
+===================
+
+  * Fix `root` path disclosure
+
+0.11.0 / 2015-01-05
+===================
+
+  * deps: debug@~2.1.1
+  * deps: etag@~1.5.1
+    - deps: crc@3.2.1
+  * deps: ms@0.7.0
+    - Add `milliseconds`
+    - Add `msecs`
+    - Add `secs`
+    - Add `mins`
+    - Add `hrs`
+    - Add `yrs`
+  * deps: on-finished@~2.2.0
+
+0.10.1 / 2014-10-22
+===================
+
+  * deps: on-finished@~2.1.1
+    - Fix handling of pipelined requests
+
+0.10.0 / 2014-10-15
+===================
+
+  * deps: debug@~2.1.0
+    - Implement `DEBUG_FD` env variable support
+  * deps: depd@~1.0.0
+  * deps: etag@~1.5.0
+    - Improve string performance
+    - Slightly improve speed for weak ETags over 1KB
+
+0.9.3 / 2014-09-24
+==================
+
+  * deps: etag@~1.4.0
+    - Support "fake" stats objects
+
+0.9.2 / 2014-09-15
+==================
+
+  * deps: depd@0.4.5
+  * deps: etag@~1.3.1
+  * deps: range-parser@~1.0.2
+
+0.9.1 / 2014-09-07
+==================
+
+  * deps: fresh@0.2.4
+
+0.9.0 / 2014-09-07
+==================
+
+  * Add `lastModified` option
+  * Use `etag` to generate `ETag` header
+  * deps: debug@~2.0.0
+
+0.8.5 / 2014-09-04
+==================
+
+  * Fix malicious path detection for empty string path
+
+0.8.4 / 2014-09-04
+==================
+
+  * Fix a path traversal issue when using `root`
+
+0.8.3 / 2014-08-16
+==================
+
+  * deps: destroy@1.0.3
+    - renamed from dethroy
+  * deps: on-finished@2.1.0
+
+0.8.2 / 2014-08-14
+==================
+
+  * Work around `fd` leak in Node.js 0.10 for `fs.ReadStream`
+  * deps: dethroy@1.0.2
+
+0.8.1 / 2014-08-05
+==================
+
+  * Fix `extensions` behavior when file already has extension
+
+0.8.0 / 2014-08-05
+==================
+
+  * Add `extensions` option
+
+0.7.4 / 2014-08-04
+==================
+
+  * Fix serving index files without root dir
+
+0.7.3 / 2014-07-29
+==================
+
+  * Fix incorrect 403 on Windows and Node.js 0.11
+
+0.7.2 / 2014-07-27
+==================
+
+  * deps: depd@0.4.4
+    - Work-around v8 generating empty stack traces
+
+0.7.1 / 2014-07-26
+==================
+
+ * deps: depd@0.4.3
+   - Fix exception when global `Error.stackTraceLimit` is too low
+
+0.7.0 / 2014-07-20
+==================
+
+ * Deprecate `hidden` option; use `dotfiles` option
+ * Add `dotfiles` option
+ * deps: debug@1.0.4
+ * deps: depd@0.4.2
+   - Add `TRACE_DEPRECATION` environment variable
+   - Remove non-standard grey color from color output
+   - Support `--no-deprecation` argument
+   - Support `--trace-deprecation` argument
+
+0.6.0 / 2014-07-11
+==================
+
+ * Deprecate `from` option; use `root` option
+ * Deprecate `send.etag()` -- use `etag` in `options`
+ * Deprecate `send.hidden()` -- use `hidden` in `options`
+ * Deprecate `send.index()` -- use `index` in `options`
+ * Deprecate `send.maxage()` -- use `maxAge` in `options`
+ * Deprecate `send.root()` -- use `root` in `options`
+ * Cap `maxAge` value to 1 year
+ * deps: debug@1.0.3
+   - Add support for multiple wildcards in namespaces
+
+0.5.0 / 2014-06-28
+==================
+
+ * Accept string for `maxAge` (converted by `ms`)
+ * Add `headers` event
+ * Include link in default redirect response
+ * Use `EventEmitter.listenerCount` to count listeners
+
+0.4.3 / 2014-06-11
+==================
+
+ * Do not throw un-catchable error on file open race condition
+ * Use `escape-html` for HTML escaping
+ * deps: debug@1.0.2
+   - fix some debugging output colors on node.js 0.8
+ * deps: finished@1.2.2
+ * deps: fresh@0.2.2
+
+0.4.2 / 2014-06-09
+==================
+
+ * fix "event emitter leak" warnings
+ * deps: debug@1.0.1
+ * deps: finished@1.2.1
+
+0.4.1 / 2014-06-02
+==================
+
+ * Send `max-age` in `Cache-Control` in correct format
+
+0.4.0 / 2014-05-27
+==================
+
+ * Calculate ETag with md5 for reduced collisions
+ * Fix wrong behavior when index file matches directory
+ * Ignore stream errors after request ends
+   - Goodbye `EBADF, read`
+ * Skip directories in index file search
+ * deps: debug@0.8.1
+
+0.3.0 / 2014-04-24
+==================
+
+ * Fix sending files with dots without root set
+ * Coerce option types
+ * Accept API options in options object
+ * Set etags to "weak"
+ * Include file path in etag
+ * Make "Can't set headers after they are sent." catchable
+ * Send full entity-body for multi range requests
+ * Default directory access to 403 when index disabled
+ * Support multiple index paths
+ * Support "If-Range" header
+ * Control whether to generate etags
+ * deps: mime@1.2.11
+
+0.2.0 / 2014-01-29
+==================
+
+ * update range-parser and fresh
+
+0.1.4 / 2013-08-11 
+==================
+
+ * update fresh
+
+0.1.3 / 2013-07-08 
+==================
+
+ * Revert "Fix fd leak"
+
+0.1.2 / 2013-07-03 
+==================
+
+ * Fix fd leak
+
+0.1.0 / 2012-08-25 
+==================
+
+  * add options parameter to send() that is passed to fs.createReadStream() [kanongil]
+
+0.0.4 / 2012-08-16 
+==================
+
+  * allow custom "Accept-Ranges" definition
+
+0.0.3 / 2012-07-16 
+==================
+
+  * fix normalization of the root directory. Closes #3
+
+0.0.2 / 2012-07-09 
+==================
+
+  * add passing of req explicitly for now (YUCK)
+
+0.0.1 / 2010-01-03
+==================
+
+  * Initial release
+�/package.json�#{
+  "name": "send",
+  "description": "Better streaming static file server with Range and conditional-GET support",
+  "version": "0.18.0",
+  "author": "TJ Holowaychuk <tj@vision-media.ca>",
+  "contributors": [
+    "Douglas Christopher Wilson <doug@somethingdoug.com>",
+    "James Wyatt Cready <jcready@gmail.com>",
+    "Jes煤s Legan茅s Combarro <piranna@gmail.com>"
+  ],
+  "license": "MIT",
+  "repository": "pillarjs/send",
+  "keywords": [
+    "static",
+    "file",
+    "server"
+  ],
+  "dependencies": {
+    "debug": "2.6.9",
+    "depd": "2.0.0",
+    "destroy": "1.2.0",
+    "encodeurl": "~1.0.2",
+    "escape-html": "~1.0.3",
+    "etag": "~1.8.1",
+    "fresh": "0.5.2",
+    "http-errors": "2.0.0",
+    "mime": "1.6.0",
+    "ms": "2.1.3",
+    "on-finished": "2.4.1",
+    "range-parser": "~1.2.1",
+    "statuses": "2.0.1"
+  },
+  "devDependencies": {
+    "after": "0.8.2",
+    "eslint": "7.32.0",
+    "eslint-config-standard": "14.1.1",
+    "eslint-plugin-import": "2.25.4",
+    "eslint-plugin-markdown": "2.2.1",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-promise": "5.2.0",
+    "eslint-plugin-standard": "4.1.0",
+    "mocha": "9.2.2",
+    "nyc": "15.1.0",
+    "supertest": "6.2.2"
+  },
+  "files": [
+    "HISTORY.md",
+    "LICENSE",
+    "README.md",
+    "SECURITY.md",
+    "index.js"
+  ],
+  "engines": {
+    "node": ">= 0.8.0"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "mocha --check-leaks --reporter spec --bail",
+    "test-ci": "nyc --reporter=lcov --reporter=text npm test",
+    "test-cov": "nyc --reporter=html --reporter=text npm test"
+  }
+}
+�/LICENSE�h(The MIT License)
+
+Copyright (c) 2012 TJ Holowaychuk
+Copyright (c) 2014-2022 Douglas Christopher Wilson
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+�/index.js臶�/*!
+ * send
+ * Copyright(c) 2012 TJ Holowaychuk
+ * Copyright(c) 2014-2022 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+'use strict'
+
+/**
+ * Module dependencies.
+ * @private
+ */
+
+var createError = require('http-errors')
+var debug = require('debug')('send')
+var deprecate = require('depd')('send')
+var destroy = require('destroy')
+var encodeUrl = require('encodeurl')
+var escapeHtml = require('escape-html')
+var etag = require('etag')
+var fresh = require('fresh')
+var fs = require('fs')
+var mime = require('mime')
+var ms = require('ms')
+var onFinished = require('on-finished')
+var parseRange = require('range-parser')
+var path = require('path')
+var statuses = require('statuses')
+var Stream = require('stream')
+var util = require('util')
+
+/**
+ * Path function references.
+ * @private
+ */
+
+var extname = path.extname
+var join = path.join
+var normalize = path.normalize
+var resolve = path.resolve
+var sep = path.sep
+
+/**
+ * Regular expression for identifying a bytes Range header.
+ * @private
+ */
+
+var BYTES_RANGE_REGEXP = /^ *bytes=/
+
+/**
+ * Maximum value allowed for the max age.
+ * @private
+ */
+
+var MAX_MAXAGE = 60 * 60 * 24 * 365 * 1000 // 1 year
+
+/**
+ * Regular expression to match a path with a directory up component.
+ * @private
+ */
+
+var UP_PATH_REGEXP = /(?:^|[\\/])\.\.(?:[\\/]|$)/
+
+/**
+ * Module exports.
+ * @public
+ */
+
+module.exports = send
+module.exports.mime = mime
+
+/**
+ * Return a `SendStream` for `req` and `path`.
+ *
+ * @param {object} req
+ * @param {string} path
+ * @param {object} [options]
+ * @return {SendStream}
+ * @public
+ */
+
+function send (req, path, options) {
+  return new SendStream(req, path, options)
+}
+
+/**
+ * Initialize a `SendStream` with the given `path`.
+ *
+ * @param {Request} req
+ * @param {String} path
+ * @param {object} [options]
+ * @private
+ */
+
+function SendStream (req, path, options) {
+  Stream.call(this)
+
+  var opts = options || {}
+
+  this.options = opts
+  this.path = path
+  this.req = req
+
+  this._acceptRanges = opts.acceptRanges !== undefined
+    ? Boolean(opts.acceptRanges)
+    : true
+
+  this._cacheControl = opts.cacheControl !== undefined
+    ? Boolean(opts.cacheControl)
+    : true
+
+  this._etag = opts.etag !== undefined
+    ? Boolean(opts.etag)
+    : true
+
+  this._dotfiles = opts.dotfiles !== undefined
+    ? opts.dotfiles
+    : 'ignore'
+
+  if (this._dotfiles !== 'ignore' && this._dotfiles !== 'allow' && this._dotfiles !== 'deny') {
+    throw new TypeError('dotfiles option must be "allow", "deny", or "ignore"')
+  }
+
+  this._hidden = Boolean(opts.hidden)
+
+  if (opts.hidden !== undefined) {
+    deprecate('hidden: use dotfiles: \'' + (this._hidden ? 'allow' : 'ignore') + '\' instead')
+  }
+
+  // legacy support
+  if (opts.dotfiles === undefined) {
+    this._dotfiles = undefined
+  }
+
+  this._extensions = opts.extensions !== undefined
+    ? normalizeList(opts.extensions, 'extensions option')
+    : []
+
+  this._immutable = opts.immutable !== undefined
+    ? Boolean(opts.immutable)
+    : false
+
+  this._index = opts.index !== undefined
+    ? normalizeList(opts.index, 'index option')
+    : ['index.html']
+
+  this._lastModified = opts.lastModified !== undefined
+    ? Boolean(opts.lastModified)
+    : true
+
+  this._maxage = opts.maxAge || opts.maxage
+  this._maxage = typeof this._maxage === 'string'
+    ? ms(this._maxage)
+    : Number(this._maxage)
+  this._maxage = !isNaN(this._maxage)
+    ? Math.min(Math.max(0, this._maxage), MAX_MAXAGE)
+    : 0
+
+  this._root = opts.root
+    ? resolve(opts.root)
+    : null
+
+  if (!this._root && opts.from) {
+    this.from(opts.from)
+  }
+}
+
+/**
+ * Inherits from `Stream`.
+ */
+
+util.inherits(SendStream, Stream)
+
+/**
+ * Enable or disable etag generation.
+ *
+ * @param {Boolean} val
+ * @return {SendStream}
+ * @api public
+ */
+
+SendStream.prototype.etag = deprecate.function(function etag (val) {
+  this._etag = Boolean(val)
+  debug('etag %s', this._etag)
+  return this
+}, 'send.etag: pass etag as option')
+
+/**
+ * Enable or disable "hidden" (dot) files.
+ *
+ * @param {Boolean} path
+ * @return {SendStream}
+ * @api public
+ */
+
+SendStream.prototype.hidden = deprecate.function(function hidden (val) {
+  this._hidden = Boolean(val)
+  this._dotfiles = undefined
+  debug('hidden %s', this._hidden)
+  return this
+}, 'send.hidden: use dotfiles option')
+
+/**
+ * Set index `paths`, set to a falsy
+ * value to disable index support.
+ *
+ * @param {String|Boolean|Array} paths
+ * @return {SendStream}
+ * @api public
+ */
+
+SendStream.prototype.index = deprecate.function(function index (paths) {
+  var index = !paths ? [] : normalizeList(paths, 'paths argument')
+  debug('index %o', paths)
+  this._index = index
+  return this
+}, 'send.index: pass index as option')
+
+/**
+ * Set root `path`.
+ *
+ * @param {String} path
+ * @return {SendStream}
+ * @api public
+ */
+
+SendStream.prototype.root = function root (path) {
+  this._root = resolve(String(path))
+  debug('root %s', this._root)
+  return this
+}
+
+SendStream.prototype.from = deprecate.function(SendStream.prototype.root,
+  'send.from: pass root as option')
+
+SendStream.prototype.root = deprecate.function(SendStream.prototype.root,
+  'send.root: pass root as option')
+
+/**
+ * Set max-age to `maxAge`.
+ *
+ * @param {Number} maxAge
+ * @return {SendStream}
+ * @api public
+ */
+
+SendStream.prototype.maxage = deprecate.function(function maxage (maxAge) {
+  this._maxage = typeof maxAge === 'string'
+    ? ms(maxAge)
+    : Number(maxAge)
+  this._maxage = !isNaN(this._maxage)
+    ? Math.min(Math.max(0, this._maxage), MAX_MAXAGE)
+    : 0
+  debug('max-age %d', this._maxage)
+  return this
+}, 'send.maxage: pass maxAge as option')
+
+/**
+ * Emit error with `status`.
+ *
+ * @param {number} status
+ * @param {Error} [err]
+ * @private
+ */
+
+SendStream.prototype.error = function error (status, err) {
+  // emit if listeners instead of responding
+  if (hasListeners(this, 'error')) {
+    return this.emit('error', createHttpError(status, err))
+  }
+
+  var res = this.res
+  var msg = statuses.message[status] || String(status)
+  var doc = createHtmlDocument('Error', escapeHtml(msg))
+
+  // clear existing headers
+  clearHeaders(res)
+
+  // add error headers
+  if (err && err.headers) {
+    setHeaders(res, err.headers)
+  }
+
+  // send basic response
+  res.statusCode = status
+  res.setHeader('Content-Type', 'text/html; charset=UTF-8')
+  res.setHeader('Content-Length', Buffer.byteLength(doc))
+  res.setHeader('Content-Security-Policy', "default-src 'none'")
+  res.setHeader('X-Content-Type-Options', 'nosniff')
+  res.end(doc)
+}
+
+/**
+ * Check if the pathname ends with "/".
+ *
+ * @return {boolean}
+ * @private
+ */
+
+SendStream.prototype.hasTrailingSlash = function hasTrailingSlash () {
+  return this.path[this.path.length - 1] === '/'
+}
+
+/**
+ * Check if this is a conditional GET request.
+ *
+ * @return {Boolean}
+ * @api private
+ */
+
+SendStream.prototype.isConditionalGET = function isConditionalGET () {
+  return this.req.headers['if-match'] ||
+    this.req.headers['if-unmodified-since'] ||
+    this.req.headers['if-none-match'] ||
+    this.req.headers['if-modified-since']
+}
+
+/**
+ * Check if the request preconditions failed.
+ *
+ * @return {boolean}
+ * @private
+ */
+
+SendStream.prototype.isPreconditionFailure = function isPreconditionFailure () {
+  var req = this.req
+  var res = this.res
+
+  // if-match
+  var match = req.headers['if-match']
+  if (match) {
+    var etag = res.getHeader('ETag')
+    return !etag || (match !== '*' && parseTokenList(match).every(function (match) {
+      return match !== etag && match !== 'W/' + etag && 'W/' + match !== etag
+    }))
+  }
+
+  // if-unmodified-since
+  var unmodifiedSince = parseHttpDate(req.headers['if-unmodified-since'])
+  if (!isNaN(unmodifiedSince)) {
+    var lastModified = parseHttpDate(res.getHeader('Last-Modified'))
+    return isNaN(lastModified) || lastModified > unmodifiedSince
+  }
+
+  return false
+}
+
+/**
+ * Strip various content header fields for a change in entity.
+ *
+ * @private
+ */
+
+SendStream.prototype.removeContentHeaderFields = function removeContentHeaderFields () {
+  var res = this.res
+
+  res.removeHeader('Content-Encoding')
+  res.removeHeader('Content-Language')
+  res.removeHeader('Content-Length')
+  res.removeHeader('Content-Range')
+  res.removeHeader('Content-Type')
+}
+
+/**
+ * Respond with 304 not modified.
+ *
+ * @api private
+ */
+
+SendStream.prototype.notModified = function notModified () {
+  var res = this.res
+  debug('not modified')
+  this.removeContentHeaderFields()
+  res.statusCode = 304
+  res.end()
+}
+
+/**
+ * Raise error that headers already sent.
+ *
+ * @api private
+ */
+
+SendStream.prototype.headersAlreadySent = function headersAlreadySent () {
+  var err = new Error('Can\'t set headers after they are sent.')
+  debug('headers already sent')
+  this.error(500, err)
+}
+
+/**
+ * Check if the request is cacheable, aka
+ * responded with 2xx or 304 (see RFC 2616 section 14.2{5,6}).
+ *
+ * @return {Boolean}
+ * @api private
+ */
+
+SendStream.prototype.isCachable = function isCachable () {
+  var statusCode = this.res.statusCode
+  return (statusCode >= 200 && statusCode < 300) ||
+    statusCode === 304
+}
+
+/**
+ * Handle stat() error.
+ *
+ * @param {Error} error
+ * @private
+ */
+
+SendStream.prototype.onStatError = function onStatError (error) {
+  switch (error.code) {
+    case 'ENAMETOOLONG':
+    case 'ENOENT':
+    case 'ENOTDIR':
+      this.error(404, error)
+      break
+    default:
+      this.error(500, error)
+      break
+  }
+}
+
+/**
+ * Check if the cache is fresh.
+ *
+ * @return {Boolean}
+ * @api private
+ */
+
+SendStream.prototype.isFresh = function isFresh () {
+  return fresh(this.req.headers, {
+    etag: this.res.getHeader('ETag'),
+    'last-modified': this.res.getHeader('Last-Modified')
+  })
+}
+
+/**
+ * Check if the range is fresh.
+ *
+ * @return {Boolean}
+ * @api private
+ */
+
+SendStream.prototype.isRangeFresh = function isRangeFresh () {
+  var ifRange = this.req.headers['if-range']
+
+  if (!ifRange) {
+    return true
+  }
+
+  // if-range as etag
+  if (ifRange.indexOf('"') !== -1) {
+    var etag = this.res.getHeader('ETag')
+    return Boolean(etag && ifRange.indexOf(etag) !== -1)
+  }
+
+  // if-range as modified date
+  var lastModified = this.res.getHeader('Last-Modified')
+  return parseHttpDate(lastModified) <= parseHttpDate(ifRange)
+}
+
+/**
+ * Redirect to path.
+ *
+ * @param {string} path
+ * @private
+ */
+
+SendStream.prototype.redirect = function redirect (path) {
+  var res = this.res
+
+  if (hasListeners(this, 'directory')) {
+    this.emit('directory', res, path)
+    return
+  }
+
+  if (this.hasTrailingSlash()) {
+    this.error(403)
+    return
+  }
+
+  var loc = encodeUrl(collapseLeadingSlashes(this.path + '/'))
+  var doc = createHtmlDocument('Redirecting', 'Redirecting to <a href="' + escapeHtml(loc) + '">' +
+    escapeHtml(loc) + '</a>')
+
+  // redirect
+  res.statusCode = 301
+  res.setHeader('Content-Type', 'text/html; charset=UTF-8')
+  res.setHeader('Content-Length', Buffer.byteLength(doc))
+  res.setHeader('Content-Security-Policy', "default-src 'none'")
+  res.setHeader('X-Content-Type-Options', 'nosniff')
+  res.setHeader('Location', loc)
+  res.end(doc)
+}
+
+/**
+ * Pipe to `res.
+ *
+ * @param {Stream} res
+ * @return {Stream} res
+ * @api public
+ */
+
+SendStream.prototype.pipe = function pipe (res) {
+  // root path
+  var root = this._root
+
+  // references
+  this.res = res
+
+  // decode the path
+  var path = decode(this.path)
+  if (path === -1) {
+    this.error(400)
+    return res
+  }
+
+  // null byte(s)
+  if (~path.indexOf('\0')) {
+    this.error(400)
+    return res
+  }
+
+  var parts
+  if (root !== null) {
+    // normalize
+    if (path) {
+      path = normalize('.' + sep + path)
+    }
+
+    // malicious path
+    if (UP_PATH_REGEXP.test(path)) {
+      debug('malicious path "%s"', path)
+      this.error(403)
+      return res
+    }
+
+    // explode path parts
+    parts = path.split(sep)
+
+    // join / normalize from optional root dir
+    path = normalize(join(root, path))
+  } else {
+    // ".." is malicious without "root"
+    if (UP_PATH_REGEXP.test(path)) {
+      debug('malicious path "%s"', path)
+      this.error(403)
+      return res
+    }
+
+    // explode path parts
+    parts = normalize(path).split(sep)
+
+    // resolve the path
+    path = resolve(path)
+  }
+
+  // dotfile handling
+  if (containsDotFile(parts)) {
+    var access = this._dotfiles
+
+    // legacy support
+    if (access === undefined) {
+      access = parts[parts.length - 1][0] === '.'
+        ? (this._hidden ? 'allow' : 'ignore')
+        : 'allow'
+    }
+
+    debug('%s dotfile "%s"', access, path)
+    switch (access) {
+      case 'allow':
+        break
+      case 'deny':
+        this.error(403)
+        return res
+      case 'ignore':
+      default:
+        this.error(404)
+        return res
+    }
+  }
+
+  // index file support
+  if (this._index.length && this.hasTrailingSlash()) {
+    this.sendIndex(path)
+    return res
+  }
+
+  this.sendFile(path)
+  return res
+}
+
+/**
+ * Transfer `path`.
+ *
+ * @param {String} path
+ * @api public
+ */
+
+SendStream.prototype.send = function send (path, stat) {
+  var len = stat.size
+  var options = this.options
+  var opts = {}
+  var res = this.res
+  var req = this.req
+  var ranges = req.headers.range
+  var offset = options.start || 0
+
+  if (headersSent(res)) {
+    // impossible to send now
+    this.headersAlreadySent()
+    return
+  }
+
+  debug('pipe "%s"', path)
+
+  // set header fields
+  this.setHeader(path, stat)
+
+  // set content-type
+  this.type(path)
+
+  // conditional GET support
+  if (this.isConditionalGET()) {
+    if (this.isPreconditionFailure()) {
+      this.error(412)
+      return
+    }
+
+    if (this.isCachable() && this.isFresh()) {
+      this.notModified()
+      return
+    }
+  }
+
+  // adjust len to start/end options
+  len = Math.max(0, len - offset)
+  if (options.end !== undefined) {
+    var bytes = options.end - offset + 1
+    if (len > bytes) len = bytes
+  }
+
+  // Range support
+  if (this._acceptRanges && BYTES_RANGE_REGEXP.test(ranges)) {
+    // parse
+    ranges = parseRange(len, ranges, {
+      combine: true
+    })
+
+    // If-Range support
+    if (!this.isRangeFresh()) {
+      debug('range stale')
+      ranges = -2
+    }
+
+    // unsatisfiable
+    if (ranges === -1) {
+      debug('range unsatisfiable')
+
+      // Content-Range
+      res.setHeader('Content-Range', contentRange('bytes', len))
+
+      // 416 Requested Range Not Satisfiable
+      return this.error(416, {
+        headers: { 'Content-Range': res.getHeader('Content-Range') }
+      })
+    }
+
+    // valid (syntactically invalid/multiple ranges are treated as a regular response)
+    if (ranges !== -2 && ranges.length === 1) {
+      debug('range %j', ranges)
+
+      // Content-Range
+      res.statusCode = 206
+      res.setHeader('Content-Range', contentRange('bytes', len, ranges[0]))
+
+      // adjust for requested range
+      offset += ranges[0].start
+      len = ranges[0].end - ranges[0].start + 1
+    }
+  }
+
+  // clone options
+  for (var prop in options) {
+    opts[prop] = options[prop]
+  }
+
+  // set read options
+  opts.start = offset
+  opts.end = Math.max(offset, offset + len - 1)
+
+  // content-length
+  res.setHeader('Content-Length', len)
+
+  // HEAD support
+  if (req.method === 'HEAD') {
+    res.end()
+    return
+  }
+
+  this.stream(path, opts)
+}
+
+/**
+ * Transfer file for `path`.
+ *
+ * @param {String} path
+ * @api private
+ */
+SendStream.prototype.sendFile = function sendFile (path) {
+  var i = 0
+  var self = this
+
+  debug('stat "%s"', path)
+  fs.stat(path, function onstat (err, stat) {
+    if (err && err.code === 'ENOENT' && !extname(path) && path[path.length - 1] !== sep) {
+      // not found, check extensions
+      return next(err)
+    }
+    if (err) return self.onStatError(err)
+    if (stat.isDirectory()) return self.redirect(path)
+    self.emit('file', path, stat)
+    self.send(path, stat)
+  })
+
+  function next (err) {
+    if (self._extensions.length <= i) {
+      return err
+        ? self.onStatError(err)
+        : self.error(404)
+    }
+
+    var p = path + '.' + self._extensions[i++]
+
+    debug('stat "%s"', p)
+    fs.stat(p, function (err, stat) {
+      if (err) return next(err)
+      if (stat.isDirectory()) return next()
+      self.emit('file', p, stat)
+      self.send(p, stat)
+    })
+  }
+}
+
+/**
+ * Transfer index for `path`.
+ *
+ * @param {String} path
+ * @api private
+ */
+SendStream.prototype.sendIndex = function sendIndex (path) {
+  var i = -1
+  var self = this
+
+  function next (err) {
+    if (++i >= self._index.length) {
+      if (err) return self.onStatError(err)
+      return self.error(404)
+    }
+
+    var p = join(path, self._index[i])
+
+    debug('stat "%s"', p)
+    fs.stat(p, function (err, stat) {
+      if (err) return next(err)
+      if (stat.isDirectory()) return next()
+      self.emit('file', p, stat)
+      self.send(p, stat)
+    })
+  }
+
+  next()
+}
+
+/**
+ * Stream `path` to the response.
+ *
+ * @param {String} path
+ * @param {Object} options
+ * @api private
+ */
+
+SendStream.prototype.stream = function stream (path, options) {
+  var self = this
+  var res = this.res
+
+  // pipe
+  var stream = fs.createReadStream(path, options)
+  this.emit('stream', stream)
+  stream.pipe(res)
+
+  // cleanup
+  function cleanup () {
+    destroy(stream, true)
+  }
+
+  // response finished, cleanup
+  onFinished(res, cleanup)
+
+  // error handling
+  stream.on('error', function onerror (err) {
+    // clean up stream early
+    cleanup()
+
+    // error
+    self.onStatError(err)
+  })
+
+  // end
+  stream.on('end', function onend () {
+    self.emit('end')
+  })
+}
+
+/**
+ * Set content-type based on `path`
+ * if it hasn't been explicitly set.
+ *
+ * @param {String} path
+ * @api private
+ */
+
+SendStream.prototype.type = function type (path) {
+  var res = this.res
+
+  if (res.getHeader('Content-Type')) return
+
+  var type = mime.lookup(path)
+
+  if (!type) {
+    debug('no content-type')
+    return
+  }
+
+  var charset = mime.charsets.lookup(type)
+
+  debug('content-type %s', type)
+  res.setHeader('Content-Type', type + (charset ? '; charset=' + charset : ''))
+}
+
+/**
+ * Set response header fields, most
+ * fields may be pre-defined.
+ *
+ * @param {String} path
+ * @param {Object} stat
+ * @api private
+ */
+
+SendStream.prototype.setHeader = function setHeader (path, stat) {
+  var res = this.res
+
+  this.emit('headers', res, path, stat)
+
+  if (this._acceptRanges && !res.getHeader('Accept-Ranges')) {
+    debug('accept ranges')
+    res.setHeader('Accept-Ranges', 'bytes')
+  }
+
+  if (this._cacheControl && !res.getHeader('Cache-Control')) {
+    var cacheControl = 'public, max-age=' + Math.floor(this._maxage / 1000)
+
+    if (this._immutable) {
+      cacheControl += ', immutable'
+    }
+
+    debug('cache-control %s', cacheControl)
+    res.setHeader('Cache-Control', cacheControl)
+  }
+
+  if (this._lastModified && !res.getHeader('Last-Modified')) {
+    var modified = stat.mtime.toUTCString()
+    debug('modified %s', modified)
+    res.setHeader('Last-Modified', modified)
+  }
+
+  if (this._etag && !res.getHeader('ETag')) {
+    var val = etag(stat)
+    debug('etag %s', val)
+    res.setHeader('ETag', val)
+  }
+}
+
+/**
+ * Clear all headers from a response.
+ *
+ * @param {object} res
+ * @private
+ */
+
+function clearHeaders (res) {
+  var headers = getHeaderNames(res)
+
+  for (var i = 0; i < headers.length; i++) {
+    res.removeHeader(headers[i])
+  }
+}
+
+/**
+ * Collapse all leading slashes into a single slash
+ *
+ * @param {string} str
+ * @private
+ */
+function collapseLeadingSlashes (str) {
+  for (var i = 0; i < str.length; i++) {
+    if (str[i] !== '/') {
+      break
+    }
+  }
+
+  return i > 1
+    ? '/' + str.substr(i)
+    : str
+}
+
+/**
+ * Determine if path parts contain a dotfile.
+ *
+ * @api private
+ */
+
+function containsDotFile (parts) {
+  for (var i = 0; i < parts.length; i++) {
+    var part = parts[i]
+    if (part.length > 1 && part[0] === '.') {
+      return true
+    }
+  }
+
+  return false
+}
+
+/**
+ * Create a Content-Range header.
+ *
+ * @param {string} type
+ * @param {number} size
+ * @param {array} [range]
+ */
+
+function contentRange (type, size, range) {
+  return type + ' ' + (range ? range.start + '-' + range.end : '*') + '/' + size
+}
+
+/**
+ * Create a minimal HTML document.
+ *
+ * @param {string} title
+ * @param {string} body
+ * @private
+ */
+
+function createHtmlDocument (title, body) {
+  return '<!DOCTYPE html>\n' +
+    '<html lang="en">\n' +
+    '<head>\n' +
+    '<meta charset="utf-8">\n' +
+    '<title>' + title + '</title>\n' +
+    '</head>\n' +
+    '<body>\n' +
+    '<pre>' + body + '</pre>\n' +
+    '</body>\n' +
+    '</html>\n'
+}
+
+/**
+ * Create a HttpError object from simple arguments.
+ *
+ * @param {number} status
+ * @param {Error|object} err
+ * @private
+ */
+
+function createHttpError (status, err) {
+  if (!err) {
+    return createError(status)
+  }
+
+  return err instanceof Error
+    ? createError(status, err, { expose: false })
+    : createError(status, err)
+}
+
+/**
+ * decodeURIComponent.
+ *
+ * Allows V8 to only deoptimize this fn instead of all
+ * of send().
+ *
+ * @param {String} path
+ * @api private
+ */
+
+function decode (path) {
+  try {
+    return decodeURIComponent(path)
+  } catch (err) {
+    return -1
+  }
+}
+
+/**
+ * Get the header names on a respnse.
+ *
+ * @param {object} res
+ * @returns {array[string]}
+ * @private
+ */
+
+function getHeaderNames (res) {
+  return typeof res.getHeaderNames !== 'function'
+    ? Object.keys(res._headers || {})
+    : res.getHeaderNames()
+}
+
+/**
+ * Determine if emitter has listeners of a given type.
+ *
+ * The way to do this check is done three different ways in Node.js >= 0.8
+ * so this consolidates them into a minimal set using instance methods.
+ *
+ * @param {EventEmitter} emitter
+ * @param {string} type
+ * @returns {boolean}
+ * @private
+ */
+
+function hasListeners (emitter, type) {
+  var count = typeof emitter.listenerCount !== 'function'
+    ? emitter.listeners(type).length
+    : emitter.listenerCount(type)
+
+  return count > 0
+}
+
+/**
+ * Determine if the response headers have been sent.
+ *
+ * @param {object} res
+ * @returns {boolean}
+ * @private
+ */
+
+function headersSent (res) {
+  return typeof res.headersSent !== 'boolean'
+    ? Boolean(res._header)
+    : res.headersSent
+}
+
+/**
+ * Normalize the index option into an array.
+ *
+ * @param {boolean|string|array} val
+ * @param {string} name
+ * @private
+ */
+
+function normalizeList (val, name) {
+  var list = [].concat(val || [])
+
+  for (var i = 0; i < list.length; i++) {
+    if (typeof list[i] !== 'string') {
+      throw new TypeError(name + ' must be array of strings or false')
+    }
+  }
+
+  return list
+}
+
+/**
+ * Parse an HTTP Date into a number.
+ *
+ * @param {string} date
+ * @private
+ */
+
+function parseHttpDate (date) {
+  var timestamp = date && Date.parse(date)
+
+  return typeof timestamp === 'number'
+    ? timestamp
+    : NaN
+}
+
+/**
+ * Parse a HTTP token list.
+ *
+ * @param {string} str
+ * @private
+ */
+
+function parseTokenList (str) {
+  var end = 0
+  var list = []
+  var start = 0
+
+  // gather tokens
+  for (var i = 0, len = str.length; i < len; i++) {
+    switch (str.charCodeAt(i)) {
+      case 0x20: /*   */
+        if (start === end) {
+          start = end = i + 1
+        }
+        break
+      case 0x2c: /* , */
+        if (start !== end) {
+          list.push(str.substring(start, end))
+        }
+        start = end = i + 1
+        break
+      default:
+        end = i + 1
+        break
+    }
+  }
+
+  // final token
+  if (start !== end) {
+    list.push(str.substring(start, end))
+  }
+
+  return list
+}
+
+/**
+ * Set an object of headers on a response.
+ *
+ * @param {object} res
+ * @param {object} headers
+ * @private
+ */
+
+function setHeaders (res, headers) {
+  var keys = Object.keys(headers)
+
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i]
+    res.setHeader(key, headers[key])
+  }
+}
+�/README.md�%# send
+
+[![NPM Version][npm-version-image]][npm-url]
+[![NPM Downloads][npm-downloads-image]][npm-url]
+[![Linux Build][github-actions-ci-image]][github-actions-ci-url]
+[![Windows Build][appveyor-image]][appveyor-url]
+[![Test Coverage][coveralls-image]][coveralls-url]
+
+Send is a library for streaming files from the file system as a http response
+supporting partial responses (Ranges), conditional-GET negotiation (If-Match,
+If-Unmodified-Since, If-None-Match, If-Modified-Since), high test coverage,
+and granular events which may be leveraged to take appropriate actions in your
+application or framework.
+
+Looking to serve up entire folders mapped to URLs? Try [serve-static](https://www.npmjs.org/package/serve-static).
+
+## Installation
+
+This is a [Node.js](https://nodejs.org/en/) module available through the
+[npm registry](https://www.npmjs.com/). Installation is done using the
+[`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
+
+```bash
+$ npm install send
+```
+
+## API
+
+```js
+var send = require('send')
+```
+
+### send(req, path, [options])
+
+Create a new `SendStream` for the given path to send to a `res`. The `req` is
+the Node.js HTTP request and the `path` is a urlencoded path to send (urlencoded,
+not the actual file-system path).
+
+#### Options
+
+##### acceptRanges
+
+Enable or disable accepting ranged requests, defaults to true.
+Disabling this will not send `Accept-Ranges` and ignore the contents
+of the `Range` request header.
+
+##### cacheControl
+
+Enable or disable setting `Cache-Control` response header, defaults to
+true. Disabling this will ignore the `immutable` and `maxAge` options.
+
+##### dotfiles
+
+Set how "dotfiles" are treated when encountered. A dotfile is a file
+or directory that begins with a dot ("."). Note this check is done on
+the path itself without checking if the path actually exists on the
+disk. If `root` is specified, only the dotfiles above the root are
+checked (i.e. the root itself can be within a dotfile when when set
+to "deny").
+
+  - `'allow'` No special treatment for dotfiles.
+  - `'deny'` Send a 403 for any request for a dotfile.
+  - `'ignore'` Pretend like the dotfile does not exist and 404.
+
+The default value is _similar_ to `'ignore'`, with the exception that
+this default will not ignore the files within a directory that begins
+with a dot, for backward-compatibility.
+
+##### end
+
+Byte offset at which the stream ends, defaults to the length of the file
+minus 1. The end is inclusive in the stream, meaning `end: 3` will include
+the 4th byte in the stream.
+
+##### etag
+
+Enable or disable etag generation, defaults to true.
+
+##### extensions
+
+If a given file doesn't exist, try appending one of the given extensions,
+in the given order. By default, this is disabled (set to `false`). An
+example value that will serve extension-less HTML files: `['html', 'htm']`.
+This is skipped if the requested file already has an extension.
+
+##### immutable
+
+Enable or disable the `immutable` directive in the `Cache-Control` response
+header, defaults to `false`. If set to `true`, the `maxAge` option should
+also be specified to enable caching. The `immutable` directive will prevent
+supported clients from making conditional requests during the life of the
+`maxAge` option to check if the file has changed.
+
+##### index
+
+By default send supports "index.html" files, to disable this
+set `false` or to supply a new index pass a string or an array
+in preferred order.
+
+##### lastModified
+
+Enable or disable `Last-Modified` header, defaults to true. Uses the file
+system's last modified value.
+
+##### maxAge
+
+Provide a max-age in milliseconds for http caching, defaults to 0.
+This can also be a string accepted by the
+[ms](https://www.npmjs.org/package/ms#readme) module.
+
+##### root
+
+Serve files relative to `path`.
+
+##### start
+
+Byte offset at which the stream starts, defaults to 0. The start is inclusive,
+meaning `start: 2` will include the 3rd byte in the stream.
+
+#### Events
+
+The `SendStream` is an event emitter and will emit the following events:
+
+  - `error` an error occurred `(err)`
+  - `directory` a directory was requested `(res, path)`
+  - `file` a file was requested `(path, stat)`
+  - `headers` the headers are about to be set on a file `(res, path, stat)`
+  - `stream` file streaming has started `(stream)`
+  - `end` streaming has completed
+
+#### .pipe
+
+The `pipe` method is used to pipe the response into the Node.js HTTP response
+object, typically `send(req, path, options).pipe(res)`.
+
+### .mime
+
+The `mime` export is the global instance of of the
+[`mime` npm module](https://www.npmjs.com/package/mime).
+
+This is used to configure the MIME types that are associated with file extensions
+as well as other options for how to resolve the MIME type of a file (like the
+default type to use for an unknown file extension).
+
+## Error-handling
+
+By default when no `error` listeners are present an automatic response will be
+made, otherwise you have full control over the response, aka you may show a 5xx
+page etc.
+
+## Caching
+
+It does _not_ perform internal caching, you should use a reverse proxy cache
+such as Varnish for this, or those fancy things called CDNs. If your
+application is small enough that it would benefit from single-node memory
+caching, it's small enough that it does not need caching at all ;).
+
+## Debugging
+
+To enable `debug()` instrumentation output export __DEBUG__:
+
+```
+$ DEBUG=send node app
+```
+
+## Running tests
+
+```
+$ npm install
+$ npm test
+```
+
+## Examples
+
+### Serve a specific file
+
+This simple example will send a specific file to all requests.
+
+```js
+var http = require('http')
+var send = require('send')
+
+var server = http.createServer(function onRequest (req, res) {
+  send(req, '/path/to/index.html')
+    .pipe(res)
+})
+
+server.listen(3000)
+```
+
+### Serve all files from a directory
+
+This simple example will just serve up all the files in a
+given directory as the top-level. For example, a request
+`GET /foo.txt` will send back `/www/public/foo.txt`.
+
+```js
+var http = require('http')
+var parseUrl = require('parseurl')
+var send = require('send')
+
+var server = http.createServer(function onRequest (req, res) {
+  send(req, parseUrl(req).pathname, { root: '/www/public' })
+    .pipe(res)
+})
+
+server.listen(3000)
+```
+
+### Custom file types
+
+```js
+var http = require('http')
+var parseUrl = require('parseurl')
+var send = require('send')
+
+// Default unknown types to text/plain
+send.mime.default_type = 'text/plain'
+
+// Add a custom type
+send.mime.define({
+  'application/x-my-type': ['x-mt', 'x-mtt']
+})
+
+var server = http.createServer(function onRequest (req, res) {
+  send(req, parseUrl(req).pathname, { root: '/www/public' })
+    .pipe(res)
+})
+
+server.listen(3000)
+```
+
+### Custom directory index view
+
+This is a example of serving up a structure of directories with a
+custom function to render a listing of a directory.
+
+```js
+var http = require('http')
+var fs = require('fs')
+var parseUrl = require('parseurl')
+var send = require('send')
+
+// Transfer arbitrary files from within /www/example.com/public/*
+// with a custom handler for directory listing
+var server = http.createServer(function onRequest (req, res) {
+  send(req, parseUrl(req).pathname, { index: false, root: '/www/public' })
+    .once('directory', directory)
+    .pipe(res)
+})
+
+server.listen(3000)
+
+// Custom directory handler
+function directory (res, path) {
+  var stream = this
+
+  // redirect to trailing slash for consistent url
+  if (!stream.hasTrailingSlash()) {
+    return stream.redirect(path)
+  }
+
+  // get directory list
+  fs.readdir(path, function onReaddir (err, list) {
+    if (err) return stream.error(err)
+
+    // render an index for the directory
+    res.setHeader('Content-Type', 'text/plain; charset=UTF-8')
+    res.end(list.join('\n') + '\n')
+  })
+}
+```
+
+### Serving from a root directory with custom error-handling
+
+```js
+var http = require('http')
+var parseUrl = require('parseurl')
+var send = require('send')
+
+var server = http.createServer(function onRequest (req, res) {
+  // your custom error-handling logic:
+  function error (err) {
+    res.statusCode = err.status || 500
+    res.end(err.message)
+  }
+
+  // your custom headers
+  function headers (res, path, stat) {
+    // serve all files for download
+    res.setHeader('Content-Disposition', 'attachment')
+  }
+
+  // your custom directory handling logic:
+  function redirect () {
+    res.statusCode = 301
+    res.setHeader('Location', req.url + '/')
+    res.end('Redirecting to ' + req.url + '/')
+  }
+
+  // transfer arbitrary files from within
+  // /www/example.com/public/*
+  send(req, parseUrl(req).pathname, { root: '/www/public' })
+    .on('error', error)
+    .on('directory', redirect)
+    .on('headers', headers)
+    .pipe(res)
+})
+
+server.listen(3000)
+```
+
+## License
+
+[MIT](LICENSE)
+
+[appveyor-image]: https://badgen.net/appveyor/ci/dougwilson/send/master?label=windows
+[appveyor-url]: https://ci.appveyor.com/project/dougwilson/send
+[coveralls-image]: https://badgen.net/coveralls/c/github/pillarjs/send/master
+[coveralls-url]: https://coveralls.io/r/pillarjs/send?branch=master
+[github-actions-ci-image]: https://badgen.net/github/checks/pillarjs/send/master?label=linux
+[github-actions-ci-url]: https://github.com/pillarjs/send/actions/workflows/ci.yml
+[node-image]: https://badgen.net/npm/node/send
+[node-url]: https://nodejs.org/en/download/
+[npm-downloads-image]: https://badgen.net/npm/dm/send
+[npm-url]: https://npmjs.org/package/send
+[npm-version-image]: https://badgen.net/npm/v/send
+�/SECURITY.md��# Security Policies and Procedures
+
+## Reporting a Bug
+
+The `send` team and community take all security bugs seriously. Thank you
+for improving the security of Express. We appreciate your efforts and
+responsible disclosure and will make every effort to acknowledge your
+contributions.
+
+Report security bugs by emailing the current owner(s) of `send`. This information
+can be found in the npm registry using the command `npm owner ls send`.
+If unsure or unable to get the information from the above, open an issue
+in the [project issue tracker](https://github.com/pillarjs/send/issues)
+asking for the current contact information.
+
+To ensure the timely response to your report, please ensure that the entirety
+of the report is contained within the email body and not solely behind a web
+link or an attachment.
+
+At least one owner will acknowledge your email within 48 hours, and will send a
+more detailed response within 48 hours indicating the next steps in handling
+your report. After the initial reply to your report, the owners will
+endeavor to keep you informed of the progress towards a fix and full
+announcement, and may ask for additional information or guidance.

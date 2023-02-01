@@ -1,0 +1,648 @@
+Œ­/package.jsonÅ{
+  "name": "value-or-promise",
+  "version": "1.0.11",
+  "description": "A thenable to streamline a possibly sync / possibly async workflow.",
+  "main": "build/main/index.js",
+  "typings": "build/main/index.d.ts",
+  "module": "build/module/index.js",
+  "repository": "https://github.com/yaacovCR/value-or-promise",
+  "license": "MIT",
+  "keywords": [],
+  "scripts": {
+    "build": "run-p build:*",
+    "build:main": "tsc -p tsconfig.json",
+    "build:module": "tsc -p tsconfig.module.json",
+    "fix": "run-s fix:*",
+    "fix:prettier": "prettier \"src/**/*.ts\" --write",
+    "fix:lint": "eslint src --ext .ts --fix",
+    "test": "run-s build test:*",
+    "test:lint": "eslint src --ext .ts",
+    "test:prettier": "prettier \"src/**/*.ts\" --list-different",
+    "test:mocha": "mocha --require ts-node/register \"src/**/*.spec.ts\"",
+    "watch:build": "tsc -p tsconfig.json -w",
+    "watch:test": "mocha --require ts-node/register --watch --watch-extensions ts --watch-files src \"src/**/*.spec.ts\" "
+  },
+  "engines": {
+    "node": ">=12"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.16.0",
+    "@types/mocha": "^8.2.2",
+    "@types/node": "^15.0.1",
+    "@typescript-eslint/eslint-plugin": "^4.22.0",
+    "@typescript-eslint/parser": "^4.22.0",
+    "eslint": "^7.25.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-eslint-comments": "^3.2.0",
+    "eslint-plugin-functional": "^3.2.1",
+    "eslint-plugin-import": "^2.22.1",
+    "expect": "^26.6.2",
+    "mocha": "^8.3.2",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^2.2.1",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.4"
+  },
+  "files": [
+    "build/main/**/*",
+    "build/module/**/*",
+    "!**/*.spec.*",
+    "!**/*.json",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md"
+  ],
+  "prettier": {
+    "singleQuote": true
+  }
+}
+­/CHANGELOG.mdÅ‹# value-or-promise
+
+## 1.0.11
+
+### Patch Changes
+
+- 81274d4: fix(ValueOrPromise.all): sync code should error first
+
+## 1.0.10
+
+### Patch Changes
+
+- 7219d1c: fix(types): implementation signature should also be callable
+
+## 1.0.9
+
+### Patch Changes
+
+- ade3f7d: fix(types): do not make results nullable
+
+## 1.0.8
+
+### Patch Changes
+
+- 1b378e8: chore(docs): correct typo
+
+## 1.0.7
+
+### Patch Changes
+
+- 8366d7e: fix(resolve): always resolve to actual Promise
+
+  Even though ValueOrPromise objects can be initialized with anything PromiseLike, it is helpful to have them always resolve to either values or to actual promises.
+
+## 1.0.6
+
+### Patch Changes
+
+- a246304: fix(dependencies): no dependencies, please
+
+## 1.0.5
+
+### Patch Changes
+
+- 4652893: fix published api
+
+## 1.0.4
+
+### Patch Changes
+
+- a4eff20: add missing catch
+
+## 1.0.3
+
+### Patch Changes
+
+- 817088d: exclude spec files from build
+
+## 1.0.2
+
+### Patch Changes
+
+- e712ab8: add missing function ValueOrPromise.all
+
+## 1.0.1
+
+### Patch Changes
+
+- 4e5e5f8: add resolve method to resolve the ValueOrPromise to either a value or promise
+½/build/main/ValueOrPromise.jsÅÚ"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ValueOrPromise = void 0;
+function isPromiseLike(object) {
+    return (object != null && typeof object.then === 'function');
+}
+const defaultOnRejectedFn = (reason) => {
+    throw reason;
+};
+class ValueOrPromise {
+    constructor(executor) {
+        let value;
+        try {
+            value = executor();
+        }
+        catch (reason) {
+            this.state = { status: 'rejected', value: reason };
+            return;
+        }
+        if (isPromiseLike(value)) {
+            this.state = { status: 'pending', value };
+            return;
+        }
+        this.state = { status: 'fulfilled', value };
+    }
+    then(onFulfilled, onRejected) {
+        const state = this.state;
+        if (state.status === 'pending') {
+            return new ValueOrPromise(() => state.value.then(onFulfilled, onRejected));
+        }
+        const onRejectedFn = typeof onRejected === 'function' ? onRejected : defaultOnRejectedFn;
+        if (state.status === 'rejected') {
+            return new ValueOrPromise(() => onRejectedFn(state.value));
+        }
+        try {
+            const onFulfilledFn = typeof onFulfilled === 'function' ? onFulfilled : undefined;
+            return onFulfilledFn === undefined
+                ? new ValueOrPromise(() => state.value)
+                : new ValueOrPromise(() => onFulfilledFn(state.value));
+        }
+        catch (e) {
+            return new ValueOrPromise(() => onRejectedFn(e));
+        }
+    }
+    catch(onRejected) {
+        return this.then(undefined, onRejected);
+    }
+    resolve() {
+        const state = this.state;
+        if (state.status === 'pending') {
+            return Promise.resolve(state.value);
+        }
+        if (state.status === 'rejected') {
+            throw state.value;
+        }
+        return state.value;
+    }
+    static all(valueOrPromises) {
+        let containsPromise = false;
+        const values = [];
+        for (const valueOrPromise of valueOrPromises) {
+            const state = valueOrPromise.state;
+            if (state.status === 'rejected') {
+                return new ValueOrPromise(() => {
+                    throw state.value;
+                });
+            }
+            if (state.status === 'pending') {
+                containsPromise = true;
+            }
+            values.push(state.value);
+        }
+        if (containsPromise) {
+            return new ValueOrPromise(() => Promise.all(values));
+        }
+        return new ValueOrPromise(() => values);
+    }
+}
+exports.ValueOrPromise = ValueOrPromise;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiVmFsdWVPclByb21pc2UuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi9zcmMvVmFsdWVPclByb21pc2UudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7O0FBQUEsU0FBUyxhQUFhLENBQUksTUFBZTtJQUN2QyxPQUFPLENBQ0wsTUFBTSxJQUFJLElBQUksSUFBSSxPQUFRLE1BQXlCLENBQUMsSUFBSSxLQUFLLFVBQVUsQ0FDeEUsQ0FBQztBQUNKLENBQUM7QUFtQkQsTUFBTSxtQkFBbUIsR0FBRyxDQUFDLE1BQWUsRUFBRSxFQUFFO0lBQzlDLE1BQU0sTUFBTSxDQUFDO0FBQ2YsQ0FBQyxDQUFDO0FBRUYsTUFBYSxjQUFjO0lBR3pCLFlBQVksUUFBa0M7UUFDNUMsSUFBSSxLQUF5QixDQUFDO1FBRTlCLElBQUk7WUFDRixLQUFLLEdBQUcsUUFBUSxFQUFFLENBQUM7U0FDcEI7UUFBQyxPQUFPLE1BQU0sRUFBRTtZQUNmLElBQUksQ0FBQyxLQUFLLEdBQUcsRUFBRSxNQUFNLEVBQUUsVUFBVSxFQUFFLEtBQUssRUFBRSxNQUFNLEVBQUUsQ0FBQztZQUNuRCxPQUFPO1NBQ1I7UUFFRCxJQUFJLGFBQWEsQ0FBQyxLQUFLLENBQUMsRUFBRTtZQUN4QixJQUFJLENBQUMsS0FBSyxHQUFHLEVBQUUsTUFBTSxFQUFFLFNBQVMsRUFBRSxLQUFLLEVBQUUsQ0FBQztZQUMxQyxPQUFPO1NBQ1I7UUFFRCxJQUFJLENBQUMsS0FBSyxHQUFHLEVBQUUsTUFBTSxFQUFFLFdBQVcsRUFBRSxLQUFLLEVBQUUsQ0FBQztJQUM5QyxDQUFDO0lBRU0sSUFBSSxDQUNULFdBR1EsRUFDUixVQUdRO1FBRVIsTUFBTSxLQUFLLEdBQUcsSUFBSSxDQUFDLEtBQUssQ0FBQztRQUV6QixJQUFJLEtBQUssQ0FBQyxNQUFNLEtBQUssU0FBUyxFQUFFO1lBQzlCLE9BQU8sSUFBSSxjQUFjLENBQUMsR0FBRyxFQUFFLENBQzdCLEtBQUssQ0FBQyxLQUFLLENBQUMsSUFBSSxD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¿/build/module/ValueOrPromise.jsÅ6function isPromiseLike(object) {
+    return (object != null && typeof object.then === 'function');
+}
+const defaultOnRejectedFn = (reason) => {
+    throw reason;
+};
+export class ValueOrPromise {
+    constructor(executor) {
+        let value;
+        try {
+            value = executor();
+        }
+        catch (reason) {
+            this.state = { status: 'rejected', value: reason };
+            return;
+        }
+        if (isPromiseLike(value)) {
+            this.state = { status: 'pending', value };
+            return;
+        }
+        this.state = { status: 'fulfilled', value };
+    }
+    then(onFulfilled, onRejected) {
+        const state = this.state;
+        if (state.status === 'pending') {
+            return new ValueOrPromise(() => state.value.then(onFulfilled, onRejected));
+        }
+        const onRejectedFn = typeof onRejected === 'function' ? onRejected : defaultOnRejectedFn;
+        if (state.status === 'rejected') {
+            return new ValueOrPromise(() => onRejectedFn(state.value));
+        }
+        try {
+            const onFulfilledFn = typeof onFulfilled === 'function' ? onFulfilled : undefined;
+            return onFulfilledFn === undefined
+                ? new ValueOrPromise(() => state.value)
+                : new ValueOrPromise(() => onFulfilledFn(state.value));
+        }
+        catch (e) {
+            return new ValueOrPromise(() => onRejectedFn(e));
+        }
+    }
+    catch(onRejected) {
+        return this.then(undefined, onRejected);
+    }
+    resolve() {
+        const state = this.state;
+        if (state.status === 'pending') {
+            return Promise.resolve(state.value);
+        }
+        if (state.status === 'rejected') {
+            throw state.value;
+        }
+        return state.value;
+    }
+    static all(valueOrPromises) {
+        let containsPromise = false;
+        const values = [];
+        for (const valueOrPromise of valueOrPromises) {
+            const state = valueOrPromise.state;
+            if (state.status === 'rejected') {
+                return new ValueOrPromise(() => {
+                    throw state.value;
+                });
+            }
+            if (state.status === 'pending') {
+                containsPromise = true;
+            }
+            values.push(state.value);
+        }
+        if (containsPromise) {
+            return new ValueOrPromise(() => Promise.all(values));
+        }
+        return new ValueOrPromise(() => values);
+    }
+}
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiVmFsdWVPclByb21pc2UuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi9zcmMvVmFsdWVPclByb21pc2UudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUEsU0FBUyxhQUFhLENBQUksTUFBZTtJQUN2QyxPQUFPLENBQ0wsTUFBTSxJQUFJLElBQUksSUFBSSxPQUFRLE1BQXlCLENBQUMsSUFBSSxLQUFLLFVBQVUsQ0FDeEUsQ0FBQztBQUNKLENBQUM7QUFtQkQsTUFBTSxtQkFBbUIsR0FBRyxDQUFDLE1BQWUsRUFBRSxFQUFFO0lBQzlDLE1BQU0sTUFBTSxDQUFDO0FBQ2YsQ0FBQyxDQUFDO0FBRUYsTUFBTSxPQUFPLGNBQWM7SUFHekIsWUFBWSxRQUFrQztRQUM1QyxJQUFJLEtBQXlCLENBQUM7UUFFOUIsSUFBSTtZQUNGLEtBQUssR0FBRyxRQUFRLEVBQUUsQ0FBQztTQUNwQjtRQUFDLE9BQU8sTUFBTSxFQUFFO1lBQ2YsSUFBSSxDQUFDLEtBQUssR0FBRyxFQUFFLE1BQU0sRUFBRSxVQUFVLEVBQUUsS0FBSyxFQUFFLE1BQU0sRUFBRSxDQUFDO1lBQ25ELE9BQU87U0FDUjtRQUVELElBQUksYUFBYSxDQUFDLEtBQUssQ0FBQyxFQUFFO1lBQ3hCLElBQUksQ0FBQyxLQUFLLEdBQUcsRUFBRSxNQUFNLEVBQUUsU0FBUyxFQUFFLEtBQUssRUFBRSxDQUFDO1lBQzFDLE9BQU87U0FDUjtRQUVELElBQUksQ0FBQyxLQUFLLEdBQUcsRUFBRSxNQUFNLEVBQUUsV0FBVyxFQUFFLEtBQUssRUFBRSxDQUFDO0lBQzlDLENBQUM7SUFFTSxJQUFJLENBQ1QsV0FHUSxFQUNSLFVBR1E7UUFFUixNQUFNLEtBQUssR0FBRyxJQUFJLENBQUMsS0FBSyxDQUFDO1FBRXpCLElBQUksS0FBSyxDQUFDLE1BQU0sS0FBSyxTQUFTLEVBQUU7WUFDOUIsT0FBTyxJQUFJLGNBQWMsQ0FBQyxHQUFHLEVBQUUsQ0FDN0IsS0FBSyxDQUFDLEtBQUssQ0FBQyxJQUFJ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¸/build/module/index.d.tsÄ#export * from './ValueOrPromise';
+Ù!/build/module/ValueOrPromise.d.tsÅ·export declare class ValueOrPromise<T> {
+    private readonly state;
+    constructor(executor: () => T | PromiseLike<T>);
+    then<TResult1 = T, TResult2 = never>(onFulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onRejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | undefined | null): ValueOrPromise<TResult1 | TResult2>;
+    catch<TResult = never>(onRejected: ((reason: unknown) => TResult | PromiseLike<TResult>) | undefined | null): ValueOrPromise<TResult>;
+    resolve(): T | Promise<T>;
+    static all<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(valueOrPromises: readonly [
+        ValueOrPromise<T1>,
+        ValueOrPromise<T2>,
+        ValueOrPromise<T3>,
+        ValueOrPromise<T4>,
+        ValueOrPromise<T5>,
+        ValueOrPromise<T6>,
+        ValueOrPromise<T7>,
+        ValueOrPromise<T8>,
+        ValueOrPromise<T9>,
+        ValueOrPromise<T10>
+    ]): ValueOrPromise<[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]>;
+    static all<T1, T2, T3, T4, T5, T6, T7, T8, T9>(valueOrPromises: readonly [
+        ValueOrPromise<T1>,
+        ValueOrPromise<T2>,
+        ValueOrPromise<T3>,
+        ValueOrPromise<T4>,
+        ValueOrPromise<T5>,
+        ValueOrPromise<T6>,
+        ValueOrPromise<T7>,
+        ValueOrPromise<T8>,
+        ValueOrPromise<T9>
+    ]): ValueOrPromise<[T1, T2, T3, T4, T5, T6, T7, T8, T9]>;
+    static all<T1, T2, T3, T4, T5, T6, T7, T8>(valueOrPromises: readonly [
+        ValueOrPromise<T1>,
+        ValueOrPromise<T2>,
+        ValueOrPromise<T3>,
+        ValueOrPromise<T4>,
+        ValueOrPromise<T5>,
+        ValueOrPromise<T6>,
+        ValueOrPromise<T7>,
+        ValueOrPromise<T8>
+    ]): ValueOrPromise<[T1, T2, T3, T4, T5, T6, T7, T8]>;
+    static all<T1, T2, T3, T4, T5, T6, T7>(valueOrPromises: readonly [
+        ValueOrPromise<T1>,
+        ValueOrPromise<T2>,
+        ValueOrPromise<T3>,
+        ValueOrPromise<T4>,
+        ValueOrPromise<T5>,
+        ValueOrPromise<T6>,
+        ValueOrPromise<T7>
+    ]): ValueOrPromise<[T1, T2, T3, T4, T5, T6, T7]>;
+    static all<T1, T2, T3, T4, T5, T6>(valueOrPromises: readonly [
+        ValueOrPromise<T1>,
+        ValueOrPromise<T2>,
+        ValueOrPromise<T3>,
+        ValueOrPromise<T4>,
+        ValueOrPromise<T5>,
+        ValueOrPromise<T6>
+    ]): ValueOrPromise<[T1, T2, T3, T4, T5, T6]>;
+    static all<T1, T2, T3, T4, T5>(valueOrPromises: readonly [
+        ValueOrPromise<T1>,
+        ValueOrPromise<T2>,
+        ValueOrPromise<T3>,
+        ValueOrPromise<T4>,
+        ValueOrPromise<T5>
+    ]): ValueOrPromise<[T1, T2, T3, T4, T5]>;
+    static all<T1, T2, T3, T4>(valueOrPromises: readonly [
+        ValueOrPromise<T1>,
+        ValueOrPromise<T2>,
+        ValueOrPromise<T3>,
+        ValueOrPromise<T4>
+    ]): ValueOrPromise<[T1, T2, T3, T4]>;
+    static all<T1, T2, T3>(valueOrPromises: readonly [
+        ValueOrPromise<T1>,
+        ValueOrPromise<T2>,
+        ValueOrPromise<T3>
+    ]): ValueOrPromise<[T1, T2, T3]>;
+    static all<T1, T2>(valueOrPromises: readonly [ValueOrPromise<T1>, ValueOrPromise<T2>]): ValueOrPromise<[T1, T2]>;
+    static all<T>(valueOrPromises: ReadonlyArray<ValueOrPromise<T>>): ValueOrPromise<Array<T>>;
+}
+¨/LICENSEÅGMIT License
+
+Copyright (c) 2019 Yaacov Rydzinski 
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+´/build/main/index.jsÅl"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+__exportStar(require("./ValueOrPromise"), exports);
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXguanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi9zcmMvaW5kZXgudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7O0FBQUEsbURBQWlDIn0=ª/README.mdÅ# value-or-promise
+
+A thenable to streamline a possibly sync / possibly async workflow.
+
+# Installation
+
+`yarn add value-or-promise` or `npm install value-or-promise`
+
+# Basic Motivation
+
+Instead of writing:
+
+```js
+function myFunction() {
+    const valueOrPromise = getValueOrPromise();
+
+    if (isPromise(valueOrPromise)) {
+        return valueOrPromise.then(v => onValue(v));
+    }
+    
+    return onValue(valueOrPromise);
+}
+```
+
+...write:
+
+```js
+function myFunction() {
+    return new ValueOrPromise(getValueOrPromise)
+        .then(v => onValue(v))
+        .resolve();
+}
+```
+
+When working with functions that may or may not return promises, we usually have to duplicate handlers in both the synchronous and asynchronous code paths. In the most basic scenario included above, using `value-or-promise` already provides some code savings, i.e. we only have to reference `doSomethingWithValue` once.
+
+# More Chaining
+
+Things start to get even more beneficial when we add more sync-or-async functions to the chain.
+
+Instead of writing:
+
+```js
+function myFunction() {
+    const valueOrPromise = getValueOrPromise();
+
+    if (isPromise(valueOrPromise)) {
+        return valueOrPromise
+            .then(v => first(v))
+            .then(v => second(v));
+    }
+
+    const nextValueOrPromise = first(ValueOrPromise)
+
+    if (isPromise(nextValueOrPromise)) {
+        return nextValueOrPromise.then(v => second(v));
+    }
+    
+    return second(nextValueOrPromise);
+}
+```
+
+...write:
+
+```js
+function myFunction() {
+    return new ValueOrPromise(getValueOrPromise)
+        .then(v => first(v))
+        .then(v => second(v))
+        .resolve();
+}
+```
+
+# Error Handling
+
+Even with shorter chains, `value-or-promise` comes in handy when managing errors.
+
+Instead of writing:
+
+```js
+function myFunction() {
+    try {
+        const valueOrPromise = getValueOrPromise();
+
+        if (isPromise(valueOrPromise)) {
+            return valueOrPromise
+                .then(v => onValue(v))
+                .catch(error => console.log(error));
+        }
+    
+        const nextValueOrPromise = onValue(valueOrPromise);
+
+        if (isPromise(nextValueOrPromise)) {
+            return nextValueOrPromise
+                .catch(error => console.log(error));
+        }
+
+        return nextValueOrPromise;
+    } catch (error) {
+        console.log(error);
+    }
+}
+```
+
+...write:
+
+```js
+function myFunction() {
+    return new ValueOrPromise(getValueOrPromise)
+        .then(v => onValue(v))
+        .catch(error => console.log(error))
+        .resolve();
+}
+```
+
+# Alternatives
+
+A simpler way of streamlining the above is to always return a promise.
+
+Instead of writing:
+
+```js
+function myFunction() {
+    const valueOrPromise = getValueOrPromise();
+
+    if (isPromise(valueOrPromise)) {
+        return valueOrPromise.then(v => onValue(v));
+    }
+    
+    return onValue(valueOrPromise);
+}
+```
+
+...or writing:
+
+```js
+function myFunction() {
+    return new ValueOrPromise(getValueOrPromise)
+        .then(v => onValue(v))
+        .resolve();
+}
+```
+
+...we could write:
+
+```js
+function myFunction() {
+    return Promise.resolve(getValueOrPromise)
+        .then(v => onValue(v));
+}
+```
+
+...but then we would always have to return a promise! If we are trying to avoid the event loop when possible, this will not suffice.
+
+# `ValueOrPromise.all(...)?`
+
+We can use `ValueOrPromise.all(...)` analogous to `Promise.all(...)` to create a new `ValueOrPromise` object that will either resolve to an array of values, if none of the passed `ValueOrPromise` objects contain underlying promises, or to a new promise, if one or more of the `ValueOrPromise` objects contain an underlying promise, where the new promise will resolve when all of the potential promises have resolved.
+
+For example:
+
+```js
+function myFunction() {
+    const first = new ValueOrPromise(getFirst);
+    const second = new ValueOrPromise(getSecond);
+    return ValueOrPromise.all([first, second]).then(
+        all => onAll(all)
+    ).resolve();
+}
+```
+
+`myFunction` with return a value if and only if `getFirst` and `getSecond` both return values. If either returns a promise, `myFunction` will return a promise. If both `getFirst` and `getSecond` return promises, the new promise returned by `myFunction` will resolve only after both promises resolve, just like with `Promise.all`. 
+
+# Inspiration
+
+The `value-to-promise` concept is by [Ivan Goncharov](https://github.com/IvanGoncharov).
+
+Implementation errors are my own.¶/build/main/index.d.tsÄ#export * from './ValueOrPromise';
+¶/build/module/index.jsÄýexport * from './ValueOrPromise';
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXguanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi9zcmMvaW5kZXgudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUEsY0FBYyxrQkFBa0IsQ0FBQyJ9¿/build/main/ValueOrPromise.d.tsÅ·export declare class ValueOrPromise<T> {
+    private readonly state;
+    constructor(executor: () => T | PromiseLike<T>);
+    then<TResult1 = T, TResult2 = never>(onFulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onRejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | undefined | null): ValueOrPromise<TResult1 | TResult2>;
+    catch<TResult = never>(onRejected: ((reason: unknown) => TResult | PromiseLike<TResult>) | undefined | null): ValueOrPromise<TResult>;
+    resolve(): T | Promise<T>;
+    static all<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(valueOrPromises: readonly [
+        ValueOrPromise<T1>,
+        ValueOrPromise<T2>,
+        ValueOrPromise<T3>,
+        ValueOrPromise<T4>,
+        ValueOrPromise<T5>,
+        ValueOrPromise<T6>,
+        ValueOrPromise<T7>,
+        ValueOrPromise<T8>,
+        ValueOrPromise<T9>,
+        ValueOrPromise<T10>
+    ]): ValueOrPromise<[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]>;
+    static all<T1, T2, T3, T4, T5, T6, T7, T8, T9>(valueOrPromises: readonly [
+        ValueOrPromise<T1>,
+        ValueOrPromise<T2>,
+        ValueOrPromise<T3>,
+        ValueOrPromise<T4>,
+        ValueOrPromise<T5>,
+        ValueOrPromise<T6>,
+        ValueOrPromise<T7>,
+        ValueOrPromise<T8>,
+        ValueOrPromise<T9>
+    ]): ValueOrPromise<[T1, T2, T3, T4, T5, T6, T7, T8, T9]>;
+    static all<T1, T2, T3, T4, T5, T6, T7, T8>(valueOrPromises: readonly [
+        ValueOrPromise<T1>,
+        ValueOrPromise<T2>,
+        ValueOrPromise<T3>,
+        ValueOrPromise<T4>,
+        ValueOrPromise<T5>,
+        ValueOrPromise<T6>,
+        ValueOrPromise<T7>,
+        ValueOrPromise<T8>
+    ]): ValueOrPromise<[T1, T2, T3, T4, T5, T6, T7, T8]>;
+    static all<T1, T2, T3, T4, T5, T6, T7>(valueOrPromises: readonly [
+        ValueOrPromise<T1>,
+        ValueOrPromise<T2>,
+        ValueOrPromise<T3>,
+        ValueOrPromise<T4>,
+        ValueOrPromise<T5>,
+        ValueOrPromise<T6>,
+        ValueOrPromise<T7>
+    ]): ValueOrPromise<[T1, T2, T3, T4, T5, T6, T7]>;
+    static all<T1, T2, T3, T4, T5, T6>(valueOrPromises: readonly [
+        ValueOrPromise<T1>,
+        ValueOrPromise<T2>,
+        ValueOrPromise<T3>,
+        ValueOrPromise<T4>,
+        ValueOrPromise<T5>,
+        ValueOrPromise<T6>
+    ]): ValueOrPromise<[T1, T2, T3, T4, T5, T6]>;
+    static all<T1, T2, T3, T4, T5>(valueOrPromises: readonly [
+        ValueOrPromise<T1>,
+        ValueOrPromise<T2>,
+        ValueOrPromise<T3>,
+        ValueOrPromise<T4>,
+        ValueOrPromise<T5>
+    ]): ValueOrPromise<[T1, T2, T3, T4, T5]>;
+    static all<T1, T2, T3, T4>(valueOrPromises: readonly [
+        ValueOrPromise<T1>,
+        ValueOrPromise<T2>,
+        ValueOrPromise<T3>,
+        ValueOrPromise<T4>
+    ]): ValueOrPromise<[T1, T2, T3, T4]>;
+    static all<T1, T2, T3>(valueOrPromises: readonly [
+        ValueOrPromise<T1>,
+        ValueOrPromise<T2>,
+        ValueOrPromise<T3>
+    ]): ValueOrPromise<[T1, T2, T3]>;
+    static all<T1, T2>(valueOrPromises: readonly [ValueOrPromise<T1>, ValueOrPromise<T2>]): ValueOrPromise<[T1, T2]>;
+    static all<T>(valueOrPromises: ReadonlyArray<ValueOrPromise<T>>): ValueOrPromise<Array<T>>;
+}

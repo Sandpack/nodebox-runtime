@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Server</title>
+  </head>
+  <body>
+    <!-- Testing setup -->
+    <script type="module">
+      import { decode } from '/deps/msgpack/dist.es5+esm/index.mjs';
+      window.downloadProject = async function (packFilePath) {
+        const buffer = await fetch(packFilePath).then((response) => response.arrayBuffer());
+        return decode(buffer);
+      };
+    </script>
+
+    <!-- Node emulator -->
+    <script type="module">
+      import { Nodebox } from '/deps/nodebox/index.mjs';
+      window.Nodebox = Nodebox;
+    </script>
+
+    <h1>Test server</h1>
+    <iframe id="frame" width="2500" height="2500" sandbox="allow-scripts allow-same-origin"></iframe>
+  </body>
+</html>

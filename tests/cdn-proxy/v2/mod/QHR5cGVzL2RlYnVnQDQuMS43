@@ -1,0 +1,206 @@
+Ñ™/README.md≈
+^# Installation
+> `npm install --save @types/debug`
+
+# Summary
+This package contains type definitions for debug (https://github.com/visionmedia/debug).
+
+# Details
+Files were exported from https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/debug.
+## [index.d.ts](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/debug/index.d.ts)
+````ts
+// Type definitions for debug 4.1
+// Project: https://github.com/visionmedia/debug
+// Definitions by: Seon-Wook Park <https://github.com/swook>
+//                 Gal Talmor <https://github.com/galtalmor>
+//                 John McLaughlin <https://github.com/zamb3zi>
+//                 Brasten Sager <https://github.com/brasten>
+//                 Nicolas Penin <https://github.com/npenin>
+//                 Kristian Br√ºnn <https://github.com/kristianmitk>
+//                 Caleb Gregory <https://github.com/calebgregory>
+// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
+
+declare var debug: debug.Debug & { debug: debug.Debug; default: debug.Debug };
+
+export = debug;
+export as namespace debug;
+
+declare namespace debug {
+    interface Debug {
+        (namespace: string): Debugger;
+        coerce: (val: any) => any;
+        disable: () => string;
+        enable: (namespaces: string) => void;
+        enabled: (namespaces: string) => boolean;
+        formatArgs: (this: Debugger, args: any[]) => void;
+        log: (...args: any[]) => any;
+        selectColor: (namespace: string) => string | number;
+        humanize: typeof import('ms');
+
+        names: RegExp[];
+        skips: RegExp[];
+
+        formatters: Formatters;
+    }
+
+    type IDebug = Debug;
+
+    interface Formatters {
+        [formatter: string]: (v: any) => string;
+    }
+
+    type IDebugger = Debugger;
+
+    interface Debugger {
+        (formatter: any, ...args: any[]): void;
+
+        color: string;
+        diff: number;
+        enabled: boolean;
+        log: (...args: any[]) => any;
+        namespace: string;
+        destroy: () => boolean;
+        extend: (namespace: string, delimiter?: string) => Debugger;
+    }
+}
+
+````
+
+### Additional Details
+ * Last updated: Sat, 24 Jul 2021 08:01:14 GMT
+ * Dependencies: [@types/ms](https://npmjs.com/package/@types/ms)
+ * Global values: `debug`
+
+# Credits
+These definitions were written by [Seon-Wook Park](https://github.com/swook), [Gal Talmor](https://github.com/galtalmor), [John McLaughlin](https://github.com/zamb3zi), [Brasten Sager](https://github.com/brasten), [Nicolas Penin](https://github.com/npenin), [Kristian Br√ºnn](https://github.com/kristianmitk), and [Caleb Gregory](https://github.com/calebgregory).
+®/LICENSE≈u    MIT License
+
+    Copyright (c) Microsoft Corporation.
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE
+≠/package.json≈≠{
+    "name": "@types/debug",
+    "version": "4.1.7",
+    "description": "TypeScript definitions for debug",
+    "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/debug",
+    "license": "MIT",
+    "contributors": [
+        {
+            "name": "Seon-Wook Park",
+            "url": "https://github.com/swook",
+            "githubUsername": "swook"
+        },
+        {
+            "name": "Gal Talmor",
+            "url": "https://github.com/galtalmor",
+            "githubUsername": "galtalmor"
+        },
+        {
+            "name": "John McLaughlin",
+            "url": "https://github.com/zamb3zi",
+            "githubUsername": "zamb3zi"
+        },
+        {
+            "name": "Brasten Sager",
+            "url": "https://github.com/brasten",
+            "githubUsername": "brasten"
+        },
+        {
+            "name": "Nicolas Penin",
+            "url": "https://github.com/npenin",
+            "githubUsername": "npenin"
+        },
+        {
+            "name": "Kristian Br√ºnn",
+            "url": "https://github.com/kristianmitk",
+            "githubUsername": "kristianmitk"
+        },
+        {
+            "name": "Caleb Gregory",
+            "url": "https://github.com/calebgregory",
+            "githubUsername": "calebgregory"
+        }
+    ],
+    "main": "",
+    "types": "index.d.ts",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+        "directory": "types/debug"
+    },
+    "scripts": {},
+    "dependencies": {
+        "@types/ms": "*"
+    },
+    "typesPublisherContentHash": "b83b27a0dee1329b5308b30bc0a4193efda8f025b3f5d9301130acb5be89a5b7",
+    "typeScriptVersion": "3.6"
+}´/index.d.ts≈µ// Type definitions for debug 4.1
+// Project: https://github.com/visionmedia/debug
+// Definitions by: Seon-Wook Park <https://github.com/swook>
+//                 Gal Talmor <https://github.com/galtalmor>
+//                 John McLaughlin <https://github.com/zamb3zi>
+//                 Brasten Sager <https://github.com/brasten>
+//                 Nicolas Penin <https://github.com/npenin>
+//                 Kristian Br√ºnn <https://github.com/kristianmitk>
+//                 Caleb Gregory <https://github.com/calebgregory>
+// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
+
+declare var debug: debug.Debug & { debug: debug.Debug; default: debug.Debug };
+
+export = debug;
+export as namespace debug;
+
+declare namespace debug {
+    interface Debug {
+        (namespace: string): Debugger;
+        coerce: (val: any) => any;
+        disable: () => string;
+        enable: (namespaces: string) => void;
+        enabled: (namespaces: string) => boolean;
+        formatArgs: (this: Debugger, args: any[]) => void;
+        log: (...args: any[]) => any;
+        selectColor: (namespace: string) => string | number;
+        humanize: typeof import('ms');
+
+        names: RegExp[];
+        skips: RegExp[];
+
+        formatters: Formatters;
+    }
+
+    type IDebug = Debug;
+
+    interface Formatters {
+        [formatter: string]: (v: any) => string;
+    }
+
+    type IDebugger = Debugger;
+
+    interface Debugger {
+        (formatter: any, ...args: any[]): void;
+
+        color: string;
+        diff: number;
+        enabled: boolean;
+        log: (...args: any[]) => any;
+        namespace: string;
+        destroy: () => boolean;
+        extend: (namespace: string, delimiter?: string) => Debugger;
+    }
+}

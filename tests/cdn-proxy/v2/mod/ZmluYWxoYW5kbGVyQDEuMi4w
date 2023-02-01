@@ -1,0 +1,771 @@
+†«/HISTORY.mdÅÄ1.2.0 / 2022-03-22
+==================
+
+  * Remove set content headers that break response
+  * deps: on-finished@2.4.1
+  * deps: statuses@2.0.1
+    - Rename `425 Unordered Collection` to standard `425 Too Early`
+
+1.1.2 / 2019-05-09
+==================
+
+  * Set stricter `Content-Security-Policy` header
+  * deps: parseurl@~1.3.3
+  * deps: statuses@~1.5.0
+
+1.1.1 / 2018-03-06
+==================
+
+  * Fix 404 output for bad / missing pathnames
+  * deps: encodeurl@~1.0.2
+    - Fix encoding `%` as last character
+  * deps: statuses@~1.4.0
+
+1.1.0 / 2017-09-24
+==================
+
+  * Use `res.headersSent` when available
+
+1.0.6 / 2017-09-22
+==================
+
+  * deps: debug@2.6.9
+
+1.0.5 / 2017-09-15
+==================
+
+  * deps: parseurl@~1.3.2
+    - perf: reduce overhead for full URLs
+    - perf: unroll the "fast-path" `RegExp`
+
+1.0.4 / 2017-08-03
+==================
+
+  * deps: debug@2.6.8
+
+1.0.3 / 2017-05-16
+==================
+
+  * deps: debug@2.6.7
+    - deps: ms@2.0.0
+
+1.0.2 / 2017-04-22
+==================
+
+  * deps: debug@2.6.4
+    - deps: ms@0.7.3
+
+1.0.1 / 2017-03-21
+==================
+
+  * Fix missing `</html>` in HTML document
+  * deps: debug@2.6.3
+    - Fix: `DEBUG_MAX_ARRAY_LENGTH`
+
+1.0.0 / 2017-02-15
+==================
+
+  * Fix exception when `err` cannot be converted to a string
+  * Fully URL-encode the pathname in the 404 message
+  * Only include the pathname in the 404 message
+  * Send complete HTML document
+  * Set `Content-Security-Policy: default-src 'self'` header
+  * deps: debug@2.6.1
+    - Allow colors in workers
+    - Deprecated `DEBUG_FD` environment variable set to `3` or higher
+    - Fix error when running under React Native
+    - Use same color for same namespace
+    - deps: ms@0.7.2
+
+0.5.1 / 2016-11-12
+==================
+
+  * Fix exception when `err.headers` is not an object
+  * deps: statuses@~1.3.1
+  * perf: hoist regular expressions
+  * perf: remove duplicate validation path
+
+0.5.0 / 2016-06-15
+==================
+
+  * Change invalid or non-numeric status code to 500
+  * Overwrite status message to match set status code
+  * Prefer `err.statusCode` if `err.status` is invalid
+  * Set response headers from `err.headers` object
+  * Use `statuses` instead of `http` module for status messages
+    - Includes all defined status messages
+
+0.4.1 / 2015-12-02
+==================
+
+  * deps: escape-html@~1.0.3
+    - perf: enable strict mode
+    - perf: optimize string replacement
+    - perf: use faster string coercion
+
+0.4.0 / 2015-06-14
+==================
+
+  * Fix a false-positive when unpiping in Node.js 0.8
+  * Support `statusCode` property on `Error` objects
+  * Use `unpipe` module for unpiping requests
+  * deps: escape-html@1.0.2
+  * deps: on-finished@~2.3.0
+    - Add defined behavior for HTTP `CONNECT` requests
+    - Add defined behavior for HTTP `Upgrade` requests
+    - deps: ee-first@1.1.1
+  * perf: enable strict mode
+  * perf: remove argument reassignment
+
+0.3.6 / 2015-05-11
+==================
+
+  * deps: debug@~2.2.0
+    - deps: ms@0.7.1
+
+0.3.5 / 2015-04-22
+==================
+
+  * deps: on-finished@~2.2.1
+    - Fix `isFinished(req)` when data buffered
+
+0.3.4 / 2015-03-15
+==================
+
+  * deps: debug@~2.1.3
+    - Fix high intensity foreground color for bold
+    - deps: ms@0.7.0
+
+0.3.3 / 2015-01-01
+==================
+
+  * deps: debug@~2.1.1
+  * deps: on-finished@~2.2.0
+
+0.3.2 / 2014-10-22
+==================
+
+  * deps: on-finished@~2.1.1
+    - Fix handling of pipelined requests
+
+0.3.1 / 2014-10-16
+==================
+
+  * deps: debug@~2.1.0
+    - Implement `DEBUG_FD` env variable support
+
+0.3.0 / 2014-09-17
+==================
+
+  * Terminate in progress response only on error
+  * Use `on-finished` to determine request status
+
+0.2.0 / 2014-09-03
+==================
+
+  * Set `X-Content-Type-Options: nosniff` header
+  * deps: debug@~2.0.0
+
+0.1.0 / 2014-07-16
+==================
+
+  * Respond after request fully read
+    - prevents hung responses and socket hang ups
+  * deps: debug@1.0.4
+
+0.0.3 / 2014-07-11
+==================
+
+  * deps: debug@1.0.3
+    - Add support for multiple wildcards in namespaces
+
+0.0.2 / 2014-06-19
+==================
+
+  * Handle invalid status codes
+
+0.0.1 / 2014-06-05
+==================
+
+  * deps: debug@1.0.2
+
+0.0.0 / 2014-06-05
+==================
+
+  * Extracted from connect/express
+¨/LICENSEÅ_(The MIT License)
+
+Copyright (c) 2014-2022 Douglas Christopher Wilson <doug@somethingdoug.com>
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+­/package.jsonÅ·{
+  "name": "finalhandler",
+  "description": "Node.js final http responder",
+  "version": "1.2.0",
+  "author": "Douglas Christopher Wilson <doug@somethingdoug.com>",
+  "license": "MIT",
+  "repository": "pillarjs/finalhandler",
+  "dependencies": {
+    "debug": "2.6.9",
+    "encodeurl": "~1.0.2",
+    "escape-html": "~1.0.3",
+    "on-finished": "2.4.1",
+    "parseurl": "~1.3.3",
+    "statuses": "2.0.1",
+    "unpipe": "~1.0.0"
+  },
+  "devDependencies": {
+    "eslint": "7.32.0",
+    "eslint-config-standard": "14.1.1",
+    "eslint-plugin-import": "2.25.4",
+    "eslint-plugin-markdown": "2.2.1",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-promise": "5.2.0",
+    "eslint-plugin-standard": "4.1.0",
+    "mocha": "9.2.2",
+    "nyc": "15.1.0",
+    "readable-stream": "2.3.6",
+    "safe-buffer": "5.2.1",
+    "supertest": "6.2.2"
+  },
+  "files": [
+    "LICENSE",
+    "HISTORY.md",
+    "SECURITY.md",
+    "index.js"
+  ],
+  "engines": {
+    "node": ">= 0.8"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "mocha --reporter spec --bail --check-leaks test/",
+    "test-ci": "nyc --reporter=lcovonly --reporter=text npm test",
+    "test-cov": "nyc --reporter=html --reporter=text npm test"
+  }
+}
+ª/README.mdÅ%# finalhandler
+
+[![NPM Version][npm-image]][npm-url]
+[![NPM Downloads][downloads-image]][downloads-url]
+[![Node.js Version][node-image]][node-url]
+[![Build Status][github-actions-ci-image]][github-actions-ci-url]
+[![Test Coverage][coveralls-image]][coveralls-url]
+
+Node.js function to invoke as the final step to respond to HTTP request.
+
+## Installation
+
+This is a [Node.js](https://nodejs.org/en/) module available through the
+[npm registry](https://www.npmjs.com/). Installation is done using the
+[`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
+
+```sh
+$ npm install finalhandler
+```
+
+## API
+
+```js
+var finalhandler = require('finalhandler')
+```
+
+### finalhandler(req, res, [options])
+
+Returns function to be invoked as the final step for the given `req` and `res`.
+This function is to be invoked as `fn(err)`. If `err` is falsy, the handler will
+write out a 404 response to the `res`. If it is truthy, an error response will
+be written out to the `res` or `res` will be terminated if a response has already
+started.
+
+When an error is written, the following information is added to the response:
+
+  * The `res.statusCode` is set from `err.status` (or `err.statusCode`). If
+    this value is outside the 4xx or 5xx range, it will be set to 500.
+  * The `res.statusMessage` is set according to the status code.
+  * The body will be the HTML of the status code message if `env` is
+    `'production'`, otherwise will be `err.stack`.
+  * Any headers specified in an `err.headers` object.
+
+The final handler will also unpipe anything from `req` when it is invoked.
+
+#### options.env
+
+By default, the environment is determined by `NODE_ENV` variable, but it can be
+overridden by this option.
+
+#### options.onerror
+
+Provide a function to be called with the `err` when it exists. Can be used for
+writing errors to a central location without excessive function generation. Called
+as `onerror(err, req, res)`.
+
+## Examples
+
+### always 404
+
+```js
+var finalhandler = require('finalhandler')
+var http = require('http')
+
+var server = http.createServer(function (req, res) {
+  var done = finalhandler(req, res)
+  done()
+})
+
+server.listen(3000)
+```
+
+### perform simple action
+
+```js
+var finalhandler = require('finalhandler')
+var fs = require('fs')
+var http = require('http')
+
+var server = http.createServer(function (req, res) {
+  var done = finalhandler(req, res)
+
+  fs.readFile('index.html', function (err, buf) {
+    if (err) return done(err)
+    res.setHeader('Content-Type', 'text/html')
+    res.end(buf)
+  })
+})
+
+server.listen(3000)
+```
+
+### use with middleware-style functions
+
+```js
+var finalhandler = require('finalhandler')
+var http = require('http')
+var serveStatic = require('serve-static')
+
+var serve = serveStatic('public')
+
+var server = http.createServer(function (req, res) {
+  var done = finalhandler(req, res)
+  serve(req, res, done)
+})
+
+server.listen(3000)
+```
+
+### keep log of all errors
+
+```js
+var finalhandler = require('finalhandler')
+var fs = require('fs')
+var http = require('http')
+
+var server = http.createServer(function (req, res) {
+  var done = finalhandler(req, res, { onerror: logerror })
+
+  fs.readFile('index.html', function (err, buf) {
+    if (err) return done(err)
+    res.setHeader('Content-Type', 'text/html')
+    res.end(buf)
+  })
+})
+
+server.listen(3000)
+
+function logerror (err) {
+  console.error(err.stack || err.toString())
+}
+```
+
+## License
+
+[MIT](LICENSE)
+
+[npm-image]: https://img.shields.io/npm/v/finalhandler.svg
+[npm-url]: https://npmjs.org/package/finalhandler
+[node-image]: https://img.shields.io/node/v/finalhandler.svg
+[node-url]: https://nodejs.org/en/download
+[coveralls-image]: https://img.shields.io/coveralls/pillarjs/finalhandler.svg
+[coveralls-url]: https://coveralls.io/r/pillarjs/finalhandler?branch=master
+[downloads-image]: https://img.shields.io/npm/dm/finalhandler.svg
+[downloads-url]: https://npmjs.org/package/finalhandler
+[github-actions-ci-image]: https://img.shields.io/github/workflow/status/pillarjs/finalhandler/ci/master?label=ci
+[github-actions-ci-url]: https://github.com/jshttp/pillarjs/finalhandler?query=workflow%3Aci
+¬/SECURITY.mdÅ²# Security Policies and Procedures
+
+## Reporting a Bug
+
+The `finalhandler` team and community take all security bugs seriously. Thank
+you for improving the security of Express. We appreciate your efforts and
+responsible disclosure and will make every effort to acknowledge your
+contributions.
+
+Report security bugs by emailing the current owner(s) of `finalhandler`. This
+information can be found in the npm registry using the command
+`npm owner ls finalhandler`.
+If unsure or unable to get the information from the above, open an issue
+in the [project issue tracker](https://github.com/pillarjs/finalhandler/issues)
+asking for the current contact information.
+
+To ensure the timely response to your report, please ensure that the entirety
+of the report is contained within the email body and not solely behind a web
+link or an attachment.
+
+At least one owner will acknowledge your email within 48 hours, and will send a
+more detailed response within 48 hours indicating the next steps in handling
+your report. After the initial reply to your report, the owners will
+endeavor to keep you informed of the progress towards a fix and full
+announcement, and may ask for additional information or guidance.
+©/index.jsÅ!/*!
+ * finalhandler
+ * Copyright(c) 2014-2022 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+'use strict'
+
+/**
+ * Module dependencies.
+ * @private
+ */
+
+var debug = require('debug')('finalhandler')
+var encodeUrl = require('encodeurl')
+var escapeHtml = require('escape-html')
+var onFinished = require('on-finished')
+var parseUrl = require('parseurl')
+var statuses = require('statuses')
+var unpipe = require('unpipe')
+
+/**
+ * Module variables.
+ * @private
+ */
+
+var DOUBLE_SPACE_REGEXP = /\x20{2}/g
+var NEWLINE_REGEXP = /\n/g
+
+/* istanbul ignore next */
+var defer = typeof setImmediate === 'function'
+  ? setImmediate
+  : function (fn) { process.nextTick(fn.bind.apply(fn, arguments)) }
+var isFinished = onFinished.isFinished
+
+/**
+ * Create a minimal HTML document.
+ *
+ * @param {string} message
+ * @private
+ */
+
+function createHtmlDocument (message) {
+  var body = escapeHtml(message)
+    .replace(NEWLINE_REGEXP, '<br>')
+    .replace(DOUBLE_SPACE_REGEXP, ' &nbsp;')
+
+  return '<!DOCTYPE html>\n' +
+    '<html lang="en">\n' +
+    '<head>\n' +
+    '<meta charset="utf-8">\n' +
+    '<title>Error</title>\n' +
+    '</head>\n' +
+    '<body>\n' +
+    '<pre>' + body + '</pre>\n' +
+    '</body>\n' +
+    '</html>\n'
+}
+
+/**
+ * Module exports.
+ * @public
+ */
+
+module.exports = finalhandler
+
+/**
+ * Create a function to handle the final response.
+ *
+ * @param {Request} req
+ * @param {Response} res
+ * @param {Object} [options]
+ * @return {Function}
+ * @public
+ */
+
+function finalhandler (req, res, options) {
+  var opts = options || {}
+
+  // get environment
+  var env = opts.env || process.env.NODE_ENV || 'development'
+
+  // get error callback
+  var onerror = opts.onerror
+
+  return function (err) {
+    var headers
+    var msg
+    var status
+
+    // ignore 404 on in-flight response
+    if (!err && headersSent(res)) {
+      debug('cannot 404 after headers sent')
+      return
+    }
+
+    // unhandled error
+    if (err) {
+      // respect status code from error
+      status = getErrorStatusCode(err)
+
+      if (status === undefined) {
+        // fallback to status code on response
+        status = getResponseStatusCode(res)
+      } else {
+        // respect headers from error
+        headers = getErrorHeaders(err)
+      }
+
+      // get error message
+      msg = getErrorMessage(err, status, env)
+    } else {
+      // not found
+      status = 404
+      msg = 'Cannot ' + req.method + ' ' + encodeUrl(getResourceName(req))
+    }
+
+    debug('default %s', status)
+
+    // schedule onerror callback
+    if (err && onerror) {
+      defer(onerror, err, req, res)
+    }
+
+    // cannot actually respond
+    if (headersSent(res)) {
+      debug('cannot %d after headers sent', status)
+      req.socket.destroy()
+      return
+    }
+
+    // send response
+    send(req, res, status, headers, msg)
+  }
+}
+
+/**
+ * Get headers from Error object.
+ *
+ * @param {Error} err
+ * @return {object}
+ * @private
+ */
+
+function getErrorHeaders (err) {
+  if (!err.headers || typeof err.headers !== 'object') {
+    return undefined
+  }
+
+  var headers = Object.create(null)
+  var keys = Object.keys(err.headers)
+
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i]
+    headers[key] = err.headers[key]
+  }
+
+  return headers
+}
+
+/**
+ * Get message from Error object, fallback to status message.
+ *
+ * @param {Error} err
+ * @param {number} status
+ * @param {string} env
+ * @return {string}
+ * @private
+ */
+
+function getErrorMessage (err, status, env) {
+  var msg
+
+  if (env !== 'production') {
+    // use err.stack, which typically includes err.message
+    msg = err.stack
+
+    // fallback to err.toString() when possible
+    if (!msg && typeof err.toString === 'function') {
+      msg = err.toString()
+    }
+  }
+
+  return msg || statuses.message[status]
+}
+
+/**
+ * Get status code from Error object.
+ *
+ * @param {Error} err
+ * @return {number}
+ * @private
+ */
+
+function getErrorStatusCode (err) {
+  // check err.status
+  if (typeof err.status === 'number' && err.status >= 400 && err.status < 600) {
+    return err.status
+  }
+
+  // check err.statusCode
+  if (typeof err.statusCode === 'number' && err.statusCode >= 400 && err.statusCode < 600) {
+    return err.statusCode
+  }
+
+  return undefined
+}
+
+/**
+ * Get resource name for the request.
+ *
+ * This is typically just the original pathname of the request
+ * but will fallback to "resource" is that cannot be determined.
+ *
+ * @param {IncomingMessage} req
+ * @return {string}
+ * @private
+ */
+
+function getResourceName (req) {
+  try {
+    return parseUrl.original(req).pathname
+  } catch (e) {
+    return 'resource'
+  }
+}
+
+/**
+ * Get status code from response.
+ *
+ * @param {OutgoingMessage} res
+ * @return {number}
+ * @private
+ */
+
+function getResponseStatusCode (res) {
+  var status = res.statusCode
+
+  // default status code to 500 if outside valid range
+  if (typeof status !== 'number' || status < 400 || status > 599) {
+    status = 500
+  }
+
+  return status
+}
+
+/**
+ * Determine if the response headers have been sent.
+ *
+ * @param {object} res
+ * @returns {boolean}
+ * @private
+ */
+
+function headersSent (res) {
+  return typeof res.headersSent !== 'boolean'
+    ? Boolean(res._header)
+    : res.headersSent
+}
+
+/**
+ * Send response.
+ *
+ * @param {IncomingMessage} req
+ * @param {OutgoingMessage} res
+ * @param {number} status
+ * @param {object} headers
+ * @param {string} message
+ * @private
+ */
+
+function send (req, res, status, headers, message) {
+  function write () {
+    // response body
+    var body = createHtmlDocument(message)
+
+    // response status
+    res.statusCode = status
+    res.statusMessage = statuses.message[status]
+
+    // remove any content headers
+    res.removeHeader('Content-Encoding')
+    res.removeHeader('Content-Language')
+    res.removeHeader('Content-Range')
+
+    // response headers
+    setHeaders(res, headers)
+
+    // security headers
+    res.setHeader('Content-Security-Policy', "default-src 'none'")
+    res.setHeader('X-Content-Type-Options', 'nosniff')
+
+    // standard headers
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.setHeader('Content-Length', Buffer.byteLength(body, 'utf8'))
+
+    if (req.method === 'HEAD') {
+      res.end()
+      return
+    }
+
+    res.end(body, 'utf8')
+  }
+
+  if (isFinished(req)) {
+    write()
+    return
+  }
+
+  // unpipe everything from the request
+  unpipe(req)
+
+  // flush the request
+  onFinished(req, write)
+  req.resume()
+}
+
+/**
+ * Set response headers from an object.
+ *
+ * @param {OutgoingMessage} res
+ * @param {object} headers
+ * @private
+ */
+
+function setHeaders (res, headers) {
+  if (!headers) {
+    return
+  }
+
+  var keys = Object.keys(headers)
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i]
+    res.setHeader(key, headers[key])
+  }
+}

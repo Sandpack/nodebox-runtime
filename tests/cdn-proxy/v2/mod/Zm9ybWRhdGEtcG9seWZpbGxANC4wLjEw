@@ -1,0 +1,762 @@
+à¨/FormData.js≈.b/* formdata-polyfill. MIT License. Jimmy W√§rting <https://jimmy.warting.se/opensource> */
+
+/* global FormData self Blob File */
+/* eslint-disable no-inner-declarations */
+
+if (typeof Blob !== 'undefined' && (typeof FormData === 'undefined' || !FormData.prototype.keys)) {
+  const global = typeof globalThis === 'object'
+    ? globalThis
+    : typeof window === 'object'
+      ? window
+      : typeof self === 'object' ? self : this
+
+  // keep a reference to native implementation
+  const _FormData = global.FormData
+
+  // To be monkey patched
+  const _send = global.XMLHttpRequest && global.XMLHttpRequest.prototype.send
+  const _fetch = global.Request && global.fetch
+  const _sendBeacon = global.navigator && global.navigator.sendBeacon
+  // Might be a worker thread...
+  const _match = global.Element && global.Element.prototype
+
+  // Unable to patch Request/Response constructor correctly #109
+  // only way is to use ES6 class extend
+  // https://github.com/babel/babel/issues/1966
+
+  const stringTag = global.Symbol && Symbol.toStringTag
+
+  // Add missing stringTags to blob and files
+  if (stringTag) {
+    if (!Blob.prototype[stringTag]) {
+      Blob.prototype[stringTag] = 'Blob'
+    }
+
+    if ('File' in global && !File.prototype[stringTag]) {
+      File.prototype[stringTag] = 'File'
+    }
+  }
+
+  // Fix so you can construct your own File
+  try {
+    new File([], '') // eslint-disable-line
+  } catch (a) {
+    global.File = function File (b, d, c) {
+      const blob = new Blob(b, c || {})
+      const t = c && void 0 !== c.lastModified ? new Date(c.lastModified) : new Date()
+
+      Object.defineProperties(blob, {
+        name: {
+          value: d
+        },
+        lastModified: {
+          value: +t
+        },
+        toString: {
+          value () {
+            return '[object File]'
+          }
+        }
+      })
+
+      if (stringTag) {
+        Object.defineProperty(blob, stringTag, {
+          value: 'File'
+        })
+      }
+
+      return blob
+    }
+  }
+
+  function ensureArgs (args, expected) {
+    if (args.length < expected) {
+      throw new TypeError(`${expected} argument required, but only ${args.length} present.`)
+    }
+  }
+
+  /**
+   * @param {string} name
+   * @param {string | undefined} filename
+   * @returns {[string, File|string]}
+   */
+  function normalizeArgs (name, value, filename) {
+    if (value instanceof Blob) {
+      filename = filename !== undefined
+      ? String(filename + '')
+      : typeof value.name === 'string'
+      ? value.name
+      : 'blob'
+
+      if (value.name !== filename || Object.prototype.toString.call(value) === '[object Blob]') {
+        value = new File([value], filename)
+      }
+      return [String(name), value]
+    }
+    return [String(name), String(value)]
+  }
+
+  // normalize line feeds for textarea
+  // https://html.spec.whatwg.org/multipage/form-elements.html#textarea-line-break-normalisation-transformation
+  function normalizeLinefeeds (value) {
+    return value.replace(/\r?\n|\r/g, '\r\n')
+  }
+
+  /**
+   * @template T
+   * @param {ArrayLike<T>} arr
+   * @param {{ (elm: T): void; }} cb
+   */
+  function each (arr, cb) {
+    for (let i = 0; i < arr.length; i++) {
+      cb(arr[i])
+    }
+  }
+
+  const escape = str => str.replace(/\n/g, '%0A').replace(/\r/g, '%0D').replace(/"/g, '%22')
+
+  /**
+   * @implements {Iterable}
+   */
+  class FormDataPolyfill {
+    /**
+     * FormData class
+     *
+     * @param {HTMLFormElement=} form
+     */
+    constructor (form) {
+      /** @type {[string, string|File][]} */
+      this._data = []
+
+      const self = this
+      form && each(form.elements, (/** @type {HTMLInputElement} */ elm) => {
+        if (
+          !elm.name ||
+          elm.disabled ||
+          elm.type === 'submit' ||
+          elm.type === 'button' ||
+          elm.matches('form fieldset[disabled] *')
+        ) return
+
+        if (elm.type === 'file') {
+          const files = elm.files && elm.files.length
+            ? elm.files
+            : [new File([], '', { type: 'application/octet-stream' })] // #78
+
+          each(files, file => {
+            self.append(elm.name, file)
+          })
+        } else if (elm.type === 'select-multiple' || elm.type === 'select-one') {
+          each(elm.options, opt => {
+            !opt.disabled && opt.selected && self.append(elm.name, opt.value)
+          })
+        } else if (elm.type === 'checkbox' || elm.type === 'radio') {
+          if (elm.checked) self.append(elm.name, elm.value)
+        } else {
+          const value = elm.type === 'textarea' ? normalizeLinefeeds(elm.value) : elm.value
+          self.append(elm.name, value)
+        }
+      })
+    }
+
+    /**
+     * Append a field
+     *
+     * @param   {string}           name      field name
+     * @param   {string|Blob|File} value     string / blob / file
+     * @param   {string=}          filename  filename to use with blob
+     * @return  {undefined}
+     */
+    append (name, value, filename) {
+      ensureArgs(arguments, 2)
+      this._data.push(normalizeArgs(name, value, filename))
+    }
+
+    /**
+     * Delete all fields values given name
+     *
+     * @param   {string}  name  Field name
+     * @return  {undefined}
+     */
+    delete (name) {
+      ensureArgs(arguments, 1)
+      const result = []
+      name = String(name)
+
+      each(this._data, entry => {
+        entry[0] !== name && result.push(entry)
+      })
+
+      this._data = result
+    }
+
+    /**
+     * Iterate over all fields as [name, value]
+     *
+     * @return {Iterator}
+     */
+    * entries () {
+      for (var i = 0; i < this._data.length; i++) {
+        yield this._data[i]
+      }
+    }
+
+    /**
+     * Iterate over all fields
+     *
+     * @param   {Function}  callback  Executed for each item with parameters (value, name, thisArg)
+     * @param   {Object=}   thisArg   `this` context for callback function
+     */
+    forEach (callback, thisArg) {
+      ensureArgs(arguments, 1)
+      for (const [name, value] of this) {
+        callback.call(thisArg, value, name, this)
+      }
+    }
+
+    /**
+     * Return first field value given name
+     * or null if non existent
+     *
+     * @param   {string}  name      Field name
+     * @return  {string|File|null}  value Fields value
+     */
+    get (name) {
+      ensureArgs(arguments, 1)
+      const entries = this._data
+      name = String(name)
+      for (let i = 0; i < entries.length; i++) {
+        if (entries[i][0] === name) {
+          return entries[i][1]
+        }
+      }
+      return null
+    }
+
+    /**
+     * Return all fields values given name
+     *
+     * @param   {string}  name  Fields name
+     * @return  {Array}         [{String|File}]
+     */
+    getAll (name) {
+      ensureArgs(arguments, 1)
+      const result = []
+      name = String(name)
+      each(this._data, data => {
+        data[0] === name && result.push(data[1])
+      })
+
+      return result
+    }
+
+    /**
+     * Check for field name existence
+     *
+     * @param   {string}   name  Field name
+     * @return  {boolean}
+     */
+    has (name) {
+      ensureArgs(arguments, 1)
+      name = String(name)
+      for (let i = 0; i < this._data.length; i++) {
+        if (this._data[i][0] === name) {
+          return true
+        }
+      }
+      return false
+    }
+
+    /**
+     * Iterate over all fields name
+     *
+     * @return {Iterator}
+     */
+    * keys () {
+      for (const [name] of this) {
+        yield name
+      }
+    }
+
+    /**
+     * Overwrite all values given name
+     *
+     * @param   {string}    name      Filed name
+     * @param   {string}    value     Field value
+     * @param   {string=}   filename  Filename (optional)
+     */
+    set (name, value, filename) {
+      ensureArgs(arguments, 2)
+      name = String(name)
+      /** @type {[string, string|File][]} */
+      const result = []
+      const args = normalizeArgs(name, value, filename)
+      let replace = true
+
+      // - replace the first occurrence with same name
+      // - discards the remaining with same name
+      // - while keeping the same order items where added
+      each(this._data, data => {
+        data[0] === name
+          ? replace && (replace = !result.push(args))
+          : result.push(data)
+      })
+
+      replace && result.push(args)
+
+      this._data = result
+    }
+
+    /**
+     * Iterate over all fields
+     *
+     * @return {Iterator}
+     */
+    * values () {
+      for (const [, value] of this) {
+        yield value
+      }
+    }
+
+    /**
+     * Return a native (perhaps degraded) FormData with only a `append` method
+     * Can throw if it's not supported
+     *
+     * @return {FormData}
+     */
+    ['_asNative'] () {
+      const fd = new _FormData()
+
+      for (const [name, value] of this) {
+        fd.append(name, value)
+      }
+
+      return fd
+    }
+
+    /**
+     * [_blob description]
+     *
+     * @return {Blob} [description]
+     */
+    ['_blob'] () {
+        const boundary = '----formdata-polyfill-' + Math.random(),
+          chunks = [],
+          p = `--${boundary}\r\nContent-Disposition: form-data; name="`
+        this.forEach((value, name) => typeof value == 'string'
+          ? chunks.push(p + escape(normalizeLinefeeds(name)) + `"\r\n\r\n${normalizeLinefeeds(value)}\r\n`)
+          : chunks.push(p + escape(normalizeLinefeeds(name)) + `"; filename="${escape(value.name)}"\r\nContent-Type: ${value.type||"application/octet-stream"}\r\n\r\n`, value, `\r\n`))
+        chunks.push(`--${boundary}--`)
+        return new Blob(chunks, {
+          type: "multipart/form-data; boundary=" + boundary
+        })
+    }
+
+    /**
+     * The class itself is iterable
+     * alias for formdata.entries()
+     *
+     * @return {Iterator}
+     */
+    [Symbol.iterator] () {
+      return this.entries()
+    }
+
+    /**
+     * Create the default string description.
+     *
+     * @return  {string} [object FormData]
+     */
+    toString () {
+      return '[object FormData]'
+    }
+  }
+
+  if (_match && !_match.matches) {
+    _match.matches =
+      _match.matchesSelector ||
+      _match.mozMatchesSelector ||
+      _match.msMatchesSelector ||
+      _match.oMatchesSelector ||
+      _match.webkitMatchesSelector ||
+      function (s) {
+        var matches = (this.document || this.ownerDocument).querySelectorAll(s)
+        var i = matches.length
+        while (--i >= 0 && matches.item(i) !== this) {}
+        return i > -1
+      }
+  }
+
+  if (stringTag) {
+    /**
+     * Create the default string description.
+     * It is accessed internally by the Object.prototype.toString().
+     */
+    FormDataPolyfill.prototype[stringTag] = 'FormData'
+  }
+
+  // Patch xhr's send method to call _blob transparently
+  if (_send) {
+    const setRequestHeader = global.XMLHttpRequest.prototype.setRequestHeader
+
+    global.XMLHttpRequest.prototype.setRequestHeader = function (name, value) {
+      setRequestHeader.call(this, name, value)
+      if (name.toLowerCase() === 'content-type') this._hasContentType = true
+    }
+
+    global.XMLHttpRequest.prototype.send = function (data) {
+      // need to patch send b/c old IE don't send blob's type (#44)
+      if (data instanceof FormDataPolyfill) {
+        const blob = data['_blob']()
+        if (!this._hasContentType) this.setRequestHeader('Content-Type', blob.type)
+        _send.call(this, blob)
+      } else {
+        _send.call(this, data)
+      }
+    }
+  }
+
+  // Patch fetch's function to call _blob transparently
+  if (_fetch) {
+    global.fetch = function (input, init) {
+      if (init && init.body && init.body instanceof FormDataPolyfill) {
+        init.body = init.body['_blob']()
+      }
+
+      return _fetch.call(this, input, init)
+    }
+  }
+
+  // Patch navigator.sendBeacon to use native FormData
+  if (_sendBeacon) {
+    global.navigator.sendBeacon = function (url, data) {
+      if (data instanceof FormDataPolyfill) {
+        data = data['_asNative']()
+      }
+      return _sendBeacon.call(this, url, data)
+    }
+  }
+
+  global['FormData'] = FormDataPolyfill
+}
+¥/formdata-to-blob.js≈/*! formdata-polyfill. MIT License. Jimmy W√§rting <https://jimmy.warting.se/opensource> */
+
+const escape = (str, filename) =>
+  (filename ? str : str.replace(/\r?\n|\r/g, '\r\n'))
+  .replace(/\n/g, '%0A')
+  .replace(/\r/g, '%0D')
+  .replace(/"/g, '%22')
+
+/**
+ * pure function to convert any formData instance to a Blob
+ * instances synchronous without reading all of the files
+ *
+ * @param {FormData|*} formData an instance of a formData Class
+ * @param {Blob|*} [BlobClass=Blob] the Blob class to use when constructing it
+ */
+export function formDataToBlob (formData, BlobClass = Blob) {
+  const boundary = ('----formdata-polyfill-' + Math.random())
+  const chunks = []
+  const prefix = `--${boundary}\r\nContent-Disposition: form-data; name="`
+
+  for (let [name, value] of formData) {
+    if (typeof value === 'string') {
+      chunks.push(prefix + escape(name) + `"\r\n\r\n${value.replace(/\r(?!\n)|(?<!\r)\n/g, '\r\n')}\r\n`)
+    } else {
+      chunks.push(
+        prefix + escape(name) + `"; filename="${escape(value.name, 1)}"\r\n` +
+        `Content-Type: ${value.type || 'application/octet-stream'}\r\n\r\n`,
+        value,
+        '\r\n'
+      )
+    }
+  }
+
+  chunks.push(`--${boundary}--`)
+
+  return new BlobClass(chunks, {
+    type: 'multipart/form-data; boundary=' + boundary
+  })
+}
+≠/package.json≈Î{
+  "name": "formdata-polyfill",
+  "version": "4.0.10",
+  "description": "HTML5 `FormData` for Browsers and Node.",
+  "type": "module",
+  "main": "formdata.min.js",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node test/test-esm.js",
+    "test-wpt": "node --experimental-loader ./test/http-loader.js ./test/test-wpt-in-node.js",
+    "test-polyfill": "php -S localhost:4445 & open http://localhost:4445/test/test-polyfill.html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://jimmywarting@github.com/jimmywarting/FormData.git"
+  },
+  "files": [
+    "esm.min.js",
+    "esm.min.d.ts",
+    "FormData.js",
+    "formdata-to-blob.js",
+    "formdata.min.js",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=12.20.0"
+  },
+  "keywords": [
+    "formdata",
+    "fetch",
+    "node-fetch",
+    "html5",
+    "browser",
+    "polyfill"
+  ],
+  "author": "Jimmy W√§rting",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jimmywarting/FormData/issues"
+  },
+  "homepage": "https://github.com/jimmywarting/FormData#readme",
+  "dependencies": {
+    "fetch-blob": "^3.1.2"
+  },
+  "devDependencies": {
+    "@types/google-closure-compiler": "^0.0.19",
+    "@types/node": "^16.7.10",
+    "google-closure-compiler": "^20210808.0.0"
+  }
+}
+≠/esm.min.d.tsƒëexport declare const FormData: {
+  new (): FormData;
+  prototype: FormData;
+};
+export declare function formDataToBlob(formData: FormData): Blob;
+®/LICENSE≈;MIT License
+
+Copyright (c) 2016 Jimmy Karl Roland W√§rting
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+∞/formdata.min.js≈"∫/*! formdata-polyfill. MIT License. Jimmy W?rting <https://jimmy.warting.se/opensource> */
+;(function(){var h;function l(a){var b=0;return function(){return b<a.length?{done:!1,value:a[b++]}:{done:!0}}}var m="function"==typeof Object.defineProperties?Object.defineProperty:function(a,b,c){if(a==Array.prototype||a==Object.prototype)return a;a[b]=c.value;return a};
+function n(a){a=["object"==typeof globalThis&&globalThis,a,"object"==typeof window&&window,"object"==typeof self&&self,"object"==typeof global&&global];for(var b=0;b<a.length;++b){var c=a[b];if(c&&c.Math==Math)return c}throw Error("Cannot find global object");}var q=n(this);function r(a,b){if(b)a:{var c=q;a=a.split(".");for(var d=0;d<a.length-1;d++){var e=a[d];if(!(e in c))break a;c=c[e]}a=a[a.length-1];d=c[a];b=b(d);b!=d&&null!=b&&m(c,a,{configurable:!0,writable:!0,value:b})}}
+r("Symbol",function(a){function b(f){if(this instanceof b)throw new TypeError("Symbol is not a constructor");return new c(d+(f||"")+"_"+e++,f)}function c(f,g){this.A=f;m(this,"description",{configurable:!0,writable:!0,value:g})}if(a)return a;c.prototype.toString=function(){return this.A};var d="jscomp_symbol_"+(1E9*Math.random()>>>0)+"_",e=0;return b});
+r("Symbol.iterator",function(a){if(a)return a;a=Symbol("Symbol.iterator");for(var b="Array Int8Array Uint8Array Uint8ClampedArray Int16Array Uint16Array Int32Array Uint32Array Float32Array Float64Array".split(" "),c=0;c<b.length;c++){var d=q[b[c]];"function"===typeof d&&"function"!=typeof d.prototype[a]&&m(d.prototype,a,{configurable:!0,writable:!0,value:function(){return u(l(this))}})}return a});function u(a){a={next:a};a[Symbol.iterator]=function(){return this};return a}
+function v(a){var b="undefined"!=typeof Symbol&&Symbol.iterator&&a[Symbol.iterator];return b?b.call(a):{next:l(a)}}var w;if("function"==typeof Object.setPrototypeOf)w=Object.setPrototypeOf;else{var y;a:{var z={a:!0},A={};try{A.__proto__=z;y=A.a;break a}catch(a){}y=!1}w=y?function(a,b){a.__proto__=b;if(a.__proto__!==b)throw new TypeError(a+" is not extensible");return a}:null}var B=w;function C(){this.m=!1;this.j=null;this.v=void 0;this.h=1;this.u=this.C=0;this.l=null}
+function D(a){if(a.m)throw new TypeError("Generator is already running");a.m=!0}C.prototype.o=function(a){this.v=a};C.prototype.s=function(a){this.l={D:a,F:!0};this.h=this.C||this.u};C.prototype.return=function(a){this.l={return:a};this.h=this.u};function E(a,b){a.h=3;return{value:b}}function F(a){this.g=new C;this.G=a}F.prototype.o=function(a){D(this.g);if(this.g.j)return G(this,this.g.j.next,a,this.g.o);this.g.o(a);return H(this)};
+function I(a,b){D(a.g);var c=a.g.j;if(c)return G(a,"return"in c?c["return"]:function(d){return{value:d,done:!0}},b,a.g.return);a.g.return(b);return H(a)}F.prototype.s=function(a){D(this.g);if(this.g.j)return G(this,this.g.j["throw"],a,this.g.o);this.g.s(a);return H(this)};
+function G(a,b,c,d){try{var e=b.call(a.g.j,c);if(!(e instanceof Object))throw new TypeError("Iterator result "+e+" is not an object");if(!e.done)return a.g.m=!1,e;var f=e.value}catch(g){return a.g.j=null,a.g.s(g),H(a)}a.g.j=null;d.call(a.g,f);return H(a)}function H(a){for(;a.g.h;)try{var b=a.G(a.g);if(b)return a.g.m=!1,{value:b.value,done:!1}}catch(c){a.g.v=void 0,a.g.s(c)}a.g.m=!1;if(a.g.l){b=a.g.l;a.g.l=null;if(b.F)throw b.D;return{value:b.return,done:!0}}return{value:void 0,done:!0}}
+function J(a){this.next=function(b){return a.o(b)};this.throw=function(b){return a.s(b)};this.return=function(b){return I(a,b)};this[Symbol.iterator]=function(){return this}}function K(a,b){b=new J(new F(b));B&&a.prototype&&B(b,a.prototype);return b}function L(a,b){a instanceof String&&(a+="");var c=0,d=!1,e={next:function(){if(!d&&c<a.length){var f=c++;return{value:b(f,a[f]),done:!1}}d=!0;return{done:!0,value:void 0}}};e[Symbol.iterator]=function(){return e};return e}
+r("Array.prototype.entries",function(a){return a?a:function(){return L(this,function(b,c){return[b,c]})}});
+if("undefined"!==typeof Blob&&("undefined"===typeof FormData||!FormData.prototype.keys)){var M=function(a,b){for(var c=0;c<a.length;c++)b(a[c])},N=function(a){return a.replace(/\r?\n|\r/g,"\r\n")},O=function(a,b,c){if(b instanceof Blob){c=void 0!==c?String(c+""):"string"===typeof b.name?b.name:"blob";if(b.name!==c||"[object Blob]"===Object.prototype.toString.call(b))b=new File([b],c);return[String(a),b]}return[String(a),String(b)]},P=function(a,b){if(a.length<b)throw new TypeError(b+" argument required, but only "+
+a.length+" present.");},Q="object"===typeof globalThis?globalThis:"object"===typeof window?window:"object"===typeof self?self:this,R=Q.FormData,S=Q.XMLHttpRequest&&Q.XMLHttpRequest.prototype.send,T=Q.Request&&Q.fetch,U=Q.navigator&&Q.navigator.sendBeacon,V=Q.Element&&Q.Element.prototype,W=Q.Symbol&&Symbol.toStringTag;W&&(Blob.prototype[W]||(Blob.prototype[W]="Blob"),"File"in Q&&!File.prototype[W]&&(File.prototype[W]="File"));try{new File([],"")}catch(a){Q.File=function(b,c,d){b=new Blob(b,d||{});
+Object.defineProperties(b,{name:{value:c},lastModified:{value:+(d&&void 0!==d.lastModified?new Date(d.lastModified):new Date)},toString:{value:function(){return"[object File]"}}});W&&Object.defineProperty(b,W,{value:"File"});return b}}var escape=function(a){return a.replace(/\n/g,"%0A").replace(/\r/g,"%0D").replace(/"/g,"%22")},X=function(a){this.i=[];var b=this;a&&M(a.elements,function(c){if(c.name&&!c.disabled&&"submit"!==c.type&&"button"!==c.type&&!c.matches("form fieldset[disabled] *"))if("file"===
+c.type){var d=c.files&&c.files.length?c.files:[new File([],"",{type:"application/octet-stream"})];M(d,function(e){b.append(c.name,e)})}else"select-multiple"===c.type||"select-one"===c.type?M(c.options,function(e){!e.disabled&&e.selected&&b.append(c.name,e.value)}):"checkbox"===c.type||"radio"===c.type?c.checked&&b.append(c.name,c.value):(d="textarea"===c.type?N(c.value):c.value,b.append(c.name,d))})};h=X.prototype;h.append=function(a,b,c){P(arguments,2);this.i.push(O(a,b,c))};h.delete=function(a){P(arguments,
+1);var b=[];a=String(a);M(this.i,function(c){c[0]!==a&&b.push(c)});this.i=b};h.entries=function b(){var c,d=this;return K(b,function(e){1==e.h&&(c=0);if(3!=e.h)return c<d.i.length?e=E(e,d.i[c]):(e.h=0,e=void 0),e;c++;e.h=2})};h.forEach=function(b,c){P(arguments,1);for(var d=v(this),e=d.next();!e.done;e=d.next()){var f=v(e.value);e=f.next().value;f=f.next().value;b.call(c,f,e,this)}};h.get=function(b){P(arguments,1);var c=this.i;b=String(b);for(var d=0;d<c.length;d++)if(c[d][0]===b)return c[d][1];
+return null};h.getAll=function(b){P(arguments,1);var c=[];b=String(b);M(this.i,function(d){d[0]===b&&c.push(d[1])});return c};h.has=function(b){P(arguments,1);b=String(b);for(var c=0;c<this.i.length;c++)if(this.i[c][0]===b)return!0;return!1};h.keys=function c(){var d=this,e,f,g,k,p;return K(c,function(t){1==t.h&&(e=v(d),f=e.next());if(3!=t.h){if(f.done){t.h=0;return}g=f.value;k=v(g);p=k.next().value;return E(t,p)}f=e.next();t.h=2})};h.set=function(c,d,e){P(arguments,2);c=String(c);var f=[],g=O(c,
+d,e),k=!0;M(this.i,function(p){p[0]===c?k&&(k=!f.push(g)):f.push(p)});k&&f.push(g);this.i=f};h.values=function d(){var e=this,f,g,k,p,t;return K(d,function(x){1==x.h&&(f=v(e),g=f.next());if(3!=x.h){if(g.done){x.h=0;return}k=g.value;p=v(k);p.next();t=p.next().value;return E(x,t)}g=f.next();x.h=2})};X.prototype._asNative=function(){for(var d=new R,e=v(this),f=e.next();!f.done;f=e.next()){var g=v(f.value);f=g.next().value;g=g.next().value;d.append(f,g)}return d};X.prototype._blob=function(){var d="----formdata-polyfill-"+
+Math.random(),e=[],f="--"+d+'\r\nContent-Disposition: form-data; name="';this.forEach(function(g,k){return"string"==typeof g?e.push(f+escape(N(k))+('"\r\n\r\n'+N(g)+"\r\n")):e.push(f+escape(N(k))+('"; filename="'+escape(g.name)+'"\r\nContent-Type: '+(g.type||"application/octet-stream")+"\r\n\r\n"),g,"\r\n")});e.push("--"+d+"--");return new Blob(e,{type:"multipart/form-data; boundary="+d})};X.prototype[Symbol.iterator]=function(){return this.entries()};X.prototype.toString=function(){return"[object FormData]"};
+V&&!V.matches&&(V.matches=V.matchesSelector||V.mozMatchesSelector||V.msMatchesSelector||V.oMatchesSelector||V.webkitMatchesSelector||function(d){d=(this.document||this.ownerDocument).querySelectorAll(d);for(var e=d.length;0<=--e&&d.item(e)!==this;);return-1<e});W&&(X.prototype[W]="FormData");if(S){var Y=Q.XMLHttpRequest.prototype.setRequestHeader;Q.XMLHttpRequest.prototype.setRequestHeader=function(d,e){Y.call(this,d,e);"content-type"===d.toLowerCase()&&(this.B=!0)};Q.XMLHttpRequest.prototype.send=
+function(d){d instanceof X?(d=d._blob(),this.B||this.setRequestHeader("Content-Type",d.type),S.call(this,d)):S.call(this,d)}}T&&(Q.fetch=function(d,e){e&&e.body&&e.body instanceof X&&(e.body=e.body._blob());return T.call(this,d,e)});U&&(Q.navigator.sendBeacon=function(d,e){e instanceof X&&(e=e._asNative());return U.call(this,d,e)});Q.FormData=X};})();
+´/esm.min.js≈	J/*! formdata-polyfill. MIT License. Jimmy W√§rting <https://jimmy.warting.se/opensource> */
+
+import C from 'fetch-blob'
+import F from 'fetch-blob/file.js'
+
+var {toStringTag:t,iterator:i,hasInstance:h}=Symbol,
+r=Math.random,
+m='append,set,get,getAll,delete,keys,values,entries,forEach,constructor'.split(','),
+f=(a,b,c)=>(a+='',/^(Blob|File)$/.test(b && b[t])?[(c=c!==void 0?c+'':b[t]=='File'?b.name:'blob',a),b.name!==c||b[t]=='blob'?new F([b],c,b):b]:[a,b+'']),
+e=(c,f)=>(f?c:c.replace(/\r?\n|\r/g,'\r\n')).replace(/\n/g,'%0A').replace(/\r/g,'%0D').replace(/"/g,'%22'),
+x=(n, a, e)=>{if(a.length<e){throw new TypeError(`Failed to execute '${n}' on 'FormData': ${e} arguments required, but only ${a.length} present.`)}}
+
+export const File = F
+
+/** @type {typeof globalThis.FormData} */
+export const FormData = class FormData {
+#d=[];
+constructor(...a){if(a.length)throw new TypeError(`Failed to construct 'FormData': parameter 1 is not of type 'HTMLFormElement'.`)}
+get [t]() {return 'FormData'}
+[i](){return this.entries()}
+static [h](o) {return o&&typeof o==='object'&&o[t]==='FormData'&&!m.some(m=>typeof o[m]!='function')}
+append(...a){x('append',arguments,2);this.#d.push(f(...a))}
+delete(a){x('delete',arguments,1);a+='';this.#d=this.#d.filter(([b])=>b!==a)}
+get(a){x('get',arguments,1);a+='';for(var b=this.#d,l=b.length,c=0;c<l;c++)if(b[c][0]===a)return b[c][1];return null}
+getAll(a,b){x('getAll',arguments,1);b=[];a+='';this.#d.forEach(c=>c[0]===a&&b.push(c[1]));return b}
+has(a){x('has',arguments,1);a+='';return this.#d.some(b=>b[0]===a)}
+forEach(a,b){x('forEach',arguments,1);for(var [c,d]of this)a.call(b,d,c,this)}
+set(...a){x('set',arguments,2);var b=[],c=!0;a=f(...a);this.#d.forEach(d=>{d[0]===a[0]?c&&(c=!b.push(a)):b.push(d)});c&&b.push(a);this.#d=b}
+*entries(){yield*this.#d}
+*keys(){for(var[a]of this)yield a}
+*values(){for(var[,a]of this)yield a}}
+
+/** @param {FormData} F */
+export function formDataToBlob (F,B=C){
+var b=`${r()}${r()}`.replace(/\./g, '').slice(-28).padStart(32, '-'),c=[],p=`--${b}\r\nContent-Disposition: form-data; name="`
+F.forEach((v,n)=>typeof v=='string'
+?c.push(p+e(n)+`"\r\n\r\n${v.replace(/\r(?!\n)|(?<!\r)\n/g, '\r\n')}\r\n`)
+:c.push(p+e(n)+`"; filename="${e(v.name, 1)}"\r\nContent-Type: ${v.type||"application/octet-stream"}\r\n\r\n`, v, '\r\n'))
+c.push(`--${b}--`)
+return new B(c,{type:"multipart/form-data; boundary="+b})}
+™/README.md≈Ø### A `FormData` polyfill for the browser ...and a module for NodeJS (`New!`)
+
+```bash
+npm install formdata-polyfill
+```
+
+The browser polyfill will likely have done its part already, and i hope you stop supporting old browsers c",)<br>
+But NodeJS still laks a proper FormData<br>The good old form-data package is a very old and isn't spec compatible and dose some abnormal stuff to construct and read FormData instances that other http libraries are not happy about when it comes to follow the spec.
+
+### The NodeJS / ESM version
+- The modular (~2.3 KiB minified uncompressed) version of this package is independent of any browser stuff and don't patch anything
+- It's as pure/spec compatible as it possible gets the test are run by WPT.
+- It's compatible with [node-fetch](https://github.com/node-fetch/node-fetch).
+- It have higher platform dependencies as it uses classes, symbols, ESM & private fields
+- Only dependency it has is [fetch-blob](https://github.com/node-fetch/fetch-blob)
+
+```js
+// Node example
+import fetch from 'node-fetch'
+import File from 'fetch-blob/file.js'
+import { fileFromSync } from 'fetch-blob/from.js'
+import { FormData } from 'formdata-polyfill/esm.min.js'
+
+const file = fileFromSync('./README.md')
+const fd = new FormData()
+
+fd.append('file-upload', new File(['abc'], 'hello-world.txt'))
+fd.append('file-upload', file)
+
+// it's also possible to append file/blob look-a-like items
+// if you have streams coming from other destinations
+fd.append('file-upload', {
+  size: 123,
+  type: '',
+  name: 'cat-video.mp4',
+  stream() { return stream },
+  [Symbol.toStringTag]: 'File'
+})
+
+fetch('https://httpbin.org/post', { method: 'POST', body: fd })
+```
+
+----
+
+It also comes with way to convert FormData into Blobs - it's not something that every developer should have to deal with.
+It's mainly for [node-fetch](https://github.com/node-fetch/node-fetch) and other http library to ease the process of serializing a FormData into a blob and just wish to deal with Blobs instead (Both Deno and Undici adapted a version of this [formDataToBlob](https://github.com/jimmywarting/FormData/blob/5ddea9e0de2fc5e246ab1b2f9d404dee0c319c02/formdata-to-blob.js) to the core and passes all WPT tests run by the browser itself)
+```js
+import { Readable } from 'node:stream'
+import { FormData, formDataToBlob } from 'formdata-polyfill/esm.min.js'
+
+const blob = formDataToBlob(new FormData())
+fetch('https://httpbin.org/post', { method: 'POST', body: blob })
+
+// node built in http and other similar http library have to do:
+const stream = Readable.from(blob.stream())
+const req = http.request('http://httpbin.org/post', {
+  method: 'post',
+  headers: {
+    'Content-Length': blob.size,
+    'Content-Type': blob.type
+  }
+})
+stream.pipe(req)
+```
+
+PS: blob & file that are appended to the FormData will not be read until any of the serialized blob read-methods gets called
+...so uploading very large files is no biggie
+
+### Browser polyfill
+
+usage:
+
+```js
+import 'formdata-polyfill' // that's it
+```
+
+The browser polyfill conditionally replaces the native implementation rather than fixing the missing functions,
+since otherwise there is no way to get or delete existing values in the FormData object.
+Therefore this also patches `XMLHttpRequest.prototype.send` and `fetch` to send the `FormData` as a blob,
+and `navigator.sendBeacon` to send native `FormData`.
+
+I was unable to patch the Response/Request constructor
+so if you are constructing them with FormData then you need to call `fd._blob()` manually.
+
+```js
+new Request(url, {
+  method: 'post',
+  body: fd._blob ? fd._blob() : fd
+})
+```
+
+Dependencies
+---
+
+If you need to support IE <= 9 then I recommend you to include eligrey's [blob.js]
+(which i hope you don't - since IE is now dead)
+
+<details>
+    <summary>Updating from 2.x to 3.x</summary>
+
+Previously you had to import the polyfill and use that,
+since it didn't replace the global (existing) FormData implementation.
+But now it transparently calls `_blob()` for you when you are sending something with fetch or XHR,
+by way of monkey-patching the `XMLHttpRequest.prototype.send` and `fetch` functions.
+
+So you maybe had something like this:
+
+```javascript
+var FormData = require('formdata-polyfill')
+var fd = new FormData(form)
+xhr.send(fd._blob())
+```
+
+There is no longer anything exported from the module
+(though you of course still need to import it to install the polyfill),
+so you can now use the FormData object as normal:
+
+```javascript
+require('formdata-polyfill')
+var fd = new FormData(form)
+xhr.send(fd)
+```
+
+</details>
+
+
+
+Native Browser compatibility (as of 2021-05-08)
+---
+Based on this you can decide for yourself if you need this polyfill.
+
+[![screenshot](https://user-images.githubusercontent.com/1148376/117550329-0993aa80-b040-11eb-976c-14e31f1a3ba4.png)](https://developer.mozilla.org/en-US/docs/Web/API/FormData#Browser_compatibility)
+
+
+
+This normalizes support for the FormData API:
+
+ - `append` with filename
+ - `delete()`, `get()`, `getAll()`, `has()`, `set()`
+ - `entries()`, `keys()`, `values()`, and support for `for...of`
+ - Available in web workers (just include the polyfill)
+
+  [npm-image]: https://img.shields.io/npm/v/formdata-polyfill.svg
+  [npm-url]: https://www.npmjs.com/package/formdata-polyfill
+  [blob.js]: https://github.com/eligrey/Blob.js

@@ -1,0 +1,117 @@
+Ö©/index.js≈import process from 'node:process';
+import onetime from 'onetime';
+import signalExit from 'signal-exit';
+
+const restoreCursor = onetime(() => {
+	signalExit(() => {
+		process.stderr.write('\u001B[?25h');
+	}, {alwaysLast: true});
+});
+
+export default restoreCursor;
+´/index.d.tsƒ±/**
+Gracefully restore the CLI cursor on exit.
+
+@example
+```
+import restoreCursor from 'restore-cursor';
+
+restoreCursor();
+```
+*/
+export default function restoreCursor(): void;
+™/readme.md≈ﬂ# restore-cursor
+
+> Gracefully restore the CLI cursor on exit
+
+Prevent the cursor you've hidden interactively from remaining hidden if the process crashes.
+
+## Install
+
+```
+$ npm install restore-cursor
+```
+
+## Usage
+
+```js
+import restoreCursor from 'restore-cursor';
+
+restoreCursor();
+```
+
+---
+
+<div align="center">
+	<b>
+		<a href="https://tidelift.com/subscription/pkg/npm-restore-cursor?utm_source=npm-restore-cursor&utm_medium=referral&utm_campaign=readme">Get professional support for this package with a Tidelift subscription</a>
+	</b>
+	<br>
+	<sub>
+		Tidelift helps make open source sustainable for maintainers while giving companies<br>assurances about security, maintenance, and licensing for their dependencies.
+	</sub>
+</div>
+≠/package.json≈•{
+	"name": "restore-cursor",
+	"version": "4.0.0",
+	"description": "Gracefully restore the CLI cursor on exit",
+	"license": "MIT",
+	"repository": "sindresorhus/restore-cursor",
+	"funding": "https://github.com/sponsors/sindresorhus",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "https://sindresorhus.com"
+	},
+	"type": "module",
+	"exports": "./index.js",
+	"engines": {
+		"node": "^12.20.0 || ^14.13.1 || >=16.0.0"
+	},
+	"scripts": {
+		"test": "xo && tsd"
+	},
+	"files": [
+		"index.js",
+		"index.d.ts"
+	],
+	"keywords": [
+		"exit",
+		"quit",
+		"process",
+		"graceful",
+		"shutdown",
+		"sigterm",
+		"sigint",
+		"terminate",
+		"kill",
+		"stop",
+		"cli",
+		"cursor",
+		"ansi",
+		"show",
+		"term",
+		"terminal",
+		"console",
+		"tty",
+		"shell",
+		"command-line"
+	],
+	"dependencies": {
+		"onetime": "^5.1.0",
+		"signal-exit": "^3.0.2"
+	},
+	"devDependencies": {
+		"tsd": "^0.7.2",
+		"xo": "^0.24.0"
+	}
+}
+®/license≈]MIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

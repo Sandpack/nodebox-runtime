@@ -1,0 +1,275 @@
+Šª/README.mdÅè# Logger interface
+
+> ```
+> interface Logger {
+>   debug(message?: any): void;
+>   info(message?: any): void;
+>   warn(message?: any): void;
+>   error(message?: any): void;
+> }
+> ```
+
+This generic interface for loggers supports logging a string at one of four different levels (`debug`, `info`, `warn`, `error`). It's designed to be compatible with Node's `console` as well as commonly used logging packages and is tested against a few of them. Below are the logging libraries we test for compatibility against.
+
+## bunyan
+
+```
+const logger = bunyan.createLogger();
+```
+
+## log4js
+
+```
+const logger = log4js.getLogger();
+```
+
+## loglevel
+
+```
+const logger = loglevel.getLogger();
+```
+
+## winston
+
+```
+const logger = winston.createLogger();
+```
+­/src/index.tsÄ’export interface Logger {
+  debug(message?: any): void;
+  info(message?: any): void;
+  warn(message?: any): void;
+  error(message?: any): void;
+}
+­/package.jsonÅ¼{
+  "name": "@apollo/utils.logger",
+  "version": "1.0.1",
+  "description": "Generic logger interface",
+  "main": "",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apollographql/apollo-utils.git",
+    "directory": "packages/logger/"
+  },
+  "keywords": [
+    "apollo",
+    "graphql",
+    "typescript",
+    "node"
+  ],
+  "author": "Apollo <packages@apollographql.com>",
+  "license": "MIT"
+}
+²/dist/index.js.mapÄf{"version":3,"file":"index.js","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":""}¨/LICENSEÅ]MIT License
+
+Copyright (c) 2022 Apollo Graph, Inc. (Formerly Meteor Development Group, Inc.)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+°/dist/index.d.tsÄ½export interface Logger {
+    debug(message?: any): void;
+    info(message?: any): void;
+    warn(message?: any): void;
+    error(message?: any): void;
+}
+//# sourceMappingURL=index.d.ts.map¼/src/__tests__/index.test.tsÅÏimport { PassThrough } from "stream";
+import * as winston from "winston";
+import WinstonTransport from "winston-transport";
+import * as bunyan from "bunyan";
+import * as loglevel from "loglevel";
+import * as log4js from "log4js";
+import type { Logger } from "..";
+
+const LOWEST_LOG_LEVEL = "debug";
+const KNOWN_DEBUG_MESSAGE = "This is a debug message";
+
+describe("Logger interface compatibility", () => {
+  it("with console", () => {
+    const sink = jest.spyOn(console, "debug");
+
+    // type checks Logger interface compatibility
+    const logger: Logger = console;
+
+    logger.debug(KNOWN_DEBUG_MESSAGE);
+
+    expect(sink).toHaveBeenCalledWith(KNOWN_DEBUG_MESSAGE);
+  });
+
+  it("with loglevel", () => {
+    const sink = jest.fn();
+    const logLevelLogger = loglevel.getLogger("test-logger-loglevel");
+
+    logLevelLogger.methodFactory =
+      (_methodName, level): loglevel.LoggingMethod =>
+      (message) =>
+        sink({ level, message });
+
+    // The `setLevel` method must be called after overwriting `methodFactory`.
+    // This is an intentional API design pattern of the loglevel package:
+    // https://www.npmjs.com/package/loglevel#writing-plugins
+    logLevelLogger.setLevel(loglevel.levels.DEBUG);
+
+    // type checks Logger interface compatibility
+    const logger: Logger = logLevelLogger;
+
+    logger.debug(KNOWN_DEBUG_MESSAGE);
+
+    expect(sink).toHaveBeenCalledWith({
+      level: loglevel.levels.DEBUG,
+      message: KNOWN_DEBUG_MESSAGE,
+    });
+  });
+
+  it("with log4js", () => {
+    const sink = jest.fn();
+
+    log4js.configure({
+      appenders: {
+        custom: {
+          type: {
+            configure: () => (loggingEvent: log4js.LoggingEvent) =>
+              sink(loggingEvent),
+          },
+        },
+      },
+      categories: {
+        default: {
+          appenders: ["custom"],
+          level: LOWEST_LOG_LEVEL,
+        },
+      },
+    });
+
+    const log4jsLogger = log4js.getLogger();
+    log4jsLogger.level = LOWEST_LOG_LEVEL;
+
+    // type checks Logger interface compatibility
+    const logger: Logger = log4jsLogger;
+
+    logger.debug(KNOWN_DEBUG_MESSAGE);
+
+    expect(sink).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: log4js.levels.DEBUG,
+        data: [KNOWN_DEBUG_MESSAGE],
+      }),
+    );
+  });
+
+  it("with bunyan", () => {
+    const sink = jest.fn();
+
+    // Bunyan uses streams for its logging implementations.
+    const writable = new PassThrough();
+    writable.on("data", (data) => sink(JSON.parse(data.toString())));
+
+    const bunyanLogger = bunyan.createLogger({
+      name: "test-logger-bunyan",
+      streams: [
+        {
+          level: LOWEST_LOG_LEVEL,
+          stream: writable,
+        },
+      ],
+    });
+
+    // type checks Logger interface compatibility
+    const logger: Logger = bunyanLogger;
+
+    logger.debug(KNOWN_DEBUG_MESSAGE);
+
+    expect(sink).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: bunyan.DEBUG,
+        msg: KNOWN_DEBUG_MESSAGE,
+      }),
+    );
+  });
+
+  it("with winston", () => {
+    const sink = jest.fn();
+    const transport = new (class extends WinstonTransport {
+      constructor() {
+        super({
+          format: winston.format.json(),
+        });
+      }
+
+      override log(info: any) {
+        sink(info);
+      }
+    })();
+
+    const winstonLogger = winston
+      .createLogger({ level: "debug" })
+      .add(transport);
+
+    // type checks Logger interface compatibility
+    const logger: Logger = winstonLogger;
+
+    logger.debug(KNOWN_DEBUG_MESSAGE);
+
+    expect(sink).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: LOWEST_LOG_LEVEL,
+        message: KNOWN_DEBUG_MESSAGE,
+      }),
+    );
+  });
+});
+
+describe("Logger interface incompatibility", () => {
+  it("missing methods", () => {
+    // @ts-ignore - logger unused
+    let logger: Logger;
+    // @ts-expect-error
+    logger = {
+      info: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+    };
+
+    // @ts-expect-error
+    logger = {
+      debug: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+    };
+
+    // @ts-expect-error
+    logger = {
+      debug: jest.fn(),
+      info: jest.fn(),
+      error: jest.fn(),
+    };
+
+    // @ts-expect-error
+    logger = {
+      debug: jest.fn(),
+      info: jest.fn(),
+      warn: jest.fn(),
+    };
+  });
+});
+´/dist/index.d.ts.mapÅM{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,MAAM;IACrB,KAAK,CAAC,OAAO,CAAC,EAAE,GAAG,GAAG,IAAI,CAAC;IAC3B,IAAI,CAAC,OAAO,CAAC,EAAE,GAAG,GAAG,IAAI,CAAC;IAC1B,IAAI,CAAC,OAAO,CAAC,EAAE,GAAG,GAAG,IAAI,CAAC;IAC1B,KAAK,CAAC,OAAO,CAAC,EAAE,GAAG,GAAG,IAAI,CAAC;CAC5B"}®/dist/index.jsÄn"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+//# sourceMappingURL=index.js.map¼/src/__tests__/tsconfig.jsonÄq{
+  "extends": "../../../../tsconfig.test.base",
+  "include": ["**/*"],
+  "references": [{ "path": "../../" }]
+}

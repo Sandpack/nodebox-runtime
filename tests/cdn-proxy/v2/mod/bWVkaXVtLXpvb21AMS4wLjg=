@@ -1,0 +1,1972 @@
+á≠/package.json≈{
+  "name": "medium-zoom",
+  "version": "1.0.8",
+  "description": "A JavaScript library for zooming images like Medium",
+  "license": "MIT",
+  "repository": "francoischalifour/medium-zoom",
+  "author": {
+    "name": "Francois Chalifour",
+    "email": "francois.chalifour@gmail.com",
+    "url": "https://francoischalifour.com"
+  },
+  "main": "dist/medium-zoom.min.js",
+  "module": "dist/medium-zoom.esm.js",
+  "types": "dist/medium-zoom.d.ts",
+  "sideEffects": false,
+  "scripts": {
+    "start": "yarn run dev",
+    "dev": "rollup --config --watch",
+    "prebuild": "yarn run clean",
+    "build": "rollup --config",
+    "postbuild": "cp ./src/medium-zoom.d.ts ./dist",
+    "prepublishOnly": "npm run build",
+    "lint": "eslint .",
+    "format": "prettier --write *.{js,json,css,md} && yarn run lint --fix",
+    "test": "jest",
+    "test:cypress:run": "cypress run",
+    "test:cypress:open": "cypress open",
+    "test:cypress:update": "cypress run --env updateSnapshots=true",
+    "test:cypress": "npm-run-all --parallel --race storybook test:cypress:run",
+    "test:cypress:record": "npm-run-all --parallel --race storybook 'test:cypress:run -- --record --key {1}' --",
+    "test:size": "bundlesize",
+    "clean": "rimraf ./dist",
+    "build:storybook": "build-storybook -o ./website/dist/storybook -c ./stories/config -s ./dist,./stories/images",
+    "storybook": "start-storybook -p 9001 -c ./stories/config -s ./dist,./stories/images",
+    "build:website": "(cd website && yarn && yarn run build) && yarn run build && yarn run build:storybook",
+    "changelog:update": "conventional-changelog -p angular -i CHANGELOG.md -s",
+    "release": "release-it",
+    "release:next": "release-it --preRelease=next",
+    "release:examples": "./scripts/release-examples.sh"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "medium",
+    "image",
+    "zoom",
+    "picture",
+    "lightbox",
+    "click",
+    "scroll",
+    "pure",
+    "plain",
+    "vanilla",
+    "javascript",
+    "ux",
+    "performance",
+    "event",
+    "medium-zoom",
+    "zoomable"
+  ],
+  "devDependencies": {
+    "@storybook/addon-notes": "4.0.0-alpha.14",
+    "@storybook/addon-options": "4.0.0-alpha.14",
+    "@storybook/addon-storysource": "4.0.0-alpha.14",
+    "@storybook/html": "4.0.0-alpha.14",
+    "babel-core": "6.26.3",
+    "babel-eslint": "10.0.3",
+    "babel-plugin-external-helpers": "6.22.0",
+    "babel-plugin-require-context-hook": "1.0.0",
+    "babel-plugin-transform-object-rest-spread": "6.26.0",
+    "babel-preset-env": "1.7.0",
+    "bundlesize": "0.18.0",
+    "conventional-changelog-cli": "2.0.28",
+    "cssnano": "4.1.10",
+    "cypress": "3.7.0",
+    "cypress-image-snapshot": "3.1.1",
+    "eslint": "5.12.1",
+    "eslint-config-airbnb-base": "13.1.0",
+    "eslint-config-prettier": "3.6.0",
+    "eslint-plugin-cypress": "2.7.0",
+    "eslint-plugin-import": "2.18.2",
+    "husky": "3.1.0",
+    "jest": "23.6.0",
+    "npm-run-all": "4.1.5",
+    "prettier": "1.19.1",
+    "pretty-quick": "1.10.0",
+    "release-it": "10.4.5",
+    "rimraf": "3.0.0",
+    "rollup": "1.27.8",
+    "rollup-plugin-babel": "3.0.7",
+    "rollup-plugin-filesize": "6.2.1",
+    "rollup-plugin-license": "0.13.0",
+    "rollup-plugin-postcss": "2.0.3",
+    "rollup-plugin-replace": "2.2.0",
+    "rollup-plugin-terser": "5.1.2",
+    "rollup-plugin-uglify": "4.0.0",
+    "rollup-watch": "4.3.1"
+  }
+}
+∏/dist/medium-zoom.esm.js≈O_/*! medium-zoom 1.0.8 | MIT License | https://github.com/francoischalifour/medium-zoom */
+var _extends = Object.assign || function (target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i];
+
+    for (var key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    }
+  }
+
+  return target;
+};
+
+var isSupported = function isSupported(node) {
+  return node.tagName === 'IMG';
+};
+
+/* eslint-disable-next-line no-prototype-builtins */
+var isNodeList = function isNodeList(selector) {
+  return NodeList.prototype.isPrototypeOf(selector);
+};
+
+var isNode = function isNode(selector) {
+  return selector && selector.nodeType === 1;
+};
+
+var isSvg = function isSvg(image) {
+  var source = image.currentSrc || image.src;
+  return source.substr(-4).toLowerCase() === '.svg';
+};
+
+var getImagesFromSelector = function getImagesFromSelector(selector) {
+  try {
+    if (Array.isArray(selector)) {
+      return selector.filter(isSupported);
+    }
+
+    if (isNodeList(selector)) {
+      // Do not use spread operator or Array.from() for IE support
+      return [].slice.call(selector).filter(isSupported);
+    }
+
+    if (isNode(selector)) {
+      return [selector].filter(isSupported);
+    }
+
+    if (typeof selector === 'string') {
+      // Do not use spread operator or Array.from() for IE support
+      return [].slice.call(document.querySelectorAll(selector)).filter(isSupported);
+    }
+
+    return [];
+  } catch (err) {
+    throw new TypeError('The provided selector is invalid.\n' + 'Expects a CSS selector, a Node element, a NodeList or an array.\n' + 'See: https://github.com/francoischalifour/medium-zoom');
+  }
+};
+
+var createOverlay = function createOverlay(background) {
+  var overlay = document.createElement('div');
+  overlay.classList.add('medium-zoom-overlay');
+  overlay.style.background = background;
+
+  return overlay;
+};
+
+var cloneTarget = function cloneTarget(template) {
+  var _template$getBounding = template.getBoundingClientRect(),
+      top = _template$getBounding.top,
+      left = _template$getBounding.left,
+      width = _template$getBounding.width,
+      height = _template$getBounding.height;
+
+  var clone = template.cloneNode();
+  var scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+  var scrollLeft = window.pageXOffset || document.documentElement.scrollLeft || document.body.scrollLeft || 0;
+
+  clone.removeAttribute('id');
+  clone.style.position = 'absolute';
+  clone.style.top = top + scrollTop + 'px';
+  clone.style.left = left + scrollLeft + 'px';
+  clone.style.width = width + 'px';
+  clone.style.height = height + 'px';
+  clone.style.transform = '';
+
+  return clone;
+};
+
+var createCustomEvent = function createCustomEvent(type, params) {
+  var eventParams = _extends({
+    bubbles: false,
+    cancelable: false,
+    detail: undefined
+  }, params);
+
+  if (typeof window.CustomEvent === 'function') {
+    return new CustomEvent(type, eventParams);
+  }
+
+  var customEvent = document.createEvent('CustomEvent');
+  customEvent.initCustomEvent(type, eventParams.bubbles, eventParams.cancelable, eventParams.detail);
+
+  return customEvent;
+};
+
+var mediumZoom = function mediumZoom(selector) {
+  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+  /**
+   * Ensure the compatibility with IE11 if no Promise polyfill are used.
+   */
+  var Promise = window.Promise || function Promise(fn) {
+    function noop() {}
+    fn(noop, noop);
+  };
+
+  var _handleClick = function _handleClick(event) {
+    var target = event.target;
+
+
+    if (target === overlay) {
+      close();
+      return;
+    }
+
+    if (images.indexOf(target) === -1) {
+      return;
+    }
+
+    toggle({ target: target });
+  };
+
+  var _handleScroll = function _handleScroll() {
+    if (isAnimating || !active.original) {
+      return;
+    }
+
+    var currentScroll = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+
+    if (Math.abs(scrollTop - currentScroll) > zoomOptions.scrollOffset) {
+      setTimeout(close, 150);
+    }
+  };
+
+  var _handleKeyUp = function _handleKeyUp(event) {
+    var key = event.key || event.keyCode;
+
+    // Close if escape key is pressed
+    if (key === 'Escape' || key === 'Esc' || key === 27) {
+      close();
+    }
+  };
+
+  var update = function update() {
+    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+    var newOptions = options;
+
+    if (options.background) {
+      overlay.style.background = options.background;
+    }
+
+    if (options.container && options.container instanceof Object) {
+      newOptions.container = _extends({}, zoomOptions.container, options.container);
+    }
+
+    if (options.template) {
+      var template = isNode(options.template) ? options.template : document.querySelector(options.template);
+
+      newOptions.template = template;
+    }
+
+    zoomOptions = _extends({}, zoomOptions, newOptions);
+
+    images.forEach(function (image) {
+      image.dispatchEvent(createCustomEvent('medium-zoom:update', {
+        detail: { zoom: zoom }
+      }));
+    });
+
+    return zoom;
+  };
+
+  var clone = function clone() {
+    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    return mediumZoom(_extends({}, zoomOptions, options));
+  };
+
+  var attach = function attach() {
+    for (var _len = arguments.length, selectors = Array(_len), _key = 0; _key < _len; _key++) {
+      selectors[_key] = arguments[_key];
+    }
+
+    var newImages = selectors.reduce(function (imagesAccumulator, currentSelector) {
+      return [].concat(imagesAccumulator, getImagesFromSelector(currentSelector));
+    }, []);
+
+    newImages.filter(function (newImage) {
+      return images.indexOf(newImage) === -1;
+    }).forEach(function (newImage) {
+      images.push(newImage);
+      newImage.classList.add('medium-zoom-image');
+    });
+
+    eventListeners.forEach(function (_ref) {
+      var type = _ref.type,
+          listener = _ref.listener,
+          options = _ref.options;
+
+      newImages.forEach(function (image) {
+        image.addEventListener(type, listener, options);
+      });
+    });
+
+    return zoom;
+  };
+
+  var detach = function detach() {
+    for (var _len2 = arguments.length, selectors = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+      selectors[_key2] = arguments[_key2];
+    }
+
+    if (active.zoomed) {
+      close();
+    }
+
+    var imagesToDetach = selectors.length > 0 ? selectors.reduce(function (imagesAccumulator, currentSelector) {
+      return [].concat(imagesAccumulator, getImagesFromSelector(currentSelector));
+    }, []) : images;
+
+    imagesToDetach.forEach(function (image) {
+      image.classList.remove('medium-zoom-image');
+      image.dispatchEvent(createCustomEvent('medium-zoom:detach', {
+        detail: { zoom: zoom }
+      }));
+    });
+
+    images = images.filter(function (image) {
+      return imagesToDetach.indexOf(image) === -1;
+    });
+
+    return zoom;
+  };
+
+  var on = function on(type, listener) {
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+    images.forEach(function (image) {
+      image.addEventListener('medium-zoom:' + type, listener, options);
+    });
+
+    eventListeners.push({ type: 'medium-zoom:' + type, listener: listener, options: options });
+
+    return zoom;
+  };
+
+  var off = function off(type, listener) {
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+    images.forEach(function (image) {
+      image.removeEventListener('medium-zoom:' + type, listener, options);
+    });
+
+    eventListeners = eventListeners.filter(function (eventListener) {
+      return !(eventListener.type === 'medium-zoom:' + type && eventListener.listener.toString() === listener.toString());
+    });
+
+    return zoom;
+  };
+
+  var open = function open() {
+    var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+        target = _ref2.target;
+
+    var _animate = function _animate() {
+      var container = {
+        width: document.documentElement.clientWidth,
+        height: document.documentElement.clientHeight,
+        left: 0,
+        top: 0,
+        right: 0,
+        bottom: 0
+      };
+      var viewportWidth = void 0;
+      var viewportHeight = void 0;
+
+      if (zoomOptions.container) {
+        if (zoomOptions.container instanceof Object) {
+          // The container is given as an object with properties like width, height, left, top
+          container = _extends({}, container, zoomOptions.container);
+
+          // We need to adjust custom options like container.right or container.bottom
+          viewportWidth = container.width - container.left - container.right - zoomOptions.margin * 2;
+          viewportHeight = container.height - container.top - container.bottom - zoomOptions.margin * 2;
+        } else {
+          // The container is given as an element
+          var zoomContainer = isNode(zoomOptions.container) ? zoomOptions.container : document.querySelector(zoomOptions.container);
+
+          var _zoomContainer$getBou = zoomContainer.getBoundingClientRect(),
+              _width = _zoomContainer$getBou.width,
+              _height = _zoomContainer$getBou.height,
+              _left = _zoomContainer$getBou.left,
+              _top = _zoomContainer$getBou.top;
+
+          container = _extends({}, container, {
+            width: _width,
+            height: _height,
+            left: _left,
+            top: _top
+          });
+        }
+      }
+
+      viewportWidth = viewportWidth || container.width - zoomOptions.margin * 2;
+      viewportHeight = viewportHeight || container.height - zoomOptions.margin * 2;
+
+      var zoomTarget = active.zoomedHd || active.original;
+      var naturalWidth = isSvg(zoomTarget) ? viewportWidth : zoomTarget.naturalWidth || viewportWidth;
+      var naturalHeight = isSvg(zoomTarget) ? viewportHeight : zoomTarget.naturalHeight || viewportHeight;
+
+      var _zoomTarget$getBoundi = zoomTarget.getBoundingClientRect(),
+          top = _zoomTarget$getBoundi.top,
+          left = _zoomTarget$getBoundi.left,
+          width = _zoomTarget$getBoundi.width,
+          height = _zoomTarget$getBoundi.height;
+
+      var scaleX = Math.min(Math.max(width, naturalWidth), viewportWidth) / width;
+      var scaleY = Math.min(Math.max(height, naturalHeight), viewportHeight) / height;
+      var scale = Math.min(scaleX, scaleY);
+      var translateX = (-left + (viewportWidth - width) / 2 + zoomOptions.margin + container.left) / scale;
+      var translateY = (-top + (viewportHeight - height) / 2 + zoomOptions.margin + container.top) / scale;
+      var transform = 'scale(' + scale + ') translate3d(' + translateX + 'px, ' + translateY + 'px, 0)';
+
+      active.zoomed.style.transform = transform;
+
+      if (active.zoomedHd) {
+        active.zoomedHd.style.transform = transform;
+      }
+    };
+
+    return new Promise(function (resolve) {
+      if (target && images.indexOf(target) === -1) {
+        resolve(zoom);
+        return;
+      }
+
+      var _handleOpenEnd = function _handleOpenEnd() {
+        isAnimating = false;
+        active.zoomed.removeEventListener('transitionend', _handleOpenEnd);
+        active.original.dispatchEvent(createCustomEvent('medium-zoom:opened', {
+          detail: { zoom: zoom }
+        }));
+
+        resolve(zoom);
+      };
+
+      if (active.zoomed) {
+        resolve(zoom);
+        return;
+      }
+
+      if (target) {
+        // The zoom was triggered manually via a click
+        active.original = target;
+      } else if (images.length > 0) {
+var _images = images;
+        active.original = _images[0];
+      } else {
+        resolve(zoom);
+        return;
+      }
+
+      active.original.dispatchEvent(createCustomEvent('medium-zoom:open', {
+        detail: { zoom: zoom }
+      }));
+
+      scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+      isAnimating = true;
+      active.zoomed = cloneTarget(active.original);
+
+      document.body.appendChild(overlay);
+
+      if (zoomOptions.template) {
+        var template = isNode(zoomOptions.template) ? zoomOptions.template : document.querySelector(zoomOptions.template);
+        active.template = document.createElement('div');
+        active.template.appendChild(template.content.cloneNode(true));
+
+        document.body.appendChild(active.template);
+      }
+
+      // If the selected <img> tag is inside a <picture> tag, set the
+      // currently-applied source as the cloned `src=` attribute.
+      // (as these might differ, or src= might be unset in some cases)
+      if (active.original.parentElement && active.original.parentElement.tagName === 'PICTURE' && active.original.currentSrc) {
+        active.zoomed.src = active.original.currentSrc;
+      }
+
+      document.body.appendChild(active.zoomed);
+
+      window.requestAnimationFrame(function () {
+        document.body.classList.add('medium-zoom--opened');
+      });
+
+      active.original.classList.add('medium-zoom-image--hidden');
+      active.zoomed.classList.add('medium-zoom-image--opened');
+
+      active.zoomed.addEventListener('click', close);
+      active.zoomed.addEventListener('transitionend', _handleOpenEnd);
+
+      if (active.original.getAttribute('data-zoom-src')) {
+        active.zoomedHd = active.zoomed.cloneNode();
+
+        // Reset the `scrset` property or the HD image won't load.
+        active.zoomedHd.removeAttribute('srcset');
+        active.zoomedHd.removeAttribute('sizes');
+        // Remove loading attribute so the browser can load the image normally
+        active.zoomedHd.removeAttribute('loading');
+
+        active.zoomedHd.src = active.zoomed.getAttribute('data-zoom-src');
+
+        active.zoomedHd.onerror = function () {
+          clearInterval(getZoomTargetSize);
+          console.warn('Unable to reach the zoom image target ' + active.zoomedHd.src);
+          active.zoomedHd = null;
+          _animate();
+        };
+
+        // We need to access the natural size of the full HD
+        // target as fast as possible to compute the animation.
+        var getZoomTargetSize = setInterval(function () {
+          if ( active.zoomedHd.complete) {
+            clearInterval(getZoomTargetSize);
+            active.zoomedHd.classList.add('medium-zoom-image--opened');
+            active.zoomedHd.addEventListener('click', close);
+            document.body.appendChild(active.zoomedHd);
+            _animate();
+          }
+        }, 10);
+      } else if (active.original.hasAttribute('srcset')) {
+        // If an image has a `srcset` attribuet, we don't know the dimensions of the
+        // zoomed (HD) image (like when `data-zoom-src` is specified).
+        // Therefore the approach is quite similar.
+        active.zoomedHd = active.zoomed.cloneNode();
+
+        // Resetting the sizes attribute tells the browser to load the
+        // image best fitting the current viewport size, respecting the `srcset`.
+        active.zoomedHd.removeAttribute('sizes');
+
+        // In Firefox, the `loading` attribute needs to be set to `eager` (default
+        // value) for the load event to be fired.
+        active.zoomedHd.removeAttribute('loading');
+
+        // Wait for the load event of the hd image. This will fire if the image
+        // is already cached.
+        var loadEventListener = active.zoomedHd.addEventListener('load', function () {
+          active.zoomedHd.removeEventListener('load', loadEventListener);
+          active.zoomedHd.classList.add('medium-zoom-image--opened');
+          active.zoomedHd.addEventListener('click', close);
+          document.body.appendChild(active.zoomedHd);
+          _animate();
+        });
+      } else {
+        _animate();
+      }
+    });
+  };
+
+  var close = function close() {
+    return new Promise(function (resolve) {
+      if (isAnimating || !active.original) {
+        resolve(zoom);
+        return;
+      }
+
+      var _handleCloseEnd = function _handleCloseEnd() {
+        active.original.classList.remove('medium-zoom-image--hidden');
+        document.body.removeChild(active.zoomed);
+        if (active.zoomedHd) {
+          document.body.removeChild(active.zoomedHd);
+        }
+        document.body.removeChild(overlay);
+        active.zoomed.classList.remove('medium-zoom-image--opened');
+        if (active.template) {
+          document.body.removeChild(active.template);
+        }
+
+        isAnimating = false;
+        active.zoomed.removeEventListener('transitionend', _handleCloseEnd);
+
+        active.original.dispatchEvent(createCustomEvent('medium-zoom:closed', {
+          detail: { zoom: zoom }
+        }));
+
+        active.original = null;
+        active.zoomed = null;
+        active.zoomedHd = null;
+        active.template = null;
+
+        resolve(zoom);
+      };
+
+      isAnimating = true;
+      document.body.classList.remove('medium-zoom--opened');
+      active.zoomed.style.transform = '';
+
+      if (active.zoomedHd) {
+        active.zoomedHd.style.transform = '';
+      }
+
+      // Fade out the template so it's not too abrupt
+      if (active.template) {
+        active.template.style.transition = 'opacity 150ms';
+        active.template.style.opacity = 0;
+      }
+
+      active.original.dispatchEvent(createCustomEvent('medium-zoom:close', {
+        detail: { zoom: zoom }
+      }));
+
+      active.zoomed.addEventListener('transitionend', _handleCloseEnd);
+    });
+  };
+
+  var toggle = function toggle() {
+    var _ref3 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+        target = _ref3.target;
+
+    if (active.original) {
+      return close();
+    }
+
+    return open({ target: target });
+  };
+
+  var getOptions = function getOptions() {
+    return zoomOptions;
+  };
+
+  var getImages = function getImages() {
+    return images;
+  };
+
+  var getZoomedImage = function getZoomedImage() {
+    return active.original;
+  };
+
+  var images = [];
+  var eventListeners = [];
+  var isAnimating = false;
+  var scrollTop = 0;
+  var zoomOptions = options;
+  var active = {
+    original: null,
+    zoomed: null,
+    zoomedHd: null,
+    template: null
+
+    // If the selector is omitted, it's replaced by the options
+  };if (Object.prototype.toString.call(selector) === '[object Object]') {
+    zoomOptions = selector;
+  } else if (selector || typeof selector === 'string' // to process empty string as a selector
+  ) {
+      attach(selector);
+    }
+
+  // Apply the default option values
+  zoomOptions = _extends({
+    margin: 0,
+    background: '#fff',
+    scrollOffset: 40,
+    container: null,
+    template: null
+  }, zoomOptions);
+
+  var overlay = createOverlay(zoomOptions.background);
+
+  document.addEventListener('click', _handleClick);
+  document.addEventListener('keyup', _handleKeyUp);
+  document.addEventListener('scroll', _handleScroll);
+  window.addEventListener('resize', close);
+
+  var zoom = {
+    open: open,
+    close: close,
+    toggle: toggle,
+    update: update,
+    clone: clone,
+    attach: attach,
+    detach: detach,
+    on: on,
+    off: off,
+    getOptions: getOptions,
+    getImages: getImages,
+    getZoomedImage: getZoomedImage
+  };
+
+  return zoom;
+};
+
+function styleInject(css, ref) {
+  if ( ref === void 0 ) ref = {};
+  var insertAt = ref.insertAt;
+
+  if (!css || typeof document === 'undefined') { return; }
+
+  var head = document.head || document.getElementsByTagName('head')[0];
+  var style = document.createElement('style');
+  style.type = 'text/css';
+
+  if (insertAt === 'top') {
+    if (head.firstChild) {
+      head.insertBefore(style, head.firstChild);
+    } else {
+      head.appendChild(style);
+    }
+  } else {
+    head.appendChild(style);
+  }
+
+  if (style.styleSheet) {
+    style.styleSheet.cssText = css;
+  } else {
+    style.appendChild(document.createTextNode(css));
+  }
+}
+
+var css = ".medium-zoom-overlay{position:fixed;top:0;right:0;bottom:0;left:0;opacity:0;transition:opacity .3s;will-change:opacity}.medium-zoom--opened .medium-zoom-overlay{cursor:pointer;cursor:zoom-out;opacity:1}.medium-zoom-image{cursor:pointer;cursor:zoom-in;transition:transform .3s cubic-bezier(.2,0,.2,1)!important}.medium-zoom-image--hidden{visibility:hidden}.medium-zoom-image--opened{position:relative;cursor:pointer;cursor:zoom-out;will-change:transform}";
+styleInject(css);
+
+export default mediumZoom;
+∏/dist/medium-zoom.min.js≈%•/*! medium-zoom 1.0.8 | MIT License | https://github.com/francoischalifour/medium-zoom */
+!function(e,t){"object"==typeof exports&&"undefined"!=typeof module?module.exports=t():"function"==typeof define&&define.amd?define(t):(e=e||self).mediumZoom=t()}(this,(function(){"use strict";var e=Object.assign||function(e){for(var t=1;t<arguments.length;t++){var o=arguments[t];for(var n in o)Object.prototype.hasOwnProperty.call(o,n)&&(e[n]=o[n])}return e},t=function(e){return"IMG"===e.tagName},o=function(e){return e&&1===e.nodeType},n=function(e){return".svg"===(e.currentSrc||e.src).substr(-4).toLowerCase()},i=function(e){try{return Array.isArray(e)?e.filter(t):function(e){return NodeList.prototype.isPrototypeOf(e)}(e)?[].slice.call(e).filter(t):o(e)?[e].filter(t):"string"==typeof e?[].slice.call(document.querySelectorAll(e)).filter(t):[]}catch(e){throw new TypeError("The provided selector is invalid.\nExpects a CSS selector, a Node element, a NodeList or an array.\nSee: https://github.com/francoischalifour/medium-zoom")}},r=function(e){var t=document.createElement("div");return t.classList.add("medium-zoom-overlay"),t.style.background=e,t},d=function(e){var t=e.getBoundingClientRect(),o=t.top,n=t.left,i=t.width,r=t.height,d=e.cloneNode(),a=window.pageYOffset||document.documentElement.scrollTop||document.body.scrollTop||0,m=window.pageXOffset||document.documentElement.scrollLeft||document.body.scrollLeft||0;return d.removeAttribute("id"),d.style.position="absolute",d.style.top=o+a+"px",d.style.left=n+m+"px",d.style.width=i+"px",d.style.height=r+"px",d.style.transform="",d},a=function(t,o){var n=e({bubbles:!1,cancelable:!1,detail:void 0},o);if("function"==typeof window.CustomEvent)return new CustomEvent(t,n);var i=document.createEvent("CustomEvent");return i.initCustomEvent(t,n.bubbles,n.cancelable,n.detail),i};return function(e,t){void 0===t&&(t={});var o=t.insertAt;if(e&&"undefined"!=typeof document){var n=document.head||document.getElementsByTagName("head")[0],i=document.createElement("style");i.type="text/css","top"===o&&n.firstChild?n.insertBefore(i,n.firstChild):n.appendChild(i),i.styleSheet?i.styleSheet.cssText=e:i.appendChild(document.createTextNode(e))}}(".medium-zoom-overlay{position:fixed;top:0;right:0;bottom:0;left:0;opacity:0;transition:opacity .3s;will-change:opacity}.medium-zoom--opened .medium-zoom-overlay{cursor:pointer;cursor:zoom-out;opacity:1}.medium-zoom-image{cursor:pointer;cursor:zoom-in;transition:transform .3s cubic-bezier(.2,0,.2,1)!important}.medium-zoom-image--hidden{visibility:hidden}.medium-zoom-image--opened{position:relative;cursor:pointer;cursor:zoom-out;will-change:transform}"),function t(m){var l=arguments.length>1&&void 0!==arguments[1]?arguments[1]:{},c=window.Promise||function(e){function t(){}e(t,t)},u=function(e){var t=e.target;t!==N?-1!==x.indexOf(t)&&w({target:t}):E()},s=function(){if(!A&&k.original){var e=window.pageYOffset||document.documentElement.scrollTop||document.body.scrollTop||0;Math.abs(S-e)>T.scrollOffset&&setTimeout(E,150)}},f=function(e){var t=e.key||e.keyCode;"Escape"!==t&&"Esc"!==t&&27!==t||E()},p=function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},n=t;if(t.background&&(N.style.background=t.background),t.container&&t.container instanceof Object&&(n.container=e({},T.container,t.container)),t.template){var i=o(t.template)?t.template:document.querySelector(t.template);n.template=i}return T=e({},T,n),x.forEach((function(e){e.dispatchEvent(a("medium-zoom:update",{detail:{zoom:j}}))})),j},g=function(){var o=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};return t(e({},T,o))},v=function(){for(var e=arguments.length,t=Array(e),o=0;o<e;o++)t[o]=arguments[o];var n=t.reduce((function(e,t){return[].concat(e,i(t))}),[]);return n.filter((function(e){return-1===x.indexOf(e)})).forEach((function(e){x.push(e),e.classList.add("medium-zoom-image")})),O.forEach((function(e){var t=e.type,o=e.listener,i=e.options;n.forEach((function(e){e.addEventListener(t,o,i)}))})),j},h=function(){for(var e=arguments.length,t=Array(e),o=0;o<e;o++)t[o]=arguments[o];k.zoomed&&E();var n=t.length>0?t.reduce((function(e,t){return[].concat(e,i(t))}),[]):x;return n.forEach((function(e){e.classList.remove("medium-zoom-image"),e.dispatchEvent(a("medium-zoom:detach",{detail:{zoom:j}}))})),x=x.filter((function(e){return-1===n.indexOf(e)})),j},z=function(e,t){var o=arguments.length>2&&void 0!==arguments[2]?arguments[2]:{};return x.forEach((function(n){n.addEventListener("medium-zoom:"+e,t,o)})),O.push({type:"medium-zoom:"+e,listener:t,options:o}),j},y=function(e,t){var o=arguments.length>2&&void 0!==arguments[2]?arguments[2]:{};return x.forEach((function(n){n.removeEventListener("medium-zoom:"+e,t,o)})),O=O.filter((function(o){return!(o.type==="medium-zoom:"+e&&o.listener.toString()===t.toString())})),j},b=function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},i=t.target,r=function(){var t={width:document.documentElement.clientWidth,height:document.documentElement.clientHeight,left:0,top:0,right:0,bottom:0},i=void 0,r=void 0;if(T.container)if(T.container instanceof Object)i=(t=e({},t,T.container)).width-t.left-t.right-2*T.margin,r=t.height-t.top-t.bottom-2*T.margin;else{var d=(o(T.container)?T.container:document.querySelector(T.container)).getBoundingClientRect(),a=d.width,m=d.height,l=d.left,c=d.top;t=e({},t,{width:a,height:m,left:l,top:c})}i=i||t.width-2*T.margin,r=r||t.height-2*T.margin;var u=k.zoomedHd||k.original,s=n(u)?i:u.naturalWidth||i,f=n(u)?r:u.naturalHeight||r,p=u.getBoundingClientRect(),g=p.top,v=p.left,h=p.width,z=p.height,y=Math.min(Math.max(h,s),i)/h,b=Math.min(Math.max(z,f),r)/z,E=Math.min(y,b),w="scale("+E+") translate3d("+((i-h)/2-v+T.margin+t.left)/E+"px, "+((r-z)/2-g+T.margin+t.top)/E+"px, 0)";k.zoomed.style.transform=w,k.zoomedHd&&(k.zoomedHd.style.transform=w)};return new c((function(e){if(i&&-1===x.indexOf(i))e(j);else{if(k.zoomed)e(j);else{if(i)k.original=i;else{if(!(x.length>0))return void e(j);var t=x;k.original=t[0]}if(k.original.dispatchEvent(a("medium-zoom:open",{detail:{zoom:j}})),S=window.pageYOffset||document.documentElement.scrollTop||document.body.scrollTop||0,A=!0,k.zoomed=d(k.original),document.body.appendChild(N),T.template){var n=o(T.template)?T.template:document.querySelector(T.template);k.template=document.createElement("div"),k.template.appendChild(n.content.cloneNode(!0)),document.body.appendChild(k.template)}if(k.original.parentElement&&"PICTURE"===k.original.parentElement.tagName&&k.original.currentSrc&&(k.zoomed.src=k.original.currentSrc),document.body.appendChild(k.zoomed),window.requestAnimationFrame((function(){document.body.classList.add("medium-zoom--opened")})),k.original.classList.add("medium-zoom-image--hidden"),k.zoomed.classList.add("medium-zoom-image--opened"),k.zoomed.addEventListener("click",E),k.zoomed.addEventListener("transitionend",(function t(){A=!1,k.zoomed.removeEventListener("transitionend",t),k.original.dispatchEvent(a("medium-zoom:opened",{detail:{zoom:j}})),e(j)})),k.original.getAttribute("data-zoom-src")){k.zoomedHd=k.zoomed.cloneNode(),k.zoomedHd.removeAttribute("srcset"),k.zoomedHd.removeAttribute("sizes"),k.zoomedHd.removeAttribute("loading"),k.zoomedHd.src=k.zoomed.getAttribute("data-zoom-src"),k.zoomedHd.onerror=function(){clearInterval(m),console.warn("Unable to reach the zoom image target "+k.zoomedHd.src),k.zoomedHd=null,r()};var m=setInterval((function(){k.zoomedHd.complete&&(clearInterval(m),k.zoomedHd.classList.add("medium-zoom-image--opened"),k.zoomedHd.addEventListener("click",E),document.body.appendChild(k.zoomedHd),r())}),10)}else if(k.original.hasAttribute("srcset")){k.zoomedHd=k.zoomed.cloneNode(),k.zoomedHd.removeAttribute("sizes"),k.zoomedHd.removeAttribute("loading");var l=k.zoomedHd.addEventListener("load",(function(){k.zoomedHd.removeEventListener("load",l),k.zoomedHd.classList.add("medium-zoom-image--opened"),k.zoomedHd.addEventListener("click",E),document.body.appendChild(k.zoomedHd),r()}))}else r()}}}))},E=function(){return new c((function(e){if(!A&&k.original){A=!0,document.body.classList.remove("medium-zoom--opened"),k.zoomed.style.transform="",k.zoomedHd&&(k.zoomedHd.style.transform=""),k.template&&(k.template.style.transition="opacity 150ms",k.template.style.opacity=0),k.original.dispatchEvent(a("medium-zoom:close",{detail:{zoom:j}})),k.zoomed.addEventListener("transitionend",(function t(){k.original.classList.remove("medium-zoom-image--hidden"),document.body.removeChild(k.zoomed),k.zoomedHd&&document.body.removeChild(k.zoomedHd),document.body.removeChild(N),k.zoomed.classList.remove("medium-zoom-image--opened"),k.template&&document.body.removeChild(k.template),A=!1,k.zoomed.removeEventListener("transitionend",t),k.original.dispatchEvent(a("medium-zoom:closed",{detail:{zoom:j}})),k.original=null,k.zoomed=null,k.zoomedHd=null,k.template=null,e(j)}))}else e(j)}))},w=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},t=e.target;return k.original?E():b({target:t})},L=function(){return T},H=function(){return x},C=function(){return k.original},x=[],O=[],A=!1,S=0,T=l,k={original:null,zoomed:null,zoomedHd:null,template:null};"[object Object]"===Object.prototype.toString.call(m)?T=m:(m||"string"==typeof m)&&v(m),T=e({margin:0,background:"#fff",scrollOffset:40,container:null,template:null},T);var N=r(T.background);document.addEventListener("click",u),document.addEventListener("keyup",f),document.addEventListener("scroll",s),window.addEventListener("resize",E);var j={open:b,close:E,toggle:w,update:p,clone:g,attach:v,detach:h,on:z,off:y,getOptions:L,getImages:H,getZoomedImage:C};return j}}));
+™/README.md≈<*<p align="center">
+  <a href="https://medium-zoom.francoischalifour.com"><img src="logo.svg" alt="Demo" width="64"></a>
+  <h3 align="center">medium-zoom</h3>
+  <p align="center">A JavaScript library for zooming images like Medium</p>
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/medium-zoom">
+    <img src="https://img.shields.io/npm/v/medium-zoom.svg?style=flat-square" alt="version">
+  </a>
+  <a href="https://github.com/francoischalifour/medium-zoom/blob/master/LICENSE">
+    <img src="https://img.shields.io/npm/l/medium-zoom.svg?style=flat-square" alt="MIT license">
+  </a>
+  <a href="http://npmcharts.com/compare/medium-zoom">
+    <img src="https://img.shields.io/npm/dm/medium-zoom.svg?style=flat-square" alt="downloads">
+  </a>
+  <br>
+  <a href="https://unpkg.com/medium-zoom/dist/">
+    <img src="http://img.badgesize.io/https://unpkg.com/medium-zoom/dist/medium-zoom.min.js?compression=gzip&label=gzip%20size&style=flat-square" alt="gzip size">
+  </a>
+  <a href="https://github.com/francoischalifour/medium-zoom/blob/master/package.json">
+    <img src="https://img.shields.io/badge/dependencies-none-lightgrey.svg?style=flat-square" alt="no dependencies">
+  </a>
+  <a href="https://travis-ci.org/francoischalifour/medium-zoom">
+    <img src="https://img.shields.io/travis/francoischalifour/medium-zoom.svg?style=flat-square" alt="travis">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://medium-zoom.francoischalifour.com">
+    <img src="https://user-images.githubusercontent.com/6137112/43369906-7623239a-9376-11e8-978b-6e089be499fb.gif" alt="Medium Zoom Demo">
+  </a>
+  <br>
+  <br>
+  <strong>
+  <a href="https://codesandbox.io/s/github/francoischalifour/medium-zoom/tree/master/website">üî¨ Playground</a> „Éª
+  <a href="https://medium-zoom.francoischalifour.com">üîé Demo</a> „Éª
+  <a href="https://medium-zoom.francoischalifour.com/storybook">üìö Storybook</a>
+  </strong>
+</p>
+
+<details>
+  <summary><strong>Contents</strong></summary>
+
+<!--
+Generate the table of contents using:
+
+```
+npx doctoc README.md --maxlevel 3
+```
+-->
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [API](#api)
+  - [Selectors](#selectors)
+  - [Options](#options)
+  - [Methods](#methods)
+  - [Attributes](#attributes)
+  - [Events](#events)
+- [Examples](#examples)
+- [Debugging](#debugging)
+- [Browser support](#browser-support)
+- [Contributing](#contributing)
+- [License](#license)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+</details>
+
+## Features
+
+- üì± **Responsive** ‚Äî _scale on mobile and desktop_
+- üöÄ **Performant and lightweight** ‚Äî _should be able to reach 60 [fps](https://en.wikipedia.org/wiki/Frame_rate)_
+- ‚ö°Ô∏è **High definition support** ‚Äî _load the HD version of your image on zoom_
+- üîé **Flexibility** ‚Äî _apply the zoom to a selection of images_
+- üñ± **Mouse, keyboard and gesture friendly** ‚Äî _click anywhere, press a key or scroll away to close the zoom_
+- üéÇ **Event handling** ‚Äî _trigger events when the zoom enters a new state_
+- üì¶ **Customization** ‚Äî _set your own margin, background and scroll offset_
+- üîß **Pluggable** ‚Äî _add your own features to the zoom_
+- üíé **Custom templates** ‚Äî _extend the default look to match the UI of your app_
+
+## Installation
+
+The module is available on the [npm](https://www.npmjs.com) registry.
+
+```sh
+npm install medium-zoom
+# or
+yarn add medium-zoom
+```
+
+###### Download
+
+- [Normal](https://cdn.jsdelivr.net/npm/medium-zoom/dist/medium-zoom.js)
+- [Minified](https://cdn.jsdelivr.net/npm/medium-zoom/dist/medium-zoom.min.js)
+
+###### CDN
+
+- [jsDelivr](https://www.jsdelivr.com/package/npm/medium-zoom)
+- [unpkg](https://unpkg.com/medium-zoom/)
+
+## Usage
+
+> [Try it out in the browser](https://codesandbox.io/s/github/francoischalifour/medium-zoom/tree/master/website)
+
+Import the library as a module:
+
+```js
+import mediumZoom from 'medium-zoom'
+```
+
+Or import the library with a script tag:
+
+```html
+<script src="node_modules/medium-zoom/dist/medium-zoom.min.js"></script>
+```
+
+That's it! You don't need to import any CSS styles.
+
+Assuming you add the `data-zoomable` attribute to your images:
+
+```js
+mediumZoom('[data-zoomable]')
+```
+
+## API
+
+```ts
+mediumZoom(selector?: string | HTMLElement | HTMLElement[] | NodeList, options?: object): Zoom
+```
+
+### Selectors
+
+The selector allows attaching images to the zoom. It can be of the following types:
+
+- [CSS selectors](https://developer.mozilla.org/docs/Web/CSS/CSS_Selectors)
+- [`HTMLElement`](https://developer.mozilla.org/docs/Web/API/HTMLElement)
+- [`NodeList`](https://developer.mozilla.org/docs/Web/API/NodeList)
+- [`Array`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)
+
+```js
+// CSS selector
+mediumZoom('[data-zoomable]')
+
+// HTMLElement
+mediumZoom(document.querySelector('#cover'))
+
+// NodeList
+mediumZoom(document.querySelectorAll('[data-zoomable]'))
+
+// Array
+const images = [
+  document.querySelector('#cover'),
+  ...document.querySelectorAll('[data-zoomable]'),
+]
+
+mediumZoom(images)
+```
+
+### Options
+
+The options enable the customization of the zoom. They are defined as an object with the following properties:
+
+| Property       | Type                                  | Default  | Description                                                                 |
+| -------------- | ------------------------------------- | -------- | --------------------------------------------------------------------------- |
+| `margin`       | `number`                              | `0`      | The space outside the zoomed image                                          |
+| `background`   | `string`                              | `"#fff"` | The background of the overlay                                               |
+| `scrollOffset` | `number`                              | `40`     | The number of pixels to scroll to close the zoom                            |
+| `container`    | `string` \| `HTMLElement` \| `object` | `null`   | The viewport to render the zoom in<br> [Read more ‚Üí](docs/container.md)     |
+| `template`     | `string` \| `HTMLTemplateElement`     | `null`   | The template element to display on zoom<br> [Read more ‚Üí](docs/template.md) |
+
+```js
+mediumZoom('[data-zoomable]', {
+  margin: 24,
+  background: '#BADA55',
+  scrollOffset: 0,
+  container: '#zoom-container',
+  template: '#zoom-template',
+})
+```
+
+### Methods
+
+#### `open({ target?: HTMLElement }): Promise<Zoom>`
+
+Opens the zoom and returns a promise resolving with the zoom.
+
+```js
+const zoom = mediumZoom('[data-zoomable]')
+
+zoom.open()
+```
+
+_Emits an event [`open`](#events) on animation start and [`opened`](#events) when completed._
+
+#### `close(): Promise<Zoom>`
+
+Closes the zoom and returns a promise resolving with the zoom.
+
+```js
+const zoom = mediumZoom('[data-zoomable]')
+
+zoom.close()
+```
+
+_Emits an event [`close`](#events) on animation start and [`closed`](#events) when completed._
+
+#### `toggle({ target?: HTMLElement }): Promise<Zoom>`
+
+Opens the zoom when closed / dismisses the zoom when opened, and returns a promise resolving with the zoom.
+
+```js
+const zoom = mediumZoom('[data-zoomable]')
+
+zoom.toggle()
+```
+
+#### `attach(...selectors: string[] | HTMLElement[] | NodeList[] | Array[]): Zoom`
+
+Attaches the images to the zoom and returns the zoom.
+
+```js
+const zoom = mediumZoom()
+
+zoom.attach('#image-1', '#image-2')
+zoom.attach(
+  document.querySelector('#image-3'),
+  document.querySelectorAll('[data-zoomable]')
+)
+```
+
+#### `detach(...selectors: string[] | HTMLElement[] | NodeList[] | Array[]): Zoom`
+
+Releases the images from the zoom and returns the zoom.
+
+```js
+const zoom = mediumZoom('[data-zoomable]')
+
+zoom.detach('#image-1', document.querySelector('#image-2')) // detach two images
+zoom.detach() // detach all images
+```
+
+_Emits an event [`detach`](#events) on the image._
+
+#### `update(options: object): Zoom`
+
+Updates the options and returns the zoom.
+
+```js
+const zoom = mediumZoom('[data-zoomable]')
+
+zoom.update({ background: '#BADA55' })
+```
+
+_Emits an event [`update`](#events) on each image of the zoom._
+
+#### `clone(options?: object): Zoom`
+
+Clones the zoom with provided options merged with the current ones and returns the zoom.
+
+```js
+const zoom = mediumZoom('[data-zoomable]', { background: '#BADA55' })
+
+const clonedZoom = zoom.clone({ margin: 48 })
+
+clonedZoom.getOptions() // => { background: '#BADA55', margin: 48, ... }
+```
+
+#### `on(type: string, listener: () => void, options?: boolean | AddEventListenerOptions): Zoom`
+
+Registers the listener on each target of the zoom.
+
+The same `options` as [`addEventListener`](https://developer.mozilla.org/docs/Web/API/EventTarget/addEventListener#Parameters) are used.
+
+```js
+const zoom = mediumZoom('[data-zoomable]')
+
+zoom.on('closed', event => {
+  // the image has been closed
+})
+
+zoom.on(
+  'open',
+  event => {
+    // the image has been opened (tracked only once)
+  },
+  { once: true }
+)
+```
+
+The zoom object is accessible in `event.detail.zoom`.
+
+#### `off(type: string, listener: () => void, options?: boolean | AddEventListenerOptions): Zoom`
+
+Removes the previously registered listener on each target of the zoom.
+
+The same `options` as [`removeEventListener`](https://developer.mozilla.org/docs/Web/API/EventTarget/removeEventListener#Parameters) are used.
+
+```js
+const zoom = mediumZoom('[data-zoomable]')
+
+function listener(event) {
+  // ...
+}
+
+zoom.on('open', listener)
+// ...
+zoom.off('open', listener)
+```
+
+The zoom object is accessible in `event.detail.zoom`.
+
+#### `getOptions(): object`
+
+Returns the zoom options as an object.
+
+```js
+const zoom = mediumZoom({ background: '#BADA55' })
+
+zoom.getOptions() // => { background: '#BADA55', ... }
+```
+
+#### `getImages(): HTMLElement[]`
+
+Returns the images attached to the zoom as an array of [`HTMLElement`s](https://developer.mozilla.org/docs/Web/API/HTMLElement).
+
+```js
+const zoom = mediumZoom('[data-zoomable]')
+
+zoom.getImages() // => [HTMLElement, HTMLElement]
+```
+
+#### `getZoomedImage(): HTMLElement`
+
+Returns the current zoomed image as an [`HTMLElement`](https://developer.mozilla.org/docs/Web/API/HTMLElement) or `null` if none.
+
+```js
+const zoom = mediumZoom('[data-zoomable]')
+
+zoom.getZoomedImage() // => null
+zoom.open().then(() => {
+  zoom.getZoomedImage() // => HTMLElement
+})
+```
+
+### Attributes
+
+#### `data-zoom-src`
+
+Specifies the high definition image to open on zoom. This image loads when the user clicks on the source image.
+
+```html
+<img src="image-thumbnail.jpg" data-zoom-src="image-hd.jpg" alt="My image" />
+```
+
+### Events
+
+| Event  | Description                                         |
+| ------ | --------------------------------------------------- |
+| open   | Fired immediately when the `open` method is called  |
+| opened | Fired when the zoom has finished being animated     |
+| close  | Fired immediately when the `close` method is called |
+| closed | Fired when the zoom out has finished being animated |
+| detach | Fired when the `detach` method is called            |
+| update | Fired when the `update` method is called            |
+
+```js
+const zoom = mediumZoom('[data-zoomable]')
+
+zoom.on('open', event => {
+  // track when the image is zoomed
+})
+```
+
+The zoom object is accessible in `event.detail.zoom`.
+
+## Examples
+
+<details>
+ <summary>Trigger a zoom from another element</summary>
+
+```js
+const button = document.querySelector('[data-action="zoom"]')
+const zoom = mediumZoom('#image')
+
+button.addEventListener('click', () => zoom.open())
+```
+
+</details>
+
+<details>
+ <summary>Track an event (for analytics)</summary>
+
+You can use the `open` event to keep track of how many times a user interacts with your image. This can be useful if you want to gather some analytics on user engagement.
+
+```js
+let counter = 0
+const zoom = mediumZoom('#image-tracked')
+
+zoom.on('open', event => {
+  console.log(`"${event.target.alt}" has been zoomed ${++counter} times`)
+})
+```
+
+</details>
+
+<details>
+ <summary>Detach a zoom once closed</summary>
+
+```js
+const zoom = mediumZoom('[data-zoomable]')
+
+zoom.on('closed', () => zoom.detach(), { once: true })
+```
+
+</details>
+
+<details>
+ <summary>Attach jQuery elements</summary>
+
+jQuery elements are compatible with `medium-zoom` once converted to an array.
+
+```js
+mediumZoom($('[data-zoomable]').toArray())
+```
+
+</details>
+
+<details>
+ <summary>Create a zoomable React component</summary>
+
+**Using React hooks**
+
+```js
+import React from 'react'
+import mediumZoom from 'medium-zoom'
+
+function ImageZoom({ zoom, src, alt, background }) {
+  const zoomRef = React.useRef(zoom.clone({ background }))
+
+  function attachZoom(image) {
+    zoomRef.current.attach(image)
+  }
+
+  return <img src={src} alt={alt} ref={attachZoom} />
+}
+
+function App() {
+  const zoom = React.useRef(mediumZoom({ background: '#000', margin: 48 }))
+
+  render() {
+    return (
+      <ImageZoom src="image.jpg" alt="Image" zoom={zoom.current} color="#BADA55" />
+    )
+  }
+}
+```
+
+**Using React classes**
+
+```js
+import React, { Component } from 'react'
+import mediumZoom from 'medium-zoom'
+
+class ImageZoom extends Component {
+  zoom = this.props.zoom.clone({
+    background: this.props.color,
+  })
+
+  attachZoom = image => {
+    this.zoom.attach(image)
+  }
+
+  render() {
+    return (
+      <img src={this.props.src} alt={this.props.alt} ref={this.attachZoom} />
+    )
+  }
+}
+
+class App extends Component {
+  zoom = mediumZoom({ background: '#000', margin: 48 })
+
+  render() {
+    return (
+      <ImageZoom src="image.jpg" alt="Image" zoom={this.zoom} color="#BADA55" />
+    )
+  }
+}
+```
+
+</details>
+<br>
+
+You can see [more examples](examples/) including [React](examples/react) and [Vue](examples/vue), or check out the [storybook](https://medium-zoom.francoischalifour.com/storybook).
+
+## Debugging
+
+### The zoomed image is not visible
+
+The library doesn't provide a `z-index` value on the zoomed image to avoid conflicts with other frameworks. Some frameworks might specify a `z-index` for their elements, which makes the zoomed image not visible.
+
+If that's the case, you can provide a `z-index` value in your CSS:
+
+```css
+.medium-zoom-overlay,
+.medium-zoom-image--opened {
+  z-index: 999;
+}
+```
+
+## Browser support
+
+| IE              | Edge            | Chrome | Firefox | Safari |
+| --------------- | --------------- | ------ | ------- | ------ |
+| 10<sup>\*</sup> | 12<sup>\*</sup> | 36     | 34      | 9      |
+
+<sup>\*</sup> _These browsers require a [`template` polyfill](https://github.com/webcomponents/template) when using [custom templates](docs/template.md)_.
+
+<blockquote>
+  <p align="center">
+    Cross-browser testing is sponsored by
+  </p>
+  <p align="center">
+    <a href="https://www.browserstack.com">
+      <img src="https://user-images.githubusercontent.com/6137112/44587083-35987000-a7b2-11e8-8e0d-8ba15de83802.png" alt="BrowserStack" height="35">
+    </a>
+  </p>
+</blockquote>
+
+## Contributing
+
+- Run `yarn` to install Node dev dependencies
+- Run `yarn start` to build the library in watch mode
+- Run `yarn run storybook` to see your changes at http://localhost:9001
+
+Please read the [contributing guidelines](CONTRIBUTING.md) for more detailed explanations.
+
+_You can also use [npm](https://www.npmjs.com)._
+
+## License
+
+MIT ¬© [Fran√ßois Chalifour](https://francoischalifour.com)
+®/LICENSE≈FThe MIT License (MIT)
+
+Copyright (c) 2016-present Fran√ßois Chalifour
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+¥/dist/medium-zoom.js≈LV/*! medium-zoom 1.0.8 | MIT License | https://github.com/francoischalifour/medium-zoom */
+(function(global, factory) {
+  typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : (global = global || self, 
+  global.mediumZoom = factory());
+})(this, function() {
+  "use strict";
+  var _extends = Object.assign || function(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  };
+  var isSupported = function isSupported(node) {
+    return node.tagName === "IMG";
+  };
+  var isNodeList = function isNodeList(selector) {
+    return NodeList.prototype.isPrototypeOf(selector);
+  };
+  var isNode = function isNode(selector) {
+    return selector && selector.nodeType === 1;
+  };
+  var isSvg = function isSvg(image) {
+    var source = image.currentSrc || image.src;
+    return source.substr(-4).toLowerCase() === ".svg";
+  };
+  var getImagesFromSelector = function getImagesFromSelector(selector) {
+    try {
+      if (Array.isArray(selector)) {
+        return selector.filter(isSupported);
+      }
+      if (isNodeList(selector)) {
+        return [].slice.call(selector).filter(isSupported);
+      }
+      if (isNode(selector)) {
+        return [ selector ].filter(isSupported);
+      }
+      if (typeof selector === "string") {
+        return [].slice.call(document.querySelectorAll(selector)).filter(isSupported);
+      }
+      return [];
+    } catch (err) {
+      throw new TypeError("The provided selector is invalid.\n" + "Expects a CSS selector, a Node element, a NodeList or an array.\n" + "See: https://github.com/francoischalifour/medium-zoom");
+    }
+  };
+  var createOverlay = function createOverlay(background) {
+    var overlay = document.createElement("div");
+    overlay.classList.add("medium-zoom-overlay");
+    overlay.style.background = background;
+    return overlay;
+  };
+  var cloneTarget = function cloneTarget(template) {
+    var _template$getBounding = template.getBoundingClientRect(), top = _template$getBounding.top, left = _template$getBounding.left, width = _template$getBounding.width, height = _template$getBounding.height;
+    var clone = template.cloneNode();
+    var scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+    var scrollLeft = window.pageXOffset || document.documentElement.scrollLeft || document.body.scrollLeft || 0;
+    clone.removeAttribute("id");
+    clone.style.position = "absolute";
+    clone.style.top = top + scrollTop + "px";
+    clone.style.left = left + scrollLeft + "px";
+    clone.style.width = width + "px";
+    clone.style.height = height + "px";
+    clone.style.transform = "";
+    return clone;
+  };
+  var createCustomEvent = function createCustomEvent(type, params) {
+    var eventParams = _extends({
+      bubbles: false,
+      cancelable: false,
+      detail: undefined
+    }, params);
+    if (typeof window.CustomEvent === "function") {
+      return new CustomEvent(type, eventParams);
+    }
+    var customEvent = document.createEvent("CustomEvent");
+    customEvent.initCustomEvent(type, eventParams.bubbles, eventParams.cancelable, eventParams.detail);
+    return customEvent;
+  };
+  var mediumZoom = function mediumZoom(selector) {
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    var Promise = window.Promise || function Promise(fn) {
+      function noop() {}
+      fn(noop, noop);
+    };
+    var _handleClick = function _handleClick(event) {
+      var target = event.target;
+      if (target === overlay) {
+        close();
+        return;
+      }
+      if (images.indexOf(target) === -1) {
+        return;
+      }
+      toggle({
+        target: target
+      });
+    };
+    var _handleScroll = function _handleScroll() {
+      if (isAnimating || !active.original) {
+        return;
+      }
+      var currentScroll = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+      if (Math.abs(scrollTop - currentScroll) > zoomOptions.scrollOffset) {
+        setTimeout(close, 150);
+      }
+    };
+    var _handleKeyUp = function _handleKeyUp(event) {
+      var key = event.key || event.keyCode;
+      if (key === "Escape" || key === "Esc" || key === 27) {
+        close();
+      }
+    };
+    var update = function update() {
+      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      var newOptions = options;
+      if (options.background) {
+        overlay.style.background = options.background;
+      }
+      if (options.container && options.container instanceof Object) {
+        newOptions.container = _extends({}, zoomOptions.container, options.container);
+      }
+      if (options.template) {
+        var template = isNode(options.template) ? options.template : document.querySelector(options.template);
+        newOptions.template = template;
+      }
+      zoomOptions = _extends({}, zoomOptions, newOptions);
+      images.forEach(function(image) {
+        image.dispatchEvent(createCustomEvent("medium-zoom:update", {
+          detail: {
+            zoom: zoom
+          }
+        }));
+      });
+      return zoom;
+    };
+    var clone = function clone() {
+      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      return mediumZoom(_extends({}, zoomOptions, options));
+    };
+    var attach = function attach() {
+      for (var _len = arguments.length, selectors = Array(_len), _key = 0; _key < _len; _key++) {
+        selectors[_key] = arguments[_key];
+      }
+      var newImages = selectors.reduce(function(imagesAccumulator, currentSelector) {
+        return [].concat(imagesAccumulator, getImagesFromSelector(currentSelector));
+      }, []);
+      newImages.filter(function(newImage) {
+        return images.indexOf(newImage) === -1;
+      }).forEach(function(newImage) {
+        images.push(newImage);
+        newImage.classList.add("medium-zoom-image");
+      });
+      eventListeners.forEach(function(_ref) {
+        var type = _ref.type, listener = _ref.listener, options = _ref.options;
+        newImages.forEach(function(image) {
+          image.addEventListener(type, listener, options);
+        });
+      });
+      return zoom;
+    };
+    var detach = function detach() {
+      for (var _len2 = arguments.length, selectors = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+        selectors[_key2] = arguments[_key2];
+      }
+      if (active.zoomed) {
+        close();
+      }
+      var imagesToDetach = selectors.length > 0 ? selectors.reduce(function(imagesAccumulator, currentSelector) {
+        return [].concat(imagesAccumulator, getImagesFromSelector(currentSelector));
+      }, []) : images;
+      imagesToDetach.forEach(function(image) {
+        image.classList.remove("medium-zoom-image");
+        image.dispatchEvent(createCustomEvent("medium-zoom:detach", {
+          detail: {
+            zoom: zoom
+          }
+        }));
+      });
+      images = images.filter(function(image) {
+        return imagesToDetach.indexOf(image) === -1;
+      });
+      return zoom;
+    };
+    var on = function on(type, listener) {
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      images.forEach(function(image) {
+        image.addEventListener("medium-zoom:" + type, listener, options);
+      });
+      eventListeners.push({
+        type: "medium-zoom:" + type,
+        listener: listener,
+        options: options
+      });
+      return zoom;
+    };
+    var off = function off(type, listener) {
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      images.forEach(function(image) {
+        image.removeEventListener("medium-zoom:" + type, listener, options);
+      });
+      eventListeners = eventListeners.filter(function(eventListener) {
+        return !(eventListener.type === "medium-zoom:" + type && eventListener.listener.toString() === listener.toString());
+      });
+      return zoom;
+    };
+    var open = function open() {
+      var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {}, target = _ref2.target;
+      var _animate = function _animate() {
+        var container = {
+          width: document.documentElement.clientWidth,
+          height: document.documentElement.clientHeight,
+          left: 0,
+          top: 0,
+          right: 0,
+          bottom: 0
+        };
+        var viewportWidth = void 0;
+        var viewportHeight = void 0;
+        if (zoomOptions.container) {
+          if (zoomOptions.container instanceof Object) {
+            container = _extends({}, container, zoomOptions.container);
+            viewportWidth = container.width - container.left - container.right - zoomOptions.margin * 2;
+            viewportHeight = container.height - container.top - container.bottom - zoomOptions.margin * 2;
+          } else {
+            var zoomContainer = isNode(zoomOptions.container) ? zoomOptions.container : document.querySelector(zoomOptions.container);
+            var _zoomContainer$getBou = zoomContainer.getBoundingClientRect(), _width = _zoomContainer$getBou.width, _height = _zoomContainer$getBou.height, _left = _zoomContainer$getBou.left, _top = _zoomContainer$getBou.top;
+            container = _extends({}, container, {
+              width: _width,
+              height: _height,
+              left: _left,
+              top: _top
+            });
+          }
+        }
+        viewportWidth = viewportWidth || container.width - zoomOptions.margin * 2;
+        viewportHeight = viewportHeight || container.height - zoomOptions.margin * 2;
+        var zoomTarget = active.zoomedHd || active.original;
+        var naturalWidth = isSvg(zoomTarget) ? viewportWidth : zoomTarget.naturalWidth || viewportWidth;
+        var naturalHeight = isSvg(zoomTarget) ? viewportHeight : zoomTarget.naturalHeight || viewportHeight;
+        var _zoomTarget$getBoundi = zoomTarget.getBoundingClientRect(), top = _zoomTarget$getBoundi.top, left = _zoomTarget$getBoundi.left, width = _zoomTarget$getBoundi.width, height = _zoomTarget$getBoundi.height;
+        var scaleX = Math.min(Math.max(width, naturalWidth), viewportWidth) / width;
+        var scaleY = Math.min(Math.max(height, naturalHeight), viewportHeight) / height;
+        var scale = Math.min(scaleX, scaleY);
+        var translateX = (-left + (viewportWidth - width) / 2 + zoomOptions.margin + container.left) / scale;
+        var translateY = (-top + (viewportHeight - height) / 2 + zoomOptions.margin + container.top) / scale;
+        var transform = "scale(" + scale + ") translate3d(" + translateX + "px, " + translateY + "px, 0)";
+        active.zoomed.style.transform = transform;
+        if (active.zoomedHd) {
+          active.zoomedHd.style.transform = transform;
+        }
+      };
+      return new Promise(function(resolve) {
+        if (target && images.indexOf(target) === -1) {
+          resolve(zoom);
+          return;
+        }
+        var _handleOpenEnd = function _handleOpenEnd() {
+          isAnimating = false;
+          active.zoomed.removeEventListener("transitionend", _handleOpenEnd);
+          active.original.dispatchEvent(createCustomEvent("medium-zoom:opened", {
+            detail: {
+              zoom: zoom
+            }
+          }));
+          resolve(zoom);
+        };
+        if (active.zoomed) {
+          resolve(zoom);
+          return;
+        }
+        if (target) {
+          active.original = target;
+        } else if (images.length > 0) {
+          var _images = images;
+          active.original = _images[0];
+        } else {
+          resolve(zoom);
+          return;
+        }
+        active.original.dispatchEvent(createCustomEvent("medium-zoom:open", {
+          detail: {
+            zoom: zoom
+          }
+        }));
+        scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+        isAnimating = true;
+        active.zoomed = cloneTarget(active.original);
+        document.body.appendChild(overlay);
+        if (zoomOptions.template) {
+          var template = isNode(zoomOptions.template) ? zoomOptions.template : document.querySelector(zoomOptions.template);
+          active.template = document.createElement("div");
+          active.template.appendChild(template.content.cloneNode(true));
+          document.body.appendChild(active.template);
+        }
+        if (active.original.parentElement && active.original.parentElement.tagName === "PICTURE" && active.original.currentSrc) {
+          active.zoomed.src = active.original.currentSrc;
+        }
+        document.body.appendChild(active.zoomed);
+        window.requestAnimationFrame(function() {
+          document.body.classList.add("medium-zoom--opened");
+        });
+        active.original.classList.add("medium-zoom-image--hidden");
+        active.zoomed.classList.add("medium-zoom-image--opened");
+        active.zoomed.addEventListener("click", close);
+        active.zoomed.addEventListener("transitionend", _handleOpenEnd);
+        if (active.original.getAttribute("data-zoom-src")) {
+          active.zoomedHd = active.zoomed.cloneNode();
+          active.zoomedHd.removeAttribute("srcset");
+          active.zoomedHd.removeAttribute("sizes");
+          active.zoomedHd.removeAttribute("loading");
+          active.zoomedHd.src = active.zoomed.getAttribute("data-zoom-src");
+          active.zoomedHd.onerror = function() {
+            clearInterval(getZoomTargetSize);
+            console.warn("Unable to reach the zoom image target " + active.zoomedHd.src);
+            active.zoomedHd = null;
+            _animate();
+          };
+          var getZoomTargetSize = setInterval(function() {
+            if (active.zoomedHd.complete) {
+              clearInterval(getZoomTargetSize);
+              active.zoomedHd.classList.add("medium-zoom-image--opened");
+              active.zoomedHd.addEventListener("click", close);
+              document.body.appendChild(active.zoomedHd);
+              _animate();
+            }
+          }, 10);
+        } else if (active.original.hasAttribute("srcset")) {
+          active.zoomedHd = active.zoomed.cloneNode();
+          active.zoomedHd.removeAttribute("sizes");
+          active.zoomedHd.removeAttribute("loading");
+          var loadEventListener = active.zoomedHd.addEventListener("load", function() {
+            active.zoomedHd.removeEventListener("load", loadEventListener);
+            active.zoomedHd.classList.add("medium-zoom-image--opened");
+            active.zoomedHd.addEventListener("click", close);
+            document.body.appendChild(active.zoomedHd);
+            _animate();
+          });
+        } else {
+          _animate();
+        }
+      });
+    };
+    var close = function close() {
+      return new Promise(function(resolve) {
+        if (isAnimating || !active.original) {
+          resolve(zoom);
+          return;
+        }
+        var _handleCloseEnd = function _handleCloseEnd() {
+          active.original.classList.remove("medium-zoom-image--hidden");
+          document.body.removeChild(active.zoomed);
+          if (active.zoomedHd) {
+            document.body.removeChild(active.zoomedHd);
+          }
+          document.body.removeChild(overlay);
+          active.zoomed.classList.remove("medium-zoom-image--opened");
+          if (active.template) {
+            document.body.removeChild(active.template);
+          }
+          isAnimating = false;
+          active.zoomed.removeEventListener("transitionend", _handleCloseEnd);
+          active.original.dispatchEvent(createCustomEvent("medium-zoom:closed", {
+            detail: {
+              zoom: zoom
+            }
+          }));
+          active.original = null;
+          active.zoomed = null;
+          active.zoomedHd = null;
+          active.template = null;
+          resolve(zoom);
+        };
+        isAnimating = true;
+        document.body.classList.remove("medium-zoom--opened");
+        active.zoomed.style.transform = "";
+        if (active.zoomedHd) {
+          active.zoomedHd.style.transform = "";
+        }
+        if (active.template) {
+          active.template.style.transition = "opacity 150ms";
+          active.template.style.opacity = 0;
+        }
+        active.original.dispatchEvent(createCustomEvent("medium-zoom:close", {
+          detail: {
+            zoom: zoom
+          }
+        }));
+        active.zoomed.addEventListener("transitionend", _handleCloseEnd);
+      });
+    };
+    var toggle = function toggle() {
+      var _ref3 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {}, target = _ref3.target;
+      if (active.original) {
+        return close();
+      }
+      return open({
+        target: target
+      });
+    };
+    var getOptions = function getOptions() {
+      return zoomOptions;
+    };
+    var getImages = function getImages() {
+      return images;
+    };
+    var getZoomedImage = function getZoomedImage() {
+      return active.original;
+    };
+    var images = [];
+    var eventListeners = [];
+    var isAnimating = false;
+    var scrollTop = 0;
+    var zoomOptions = options;
+    var active = {
+      original: null,
+      zoomed: null,
+      zoomedHd: null,
+      template: null
+    };
+    if (Object.prototype.toString.call(selector) === "[object Object]") {
+      zoomOptions = selector;
+    } else if (selector || typeof selector === "string") {
+      attach(selector);
+    }
+    zoomOptions = _extends({
+      margin: 0,
+      background: "#fff",
+      scrollOffset: 40,
+      container: null,
+      template: null
+    }, zoomOptions);
+    var overlay = createOverlay(zoomOptions.background);
+    document.addEventListener("click", _handleClick);
+    document.addEventListener("keyup", _handleKeyUp);
+    document.addEventListener("scroll", _handleScroll);
+    window.addEventListener("resize", close);
+    var zoom = {
+      open: open,
+      close: close,
+      toggle: toggle,
+      update: update,
+      clone: clone,
+      attach: attach,
+      detach: detach,
+      on: on,
+      off: off,
+      getOptions: getOptions,
+      getImages: getImages,
+      getZoomedImage: getZoomedImage
+    };
+    return zoom;
+  };
+  function styleInject(css, ref) {
+    if (ref === void 0) ref = {};
+    var insertAt = ref.insertAt;
+    if (!css || typeof document === "undefined") {
+      return;
+    }
+    var head = document.head || document.getElementsByTagName("head")[0];
+    var style = document.createElement("style");
+    style.type = "text/css";
+    if (insertAt === "top") {
+      if (head.firstChild) {
+        head.insertBefore(style, head.firstChild);
+      } else {
+        head.appendChild(style);
+      }
+    } else {
+      head.appendChild(style);
+    }
+    if (style.styleSheet) {
+      style.styleSheet.cssText = css;
+    } else {
+      style.appendChild(document.createTextNode(css));
+    }
+  }
+  var css = ".medium-zoom-overlay{position:fixed;top:0;right:0;bottom:0;left:0;opacity:0;transition:opacity .3s;will-change:opacity}.medium-zoom--opened .medium-zoom-overlay{cursor:pointer;cursor:zoom-out;opacity:1}.medium-zoom-image{cursor:pointer;cursor:zoom-in;transition:transform .3s cubic-bezier(.2,0,.2,1)!important}.medium-zoom-image--hidden{visibility:hidden}.medium-zoom-image--opened{position:relative;cursor:pointer;cursor:zoom-out;will-change:transform}";
+  styleInject(css);
+  return mediumZoom;
+});
+∂/dist/medium-zoom.d.ts≈ùexport type ZoomSelector = string | HTMLElement | HTMLElement[] | NodeList
+
+export interface ZoomOptions {
+  /**
+   * The space outside the zoomed image.
+   *
+   * @default 0
+   */
+  margin?: number
+
+  /**
+   * The background of the overlay.
+   *
+   * @default '#fff'
+   */
+  background?: string
+
+  /**
+   * The number of pixels to scroll to close the zoom.
+   *
+   * @default 40
+   */
+  scrollOffset?: number
+
+  /**
+   * The viewport to render the zoom in.
+   *
+   * @default null
+   */
+  container?: string | HTMLElement | ZoomContainer
+
+  /**
+   * The template element to display on zoom.
+   *
+   * @default null
+   */
+  template?: string | HTMLTemplateElement
+}
+
+export interface ZoomContainer {
+  width?: number
+  height?: number
+  top?: number
+  bottom?: number
+  right?: number
+  left?: number
+}
+
+export interface ZoomOpenOptions {
+  /**
+   * The target of the zoom.
+   *
+   * If not specified, the target is the first image of the zoom.
+   *
+   * @default null
+   */
+  target?: HTMLElement
+}
+
+export interface Zoom {
+  /**
+   * Opens the zoom.
+   *
+   * @param options
+   * @returns A promise resolving with the zoom.
+   */
+  open(options?: ZoomOpenOptions): Promise<Zoom>
+
+  /**
+   * Closes the zoom.
+   *
+   * @returns A promise resolving with the zoom.
+   */
+  close(): Promise<Zoom>
+
+  /**
+   * Toggles the zoom.
+   *
+   * @param options
+   * @returns A promise resolving with the zoom.
+   */
+  toggle(options?: ZoomOpenOptions): Promise<Zoom>
+
+  /**
+   * Attaches the images to the zoom.
+   *
+   * @param selectors - The selectors describing the images.
+   * @returns The zoom.
+   */
+  attach(...selectors: ZoomSelector[]): Zoom
+
+  /**
+   * Releases the images from the zoom.
+   *
+   * @param selectors - The selectors describing the images.
+   * @returns The zoom.
+   */
+  detach(...selectors: ZoomSelector[]): Zoom
+
+  /**
+   * Updates the options.
+   *
+   * @param options
+   * @returns The zoom.
+   */
+  update(options: ZoomOptions): Zoom
+
+  /**
+   * Extends the zoom with the provided options merged with the current ones.
+   *
+   * @param options
+   * @returns The zoom.
+   */
+  clone(options?: ZoomOptions): Zoom
+
+  /**
+   * Registers an event handler on each target of the zoom.
+   *
+   * @param type - The event type to listen for.
+   * @param listener - The function to execute when the event is triggered.
+   * @param options - The event listener options (same as [`addEventListener`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#Parameters))
+   * @returns The zoom.
+   */
+  on(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions
+  ): Zoom
+
+  /**
+   * Unregisters an event handler.
+   *
+   * @param type - The event type to unregister.
+   * @param listener - The function to remove from the event target.
+   * @param options - The event listener options (same as [`removeEventListener`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener#Parameters))
+   * @returns The zoom.
+   */
+  off(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions
+  ): Zoom
+
+  /**
+   * Returns the zoom options.
+   *
+   * @returns The zoom options.
+   */
+  getOptions(): ZoomOptions
+
+  /**
+   * Returns the zoom images.
+   *
+   * @returns The zoom images.
+   */
+  getImages(): HTMLElement[]
+
+  /**
+   * Returns the current zoomed image.
+   *
+   * @returns The current zoomed image.
+   */
+  getZoomedImage(): HTMLElement
+}
+
+/**
+ * Attaches a zoom effect on a selection of images.
+ *
+ * @param selector The selector to target the images.
+ * @param options The options of the zoom.
+ * @returns The zoom.
+ */
+declare function mediumZoom(
+  selector?: ZoomSelector,
+  options?: ZoomOptions
+): Zoom
+
+/**
+ * Attaches a zoom effect on a selection of images.
+ *
+ * @param options The options of the zoom.
+ * @returns The zoom.
+ */
+declare function mediumZoom(options?: ZoomOptions): Zoom
+
+export default mediumZoom

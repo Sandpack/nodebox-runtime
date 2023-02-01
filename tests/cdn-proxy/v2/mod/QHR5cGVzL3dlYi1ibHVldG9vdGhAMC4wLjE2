@@ -1,0 +1,250 @@
+„ª/README.mdÅ‘# Installation
+> `npm install --save @types/web-bluetooth`
+
+# Summary
+This package contains type definitions for Web Bluetooth (https://webbluetoothcg.github.io/web-bluetooth/).
+
+# Details
+Files were exported from https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/web-bluetooth.
+
+### Additional Details
+ * Last updated: Sat, 15 Oct 2022 06:33:03 GMT
+ * Dependencies: none
+ * Global values: none
+
+# Credits
+These definitions were written by [Uri Shaked](https://github.com/urish), [Xavier Lozinguez](https://github.com/xlozinguez), [Rob Moran](https://github.com/thegecko), and [David Bjerremose](https://github.com/DaBs).
+­/package.jsonÅà{
+    "name": "@types/web-bluetooth",
+    "version": "0.0.16",
+    "description": "TypeScript definitions for Web Bluetooth",
+    "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/web-bluetooth",
+    "license": "MIT",
+    "contributors": [
+        {
+            "name": "Uri Shaked",
+            "url": "https://github.com/urish",
+            "githubUsername": "urish"
+        },
+        {
+            "name": "Xavier Lozinguez",
+            "url": "https://github.com/xlozinguez",
+            "githubUsername": "xlozinguez"
+        },
+        {
+            "name": "Rob Moran",
+            "url": "https://github.com/thegecko",
+            "githubUsername": "thegecko"
+        },
+        {
+            "name": "David Bjerremose",
+            "url": "https://github.com/DaBs",
+            "githubUsername": "DaBs"
+        }
+    ],
+    "main": "",
+    "types": "index.d.ts",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+        "directory": "types/web-bluetooth"
+    },
+    "scripts": {},
+    "dependencies": {},
+    "typesPublisherContentHash": "3b2f0055737003b25e0367d4a0418369d6f71f3d68510d72ab983fdf9aaab2a7",
+    "typeScriptVersion": "4.1"
+}«/index.d.tsÅ­// Type definitions for Web Bluetooth
+// Project: https://webbluetoothcg.github.io/web-bluetooth/
+// Definitions by: Uri Shaked <https://github.com/urish>
+//                    Xavier Lozinguez <https://github.com/xlozinguez>
+//                    Rob Moran <https://github.com/thegecko>
+//                    David Bjerremose <https://github.com/DaBs>
+// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
+
+type BluetoothServiceUUID = number | string;
+type BluetoothCharacteristicUUID = number | string;
+type BluetoothDescriptorUUID = number | string;
+
+type BluetoothManufacturerData = Map<number, DataView>;
+type BluetoothServiceData = Map<BluetoothServiceUUID, DataView>;
+
+interface BluetoothDataFilter {
+    readonly dataPrefix?: BufferSource | undefined;
+    readonly mask?: BufferSource | undefined;
+}
+
+interface BluetoothManufacturerDataFilter extends BluetoothDataFilter {
+    companyIdentifier: number;
+}
+
+interface BluetoothServiceDataFilter extends BluetoothDataFilter {
+    service: BluetoothServiceUUID;
+}
+
+interface BluetoothLEScanFilter {
+    readonly name?: string | undefined;
+    readonly namePrefix?: string | undefined;
+    readonly services?: BluetoothServiceUUID[] | undefined;
+    readonly manufacturerData?: BluetoothManufacturerDataFilter[] | undefined;
+    readonly serviceData?: BluetoothServiceDataFilter[] | undefined;
+}
+
+interface BluetoothLEScanOptions {
+    readonly filters?: BluetoothLEScanFilter[] | undefined;
+    readonly keepRepeatedDevices?: boolean | undefined;
+    readonly acceptAllAdvertisements?: boolean | undefined;
+}
+
+interface BluetoothLEScan extends BluetoothLEScanOptions {
+    active: boolean;
+    stop: () => void;
+}
+
+type RequestDeviceOptions = {
+    filters: BluetoothLEScanFilter[];
+    optionalServices?: BluetoothServiceUUID[] | undefined;
+    optionalManufacturerData?: number[] | undefined;
+} | {
+    acceptAllDevices: boolean;
+    optionalServices?: BluetoothServiceUUID[] | undefined;
+    optionalManufacturerData?: number[] | undefined;
+};
+
+interface BluetoothAdvertisingEvent extends Event {
+    readonly device: BluetoothDevice;
+    readonly uuids: BluetoothServiceUUID[];
+    readonly manufacturerData: BluetoothManufacturerData;
+    readonly serviceData: BluetoothServiceData;
+    readonly name?: string | undefined;
+    readonly appearance?: number | undefined;
+    readonly rssi?: number | undefined;
+    readonly txPower?: number | undefined;
+}
+
+interface BluetoothRemoteGATTDescriptor {
+    readonly characteristic: BluetoothRemoteGATTCharacteristic;
+    readonly uuid: string;
+    readonly value?: DataView | undefined;
+    readValue(): Promise<DataView>;
+    writeValue(value: BufferSource): Promise<void>;
+}
+
+interface BluetoothCharacteristicProperties {
+    readonly broadcast: boolean;
+    readonly read: boolean;
+    readonly writeWithoutResponse: boolean;
+    readonly write: boolean;
+    readonly notify: boolean;
+    readonly indicate: boolean;
+    readonly authenticatedSignedWrites: boolean;
+    readonly reliableWrite: boolean;
+    readonly writableAuxiliaries: boolean;
+}
+
+interface CharacteristicEventHandlers {
+    oncharacteristicvaluechanged: (this: this, ev: Event) => any;
+}
+
+interface BluetoothRemoteGATTCharacteristic extends EventTarget, CharacteristicEventHandlers {
+    readonly service: BluetoothRemoteGATTService;
+    readonly uuid: string;
+    readonly properties: BluetoothCharacteristicProperties;
+    readonly value?: DataView | undefined;
+    getDescriptor(descriptor: BluetoothDescriptorUUID): Promise<BluetoothRemoteGATTDescriptor>;
+    getDescriptors(descriptor?: BluetoothDescriptorUUID): Promise<BluetoothRemoteGATTDescriptor[]>;
+    readValue(): Promise<DataView>;
+    writeValue(value: BufferSource): Promise<void>;
+    writeValueWithResponse(value: BufferSource): Promise<void>;
+    writeValueWithoutResponse(value: BufferSource): Promise<void>;
+    startNotifications(): Promise<BluetoothRemoteGATTCharacteristic>;
+    stopNotifications(): Promise<BluetoothRemoteGATTCharacteristic>;
+    addEventListener(type: "characteristicvaluechanged", listener: (this: this, ev: Event) => any, useCapture?: boolean): void;
+    addEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
+}
+
+interface ServiceEventHandlers {
+    onserviceadded: (this: this, ev: Event) => any;
+    onservicechanged: (this: this, ev: Event) => any;
+    onserviceremoved: (this: this, ev: Event) => any;
+}
+
+interface BluetoothRemoteGATTService extends EventTarget, CharacteristicEventHandlers, ServiceEventHandlers {
+    readonly device: BluetoothDevice;
+    readonly uuid: string;
+    readonly isPrimary: boolean;
+    getCharacteristic(characteristic: BluetoothCharacteristicUUID): Promise<BluetoothRemoteGATTCharacteristic>;
+    getCharacteristics(characteristic?: BluetoothCharacteristicUUID): Promise<BluetoothRemoteGATTCharacteristic[]>;
+    getIncludedService(service: BluetoothServiceUUID): Promise<BluetoothRemoteGATTService>;
+    getIncludedServices(service?: BluetoothServiceUUID): Promise<BluetoothRemoteGATTService[]>;
+    addEventListener(type: "serviceadded", listener: (this: this, ev: Event) => any, useCapture?: boolean): void;
+    addEventListener(type: "servicechanged", listener: (this: this, ev: Event) => any, useCapture?: boolean): void;
+    addEventListener(type: "serviceremoved", listener: (this: this, ev: Event) => any, useCapture?: boolean): void;
+    addEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
+}
+
+interface BluetoothRemoteGATTServer {
+    readonly device: BluetoothDevice;
+    readonly connected: boolean;
+    connect(): Promise<BluetoothRemoteGATTServer>;
+    disconnect(): void;
+    getPrimaryService(service: BluetoothServiceUUID): Promise<BluetoothRemoteGATTService>;
+    getPrimaryServices(service?: BluetoothServiceUUID): Promise<BluetoothRemoteGATTService[]>;
+}
+
+interface BluetoothDeviceEventHandlers {
+    onadvertisementreceived: (this: this, ev: BluetoothAdvertisingEvent) => any;
+    ongattserverdisconnected: (this: this, ev: Event) => any;
+}
+
+interface WatchAdvertisementsOptions {
+    signal?: AbortSignal;
+}
+
+interface BluetoothDevice extends EventTarget, BluetoothDeviceEventHandlers, CharacteristicEventHandlers, ServiceEventHandlers {
+    readonly id: string;
+    readonly name?: string | undefined;
+    readonly gatt?: BluetoothRemoteGATTServer | undefined;
+    forget(): Promise<void>;
+    watchAdvertisements(options?: WatchAdvertisementsOptions): Promise<void>;
+    readonly watchingAdvertisements: boolean;
+    addEventListener(type: "gattserverdisconnected", listener: (this: this, ev: Event) => any, useCapture?: boolean): void;
+    addEventListener(type: "advertisementreceived", listener: (this: this, ev: BluetoothAdvertisingEvent) => any, useCapture?: boolean): void;
+    addEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
+}
+
+interface Bluetooth extends EventTarget, BluetoothDeviceEventHandlers, CharacteristicEventHandlers, ServiceEventHandlers {
+    getDevices(): Promise<BluetoothDevice[]>;
+    getAvailability(): Promise<boolean>;
+    onavailabilitychanged: (this: this, ev: Event) => any;
+    readonly referringDevice?: BluetoothDevice | undefined;
+    requestDevice(options?: RequestDeviceOptions): Promise<BluetoothDevice>;
+    requestLEScan(options?: BluetoothLEScanOptions): Promise<BluetoothLEScan>;
+    addEventListener(type: "availabilitychanged", listener: (this: this, ev: Event) => any, useCapture?: boolean): void;
+    addEventListener(type: "advertisementreceived", listener: (this: this, ev: BluetoothAdvertisingEvent) => any, useCapture?: boolean): void;
+    addEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
+}
+
+interface Navigator {
+    bluetooth: Bluetooth;
+}
+¨/LICENSEÅu    MIT License
+
+    Copyright (c) Microsoft Corporation.
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE

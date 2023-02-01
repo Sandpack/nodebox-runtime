@@ -1,0 +1,162 @@
+„¨/LICENSEÅu    MIT License
+
+    Copyright (c) Microsoft Corporation.
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE
+ª/README.mdÅJ# Installation
+> `npm install --save @types/connect`
+
+# Summary
+This package contains type definitions for connect (https://github.com/senchalabs/connect).
+
+# Details
+Files were exported from https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/connect.
+
+### Additional Details
+ * Last updated: Tue, 06 Jul 2021 20:32:28 GMT
+ * Dependencies: [@types/node](https://npmjs.com/package/@types/node)
+ * Global values: none
+
+# Credits
+These definitions were written by [Maxime LUCE](https://github.com/SomaticIT), and [Evan Hahn](https://github.com/EvanHahn).
+«/index.d.tsÅu// Type definitions for connect v3.4.0
+// Project: https://github.com/senchalabs/connect
+// Definitions by: Maxime LUCE <https://github.com/SomaticIT>
+//                 Evan Hahn <https://github.com/EvanHahn>
+// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
+
+/// <reference types="node" />
+
+
+import * as http from "http";
+
+/**
+ * Create a new connect server.
+ */
+declare function createServer(): createServer.Server;
+
+declare namespace createServer {
+    export type ServerHandle = HandleFunction | http.Server;
+
+    export class IncomingMessage extends http.IncomingMessage {
+        originalUrl?: http.IncomingMessage["url"] | undefined;
+    }
+
+    type NextFunction = (err?: any) => void;
+
+    export type SimpleHandleFunction = (req: IncomingMessage, res: http.ServerResponse) => void;
+    export type NextHandleFunction = (req: IncomingMessage, res: http.ServerResponse, next: NextFunction) => void;
+    export type ErrorHandleFunction = (err: any, req: IncomingMessage, res: http.ServerResponse, next: NextFunction) => void;
+    export type HandleFunction = SimpleHandleFunction | NextHandleFunction | ErrorHandleFunction;
+
+    export interface ServerStackItem {
+        route: string;
+        handle: ServerHandle;
+    }
+
+    export interface Server extends NodeJS.EventEmitter {
+        (req: http.IncomingMessage, res: http.ServerResponse, next?: Function): void;
+
+        route: string;
+        stack: ServerStackItem[];
+
+        /**
+        * Utilize the given middleware `handle` to the given `route`,
+        * defaulting to _/_. This "route" is the mount-point for the
+        * middleware, when given a value other than _/_ the middleware
+        * is only effective when that segment is present in the request's
+        * pathname.
+        *
+        * For example if we were to mount a function at _/admin_, it would
+        * be invoked on _/admin_, and _/admin/settings_, however it would
+        * not be invoked for _/_, or _/posts_.
+        */
+        use(fn: NextHandleFunction): Server;
+        use(fn: HandleFunction): Server;
+        use(route: string, fn: NextHandleFunction): Server;
+        use(route: string, fn: HandleFunction): Server;
+
+        /**
+        * Handle server requests, punting them down
+        * the middleware stack.
+        */
+        handle(req: http.IncomingMessage, res: http.ServerResponse, next: Function): void;
+
+        /**
+        * Listen for connections.
+        *
+        * This method takes the same arguments
+        * as node's `http.Server#listen()`.
+        *
+        * HTTP and HTTPS:
+        *
+        * If you run your application both as HTTP
+        * and HTTPS you may wrap them individually,
+        * since your Connect "server" is really just
+        * a JavaScript `Function`.
+        *
+        *      var connect = require('connect')
+        *        , http = require('http')
+        *        , https = require('https');
+        *
+        *      var app = connect();
+        *
+        *      http.createServer(app).listen(80);
+        *      https.createServer(options, app).listen(443);
+        */
+        listen(port: number, hostname?: string, backlog?: number, callback?: Function): http.Server;
+        listen(port: number, hostname?: string, callback?: Function): http.Server;
+        listen(path: string, callback?: Function): http.Server;
+        listen(handle: any, listeningListener?: Function): http.Server;
+    }
+}
+
+export = createServer;
+­/package.jsonÅÅ{
+    "name": "@types/connect",
+    "version": "3.4.35",
+    "description": "TypeScript definitions for connect",
+    "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/connect",
+    "license": "MIT",
+    "contributors": [
+        {
+            "name": "Maxime LUCE",
+            "url": "https://github.com/SomaticIT",
+            "githubUsername": "SomaticIT"
+        },
+        {
+            "name": "Evan Hahn",
+            "url": "https://github.com/EvanHahn",
+            "githubUsername": "EvanHahn"
+        }
+    ],
+    "main": "",
+    "types": "index.d.ts",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+        "directory": "types/connect"
+    },
+    "scripts": {},
+    "dependencies": {
+        "@types/node": "*"
+    },
+    "typesPublisherContentHash": "09c0dcec5f675cb2bdd7487a85447955f769ef4ab174294478c4f055b528fecc",
+    "typeScriptVersion": "3.6"
+}

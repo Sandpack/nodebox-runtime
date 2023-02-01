@@ -1,0 +1,240 @@
+ŒÙ!/lib/node/preparePaletteFile.d.tsÅBimport type { App } from '@vuepress/core';
+import type { PalettePluginOptions } from './palettePlugin.js';
+export declare const preparePaletteFile: (app: App, { userPaletteFile, tempPaletteFile, importCode, }: Pick<Required<PalettePluginOptions>, 'userPaletteFile' | 'tempPaletteFile' | 'importCode'>) => Promise<string>;
+º/lib/node/presetOptions.jsÅÕ/**
+ * Default options for different palette preset
+ */
+export const presetOptions = {
+    css: {
+        userPaletteFile: '.vuepress/styles/palette.css',
+        tempPaletteFile: 'styles/palette.css',
+        userStyleFile: '.vuepress/styles/index.css',
+        tempStyleFile: 'styles/index.css',
+        importCode: (filePath) => `@import '${filePath}';\n`,
+    },
+    sass: {
+        userPaletteFile: '.vuepress/styles/palette.scss',
+        tempPaletteFile: 'styles/palette.scss',
+        userStyleFile: '.vuepress/styles/index.scss',
+        tempStyleFile: 'styles/index.scss',
+        importCode: (filePath) => `@forward 'file:///${filePath}';\n`,
+    },
+    less: {
+        userPaletteFile: '.vuepress/styles/palette.less',
+        tempPaletteFile: 'styles/palette.less',
+        userStyleFile: '.vuepress/styles/index.less',
+        tempStyleFile: 'styles/index.less',
+        importCode: (filePath) => `@import '${filePath}';\n`,
+    },
+    stylus: {
+        userPaletteFile: '.vuepress/styles/palette.styl',
+        tempPaletteFile: 'styles/palette.styl',
+        userStyleFile: '.vuepress/styles/index.styl',
+        tempStyleFile: 'styles/index.styl',
+        importCode: (filePath) => `@require '${filePath}';\n`,
+    },
+};
+´/lib/node/index.d.tsÄêimport { palettePlugin } from './palettePlugin.js';
+export * from './palettePlugin.js';
+export * from './preparePaletteFile.js';
+export * from './prepareStyleFile.js';
+export * from './presetOptions.js';
+export default palettePlugin;
+½/lib/node/prepareStyleFile.jsÅ`import { fs } from '@vuepress/utils';
+export const prepareStyleFile = async (app, { userStyleFile, tempStyleFile, importCode, }) => {
+    const userStyle = app.dir.source(userStyleFile);
+    let content = '';
+    if (await fs.pathExists(userStyle)) {
+        content += importCode(userStyle);
+    }
+    return app.writeTemp(tempStyleFile, content);
+};
+²/lib/node/index.jsÄêimport { palettePlugin } from './palettePlugin.js';
+export * from './palettePlugin.js';
+export * from './preparePaletteFile.js';
+export * from './prepareStyleFile.js';
+export * from './presetOptions.js';
+export default palettePlugin;
+¼/lib/node/presetOptions.d.tsÄþimport type { PalettePluginOptions } from './palettePlugin.js';
+/**
+ * Default options for different palette preset
+ */
+export declare const presetOptions: Record<Required<PalettePluginOptions>['preset'], Omit<Required<PalettePluginOptions>, 'preset'>>;
+¿/lib/node/preparePaletteFile.jsÅpimport { fs } from '@vuepress/utils';
+export const preparePaletteFile = async (app, { userPaletteFile, tempPaletteFile, importCode, }) => {
+    const userPalette = app.dir.source(userPaletteFile);
+    let content = '';
+    if (await fs.pathExists(userPalette)) {
+        content += importCode(userPalette);
+    }
+    return app.writeTemp(tempPaletteFile, content);
+};
+­/package.jsonÅ{
+  "name": "@vuepress/plugin-palette",
+  "version": "2.0.0-beta.53",
+  "description": "VuePress plugin - palette",
+  "keywords": [
+    "vuepress-plugin",
+    "vuepress",
+    "plugin",
+    "palette",
+    "style",
+    "css",
+    "sass",
+    "less",
+    "stylus"
+  ],
+  "homepage": "https://github.com/vuepress",
+  "bugs": {
+    "url": "https://github.com/vuepress/vuepress-next/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vuepress/vuepress-next.git"
+  },
+  "license": "MIT",
+  "author": "meteorlxy",
+  "type": "module",
+  "exports": {
+    ".": "./lib/node/index.js",
+    "./package.json": "./package.json"
+  },
+  "main": "./lib/node/index.js",
+  "types": "./lib/node/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "dependencies": {
+    "@vuepress/core": "2.0.0-beta.53",
+    "@vuepress/utils": "2.0.0-beta.53",
+    "chokidar": "^3.5.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -b tsconfig.build.json",
+    "clean": "rimraf lib *.tsbuildinfo"
+  }
+}¼/lib/node/palettePlugin.d.tsÅéimport type { Plugin } from '@vuepress/core';
+/**
+ * Options of @vuepress/plugin-palette
+ */
+export interface PalettePluginOptions {
+    /**
+     * Preset of the palette
+     *
+     * @default 'css'
+     */
+    preset?: 'css' | 'sass' | 'less' | 'stylus';
+    /**
+     * File path of the user palette file, relative to source directory
+     */
+    userPaletteFile?: string;
+    /**
+     * File path of the generated palette temp file, relative to temp directory
+     */
+    tempPaletteFile?: string;
+    /**
+     * File path of the user style file, relative to source directory
+     */
+    userStyleFile?: string;
+    /**
+     * File path of the generated style temp file, relative to temp directory
+     */
+    tempStyleFile?: string;
+    /**
+     * Function to generate import code
+     */
+    importCode?: (filePath: string) => string;
+}
+export declare const palettePlugin: ({ preset, userPaletteFile, tempPaletteFile, userStyleFile, tempStyleFile, importCode, }?: PalettePluginOptions) => Plugin;
+º/lib/node/palettePlugin.jsÅ	import chokidar from 'chokidar';
+import { preparePaletteFile } from './preparePaletteFile.js';
+import { prepareStyleFile } from './prepareStyleFile.js';
+import { presetOptions } from './presetOptions.js';
+export const palettePlugin = ({ preset = 'css', userPaletteFile = presetOptions[preset].userPaletteFile, tempPaletteFile = presetOptions[preset].tempPaletteFile, userStyleFile = presetOptions[preset].userStyleFile, tempStyleFile = presetOptions[preset].tempStyleFile, importCode = presetOptions[preset].importCode, } = {}) => ({
+    name: '@vuepress/plugin-palette',
+    alias: (app) => ({
+        '@vuepress/plugin-palette/palette': app.dir.temp(tempPaletteFile),
+        '@vuepress/plugin-palette/style': app.dir.temp(tempStyleFile),
+    }),
+    onPrepared: async (app) => {
+        await Promise.all([
+            preparePaletteFile(app, {
+                userPaletteFile,
+                tempPaletteFile,
+                importCode,
+            }),
+            prepareStyleFile(app, {
+                userStyleFile,
+                tempStyleFile,
+                importCode,
+            }),
+        ]);
+    },
+    onWatched: (app, watchers) => {
+        const paletteWatcher = chokidar.watch(userPaletteFile, {
+            cwd: app.dir.source(),
+            ignoreInitial: true,
+        });
+        paletteWatcher.on('add', () => {
+            preparePaletteFile(app, {
+                userPaletteFile,
+                tempPaletteFile,
+                importCode,
+            });
+        });
+        paletteWatcher.on('unlink', () => {
+            preparePaletteFile(app, {
+                userPaletteFile,
+                tempPaletteFile,
+                importCode,
+            });
+        });
+        watchers.push(paletteWatcher);
+        const styleWatcher = chokidar.watch(userStyleFile, {
+            cwd: app.dir.source(),
+            ignoreInitial: true,
+        });
+        styleWatcher.on('add', () => {
+            prepareStyleFile(app, {
+                userStyleFile,
+                tempStyleFile,
+                importCode,
+            });
+        });
+        styleWatcher.on('unlink', () => {
+            prepareStyleFile(app, {
+                userStyleFile,
+                tempStyleFile,
+                importCode,
+            });
+        });
+        watchers.push(styleWatcher);
+    },
+});
+¿/lib/node/prepareStyleFile.d.tsÅ8import type { App } from '@vuepress/core';
+import type { PalettePluginOptions } from './palettePlugin.js';
+export declare const prepareStyleFile: (app: App, { userStyleFile, tempStyleFile, importCode, }: Pick<Required<PalettePluginOptions>, 'userStyleFile' | 'tempStyleFile' | 'importCode'>) => Promise<string>;
+¨/LICENSEÅCThe MIT License (MIT)
+
+Copyright (c) 2018-present, Yuxi (Evan) You
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.

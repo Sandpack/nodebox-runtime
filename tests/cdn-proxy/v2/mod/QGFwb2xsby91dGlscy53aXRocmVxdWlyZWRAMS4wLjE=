@@ -1,0 +1,100 @@
+Šª/README.mdÅC# WithRequired type
+
+This package defines the TypeScript utility type `WithRequired`. It transforms a type that has one or more optional fields into a type where those fields are required.
+
+For example:
+
+```
+import { WithRequired } from '@apollo/utils.withrequired';
+
+interface HasSomeOptionals {
+    foo: number;
+    bar?: string;
+    baz?: boolean;
+    quux?: string;
+}
+
+type MoreRequired = WithRequired<HasSomeOptions, 'bar' | 'baz'>;
+```
+
+The `MoreRequired` type is like `HasSomeOptionals`, but `bar` and `baz` are now required rather than optional. `quux` remains optional.
+°/dist/index.d.tsÄvexport declare type WithRequired<T, K extends keyof T> = T & Required<Pick<T, K>>;
+//# sourceMappingURL=index.d.ts.map¨/LICENSEÅ]MIT License
+
+Copyright (c) 2022 Apollo Graph, Inc. (Formerly Meteor Development Group, Inc.)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+­/package.jsonÅÔ{
+  "name": "@apollo/utils.withrequired",
+  "version": "1.0.1",
+  "description": "TypeScript utility type WithRequired",
+  "main": "",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apollographql/apollo-utils.git",
+    "directory": "packages/withRequired/"
+  },
+  "keywords": [
+    "apollo",
+    "graphql",
+    "typescript",
+    "node"
+  ],
+  "author": "Apollo <packages@apollographql.com>",
+  "license": "MIT"
+}
+´/dist/index.d.ts.mapÄÛ{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":"AAAA,oBAAY,YAAY,CAAC,CAAC,EAAE,CAAC,SAAS,MAAM,CAAC,IAAI,CAAC,GAAG,QAAQ,CAAC,IAAI,CAAC,CAAC,EAAE,CAAC,CAAC,CAAC,CAAC"}­/src/index.tsÄKexport type WithRequired<T, K extends keyof T> = T & Required<Pick<T, K>>;
+®/dist/index.jsÄn"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+//# sourceMappingURL=index.js.map¼/src/__tests__/index.test.tsÅ’import type { WithRequired } from "..";
+
+// This "test suite" actually does all its work at compile time.
+function isWRFoo(_: WRFoo) {}
+
+interface Foo {
+  alwaysOptional?: number;
+  startsOutOptional?: number;
+  alsoStartsOutOptional?: string;
+  alwaysRequired: string;
+}
+
+type WRFoo = WithRequired<Foo, "startsOutOptional" | "alsoStartsOutOptional">;
+
+it("can plug in all now-required fields", () => {
+  isWRFoo({
+    startsOutOptional: 5,
+    alsoStartsOutOptional: "asdf",
+    alwaysRequired: "bla",
+  });
+});
+
+it("now-required fields are required", () => {
+  // @ts-expect-error
+  isWRFoo({
+    startsOutOptional: 5,
+    alwaysRequired: "bla",
+  });
+});
+¼/src/__tests__/tsconfig.jsonÄq{
+  "extends": "../../../../tsconfig.test.base",
+  "include": ["**/*"],
+  "references": [{ "path": "../../" }]
+}
+²/dist/index.js.mapÄf{"version":3,"file":"index.js","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":""}

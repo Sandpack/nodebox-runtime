@@ -1,0 +1,273 @@
+‡®/dist/index.jsÄ,export {};
+//# sourceMappingURL=index.js.map´/dist/index.d.ts.mapÅ§{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":"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"}ª/README.mdÅö# Apollo Server/Gateway interface
+
+This package defines TypeScript types for the interface between Apollo Server and Apollo Gateway. It contains no runtime code.
+
+The types in this package describe the API as of Gateway 0.35.0 (ie, with onSchemaLoadOrUpdate). It is extracted from the Apollo Server 3 `apollo-server-types` package. Most of the type names have been changed to start with `Gateway`, so that they coexist better with similarly-named types. (Because TypeScript is generally structurally typed, this is OK.)
+
+Note that the cache scope field (eg, on `requestContext.overallCachePolicy.scope`) is defined as `any` in this package. That's because in AS3 this type is an enum, and enums in TypeScript are _not_ structurally typed. So we can't actually create an object of this type without depending on AS3 (or updating AS3 to get its definition from somewhere shared).
+
+We have updated `@apollo/gateway` (v0 and v2) to define its types from this package rather than `apollo-server-types`. This allows Gateway to be compatible with both AS3 and AS4 (and even AS2, for Gateway 0.x) without needing to pull either package's code into the TypeScript build.
+
+Apollo Server 4 directly depends on this package and uses its types to construct its calls to the Gateway.
+­/src/index.tsÅõ// NOTE: Once Apollo Server 4 is released, move this package into the
+// apollo-server repo. We're placing it in the apollo-utils repo for now to
+// enable us to make non-alpha releases that can be used on the apollo-server
+// version-4 branch.
+
+import type { KeyValueCache } from '@apollo/utils.keyvaluecache';
+import type {
+  DocumentNode,
+  ExecutionResult,
+  GraphQLError,
+  GraphQLFormattedError,
+  GraphQLSchema,
+  OperationDefinitionNode,
+} from 'graphql';
+import type { Logger } from '@apollo/utils.logger';
+import type { Trace } from '@apollo/usage-reporting-protobuf';
+import type { FetcherHeaders } from '@apollo/utils.fetcher';
+
+export interface GatewayInterface {
+  onSchemaLoadOrUpdate(
+    callback: GatewaySchemaLoadOrUpdateCallback,
+  ): GatewayUnsubscriber;
+  load(options: { apollo: GatewayApolloConfig }): Promise<GatewayLoadResult>;
+  stop(): Promise<void>;
+}
+
+export type GatewaySchemaLoadOrUpdateCallback = (schemaContext: {
+  apiSchema: GraphQLSchema;
+  coreSupergraphSdl: string;
+}) => void;
+
+export type GatewayUnsubscriber = () => void;
+
+export interface GatewayApolloConfig {
+  key?: string;
+  keyHash?: string;
+  graphRef?: string;
+}
+
+export interface GatewayLoadResult {
+  executor: GatewayExecutor | null;
+}
+
+export type GatewayExecutor = (
+  requestContext: GatewayGraphQLRequestContext,
+) => Promise<GatewayExecutionResult>;
+
+export type GatewayExecutionResult = ExecutionResult<
+  Record<string, any>,
+  Record<string, any>
+>;
+
+// Note that the default value for TContext is the same as in AS3, not
+// BaseContext.
+export interface GatewayGraphQLRequestContext<TContext = Record<string, any>> {
+  readonly request: GatewayGraphQLRequest;
+  readonly response?: GatewayGraphQLResponse;
+  logger: Logger;
+  readonly schema: GraphQLSchema;
+  readonly schemaHash: GatewaySchemaHash;
+  readonly context: TContext;
+  readonly cache: KeyValueCache;
+  readonly queryHash: string;
+  readonly document: DocumentNode;
+  readonly source: string;
+  readonly operationName: string | null;
+  readonly operation: OperationDefinitionNode;
+  readonly errors?: ReadonlyArray<GraphQLError>;
+  readonly metrics: GatewayGraphQLRequestMetrics;
+  debug?: boolean;
+  // In AS3 and AS4, this field is always set and is a GatewayCachePolicy, but
+  // in AS2 it is not always set and is only a GatewayCacheHint. We can't just
+  // declare this as `readonly overallCachePolicy?: GatewayCachePolicy |
+  // GatewayCacheHint` because then older versions of Gateway built against AS3
+  // types will fail to build. Gateway's own code always probes this field at
+  // runtime before using it anyway, so let's just make everything build by
+  // declaring this as `any`.
+  readonly overallCachePolicy: any;
+  // This was only added in v3.11/v4.1, so we don't want to declare that it's
+  // required. (In fact, we made it optional in v3.11.1 for this very reason.)
+  readonly requestIsBatched?: boolean;
+}
+
+export interface GatewayGraphQLRequest {
+  query?: string;
+  operationName?: string;
+  variables?: Record<string, any>;
+  extensions?: Record<string, any>;
+  http?: GatewayHTTPRequest;
+}
+
+export interface GatewayHTTPRequest {
+  readonly method: string;
+  readonly url: string;
+  readonly headers: FetcherHeaders;
+}
+
+export interface GatewayGraphQLResponse {
+  data?: Record<string, any> | null;
+  errors?: ReadonlyArray<GraphQLFormattedError>;
+  extensions?: Record<string, any>;
+  http?: GatewayHTTPResponse;
+}
+
+export interface GatewayHTTPResponse {
+  readonly headers: FetcherHeaders;
+  status?: number;
+}
+
+export type GatewaySchemaHash = string & { __fauxpaque: 'SchemaHash' };
+
+export interface GatewayGraphQLRequestMetrics {
+  captureTraces?: boolean;
+  persistedQueryHit?: boolean;
+  persistedQueryRegister?: boolean;
+  responseCacheHit?: boolean;
+  forbiddenOperation?: boolean;
+  registeredOperation?: boolean;
+  startHrTime?: [number, number];
+  queryPlanTrace?: Trace.QueryPlanNode;
+}
+
+export interface GatewayCachePolicy extends GatewayCacheHint {
+  replace(hint: GatewayCacheHint): void;
+  restrict(hint: GatewayCacheHint): void;
+  policyIfCacheable(): Required<GatewayCacheHint> | null;
+}
+
+export interface GatewayCacheHint {
+  maxAge?: number;
+  // In AS3, this field is an enum. In TypeScript, enums are not structurally
+  // typed: you need to actually refer directly to the enum's definition to
+  // produce a value of its type in a typesafe way. Doing that would prevent us
+  // from severing the dependency on apollo-server-types (AS3), so instead we
+  // just use 'any'. The legal runtime values of this fields are the strings
+  // `PUBLIC` and `PRIVATE`.
+  scope?: any;
+}
+²/dist/index.js.mapÄf{"version":3,"file":"index.js","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":""}­/package.jsonÅ›{
+  "name": "@apollo/server-gateway-interface",
+  "version": "1.0.7",
+  "description": "Interface used to connect Apollo Gateway to Apollo Server",
+  "type": "module",
+  "main": "",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/apollographql/apollo-server",
+    "directory": "packages/gateway-interface"
+  },
+  "keywords": [],
+  "author": "Apollo <packages@apollographql.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/apollographql/apollo-server/issues"
+  },
+  "homepage": "https://github.com/apollographql/apollo-server#readme",
+  "dependencies": {
+    "@apollo/utils.fetcher": "^2.0.0",
+    "@apollo/utils.logger": "^2.0.0",
+    "@apollo/utils.keyvaluecache": "^2.0.1",
+    "@apollo/usage-reporting-protobuf": "^4.0.0"
+  },
+  "peerDependencies": {
+    "graphql": "14.x || 15.x || 16.x"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  }
+}
+°/dist/index.d.tsÅèimport type { KeyValueCache } from '@apollo/utils.keyvaluecache';
+import type { DocumentNode, ExecutionResult, GraphQLError, GraphQLFormattedError, GraphQLSchema, OperationDefinitionNode } from 'graphql';
+import type { Logger } from '@apollo/utils.logger';
+import type { Trace } from '@apollo/usage-reporting-protobuf';
+import type { FetcherHeaders } from '@apollo/utils.fetcher';
+export interface GatewayInterface {
+    onSchemaLoadOrUpdate(callback: GatewaySchemaLoadOrUpdateCallback): GatewayUnsubscriber;
+    load(options: {
+        apollo: GatewayApolloConfig;
+    }): Promise<GatewayLoadResult>;
+    stop(): Promise<void>;
+}
+export type GatewaySchemaLoadOrUpdateCallback = (schemaContext: {
+    apiSchema: GraphQLSchema;
+    coreSupergraphSdl: string;
+}) => void;
+export type GatewayUnsubscriber = () => void;
+export interface GatewayApolloConfig {
+    key?: string;
+    keyHash?: string;
+    graphRef?: string;
+}
+export interface GatewayLoadResult {
+    executor: GatewayExecutor | null;
+}
+export type GatewayExecutor = (requestContext: GatewayGraphQLRequestContext) => Promise<GatewayExecutionResult>;
+export type GatewayExecutionResult = ExecutionResult<Record<string, any>, Record<string, any>>;
+export interface GatewayGraphQLRequestContext<TContext = Record<string, any>> {
+    readonly request: GatewayGraphQLRequest;
+    readonly response?: GatewayGraphQLResponse;
+    logger: Logger;
+    readonly schema: GraphQLSchema;
+    readonly schemaHash: GatewaySchemaHash;
+    readonly context: TContext;
+    readonly cache: KeyValueCache;
+    readonly queryHash: string;
+    readonly document: DocumentNode;
+    readonly source: string;
+    readonly operationName: string | null;
+    readonly operation: OperationDefinitionNode;
+    readonly errors?: ReadonlyArray<GraphQLError>;
+    readonly metrics: GatewayGraphQLRequestMetrics;
+    debug?: boolean;
+    readonly overallCachePolicy: any;
+    readonly requestIsBatched?: boolean;
+}
+export interface GatewayGraphQLRequest {
+    query?: string;
+    operationName?: string;
+    variables?: Record<string, any>;
+    extensions?: Record<string, any>;
+    http?: GatewayHTTPRequest;
+}
+export interface GatewayHTTPRequest {
+    readonly method: string;
+    readonly url: string;
+    readonly headers: FetcherHeaders;
+}
+export interface GatewayGraphQLResponse {
+    data?: Record<string, any> | null;
+    errors?: ReadonlyArray<GraphQLFormattedError>;
+    extensions?: Record<string, any>;
+    http?: GatewayHTTPResponse;
+}
+export interface GatewayHTTPResponse {
+    readonly headers: FetcherHeaders;
+    status?: number;
+}
+export type GatewaySchemaHash = string & {
+    __fauxpaque: 'SchemaHash';
+};
+export interface GatewayGraphQLRequestMetrics {
+    captureTraces?: boolean;
+    persistedQueryHit?: boolean;
+    persistedQueryRegister?: boolean;
+    responseCacheHit?: boolean;
+    forbiddenOperation?: boolean;
+    registeredOperation?: boolean;
+    startHrTime?: [number, number];
+    queryPlanTrace?: Trace.QueryPlanNode;
+}
+export interface GatewayCachePolicy extends GatewayCacheHint {
+    replace(hint: GatewayCacheHint): void;
+    restrict(hint: GatewayCacheHint): void;
+    policyIfCacheable(): Required<GatewayCacheHint> | null;
+}
+export interface GatewayCacheHint {
+    maxAge?: number;
+    scope?: any;
+}
+//# sourceMappingURL=index.d.ts.map

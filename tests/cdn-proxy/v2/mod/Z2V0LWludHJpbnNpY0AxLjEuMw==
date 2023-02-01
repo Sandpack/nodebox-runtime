@@ -1,0 +1,948 @@
+‰§/.nycrcÄ‹{
+	"all": true,
+	"check-coverage": false,
+	"reporter": ["text-summary", "text", "html", "json"],
+	"exclude": [
+		"coverage",
+		"test"
+	]
+}
+µ/test/GetIntrinsic.jsÅ"g'use strict';
+
+var GetIntrinsic = require('../');
+
+var test = require('tape');
+var forEach = require('for-each');
+var debug = require('object-inspect');
+var generatorFns = require('make-generator-function')();
+var asyncFns = require('make-async-function').list();
+var asyncGenFns = require('make-async-generator-function')();
+var mockProperty = require('mock-property');
+
+var callBound = require('call-bind/callBound');
+var v = require('es-value-fixtures');
+var $gOPD = require('es-abstract/helpers/getOwnPropertyDescriptor');
+var DefinePropertyOrThrow = require('es-abstract/2021/DefinePropertyOrThrow');
+
+var $isProto = callBound('%Object.prototype.isPrototypeOf%');
+
+test('export', function (t) {
+	t.equal(typeof GetIntrinsic, 'function', 'it is a function');
+	t.equal(GetIntrinsic.length, 2, 'function has length of 2');
+
+	t.end();
+});
+
+test('throws', function (t) {
+	t['throws'](
+		function () { GetIntrinsic('not an intrinsic'); },
+		SyntaxError,
+		'nonexistent intrinsic throws a syntax error'
+	);
+
+	t['throws'](
+		function () { GetIntrinsic(''); },
+		TypeError,
+		'empty string intrinsic throws a type error'
+	);
+
+	t['throws'](
+		function () { GetIntrinsic('.'); },
+		SyntaxError,
+		'"just a dot" intrinsic throws a syntax error'
+	);
+
+	t['throws'](
+		function () { GetIntrinsic('%String'); },
+		SyntaxError,
+		'Leading % without trailing % throws a syntax error'
+	);
+
+	t['throws'](
+		function () { GetIntrinsic('String%'); },
+		SyntaxError,
+		'Trailing % without leading % throws a syntax error'
+	);
+
+	t['throws'](
+		function () { GetIntrinsic("String['prototype]"); },
+		SyntaxError,
+		'Dynamic property access is disallowed for intrinsics (unterminated string)'
+	);
+
+	t['throws'](
+		function () { GetIntrinsic('%Proxy.prototype.undefined%'); },
+		TypeError,
+		"Throws when middle part doesn't exist (%Proxy.prototype.undefined%)"
+	);
+
+	t['throws'](
+		function () { GetIntrinsic('%Array.prototype%garbage%'); },
+		SyntaxError,
+		'Throws with extra percent signs'
+	);
+
+	t['throws'](
+		function () { GetIntrinsic('%Array.prototype%push%'); },
+		SyntaxError,
+		'Throws with extra percent signs, even on an existing intrinsic'
+	);
+
+	forEach(v.nonStrings, function (nonString) {
+		t['throws'](
+			function () { GetIntrinsic(nonString); },
+			TypeError,
+			debug(nonString) + ' is not a String'
+		);
+	});
+
+	forEach(v.nonBooleans, function (nonBoolean) {
+		t['throws'](
+			function () { GetIntrinsic('%', nonBoolean); },
+			TypeError,
+			debug(nonBoolean) + ' is not a Boolean'
+		);
+	});
+
+	forEach([
+		'toString',
+		'propertyIsEnumerable',
+		'hasOwnProperty'
+	], function (objectProtoMember) {
+		t['throws'](
+			function () { GetIntrinsic(objectProtoMember); },
+			SyntaxError,
+			debug(objectProtoMember) + ' is not an intrinsic'
+		);
+	});
+
+	t.end();
+});
+
+test('base intrinsics', function (t) {
+	t.equal(GetIntrinsic('%Object%'), Object, '%Object% yields Object');
+	t.equal(GetIntrinsic('Object'), Object, 'Object yields Object');
+	t.equal(GetIntrinsic('%Array%'), Array, '%Array% yields Array');
+	t.equal(GetIntrinsic('Array'), Array, 'Array yields Array');
+
+	t.end();
+});
+
+test('dotted paths', function (t) {
+	t.equal(GetIntrinsic('%Object.prototype.toString%'), Object.prototype.toString, '%Object.prototype.toString% yields Object.prototype.toString');
+	t.equal(GetIntrinsic('Object.prototype.toString'), Object.prototype.toString, 'Object.prototype.toString yields Object.prototype.toString');
+	t.equal(GetIntrinsic('%Array.prototype.push%'), Array.prototype.push, '%Array.prototype.push% yields Array.prototype.push');
+	t.equal(GetIntrinsic('Array.prototype.push'), Array.prototype.push, 'Array.prototype.push yields Array.prototype.push');
+
+	test('underscore paths are aliases for dotted paths', { skip: !Object.isFrozen || Object.isFrozen(Object.prototype) }, function (st) {
+		var original = GetIntrinsic('%ObjProto_toString%');
+
+		forEach([
+			'%Object.prototype.toString%',
+			'Object.prototype.toString',
+			'%ObjectPrototype.toString%',
+			'ObjectPrototype.toString',
+			'%ObjProto_toString%',
+			'ObjProto_toString'
+		], function (name) {
+			DefinePropertyOrThrow(Object.prototype, 'toString', {
+				'[[Value]]': function toString() {
+					return original.apply(this, arguments);
+				}
+			});
+			st.equal(GetIntrinsic(name), original, name + ' yields original Object.prototype.toString');
+		});
+
+		DefinePropertyOrThrow(Object.prototype, 'toString', { '[[Value]]': original });
+		st.end();
+	});
+
+	test('dotted paths cache', { skip: !Object.isFrozen || Object.isFrozen(Object.prototype) }, function (st) {
+		var original = GetIntrinsic('%Object.prototype.propertyIsEnumerable%');
+
+		forEach([
+			'%Object.prototype.propertyIsEnumerable%',
+			'Object.prototype.propertyIsEnumerable',
+			'%ObjectPrototype.propertyIsEnumerable%',
+			'ObjectPrototype.propertyIsEnumerable'
+		], function (name) {
+			var restore = mockProperty(Object.prototype, 'propertyIsEnumerable', {
+				value: function propertyIsEnumerable() {
+					return original.apply(this, arguments);
+				}
+			});
+			st.equal(GetIntrinsic(name), original, name + ' yields cached Object.prototype.propertyIsEnumerable');
+
+			restore();
+		});
+
+		st.end();
+	});
+
+	test('dotted path reports correct error', function (st) {
+		st['throws'](function () {
+			GetIntrinsic('%NonExistentIntrinsic.prototype.property%');
+		}, /%NonExistentIntrinsic%/, 'The base intrinsic of %NonExistentIntrinsic.prototype.property% is %NonExistentIntrinsic%');
+
+		st['throws'](function () {
+			GetIntrinsic('%NonExistentIntrinsicPrototype.property%');
+		}, /%NonExistentIntrinsicPrototype%/, 'The base intrinsic of %NonExistentIntrinsicPrototype.property% is %NonExistentIntrinsicPrototype%');
+
+		st.end();
+	});
+
+	t.end();
+});
+
+test('accessors', { skip: !$gOPD || typeof Map !== 'function' }, function (t) {
+	var actual = $gOPD(Map.prototype, 'size');
+	t.ok(actual, 'Map.prototype.size has a descriptor');
+	t.equal(typeof actual.get, 'function', 'Map.prototype.size has a getter function');
+	t.equal(GetIntrinsic('%Map.prototype.size%'), actual.get, '%Map.prototype.size% yields the getter for it');
+	t.equal(GetIntrinsic('Map.prototype.size'), actual.get, 'Map.prototype.size yields the getter for it');
+
+	t.end();
+});
+
+test('generator functions', { skip: !generatorFns.length }, function (t) {
+	var $GeneratorFunction = GetIntrinsic('%GeneratorFunction%');
+	var $GeneratorFunctionPrototype = GetIntrinsic('%Generator%');
+	var $GeneratorPrototype = GetIntrinsic('%GeneratorPrototype%');
+
+	forEach(generatorFns, function (genFn) {
+		var fnName = genFn.name;
+		fnName = fnName ? "'" + fnName + "'" : 'genFn';
+
+		t.ok(genFn instanceof $GeneratorFunction, fnName + ' instanceof %GeneratorFunction%');
+		t.ok($isProto($GeneratorFunctionPrototype, genFn), '%Generator% is prototype of ' + fnName);
+		t.ok($isProto($GeneratorPrototype, genFn.prototype), '%GeneratorPrototype% is prototype of ' + fnName + '.prototype');
+	});
+
+	t.end();
+});
+
+test('async functions', { skip: !asyncFns.length }, function (t) {
+	var $AsyncFunction = GetIntrinsic('%AsyncFunction%');
+	var $AsyncFunctionPrototype = GetIntrinsic('%AsyncFunctionPrototype%');
+
+	forEach(asyncFns, function (asyncFn) {
+		var fnName = asyncFn.name;
+		fnName = fnName ? "'" + fnName + "'" : 'asyncFn';
+
+		t.ok(asyncFn instanceof $AsyncFunction, fnName + ' instanceof %AsyncFunction%');
+		t.ok($isProto($AsyncFunctionPrototype, asyncFn), '%AsyncFunctionPrototype% is prototype of ' + fnName);
+	});
+
+	t.end();
+});
+
+test('async generator functions', { skip: asyncGenFns.length === 0 }, function (t) {
+	var $AsyncGeneratorFunction = GetIntrinsic('%AsyncGeneratorFunction%');
+	var $AsyncGeneratorFunctionPrototype = GetIntrinsic('%AsyncGenerator%');
+	var $AsyncGeneratorPrototype = GetIntrinsic('%AsyncGeneratorPrototype%');
+
+	forEach(asyncGenFns, function (asyncGenFn) {
+		var fnName = asyncGenFn.name;
+		fnName = fnName ? "'" + fnName + "'" : 'asyncGenFn';
+
+		t.ok(asyncGenFn instanceof $AsyncGeneratorFunction, fnName + ' instanceof %AsyncGeneratorFunction%');
+		t.ok($isProto($AsyncGeneratorFunctionPrototype, asyncGenFn), '%AsyncGenerator% is prototype of ' + fnName);
+		t.ok($isProto($AsyncGeneratorPrototype, asyncGenFn.prototype), '%AsyncGeneratorPrototype% is prototype of ' + fnName + '.prototype');
+	});
+
+	t.end();
+});
+
+test('%ThrowTypeError%', function (t) {
+	var $ThrowTypeError = GetIntrinsic('%ThrowTypeError%');
+
+	t.equal(typeof $ThrowTypeError, 'function', 'is a function');
+	t['throws'](
+		$ThrowTypeError,
+		TypeError,
+		'%ThrowTypeError% throws a TypeError'
+	);
+
+	t.end();
+});
+
+test('allowMissing', { skip: asyncGenFns.length > 0 }, function (t) {
+	t['throws'](
+		function () { GetIntrinsic('%AsyncGeneratorPrototype%'); },
+		TypeError,
+		'throws when missing'
+	);
+
+	t.equal(
+		GetIntrinsic('%AsyncGeneratorPrototype%', true),
+		undefined,
+		'does not throw when allowMissing'
+	);
+
+	t.end();
+});
+­/CHANGELOG.mdÅ§# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [v1.1.3](https://github.com/ljharb/get-intrinsic/compare/v1.1.2...v1.1.3) - 2022-09-12
+
+### Commits
+
+- [Dev Deps] update `es-abstract`, `es-value-fixtures`, `tape` [`07ff291`](https://github.com/ljharb/get-intrinsic/commit/07ff291816406ebe5a12d7f16965bde0942dd688)
+- [Fix] properly check for % signs [`50ac176`](https://github.com/ljharb/get-intrinsic/commit/50ac1760fe99c227e64eabde76e9c0e44cd881b5)
+
+## [v1.1.2](https://github.com/ljharb/get-intrinsic/compare/v1.1.1...v1.1.2) - 2022-06-08
+
+### Fixed
+
+- [Fix] properly validate against extra % signs [`#16`](https://github.com/ljharb/get-intrinsic/issues/16)
+
+### Commits
+
+- [actions] reuse common workflows [`0972547`](https://github.com/ljharb/get-intrinsic/commit/0972547efd0abc863fe4c445a6ca7eb4f8c6901d)
+- [meta] use `npmignore` to autogenerate an npmignore file [`5ba0b51`](https://github.com/ljharb/get-intrinsic/commit/5ba0b51d8d8d4f1c31d426d74abc0770fd106bad)
+- [actions] use `node/install` instead of `node/run`; use `codecov` action [`c364492`](https://github.com/ljharb/get-intrinsic/commit/c364492af4af51333e6f81c0bf21fd3d602c3661)
+- [Dev Deps] update `eslint`, `@ljharb/eslint-config`, `aud`, `auto-changelog`, `es-abstract`, `object-inspect`, `tape` [`dc04dad`](https://github.com/ljharb/get-intrinsic/commit/dc04dad86f6e5608775a2640cb0db5927ae29ed9)
+- [Dev Deps] update `eslint`, `@ljharb/eslint-config`, `es-abstract`, `object-inspect`, `safe-publish-latest`, `tape` [`1c14059`](https://github.com/ljharb/get-intrinsic/commit/1c1405984e86dd2dc9366c15d8a0294a96a146a5)
+- [Tests] use `mock-property` [`b396ef0`](https://github.com/ljharb/get-intrinsic/commit/b396ef05bb73b1d699811abd64b0d9b97997fdda)
+- [Dev Deps] update `eslint`, `@ljharb/eslint-config`, `aud`, `auto-changelog`, `object-inspect`, `tape` [`c2c758d`](https://github.com/ljharb/get-intrinsic/commit/c2c758d3b90af4fef0a76910d8d3c292ec8d1d3e)
+- [Dev Deps] update `eslint`, `@ljharb/eslint-config`, `aud`, `es-abstract`, `es-value-fixtures`, `object-inspect`, `tape` [`29e3c09`](https://github.com/ljharb/get-intrinsic/commit/29e3c091c2bf3e17099969847e8729d0e46896de)
+- [actions] update codecov uploader [`8cbc141`](https://github.com/ljharb/get-intrinsic/commit/8cbc1418940d7a8941f3a7985cbc4ac095c5e13d)
+- [Dev Deps] update `@ljharb/eslint-config`, `es-abstract`, `es-value-fixtures`, `object-inspect`, `tape` [`10b6f5c`](https://github.com/ljharb/get-intrinsic/commit/10b6f5c02593fb3680c581d696ac124e30652932)
+- [readme] add github actions/codecov badges [`4e25400`](https://github.com/ljharb/get-intrinsic/commit/4e25400d9f51ae9eb059cbe22d9144e70ea214e8)
+- [Tests] use `for-each` instead of `foreach` [`c05b957`](https://github.com/ljharb/get-intrinsic/commit/c05b957ad9a7bc7721af7cc9e9be1edbfe057496)
+- [Dev Deps] update `es-abstract` [`29b05ae`](https://github.com/ljharb/get-intrinsic/commit/29b05aec3e7330e9ad0b8e0f685a9112c20cdd97)
+- [meta] use `prepublishOnly` script for npm 7+ [`95c285d`](https://github.com/ljharb/get-intrinsic/commit/95c285da810516057d3bbfa871176031af38f05d)
+- [Deps] update `has-symbols` [`593cb4f`](https://github.com/ljharb/get-intrinsic/commit/593cb4fb38e7922e40e42c183f45274b636424cd)
+- [readme] fix repo URLs [`1c8305b`](https://github.com/ljharb/get-intrinsic/commit/1c8305b5365827c9b6fc785434aac0e1328ff2f5)
+- [Deps] update `has-symbols` [`c7138b6`](https://github.com/ljharb/get-intrinsic/commit/c7138b6c6d73132d859471fb8c13304e1e7c8b20)
+- [Dev Deps] remove unused `has-bigints` [`bd63aff`](https://github.com/ljharb/get-intrinsic/commit/bd63aff6ad8f3a986c557fcda2914187bdaab359)
+
+## [v1.1.1](https://github.com/ljharb/get-intrinsic/compare/v1.1.0...v1.1.1) - 2021-02-03
+
+### Fixed
+
+- [meta] export `./package.json` [`#9`](https://github.com/ljharb/get-intrinsic/issues/9)
+
+### Commits
+
+- [readme] flesh out the readme; use `evalmd` [`d12f12c`](https://github.com/ljharb/get-intrinsic/commit/d12f12c15345a0a0772cc65a7c64369529abd614)
+- [eslint] set up proper globals config [`5a8c098`](https://github.com/ljharb/get-intrinsic/commit/5a8c0984e3319d1ac0e64b102f8ec18b64e79f36)
+- [Dev Deps] update `eslint` [`7b9a5c0`](https://github.com/ljharb/get-intrinsic/commit/7b9a5c0d31a90ca1a1234181c74988fb046701cd)
+
+## [v1.1.0](https://github.com/ljharb/get-intrinsic/compare/v1.0.2...v1.1.0) - 2021-01-25
+
+### Fixed
+
+- [Refactor] delay `Function` eval until syntax-derived values are requested [`#3`](https://github.com/ljharb/get-intrinsic/issues/3)
+
+### Commits
+
+- [Tests] migrate tests to Github Actions [`2ab762b`](https://github.com/ljharb/get-intrinsic/commit/2ab762b48164aea8af37a40ba105bbc8246ab8c4)
+- [meta] do not publish github action workflow files [`5e7108e`](https://github.com/ljharb/get-intrinsic/commit/5e7108e4768b244d48d9567ba4f8a6cab9c65b8e)
+- [Tests] add some coverage [`01ac7a8`](https://github.com/ljharb/get-intrinsic/commit/01ac7a87ac29738567e8524cd8c9e026b1fa8cb3)
+- [Dev Deps] update `eslint`, `@ljharb/eslint-config`, `call-bind`, `es-abstract`, `tape`; add `call-bind` [`911b672`](https://github.com/ljharb/get-intrinsic/commit/911b672fbffae433a96924c6ce013585e425f4b7)
+- [Refactor] rearrange evalled constructors a bit [`7e7e4bf`](https://github.com/ljharb/get-intrinsic/commit/7e7e4bf583f3799c8ac1c6c5e10d2cb553957347)
+- [meta] add Automatic Rebase and Require Allow Edits workflows [`0199968`](https://github.com/ljharb/get-intrinsic/commit/01999687a263ffce0a3cb011dfbcb761754aedbc)
+
+## [v1.0.2](https://github.com/ljharb/get-intrinsic/compare/v1.0.1...v1.0.2) - 2020-12-17
+
+### Commits
+
+- [Fix] ThrowÂ for nonâ€‘existentÂ intrinsics [`68f873b`](https://github.com/ljharb/get-intrinsic/commit/68f873b013c732a05ad6f5fc54f697e55515461b)
+- [Fix] ThrowÂ for nonâ€‘existentÂ segments in the intrinsic path [`8325dee`](https://github.com/ljharb/get-intrinsic/commit/8325deee43128f3654d3399aa9591741ebe17b21)
+- [Dev Deps] update `eslint`, `@ljharb/eslint-config`, `aud`, `has-bigints`, `object-inspect` [`0c227a7`](https://github.com/ljharb/get-intrinsic/commit/0c227a7d8b629166f25715fd242553892e458525)
+- [meta] do not lint coverage output [`70d2419`](https://github.com/ljharb/get-intrinsic/commit/70d24199b620043cd9110fc5f426d214ebe21dc9)
+
+## [v1.0.1](https://github.com/ljharb/get-intrinsic/compare/v1.0.0...v1.0.1) - 2020-10-30
+
+### Commits
+
+- [Tests] gather coverage data on every job [`d1d280d`](https://github.com/ljharb/get-intrinsic/commit/d1d280dec714e3f0519cc877dbcb193057d9cac6)
+- [Fix] add missing dependencies [`5031771`](https://github.com/ljharb/get-intrinsic/commit/5031771bb1095b38be88ce7c41d5de88718e432e)
+- [Tests] use `es-value-fixtures` [`af48765`](https://github.com/ljharb/get-intrinsic/commit/af48765a23c5323fb0b6b38dbf00eb5099c7bebc)
+
+## v1.0.0 - 2020-10-29
+
+### Commits
+
+- Implementation [`bbce57c`](https://github.com/ljharb/get-intrinsic/commit/bbce57c6f33d05b2d8d3efa273ceeb3ee01127bb)
+- Tests [`17b4f0d`](https://github.com/ljharb/get-intrinsic/commit/17b4f0d56dea6b4059b56fc30ef3ee4d9500ebc2)
+- Initial commit [`3153294`](https://github.com/ljharb/get-intrinsic/commit/31532948de363b0a27dd9fd4649e7b7028ec4b44)
+- npm init [`fb326c4`](https://github.com/ljharb/get-intrinsic/commit/fb326c4d2817c8419ec31de1295f06bb268a7902)
+- [meta] add Automatic Rebase and Require Allow Edits workflows [`48862fb`](https://github.com/ljharb/get-intrinsic/commit/48862fb2508c8f6a57968e6d08b7c883afc9d550)
+- [meta] add `auto-changelog` [`5f28ad0`](https://github.com/ljharb/get-intrinsic/commit/5f28ad019e060a353d8028f9f2591a9cc93074a1)
+- [meta] add "funding"; create `FUNDING.yml` [`c2bbdde`](https://github.com/ljharb/get-intrinsic/commit/c2bbddeba73a875be61484ee4680b129a6d4e0a1)
+- [Tests] add `npm run lint` [`0a84b98`](https://github.com/ljharb/get-intrinsic/commit/0a84b98b22b7cf7a748666f705b0003a493c35fd)
+- Only apps should have lockfiles [`9586c75`](https://github.com/ljharb/get-intrinsic/commit/9586c75866c1ee678e4d5d4dbbdef6997e511b05)
+©/index.jsÅ1¯'use strict';
+
+var undefined;
+
+var $SyntaxError = SyntaxError;
+var $Function = Function;
+var $TypeError = TypeError;
+
+// eslint-disable-next-line consistent-return
+var getEvalledConstructor = function (expressionSyntax) {
+	try {
+		return $Function('"use strict"; return (' + expressionSyntax + ').constructor;')();
+	} catch (e) {}
+};
+
+var $gOPD = Object.getOwnPropertyDescriptor;
+if ($gOPD) {
+	try {
+		$gOPD({}, '');
+	} catch (e) {
+		$gOPD = null; // this is IE 8, which has a broken gOPD
+	}
+}
+
+var throwTypeError = function () {
+	throw new $TypeError();
+};
+var ThrowTypeError = $gOPD
+	? (function () {
+		try {
+			// eslint-disable-next-line no-unused-expressions, no-caller, no-restricted-properties
+			arguments.callee; // IE 8 does not throw here
+			return throwTypeError;
+		} catch (calleeThrows) {
+			try {
+				// IE 8 throws on Object.getOwnPropertyDescriptor(arguments, '')
+				return $gOPD(arguments, 'callee').get;
+			} catch (gOPDthrows) {
+				return throwTypeError;
+			}
+		}
+	}())
+	: throwTypeError;
+
+var hasSymbols = require('has-symbols')();
+
+var getProto = Object.getPrototypeOf || function (x) { return x.__proto__; }; // eslint-disable-line no-proto
+
+var needsEval = {};
+
+var TypedArray = typeof Uint8Array === 'undefined' ? undefined : getProto(Uint8Array);
+
+var INTRINSICS = {
+	'%AggregateError%': typeof AggregateError === 'undefined' ? undefined : AggregateError,
+	'%Array%': Array,
+	'%ArrayBuffer%': typeof ArrayBuffer === 'undefined' ? undefined : ArrayBuffer,
+	'%ArrayIteratorPrototype%': hasSymbols ? getProto([][Symbol.iterator]()) : undefined,
+	'%AsyncFromSyncIteratorPrototype%': undefined,
+	'%AsyncFunction%': needsEval,
+	'%AsyncGenerator%': needsEval,
+	'%AsyncGeneratorFunction%': needsEval,
+	'%AsyncIteratorPrototype%': needsEval,
+	'%Atomics%': typeof Atomics === 'undefined' ? undefined : Atomics,
+	'%BigInt%': typeof BigInt === 'undefined' ? undefined : BigInt,
+	'%Boolean%': Boolean,
+	'%DataView%': typeof DataView === 'undefined' ? undefined : DataView,
+	'%Date%': Date,
+	'%decodeURI%': decodeURI,
+	'%decodeURIComponent%': decodeURIComponent,
+	'%encodeURI%': encodeURI,
+	'%encodeURIComponent%': encodeURIComponent,
+	'%Error%': Error,
+	'%eval%': eval, // eslint-disable-line no-eval
+	'%EvalError%': EvalError,
+	'%Float32Array%': typeof Float32Array === 'undefined' ? undefined : Float32Array,
+	'%Float64Array%': typeof Float64Array === 'undefined' ? undefined : Float64Array,
+	'%FinalizationRegistry%': typeof FinalizationRegistry === 'undefined' ? undefined : FinalizationRegistry,
+	'%Function%': $Function,
+	'%GeneratorFunction%': needsEval,
+	'%Int8Array%': typeof Int8Array === 'undefined' ? undefined : Int8Array,
+	'%Int16Array%': typeof Int16Array === 'undefined' ? undefined : Int16Array,
+	'%Int32Array%': typeof Int32Array === 'undefined' ? undefined : Int32Array,
+	'%isFinite%': isFinite,
+	'%isNaN%': isNaN,
+	'%IteratorPrototype%': hasSymbols ? getProto(getProto([][Symbol.iterator]())) : undefined,
+	'%JSON%': typeof JSON === 'object' ? JSON : undefined,
+	'%Map%': typeof Map === 'undefined' ? undefined : Map,
+	'%MapIteratorPrototype%': typeof Map === 'undefined' || !hasSymbols ? undefined : getProto(new Map()[Symbol.iterator]()),
+	'%Math%': Math,
+	'%Number%': Number,
+	'%Object%': Object,
+	'%parseFloat%': parseFloat,
+	'%parseInt%': parseInt,
+	'%Promise%': typeof Promise === 'undefined' ? undefined : Promise,
+	'%Proxy%': typeof Proxy === 'undefined' ? undefined : Proxy,
+	'%RangeError%': RangeError,
+	'%ReferenceError%': ReferenceError,
+	'%Reflect%': typeof Reflect === 'undefined' ? undefined : Reflect,
+	'%RegExp%': RegExp,
+	'%Set%': typeof Set === 'undefined' ? undefined : Set,
+	'%SetIteratorPrototype%': typeof Set === 'undefined' || !hasSymbols ? undefined : getProto(new Set()[Symbol.iterator]()),
+	'%SharedArrayBuffer%': typeof SharedArrayBuffer === 'undefined' ? undefined : SharedArrayBuffer,
+	'%String%': String,
+	'%StringIteratorPrototype%': hasSymbols ? getProto(''[Symbol.iterator]()) : undefined,
+	'%Symbol%': hasSymbols ? Symbol : undefined,
+	'%SyntaxError%': $SyntaxError,
+	'%ThrowTypeError%': ThrowTypeError,
+	'%TypedArray%': TypedArray,
+	'%TypeError%': $TypeError,
+	'%Uint8Array%': typeof Uint8Array === 'undefined' ? undefined : Uint8Array,
+	'%Uint8ClampedArray%': typeof Uint8ClampedArray === 'undefined' ? undefined : Uint8ClampedArray,
+	'%Uint16Array%': typeof Uint16Array === 'undefined' ? undefined : Uint16Array,
+	'%Uint32Array%': typeof Uint32Array === 'undefined' ? undefined : Uint32Array,
+	'%URIError%': URIError,
+	'%WeakMap%': typeof WeakMap === 'undefined' ? undefined : WeakMap,
+	'%WeakRef%': typeof WeakRef === 'undefined' ? undefined : WeakRef,
+	'%WeakSet%': typeof WeakSet === 'undefined' ? undefined : WeakSet
+};
+
+var doEval = function doEval(name) {
+	var value;
+	if (name === '%AsyncFunction%') {
+		value = getEvalledConstructor('async function () {}');
+	} else if (name === '%GeneratorFunction%') {
+		value = getEvalledConstructor('function* () {}');
+	} else if (name === '%AsyncGeneratorFunction%') {
+		value = getEvalledConstructor('async function* () {}');
+	} else if (name === '%AsyncGenerator%') {
+		var fn = doEval('%AsyncGeneratorFunction%');
+		if (fn) {
+			value = fn.prototype;
+		}
+	} else if (name === '%AsyncIteratorPrototype%') {
+		var gen = doEval('%AsyncGenerator%');
+		if (gen) {
+			value = getProto(gen.prototype);
+		}
+	}
+
+	INTRINSICS[name] = value;
+
+	return value;
+};
+
+var LEGACY_ALIASES = {
+	'%ArrayBufferPrototype%': ['ArrayBuffer', 'prototype'],
+	'%ArrayPrototype%': ['Array', 'prototype'],
+	'%ArrayProto_entries%': ['Array', 'prototype', 'entries'],
+	'%ArrayProto_forEach%': ['Array', 'prototype', 'forEach'],
+	'%ArrayProto_keys%': ['Array', 'prototype', 'keys'],
+	'%ArrayProto_values%': ['Array', 'prototype', 'values'],
+	'%AsyncFunctionPrototype%': ['AsyncFunction', 'prototype'],
+	'%AsyncGenerator%': ['AsyncGeneratorFunction', 'prototype'],
+	'%AsyncGeneratorPrototype%': ['AsyncGeneratorFunction', 'prototype', 'prototype'],
+	'%BooleanPrototype%': ['Boolean', 'prototype'],
+	'%DataViewPrototype%': ['DataView', 'prototype'],
+	'%DatePrototype%': ['Date', 'prototype'],
+	'%ErrorPrototype%': ['Error', 'prototype'],
+	'%EvalErrorPrototype%': ['EvalError', 'prototype'],
+	'%Float32ArrayPrototype%': ['Float32Array', 'prototype'],
+	'%Float64ArrayPrototype%': ['Float64Array', 'prototype'],
+	'%FunctionPrototype%': ['Function', 'prototype'],
+	'%Generator%': ['GeneratorFunction', 'prototype'],
+	'%GeneratorPrototype%': ['GeneratorFunction', 'prototype', 'prototype'],
+	'%Int8ArrayPrototype%': ['Int8Array', 'prototype'],
+	'%Int16ArrayPrototype%': ['Int16Array', 'prototype'],
+	'%Int32ArrayPrototype%': ['Int32Array', 'prototype'],
+	'%JSONParse%': ['JSON', 'parse'],
+	'%JSONStringify%': ['JSON', 'stringify'],
+	'%MapPrototype%': ['Map', 'prototype'],
+	'%NumberPrototype%': ['Number', 'prototype'],
+	'%ObjectPrototype%': ['Object', 'prototype'],
+	'%ObjProto_toString%': ['Object', 'prototype', 'toString'],
+	'%ObjProto_valueOf%': ['Object', 'prototype', 'valueOf'],
+	'%PromisePrototype%': ['Promise', 'prototype'],
+	'%PromiseProto_then%': ['Promise', 'prototype', 'then'],
+	'%Promise_all%': ['Promise', 'all'],
+	'%Promise_reject%': ['Promise', 'reject'],
+	'%Promise_resolve%': ['Promise', 'resolve'],
+	'%RangeErrorPrototype%': ['RangeError', 'prototype'],
+	'%ReferenceErrorPrototype%': ['ReferenceError', 'prototype'],
+	'%RegExpPrototype%': ['RegExp', 'prototype'],
+	'%SetPrototype%': ['Set', 'prototype'],
+	'%SharedArrayBufferPrototype%': ['SharedArrayBuffer', 'prototype'],
+	'%StringPrototype%': ['String', 'prototype'],
+	'%SymbolPrototype%': ['Symbol', 'prototype'],
+	'%SyntaxErrorPrototype%': ['SyntaxError', 'prototype'],
+	'%TypedArrayPrototype%': ['TypedArray', 'prototype'],
+	'%TypeErrorPrototype%': ['TypeError', 'prototype'],
+	'%Uint8ArrayPrototype%': ['Uint8Array', 'prototype'],
+	'%Uint8ClampedArrayPrototype%': ['Uint8ClampedArray', 'prototype'],
+	'%Uint16ArrayPrototype%': ['Uint16Array', 'prototype'],
+	'%Uint32ArrayPrototype%': ['Uint32Array', 'prototype'],
+	'%URIErrorPrototype%': ['URIError', 'prototype'],
+	'%WeakMapPrototype%': ['WeakMap', 'prototype'],
+	'%WeakSetPrototype%': ['WeakSet', 'prototype']
+};
+
+var bind = require('function-bind');
+var hasOwn = require('has');
+var $concat = bind.call(Function.call, Array.prototype.concat);
+var $spliceApply = bind.call(Function.apply, Array.prototype.splice);
+var $replace = bind.call(Function.call, String.prototype.replace);
+var $strSlice = bind.call(Function.call, String.prototype.slice);
+var $exec = bind.call(Function.call, RegExp.prototype.exec);
+
+/* adapted from https://github.com/lodash/lodash/blob/4.17.15/dist/lodash.js#L6735-L6744 */
+var rePropName = /[^%.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|%$))/g;
+var reEscapeChar = /\\(\\)?/g; /** Used to match backslashes in property paths. */
+var stringToPath = function stringToPath(string) {
+	var first = $strSlice(string, 0, 1);
+	var last = $strSlice(string, -1);
+	if (first === '%' && last !== '%') {
+		throw new $SyntaxError('invalid intrinsic syntax, expected closing `%`');
+	} else if (last === '%' && first !== '%') {
+		throw new $SyntaxError('invalid intrinsic syntax, expected opening `%`');
+	}
+	var result = [];
+	$replace(string, rePropName, function (match, number, quote, subString) {
+		result[result.length] = quote ? $replace(subString, reEscapeChar, '$1') : number || match;
+	});
+	return result;
+};
+/* end adaptation */
+
+var getBaseIntrinsic = function getBaseIntrinsic(name, allowMissing) {
+	var intrinsicName = name;
+	var alias;
+	if (hasOwn(LEGACY_ALIASES, intrinsicName)) {
+		alias = LEGACY_ALIASES[intrinsicName];
+		intrinsicName = '%' + alias[0] + '%';
+	}
+
+	if (hasOwn(INTRINSICS, intrinsicName)) {
+		var value = INTRINSICS[intrinsicName];
+		if (value === needsEval) {
+			value = doEval(intrinsicName);
+		}
+		if (typeof value === 'undefined' && !allowMissing) {
+			throw new $TypeError('intrinsic ' + name + ' exists, but is not available. Please file an issue!');
+		}
+
+		return {
+			alias: alias,
+			name: intrinsicName,
+			value: value
+		};
+	}
+
+	throw new $SyntaxError('intrinsic ' + name + ' does not exist!');
+};
+
+module.exports = function GetIntrinsic(name, allowMissing) {
+	if (typeof name !== 'string' || name.length === 0) {
+		throw new $TypeError('intrinsic name must be a non-empty string');
+	}
+	if (arguments.length > 1 && typeof allowMissing !== 'boolean') {
+		throw new $TypeError('"allowMissing" argument must be a boolean');
+	}
+
+	if ($exec(/^%?[^%]*%?$/, name) === null) {
+		throw new $SyntaxError('`%` may not be present anywhere but at the beginning and end of the intrinsic name');
+	}
+	var parts = stringToPath(name);
+	var intrinsicBaseName = parts.length > 0 ? parts[0] : '';
+
+	var intrinsic = getBaseIntrinsic('%' + intrinsicBaseName + '%', allowMissing);
+	var intrinsicRealName = intrinsic.name;
+	var value = intrinsic.value;
+	var skipFurtherCaching = false;
+
+	var alias = intrinsic.alias;
+	if (alias) {
+		intrinsicBaseName = alias[0];
+		$spliceApply(parts, $concat([0, 1], alias));
+	}
+
+	for (var i = 1, isOwn = true; i < parts.length; i += 1) {
+		var part = parts[i];
+		var first = $strSlice(part, 0, 1);
+		var last = $strSlice(part, -1);
+		if (
+			(
+				(first === '"' || first === "'" || first === '`')
+				|| (last === '"' || last === "'" || last === '`')
+			)
+			&& first !== last
+		) {
+			throw new $SyntaxError('property names with quotes must have matching quotes');
+		}
+		if (part === 'constructor' || !isOwn) {
+			skipFurtherCaching = true;
+		}
+
+		intrinsicBaseName += '.' + part;
+		intrinsicRealName = '%' + intrinsicBaseName + '%';
+
+		if (hasOwn(INTRINSICS, intrinsicRealName)) {
+			value = INTRINSICS[intrinsicRealName];
+		} else if (value != null) {
+			if (!(part in value)) {
+				if (!allowMissing) {
+					throw new $TypeError('base intrinsic for ' + name + ' exists, but the property is not available.');
+				}
+				return void undefined;
+			}
+			if ($gOPD && (i + 1) >= parts.length) {
+				var desc = $gOPD(value, part);
+				isOwn = !!desc;
+
+				// By convention, when a data property is converted to an accessor
+				// property to emulate a data property that does not suffer from
+				// the override mistake, that accessor's getter is marked with
+				// an `originalValue` property. Here, when we detect this, we
+				// uphold the illusion by pretending to see that original data
+				// property, i.e., returning the value rather than the getter
+				// itself.
+				if (isOwn && 'get' in desc && !('originalValue' in desc.get)) {
+					value = desc.get;
+				} else {
+					value = value[part];
+				}
+			} else {
+				isOwn = hasOwn(value, part);
+				value = value[part];
+			}
+
+			if (isOwn && !skipFurtherCaching) {
+				INTRINSICS[intrinsicRealName] = value;
+			}
+		}
+	}
+	return value;
+};
+ª/README.mdÅ
+ç# get-intrinsic <sup>[![Version Badge][npm-version-svg]][package-url]</sup>
+
+[![github actions][actions-image]][actions-url]
+[![coverage][codecov-image]][codecov-url]
+[![dependency status][deps-svg]][deps-url]
+[![dev dependency status][dev-deps-svg]][dev-deps-url]
+[![License][license-image]][license-url]
+[![Downloads][downloads-image]][downloads-url]
+
+[![npm badge][npm-badge-png]][package-url]
+
+Get and robustly cache all JS language-level intrinsics at first require time.
+
+See the syntax described [in the JS spec](https://tc39.es/ecma262/#sec-well-known-intrinsic-objects) for reference.
+
+## Example
+
+```js
+var GetIntrinsic = require('get-intrinsic');
+var assert = require('assert');
+
+// static methods
+assert.equal(GetIntrinsic('%Math.pow%'), Math.pow);
+assert.equal(Math.pow(2, 3), 8);
+assert.equal(GetIntrinsic('%Math.pow%')(2, 3), 8);
+delete Math.pow;
+assert.equal(GetIntrinsic('%Math.pow%')(2, 3), 8);
+
+// instance methods
+var arr = [1];
+assert.equal(GetIntrinsic('%Array.prototype.push%'), Array.prototype.push);
+assert.deepEqual(arr, [1]);
+
+arr.push(2);
+assert.deepEqual(arr, [1, 2]);
+
+GetIntrinsic('%Array.prototype.push%').call(arr, 3);
+assert.deepEqual(arr, [1, 2, 3]);
+
+delete Array.prototype.push;
+GetIntrinsic('%Array.prototype.push%').call(arr, 4);
+assert.deepEqual(arr, [1, 2, 3, 4]);
+
+// missing features
+delete JSON.parse; // to simulate a real intrinsic that is missing in the environment
+assert.throws(() => GetIntrinsic('%JSON.parse%'));
+assert.equal(undefined, GetIntrinsic('%JSON.parse%', true));
+```
+
+## Tests
+Simply clone the repo, `npm install`, and run `npm test`
+
+## Security
+
+Please email [@ljharb](https://github.com/ljharb) or see https://tidelift.com/security if you have a potential security vulnerability to report.
+
+[package-url]: https://npmjs.org/package/get-intrinsic
+[npm-version-svg]: https://versionbadg.es/ljharb/get-intrinsic.svg
+[deps-svg]: https://david-dm.org/ljharb/get-intrinsic.svg
+[deps-url]: https://david-dm.org/ljharb/get-intrinsic
+[dev-deps-svg]: https://david-dm.org/ljharb/get-intrinsic/dev-status.svg
+[dev-deps-url]: https://david-dm.org/ljharb/get-intrinsic#info=devDependencies
+[npm-badge-png]: https://nodei.co/npm/get-intrinsic.png?downloads=true&stars=true
+[license-image]: https://img.shields.io/npm/l/get-intrinsic.svg
+[license-url]: LICENSE
+[downloads-image]: https://img.shields.io/npm/dm/get-intrinsic.svg
+[downloads-url]: https://npm-stat.com/charts.html?package=get-intrinsic
+[codecov-image]: https://codecov.io/gh/ljharb/get-intrinsic/branch/main/graphs/badge.svg
+[codecov-url]: https://app.codecov.io/gh/ljharb/get-intrinsic/
+[actions-image]: https://img.shields.io/endpoint?url=https://github-actions-badge-u3jn4tfpocch.runkit.sh/ljharb/get-intrinsic
+[actions-url]: https://github.com/ljharb/get-intrinsic/actions
+­/package.jsonÅ	{
+	"name": "get-intrinsic",
+	"version": "1.1.3",
+	"description": "Get and robustly cache all JS language-level intrinsics at first require time",
+	"main": "index.js",
+	"exports": {
+		".": [
+			{
+				"default": "./index.js"
+			},
+			"./index.js"
+		],
+		"./package.json": "./package.json"
+	},
+	"scripts": {
+		"prepack": "npmignore --auto --commentLines=autogenerated",
+		"prepublish": "not-in-publish || npm run prepublishOnly",
+		"prepublishOnly": "safe-publish-latest",
+		"prelint": "evalmd README.md",
+		"lint": "eslint --ext=.js,.mjs .",
+		"pretest": "npm run lint",
+		"tests-only": "nyc tape 'test/**/*.js'",
+		"test": "npm run tests-only",
+		"posttest": "aud --production",
+		"version": "auto-changelog && git add CHANGELOG.md",
+		"postversion": "auto-changelog && git add CHANGELOG.md && git commit --no-edit --amend && git tag -f \"v$(node -e \"console.log(require('./package.json').version)\")\""
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ljharb/get-intrinsic.git"
+	},
+	"keywords": [
+		"javascript",
+		"ecmascript",
+		"es",
+		"js",
+		"intrinsic",
+		"getintrinsic",
+		"es-abstract"
+	],
+	"author": "Jordan Harband <ljharb@gmail.com>",
+	"funding": {
+		"url": "https://github.com/sponsors/ljharb"
+	},
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/ljharb/get-intrinsic/issues"
+	},
+	"homepage": "https://github.com/ljharb/get-intrinsic#readme",
+	"devDependencies": {
+		"@ljharb/eslint-config": "^21.0.0",
+		"aud": "^2.0.0",
+		"auto-changelog": "^2.4.0",
+		"call-bind": "^1.0.2",
+		"es-abstract": "^1.20.2",
+		"es-value-fixtures": "^1.4.2",
+		"eslint": "=8.8.0",
+		"evalmd": "^0.0.19",
+		"for-each": "^0.3.3",
+		"make-async-function": "^1.0.0",
+		"make-async-generator-function": "^1.0.0",
+		"make-generator-function": "^2.0.0",
+		"mock-property": "^1.0.0",
+		"npmignore": "^0.3.0",
+		"nyc": "^10.3.2",
+		"object-inspect": "^1.12.2",
+		"safe-publish-latest": "^2.0.0",
+		"tape": "^5.6.0"
+	},
+	"auto-changelog": {
+		"output": "CHANGELOG.md",
+		"template": "keepachangelog",
+		"unreleased": false,
+		"commitLimit": false,
+		"backfillLimit": false,
+		"hideCredit": true
+	},
+	"dependencies": {
+		"function-bind": "^1.1.1",
+		"has": "^1.0.3",
+		"has-symbols": "^1.0.3"
+	},
+	"testling": {
+		"files": "test/GetIntrinsic.js"
+	},
+	"publishConfig": {
+		"ignore": [
+			".github/workflows"
+		]
+	}
+}
+´/.github/FUNDING.ymlÅH# These are supported funding model platforms
+
+github: [ljharb]
+patreon: # Replace with a single Patreon username
+open_collective: # Replace with a single Open Collective username
+ko_fi: # Replace with a single Ko-fi username
+tidelift: npm/get-intrinsic
+community_bridge: # Replace with a single Community Bridge project-name e.g., cloud-foundry
+liberapay: # Replace with a single Liberapay username
+issuehunt: # Replace with a single IssueHunt username
+otechie: # Replace with a single Otechie username
+custom: # Replace with up to 4 custom sponsorship URLs e.g., ['link1', 'link2']
+ª/.eslintrcÅI{
+	"root": true,
+
+	"extends": "@ljharb",
+
+	"env": {
+		"es6": true,
+		"es2017": true,
+		"es2020": true,
+		"es2021": true,
+		"es2022": true,
+	},
+
+	"rules": {
+		"array-bracket-newline": 0,
+		"complexity": 0,
+		"eqeqeq": [2, "allow-null"],
+		"func-name-matching": 0,
+		"id-length": 0,
+		"max-lines-per-function": [2, 90],
+		"max-params": [2, 4],
+		"max-statements": 0,
+		"max-statements-per-line": [2, { "max": 2 }],
+		"multiline-comment-style": 0,
+		"no-magic-numbers": 0,
+		"sort-keys": 0,
+	},
+
+	"overrides": [
+		{
+			"files": "test/**",
+			"rules": {
+				"new-cap": 0,
+			},
+		},
+	],
+}
+¨/LICENSEÅ/MIT License
+
+Copyright (c) 2020 Jordan Harband
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

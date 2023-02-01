@@ -1,0 +1,254 @@
+Ü®/LICENSE≈·Copyright (c) 2016, Daniel Wirtz  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+* Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution.
+* Neither the name of its author, nor the names of its contributors
+  may be used to endorse or promote products derived from this software
+  without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+™/README.md≈–@protobufjs/aspromise
+=====================
+[![npm](https://img.shields.io/npm/v/@protobufjs/aspromise.svg)](https://www.npmjs.com/package/@protobufjs/aspromise)
+
+Returns a promise from a node-style callback function.
+
+API
+---
+
+* **asPromise(fn: `function`, ctx: `Object`, ...params: `*`): `Promise<*>`**<br />
+  Returns a promise from a node-style callback function.
+
+**License:** [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause)
+≠/package.json≈E{
+  "name": "@protobufjs/aspromise",
+  "description": "Returns a promise from a node-style callback function.",
+  "version": "1.1.2",
+  "author": "Daniel Wirtz <dcode+protobufjs@dcode.io>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dcodeIO/protobuf.js.git"
+  },
+  "license": "BSD-3-Clause",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "devDependencies": {
+    "istanbul": "^0.4.5",
+    "tape": "^4.6.3"
+  },
+  "scripts": {
+    "test": "tape tests/*.js",
+    "coverage": "istanbul cover node_modules/tape/bin/tape tests/*.js"
+  }
+}©/index.js≈8"use strict";
+module.exports = asPromise;
+
+/**
+ * Callback as used by {@link util.asPromise}.
+ * @typedef asPromiseCallback
+ * @type {function}
+ * @param {Error|null} error Error, if any
+ * @param {...*} params Additional arguments
+ * @returns {undefined}
+ */
+
+/**
+ * Returns a promise from a node-style callback function.
+ * @memberof util
+ * @param {asPromiseCallback} fn Function to call
+ * @param {*} ctx Function context
+ * @param {...*} params Function arguments
+ * @returns {Promise<*>} Promisified function
+ */
+function asPromise(fn, ctx/*, varargs */) {
+    var params  = new Array(arguments.length - 1),
+        offset  = 0,
+        index   = 2,
+        pending = true;
+    while (index < arguments.length)
+        params[offset++] = arguments[index++];
+    return new Promise(function executor(resolve, reject) {
+        params[offset] = function callback(err/*, varargs */) {
+            if (pending) {
+                pending = false;
+                if (err)
+                    reject(err);
+                else {
+                    var params = new Array(arguments.length - 1),
+                        offset = 0;
+                    while (offset < params.length)
+                        params[offset++] = arguments[offset];
+                    resolve.apply(null, params);
+                }
+            }
+        };
+        try {
+            fn.apply(ctx || null, params);
+        } catch (err) {
+            if (pending) {
+                pending = false;
+                reject(err);
+            }
+        }
+    });
+}
+´/index.d.ts≈ export = asPromise;
+
+type asPromiseCallback = (error: Error | null, ...params: any[]) => {};
+
+/**
+ * Returns a promise from a node-style callback function.
+ * @memberof util
+ * @param {asPromiseCallback} fn Function to call
+ * @param {*} ctx Function context
+ * @param {...*} params Function arguments
+ * @returns {Promise<*>} Promisified function
+ */
+declare function asPromise(fn: asPromiseCallback, ctx: any, ...params: any[]): Promise<any>;
+Ø/tests/index.js≈gvar tape = require("tape");
+
+var asPromise = require("..");
+
+tape.test("aspromise", function(test) {
+
+    test.test(this.name + " - resolve", function(test) {
+
+        function fn(arg1, arg2, callback) {
+            test.equal(this, ctx, "function should be called with this = ctx");
+            test.equal(arg1, 1, "function should be called with arg1 = 1");
+            test.equal(arg2, 2, "function should be called with arg2 = 2");
+            callback(null, arg2);
+        }
+
+        var ctx = {};
+
+        var promise = asPromise(fn, ctx, 1, 2);
+        promise.then(function(arg2) {
+            test.equal(arg2, 2, "promise should be resolved with arg2 = 2");
+            test.end();
+        }).catch(function(err) {
+            test.fail("promise should not be rejected (" + err + ")");
+        });
+    });
+
+    test.test(this.name + " - reject", function(test) {
+
+        function fn(arg1, arg2, callback) {
+            test.equal(this, ctx, "function should be called with this = ctx");
+            test.equal(arg1, 1, "function should be called with arg1 = 1");
+            test.equal(arg2, 2, "function should be called with arg2 = 2");
+            callback(arg1);
+        }
+
+        var ctx = {};
+
+        var promise = asPromise(fn, ctx, 1, 2);
+        promise.then(function() {
+            test.fail("promise should not be resolved");
+        }).catch(function(err) {
+            test.equal(err, 1, "promise should be rejected with err = 1");
+            test.end();
+        });
+    });
+
+    test.test(this.name + " - resolve twice", function(test) {
+
+        function fn(arg1, arg2, callback) {
+            test.equal(this, ctx, "function should be called with this = ctx");
+            test.equal(arg1, 1, "function should be called with arg1 = 1");
+            test.equal(arg2, 2, "function should be called with arg2 = 2");
+            callback(null, arg2);
+            callback(null, arg1);
+        }
+
+        var ctx = {};
+        var count = 0;
+
+        var promise = asPromise(fn, ctx, 1, 2);
+        promise.then(function(arg2) {
+            test.equal(arg2, 2, "promise should be resolved with arg2 = 2");
+            if (++count > 1)
+                test.fail("promise should not be resolved twice");
+            test.end();
+        }).catch(function(err) {
+            test.fail("promise should not be rejected (" + err + ")");
+        });
+    });
+
+    test.test(this.name + " - reject twice", function(test) {
+
+        function fn(arg1, arg2, callback) {
+            test.equal(this, ctx, "function should be called with this = ctx");
+            test.equal(arg1, 1, "function should be called with arg1 = 1");
+            test.equal(arg2, 2, "function should be called with arg2 = 2");
+            callback(arg1);
+            callback(arg2);
+        }
+
+        var ctx = {};
+        var count = 0;
+
+        var promise = asPromise(fn, ctx, 1, 2);
+        promise.then(function() {
+            test.fail("promise should not be resolved");
+        }).catch(function(err) {
+            test.equal(err, 1, "promise should be rejected with err = 1");
+            if (++count > 1)
+                test.fail("promise should not be rejected twice");
+            test.end();
+        });
+    });
+
+    test.test(this.name + " - reject error", function(test) {
+
+        function fn(callback) {
+            test.ok(arguments.length === 1 && typeof callback === "function", "function should be called with just a callback");
+            throw 3;
+        }
+
+        var promise = asPromise(fn, null);
+        promise.then(function() {
+            test.fail("promise should not be resolved");
+        }).catch(function(err) {
+            test.equal(err, 3, "promise should be rejected with err = 3");
+            test.end();
+        });
+    });
+
+    test.test(this.name + " - reject and error", function(test) {
+
+        function fn(callback) {
+            callback(3);
+            throw 4;
+        }
+
+        var count = 0;
+
+        var promise = asPromise(fn, null);
+        promise.then(function() {
+            test.fail("promise should not be resolved");
+        }).catch(function(err) {
+            test.equal(err, 3, "promise should be rejected with err = 3");
+            if (++count > 1)
+                test.fail("promise should not be rejected twice");
+            test.end();
+        });
+    });
+});

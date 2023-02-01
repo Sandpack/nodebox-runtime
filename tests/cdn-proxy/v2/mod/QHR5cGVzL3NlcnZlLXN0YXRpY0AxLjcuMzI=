@@ -1,0 +1,151 @@
+„ª/README.mdÅ# Installation
+> `npm install --save @types/serve-static`
+
+# Summary
+This package contains type definitions for serve-static (https://github.com/expressjs/serve-static).
+
+# Details
+Files were exported from https://www.github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/serve-static
+
+Additional Details
+ * Last updated: Mon, 21 Aug 2017 22:03:22 GMT
+ * Dependencies: express-serve-static-core, mime
+ * Global values: none
+
+# Credits
+These definitions were written by Uros Smolnik <https://github.com/urossmolnik>.
+¨/LICENSEÅŠ    MIT License
+
+    Copyright (c) Microsoft Corporation. All rights reserved.
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE
+«/index.d.tsÅÉ// Type definitions for serve-static 1.7.1
+// Project: https://github.com/expressjs/serve-static
+// Definitions by: Uros Smolnik <https://github.com/urossmolnik>
+// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
+
+/* =================== USAGE ===================
+
+    import * as serveStatic from "serve-static";
+    app.use(serveStatic("public/ftp", {"index": ["default.html", "default.htm"]}))
+
+ =============================================== */
+
+/// <reference types="express-serve-static-core" />
+
+import * as express from "express-serve-static-core";
+import * as m from "mime";
+
+/**
+ * Create a new middleware function to serve files from within a given root directory.
+ * The file to serve will be determined by combining req.url with the provided root directory.
+ * When a file is not found, instead of sending a 404 response, this module will instead call next() to move on to the next middleware, allowing for stacking and fall-backs.
+ */
+declare function serveStatic(root: string, options?: serveStatic.ServeStaticOptions): express.Handler;
+
+declare namespace serveStatic {
+    var mime: typeof m;
+    interface ServeStaticOptions {
+        /**
+         * Set how "dotfiles" are treated when encountered. A dotfile is a file or directory that begins with a dot (".").
+         * Note this check is done on the path itself without checking if the path actually exists on the disk.
+         * If root is specified, only the dotfiles above the root are checked (i.e. the root itself can be within a dotfile when when set to "deny").
+         * The default value is 'ignore'.
+         * 'allow' No special treatment for dotfiles
+         * 'deny' Send a 403 for any request for a dotfile
+         * 'ignore' Pretend like the dotfile does not exist and call next()
+         */
+        dotfiles?: string;
+
+        /**
+         * Enable or disable etag generation, defaults to true.
+         */
+        etag?: boolean;
+
+        /**
+         * Set file extension fallbacks. When set, if a file is not found, the given extensions will be added to the file name and search for.
+         * The first that exists will be served. Example: ['html', 'htm'].
+         * The default value is false.
+         */
+        extensions?: string[];
+
+        /**
+         * Let client errors fall-through as unhandled requests, otherwise forward a client error.
+         * The default value is false.
+         */
+        fallthrough?: boolean;
+
+        /**
+         * By default this module will send "index.html" files in response to a request on a directory.
+         * To disable this set false or to supply a new index pass a string or an array in preferred order.
+         */
+        index?: boolean | string | string[];
+
+        /**
+         * Enable or disable Last-Modified header, defaults to true. Uses the file system's last modified value.
+         */
+        lastModified?: boolean;
+
+        /**
+         * Provide a max-age in milliseconds for http caching, defaults to 0. This can also be a string accepted by the ms module.
+         */
+        maxAge?: number | string;
+
+        /**
+         * Redirect to trailing "/" when the pathname is a dir. Defaults to true.
+         */
+        redirect?: boolean;
+
+        /**
+         * Function to set custom headers on response. Alterations to the headers need to occur synchronously.
+         * The function is called as fn(res, path, stat), where the arguments are:
+         * res the response object
+         * path the file path that is being sent
+         * stat the stat object of the file that is being sent
+         */
+        setHeaders?: (res: express.Response, path: string, stat: any) => any;
+    }
+    function serveStatic(root: string, options?: ServeStaticOptions): express.Handler;
+}
+
+export = serveStatic;
+­/package.jsonÅª{
+    "name": "@types/serve-static",
+    "version": "1.7.32",
+    "description": "TypeScript definitions for serve-static",
+    "license": "MIT",
+    "contributors": [
+        {
+            "name": "Uros Smolnik",
+            "url": "https://github.com/urossmolnik"
+        }
+    ],
+    "main": "",
+    "repository": {
+        "type": "git",
+        "url": "https://www.github.com/DefinitelyTyped/DefinitelyTyped.git"
+    },
+    "scripts": {},
+    "dependencies": {
+        "@types/express-serve-static-core": "*",
+        "@types/mime": "*"
+    },
+    "typesPublisherContentHash": "c0dac04127ff734150c992cc697e39e0374266604258bd6663a3c651531a9066",
+    "typeScriptVersion": "2.0"
+}

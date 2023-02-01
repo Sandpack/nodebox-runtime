@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Nodebox</title>
+  </head>
+  <body class="md:flex" style="border-top: 4px solid #028922">
+    <aside class="md:max-w-sm md:w-full md:h-screen p-10 flex flex-col gap-4">
+      <h1 class="text-4xl font-medium">Nodebox</h1>
+
+      <div class="p-2 border rounded mt-1 flex">
+        <select class="w-full" id="use-cases"></select>
+        <button style="color: #028922" class="hover:text-sky-600 font-medium py-1 px-3 rounded text-sm leading-tight" id="run">Run</button>
+        <button class="text-gray-600 hover:text-gray-800 py-1 px-3 rounded text-sm leading-tight" id="kill">
+          Kill
+        </button>
+      </div>
+
+      <div class="px-2">
+        <table class="text-sm font-light w-full" style="color: #0e0e0e">
+          <tr>
+            <td>Dependencies:</td>
+            <td id="timedependencies" class="tabular-nums text-right"><span></span></td>
+          </tr>
+          <tr>
+            <td class="font-medium">Total: </td>
+            <td id="timetotal" class="tabular-nums text-right"><span></span></td>
+          </tr>
+        </table>
+      </div>
+
+      <h2 class="mt-2 font-medium">Dependencies <span id="total-dependencies"></h2>
+      <div class="overflow-auto mt-1 text-sm">
+        <pre id="dependencies"></pre>
+      </div>
+    </aside>
+    
+    <main class="h-96 md:w-full md:h-screen pt-10">
+      <iframe id="frame" style="width: 100%; height: 100%" sandbox="allow-scripts allow-same-origin"></iframe>
+    </main>
+
+    <script src="./consumer.js"></script>
+    <script>
+      // Auto-enable debug logs, in case it hasn't been set
+      if (localStorage['CSB_EMULATOR_DEBUG'] === undefined) {
+        localStorage['CSB_EMULATOR_DEBUG'] = true;
+      }
+
+      /**
+       * User interface
+       */
+      const select = document.querySelector('#use-cases');
+      const exitButton = document.querySelector('#kill');
+      const runButton = document.querySelector('#run');
+      const dependenciesArea = document.querySelector('#dependencies');
+      const timeLoadParagraph = document.querySelector('#timetotal span');
+      const timeLoadDepParagraph = document.querySelector('#timedependencies span');
+      const totalDependencies = document.querySelector("#total-dependencies")
+
+      let timer;
+
+      templates.forEach(({ exampleName }) => {
+        const opt = document.createElement('option');
+        opt.text = exampleName;
+
+        select.appendChild(opt);
+      });
+
+      select.value = localStorage['CSB_EMULATOR_PLAYGROUND_OPT'];
+
+      const clean = () => {
+        dependenciesArea.innerText = '';
+        timeLoadParagraph.innerText = '';
+        timeLoadDepParagraph.innerText = '';
+      };
+
+      runButton.addEventListener('click', () => {
+        clean();
+        localStorage['CSB_EMULATOR_PLAYGROUND_OPT'] = select.value;
+
+        const func = templates.find((item) => item.exampleName === select.value);
+        eval(func.content);
+        window.runExample(window.emulatorUrl);
+
+        timer = new Date().getTime();
+      });
+
+      const onShellProcessAvailable = (shellProcess) => {
+        let initialTotalPending
+        shellProcess.on('progress', (data) => {
+          if (data.state === 'downloaded_module') {
+            dependenciesArea.innerText = dependenciesArea.innerText.trim() + `\n${data.totalPending} ${data.name.trim()}`;
+            
+            if(!initialTotalPending) {
+              initialTotalPending = data.totalPending
+            }
+
+            if (data.totalPending === 1) {
+              timeLoadDepParagraph.innerText = new Date().getTime() - timer + 'ms';
+            }
+            
+            totalDependencies.innerText = `(${initialTotalPending +1 - data.totalPending}/${initialTotalPending})`
+          }
+        });
+
+        shellProcess.stdout.on("data", (data) => {
+          timeLoadParagraph.innerText = new Date().getTime() - timer + 'ms';
+        });
+
+        exitButton.addEventListener('click', () => {
+          shellProcess.kill();
+          clean();
+        });
+      };
+    </script>
+  </body>
+</html>

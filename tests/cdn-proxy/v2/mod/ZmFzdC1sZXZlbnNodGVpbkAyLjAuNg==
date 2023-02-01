@@ -1,0 +1,304 @@
+„­/package.jsonÅæ{
+  "name": "fast-levenshtein",
+  "version": "2.0.6",
+  "description": "Efficient implementation of Levenshtein algorithm  with locale-specific collator support.",
+  "main": "levenshtein.js",
+  "files": [
+    "levenshtein.js"
+  ],
+  "scripts": {
+    "build": "grunt build",
+    "prepublish": "npm run build",
+    "benchmark": "grunt benchmark",
+    "test": "mocha"
+  },
+  "devDependencies": {
+    "chai": "~1.5.0",
+    "grunt": "~0.4.1",
+    "grunt-benchmark": "~0.2.0",
+    "grunt-cli": "^1.2.0",
+    "grunt-contrib-jshint": "~0.4.3",
+    "grunt-contrib-uglify": "~0.2.0",
+    "grunt-mocha-test": "~0.2.2",
+    "grunt-npm-install": "~0.1.0",
+    "load-grunt-tasks": "~0.6.0",
+    "lodash": "^4.0.1",
+    "mocha": "~1.9.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hiddentao/fast-levenshtein.git"
+  },
+  "keywords": [
+    "levenshtein",
+    "distance",
+    "string"
+  ],
+  "author": "Ramesh Nair <ram@hiddentao.com> (http://www.hiddentao.com/)",
+  "license": "MIT"
+}
+ª/README.mdÅV# fast-levenshtein - Levenshtein algorithm in Javascript
+
+[![Build Status](https://secure.travis-ci.org/hiddentao/fast-levenshtein.png)](http://travis-ci.org/hiddentao/fast-levenshtein)
+[![NPM module](https://badge.fury.io/js/fast-levenshtein.png)](https://badge.fury.io/js/fast-levenshtein)
+[![NPM downloads](https://img.shields.io/npm/dm/fast-levenshtein.svg?maxAge=2592000)](https://www.npmjs.com/package/fast-levenshtein)
+[![Follow on Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Follow&maxAge=2592000)](https://twitter.com/hiddentao)
+
+An efficient Javascript implementation of the [Levenshtein algorithm](http://en.wikipedia.org/wiki/Levenshtein_distance) with locale-specific collator support.
+
+## Features
+
+* Works in node.js and in the browser.
+* Better performance than other implementations by not needing to store the whole matrix ([more info](http://www.codeproject.com/Articles/13525/Fast-memory-efficient-Levenshtein-algorithm)).
+* Locale-sensitive string comparisions if needed.
+* Comprehensive test suite and performance benchmark.
+* Small: <1 KB minified and gzipped
+
+## Installation
+
+### node.js
+
+Install using [npm](http://npmjs.org/):
+
+```bash
+$ npm install fast-levenshtein
+```
+
+### Browser
+
+Using bower:
+
+```bash
+$ bower install fast-levenshtein
+```
+
+If you are not using any module loader system then the API will then be accessible via the `window.Levenshtein` object.
+
+## Examples
+
+**Default usage**
+
+```javascript
+var levenshtein = require('fast-levenshtein');
+
+var distance = levenshtein.get('back', 'book');   // 2
+var distance = levenshtein.get('æˆ‘æ„›ä½ ', 'æˆ‘å«ä½ ');   // 1
+```
+
+**Locale-sensitive string comparisons**
+
+It supports using [Intl.Collator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Collator) for locale-sensitive  string comparisons:
+
+```javascript
+var levenshtein = require('fast-levenshtein');
+
+levenshtein.get('mikailovitch', 'MikhaÃ¯lovitch', { useCollator: true});
+// 1
+```
+
+## Building and Testing
+
+To build the code and run the tests:
+
+```bash
+$ npm install -g grunt-cli
+$ npm install
+$ npm run build
+```
+
+## Performance
+
+_Thanks to [Titus Wormer](https://github.com/wooorm) for [encouraging me](https://github.com/hiddentao/fast-levenshtein/issues/1) to do this._
+
+Benchmarked against other node.js levenshtein distance modules (on Macbook Air 2012, Core i7, 8GB RAM):
+
+```bash
+Running suite Implementation comparison [benchmark/speed.js]...
+>> levenshtein-edit-distance x 234 ops/sec Â±3.02% (73 runs sampled)
+>> levenshtein-component x 422 ops/sec Â±4.38% (83 runs sampled)
+>> levenshtein-deltas x 283 ops/sec Â±3.83% (78 runs sampled)
+>> natural x 255 ops/sec Â±0.76% (88 runs sampled)
+>> levenshtein x 180 ops/sec Â±3.55% (86 runs sampled)
+>> fast-levenshtein x 1,792 ops/sec Â±2.72% (95 runs sampled)
+Benchmark done.
+Fastest test is fast-levenshtein at 4.2x faster than levenshtein-component
+```
+
+You can run this benchmark yourself by doing:
+
+```bash
+$ npm install
+$ npm run build
+$ npm run benchmark
+```
+
+## Contributing
+
+If you wish to submit a pull request please update and/or create new tests for any changes you make and ensure the grunt build passes.
+
+See [CONTRIBUTING.md](https://github.com/hiddentao/fast-levenshtein/blob/master/CONTRIBUTING.md) for details.
+
+## License
+
+MIT - see [LICENSE.md](https://github.com/hiddentao/fast-levenshtein/blob/master/LICENSE.md)
+«/LICENSE.mdÅL(MIT License)
+
+Copyright (c) 2013 [Ramesh Nair](http://www.hiddentao.com/)
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+¯/levenshtein.jsÅ\(function() {
+  'use strict';
+  
+  var collator;
+  try {
+    collator = (typeof Intl !== "undefined" && typeof Intl.Collator !== "undefined") ? Intl.Collator("generic", { sensitivity: "base" }) : null;
+  } catch (err){
+    console.log("Collator could not be initialized and wouldn't be used");
+  }
+  // arrays to re-use
+  var prevRow = [],
+    str2Char = [];
+  
+  /**
+   * Based on the algorithm at http://en.wikipedia.org/wiki/Levenshtein_distance.
+   */
+  var Levenshtein = {
+    /**
+     * Calculate levenshtein distance of the two strings.
+     *
+     * @param str1 String the first string.
+     * @param str2 String the second string.
+     * @param [options] Additional options.
+     * @param [options.useCollator] Use `Intl.Collator` for locale-sensitive string comparison.
+     * @return Integer the levenshtein distance (0 and above).
+     */
+    get: function(str1, str2, options) {
+      var useCollator = (options && collator && options.useCollator);
+      
+      var str1Len = str1.length,
+        str2Len = str2.length;
+      
+      // base cases
+      if (str1Len === 0) return str2Len;
+      if (str2Len === 0) return str1Len;
+
+      // two rows
+      var curCol, nextCol, i, j, tmp;
+
+      // initialise previous row
+      for (i=0; i<str2Len; ++i) {
+        prevRow[i] = i;
+        str2Char[i] = str2.charCodeAt(i);
+      }
+      prevRow[str2Len] = str2Len;
+
+      var strCmp;
+      if (useCollator) {
+        // calculate current row distance from previous row using collator
+        for (i = 0; i < str1Len; ++i) {
+          nextCol = i + 1;
+
+          for (j = 0; j < str2Len; ++j) {
+            curCol = nextCol;
+
+            // substution
+            strCmp = 0 === collator.compare(str1.charAt(i), String.fromCharCode(str2Char[j]));
+
+            nextCol = prevRow[j] + (strCmp ? 0 : 1);
+
+            // insertion
+            tmp = curCol + 1;
+            if (nextCol > tmp) {
+              nextCol = tmp;
+            }
+            // deletion
+            tmp = prevRow[j + 1] + 1;
+            if (nextCol > tmp) {
+              nextCol = tmp;
+            }
+
+            // copy current col value into previous (in preparation for next iteration)
+            prevRow[j] = curCol;
+          }
+
+          // copy last col value into previous (in preparation for next iteration)
+          prevRow[j] = nextCol;
+        }
+      }
+      else {
+        // calculate current row distance from previous row without collator
+        for (i = 0; i < str1Len; ++i) {
+          nextCol = i + 1;
+
+          for (j = 0; j < str2Len; ++j) {
+            curCol = nextCol;
+
+            // substution
+            strCmp = str1.charCodeAt(i) === str2Char[j];
+
+            nextCol = prevRow[j] + (strCmp ? 0 : 1);
+
+            // insertion
+            tmp = curCol + 1;
+            if (nextCol > tmp) {
+              nextCol = tmp;
+            }
+            // deletion
+            tmp = prevRow[j + 1] + 1;
+            if (nextCol > tmp) {
+              nextCol = tmp;
+            }
+
+            // copy current col value into previous (in preparation for next iteration)
+            prevRow[j] = curCol;
+          }
+
+          // copy last col value into previous (in preparation for next iteration)
+          prevRow[j] = nextCol;
+        }
+      }
+      return nextCol;
+    }
+
+  };
+
+  // amd
+  if (typeof define !== "undefined" && define !== null && define.amd) {
+    define(function() {
+      return Levenshtein;
+    });
+  }
+  // commonjs
+  else if (typeof module !== "undefined" && module !== null && typeof exports !== "undefined" && module.exports === exports) {
+    module.exports = Levenshtein;
+  }
+  // web worker
+  else if (typeof self !== "undefined" && typeof self.postMessage === 'function' && typeof self.importScripts === 'function') {
+    self.Levenshtein = Levenshtein;
+  }
+  // browser main thread
+  else if (typeof window !== "undefined" && window !== null) {
+    window.Levenshtein = Levenshtein;
+  }
+}());
+

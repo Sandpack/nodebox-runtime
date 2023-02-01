@@ -1,0 +1,154 @@
+Ñ≠/package.json≈5{
+  "name": "universalify",
+  "version": "2.0.0",
+  "description": "Make a callback- or promise-based function support both promises and callbacks.",
+  "keywords": [
+    "callback",
+    "native",
+    "promise"
+  ],
+  "homepage": "https://github.com/RyanZim/universalify#readme",
+  "bugs": "https://github.com/RyanZim/universalify/issues",
+  "license": "MIT",
+  "author": "Ryan Zimmerman <opensrc@ryanzim.com>",
+  "files": [
+    "index.js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RyanZim/universalify.git"
+  },
+  "scripts": {
+    "test": "standard && nyc tape test/*.js | colortape"
+  },
+  "devDependencies": {
+    "colortape": "^0.1.2",
+    "coveralls": "^3.0.1",
+    "nyc": "^15.0.0",
+    "standard": "^14.3.1",
+    "tape": "^5.0.1"
+  },
+  "engines": {
+    "node": ">= 10.0.0"
+  }
+}
+®/LICENSE≈L(The MIT License)
+
+Copyright (c) 2017, Ryan Zimmerman <opensrc@ryanzim.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the 'Software'), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+™/README.md≈÷# universalify
+
+[![Travis branch](https://img.shields.io/travis/RyanZim/universalify/master.svg)](https://travis-ci.org/RyanZim/universalify)
+![Coveralls github branch](https://img.shields.io/coveralls/github/RyanZim/universalify/master.svg)
+![npm](https://img.shields.io/npm/dm/universalify.svg)
+![npm](https://img.shields.io/npm/l/universalify.svg)
+
+Make a callback- or promise-based function support both promises and callbacks.
+
+Uses the native promise implementation.
+
+## Installation
+
+```bash
+npm install universalify
+```
+
+## API
+
+### `universalify.fromCallback(fn)`
+
+Takes a callback-based function to universalify, and returns the universalified  function.
+
+Function must take a callback as the last parameter that will be called with the signature `(error, result)`. `universalify` does not support calling the callback with three or more arguments, and does not ensure that the callback is only called once.
+
+```js
+function callbackFn (n, cb) {
+  setTimeout(() => cb(null, n), 15)
+}
+
+const fn = universalify.fromCallback(callbackFn)
+
+// Works with Promises:
+fn('Hello World!')
+.then(result => console.log(result)) // -> Hello World!
+.catch(error => console.error(error))
+
+// Works with Callbacks:
+fn('Hi!', (error, result) => {
+  if (error) return console.error(error)
+  console.log(result)
+  // -> Hi!
+})
+```
+
+### `universalify.fromPromise(fn)`
+
+Takes a promise-based function to universalify, and returns the universalified  function.
+
+Function must return a valid JS promise. `universalify` does not ensure that a valid promise is returned.
+
+```js
+function promiseFn (n) {
+  return new Promise(resolve => {
+    setTimeout(() => resolve(n), 15)
+  })
+}
+
+const fn = universalify.fromPromise(promiseFn)
+
+// Works with Promises:
+fn('Hello World!')
+.then(result => console.log(result)) // -> Hello World!
+.catch(error => console.error(error))
+
+// Works with Callbacks:
+fn('Hi!', (error, result) => {
+  if (error) return console.error(error)
+  console.log(result)
+  // -> Hi!
+})
+```
+
+## License
+
+MIT
+©/index.js≈»'use strict'
+
+exports.fromCallback = function (fn) {
+  return Object.defineProperty(function (...args) {
+    if (typeof args[args.length - 1] === 'function') fn.apply(this, args)
+    else {
+      return new Promise((resolve, reject) => {
+        fn.call(
+          this,
+          ...args,
+          (err, res) => (err != null) ? reject(err) : resolve(res)
+        )
+      })
+    }
+  }, 'name', { value: fn.name })
+}
+
+exports.fromPromise = function (fn) {
+  return Object.defineProperty(function (...args) {
+    const cb = args[args.length - 1]
+    if (typeof cb !== 'function') return fn.apply(this, args)
+    else fn.apply(this, args.slice(0, -1)).then(r => cb(null, r), cb)
+  }, 'name', { value: fn.name })
+}

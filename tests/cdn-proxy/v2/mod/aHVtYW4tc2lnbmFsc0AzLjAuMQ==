@@ -1,0 +1,868 @@
+å¥/build/src/main.d.ts≈s/**
+ * Object whose keys are signal names and values are signal objects.
+ */
+export declare const signalsByName: { [signalName: string]: Signal }
+/**
+ * Object whose keys are signal numbers and values are signal objects.
+ */
+export declare const signalsByNumber: { [signalNumber: string]: Signal }
+
+export declare type SignalAction =
+  | 'terminate'
+  | 'core'
+  | 'ignore'
+  | 'pause'
+  | 'unpause'
+export declare type SignalStandard =
+  | 'ansi'
+  | 'posix'
+  | 'bsd'
+  | 'systemv'
+  | 'other'
+
+export declare type Signal = {
+  /**
+   * Standard name of the signal, for example 'SIGINT'.
+   */
+  name: string
+  /**
+   * Code number of the signal, for example 2. While most number are cross-platform, some are different between different OS.
+   */
+  number: number
+  /**
+   * Human-friendly description for the signal, for example 'User interruption with CTRL-C'.
+   */
+  description: string
+  /**
+   * Whether the current OS can handle this signal in Node.js using process.on(name, handler). The list of supported signals is OS-specific.
+   */
+  supported: boolean
+  /**
+   * What is the default action for this signal when it is not handled.
+   */
+  action: SignalAction
+  /**
+   * Whether the signal's default action cannot be prevented. This is true for SIGTERM, SIGKILL and SIGSTOP.
+   */
+  forced: boolean
+  /**
+   * Which standard defined that signal.
+   */
+  standard: SignalStandard
+}
+∂/build/src/realtime.js≈õ
+export const getRealtimeSignals=function(){
+const length=SIGRTMAX-SIGRTMIN+1;
+return Array.from({length},getRealtimeSignal);
+};
+
+const getRealtimeSignal=function(value,index){
+return{
+name:`SIGRT${index+1}`,
+number:SIGRTMIN+index,
+action:"terminate",
+description:"Application-specific signal (realtime)",
+standard:"posix"};
+
+};
+
+const SIGRTMIN=34;
+export const SIGRTMAX=64;
+//# sourceMappingURL=realtime.js.map∂/build/src/core.js.map≈):{"version":3,"sources":["../../src/core.js"],"names":["SIGNALS","name","number","action","description","standard","forced"],"mappings":"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","sourcesContent":["/* eslint-disable max-lines */\n// List of known process signals with information about them\nexport const SIGNALS = [\n  {\n    name: 'SIGHUP',\n    number: 1,\n    action: 'terminate',\n    description: 'Terminal closed',\n    standard: 'posix',\n  },\n  {\n    name: 'SIGINT',\n    number: 2,\n    action: 'terminate',\n    description: 'User interruption with CTRL-C',\n    standard: 'ansi',\n  },\n  {\n    name: 'SIGQUIT',\n    number: 3,\n    action: 'core',\n    description: 'User interruption with CTRL-\\\\',\n    standard: 'posix',\n  },\n  {\n    name: 'SIGILL',\n    number: 4,\n    action: 'core',\n    description: 'Invalid machine instruction',\n    standard: 'ansi',\n  },\n  {\n    name: 'SIGTRAP',\n    number: 5,\n    action: 'core',\n    description: 'Debugger breakpoint',\n    standard: 'posix',\n  },\n  {\n    name: 'SIGABRT',\n    number: 6,\n    action: 'core',\n    description: 'Aborted',\n    standard: 'ansi',\n  },\n  {\n    name: 'SIGIOT',\n    number: 6,\n    action: 'core',\n    description: 'Aborted',\n    standard: 'bsd',\n  },\n  {\n    name: 'SIGBUS',\n    number: 7,\n    action: 'core',\n    description:\n      'Bus error due to misaligned, non-existing address or paging error',\n    standard: 'bsd',\n  },\n  {\n    name: 'SIGEMT',\n    number: 7,\n    action: 'terminate',\n    description: 'Command should be emulated but is not implemented',\n    standard: 'other',\n  },\n  {\n    name: 'SIGFPE',\n    number: 8,\n    action: 'core',\n    description: 'Floating point arithmetic error',\n    standard: 'ansi',\n  },\n  {\n    name: 'SIGKILL',\n    number: 9,\n    action: 'terminate',\n    description: 'Forced termination',\n    standard: 'posix',\n    forced: true,\n  },\n  {\n    name: 'SIGUSR1',\n    number: 10,\n    action: 'terminate',\n    description: 'Application-specific signal',\n    standard: 'posix',\n  },\n  {\n    name: 'SIGSEGV',\n    number: 11,\n    action: 'core',\n    description: 'Segmentation fault',\n    standard: 'ansi',\n  },\n  {\n    name: 'SIGUSR2',\n    number: 12,\n    action: 'terminate',\n    description: 'Application-specific signal',\n    standard: 'posix',\n  },\n  {\n    name: 'SIGPIPE',\n    number: 13,\n    action: 'terminate',\n    description: 'Broken pipe or socket',\n    standard: 'posix',\n  },\n  {\n    name: 'SIGALRM',\n    number: 14,\n    action: 'terminate',\n    description: 'Timeout or timer',\n    standard: 'posix',\n  },\n  {\n    name: 'SIGTERM',\n    number: 15,\n    action: 'terminate',\n    description: 'Termination',\n    standard: 'ansi',\n  },\n  {\n    name: 'SIGSTKFLT',\n    number: 16,\n    action: 'terminate',\n    description: 'Stack is empty or overflowed',\n    standard: 'other',\n  },\n  {\n    name: 'SIGCHLD',\n    number: 17,\n    action: 'ignore',\n    description: 'Child process terminated, paused or unpaused',\n    standard: 'posix',\n  },\n  {\n    name: 'SIGCLD',\n    number: 17,\n    action: 'ignore',\n    description: 'Child process terminated, paused or unpaused',\n    standard: 'other',\n  },\n  {\n    name: 'SIGCONT',\n    number: 18,\n    action: 'unpause',\n    description: 'Unpaused',\n    standard: 'posix',\n    forced: true,\n  },\n  {\n    name: 'SIGSTOP',\n    number: 19,\n    action: 'pause',\n    description: 'Paused',\n    standard: 'posix',\n    forced: true,\n  },\n  {\n    name: 'SIGTSTP',\n    number: 20,\n    action: 'pause',\n    description: 'Paused using CTRL-Z or \"suspend\"',\n    standard: 'posix',\n  },\n  {\n    name: 'SIGTTIN',\n    number: 21,\n    action: 'pause',\n    description: 'Background process cannot read terminal input',\n    standard: 'posix',\n  },\n  {\n    name: 'SIGBREAK',\n    number: 21,\n    action: 'terminate',\n    description: 'User interruption with CTRL-BREAK',\n    standard: 'other',\n  },\n  {\n    name: 'SIGTTOU',\n    number: 22,\n    action: 'pause',\n    description: 'Background process cannot write to terminal output',\n    standard: 'posix',\n  },\n  {\n    name: 'SIGURG',\n    number: 23,\n    action: 'ignore',\n    description: 'Socket received out-of-band data',\n    standard: 'bsd',\n  },\n  {\n    name: 'SIGXCPU',\n    number: 24,\n    action: 'core',\n    description: 'Process timed out',\n    standard: 'bsd',\n  },\n  {\n    name: 'SIGXFSZ',\n    number: 25,\n    action: 'core',\n    description: 'File too big',\n    standard: 'bsd',\n  },\n  {\n    name: 'SIGVTALRM',\n    number: 26,\n    action: 'terminate',\n    description: 'Timeout or timer',\n    standard: 'bsd',\n  },\n  {\n    name: 'SIGPROF',\n    number: 27,\n    action: 'terminate',\n    description: 'Timeout or timer',\n    standard: 'bsd',\n  },\n  {\n    name: 'SIGWINCH',\n    number: 28,\n    action: 'ignore',\n    description: 'Terminal window size changed',\n    standard: 'bsd',\n  },\n  {\n    name: 'SIGIO',\n    number: 29,\n    action: 'terminate',\n    description: 'I/O is available',\n    standard: 'other',\n  },\n  {\n    name: 'SIGPOLL',\n    number: 29,\n    action: 'terminate',\n    description: 'Watched event',\n    standard: 'other',\n  },\n  {\n    name: 'SIGINFO',\n    number: 29,\n    action: 'ignore',\n    description: 'Request for process information',\n    standard: 'other',\n  },\n  {\n    name: 'SIGPWR',\n    number: 30,\n    action: 'terminate',\n    description: 'Device running out of power',\n    standard: 'systemv',\n  },\n  {\n    name: 'SIGSYS',\n    number: 31,\n    action: 'core',\n    description: 'Invalid system call',\n    standard: 'other',\n  },\n  {\n    name: 'SIGUNUSED',\n    number: 31,\n    action: 'terminate',\n    description: 'Invalid system call',\n    standard: 'other',\n  },\n]\n/* eslint-enable max-lines */\n"],"file":"src/core.js"}∫/build/src/realtime.js.map≈Â{"version":3,"sources":["../../src/realtime.js"],"names":["getRealtimeSignals","length","SIGRTMAX","SIGRTMIN","Array","from","getRealtimeSignal","value","index","name","number","action","description","standard"],"mappings":";AACA,MAAO,MAAMA,CAAAA,kBAAkB,CAAG,UAAY;AAC5C,KAAMC,CAAAA,MAAM,CAAGC,QAAQ,CAAGC,QAAX,CAAsB,CAArC;AACA,MAAOC,CAAAA,KAAK,CAACC,IAAN,CAAW,CAAEJ,MAAF,CAAX,CAAuBK,iBAAvB,CAAP;AACD,CAHM;;AAKP,KAAMA,CAAAA,iBAAiB,CAAG,SAAUC,KAAV,CAAiBC,KAAjB,CAAwB;AAChD,MAAO;AACLC,IAAI,CAAG,QAAOD,KAAK,CAAG,CAAE,EADnB;AAELE,MAAM,CAAEP,QAAQ,CAAGK,KAFd;AAGLG,MAAM,CAAE,WAHH;AAILC,WAAW,CAAE,wCAJR;AAKLC,QAAQ,CAAE,OALL,CAAP;;AAOD,CARD;;AAUA,KAAMV,CAAAA,QAAQ,CAAG,EAAjB;AACA,MAAO,MAAMD,CAAAA,QAAQ,CAAG,EAAjB","sourcesContent":["// List of realtime signals with information about them\nexport const getRealtimeSignals = function () {\n  const length = SIGRTMAX - SIGRTMIN + 1\n  return Array.from({ length }, getRealtimeSignal)\n}\n\nconst getRealtimeSignal = function (value, index) {\n  return {\n    name: `SIGRT${index + 1}`,\n    number: SIGRTMIN + index,\n    action: 'terminate',\n    description: 'Application-specific signal (realtime)',\n    standard: 'posix',\n  }\n}\n\nconst SIGRTMIN = 34\nexport const SIGRTMAX = 64\n"],"file":"src/realtime.js"}∂/build/src/main.js.map≈D{"version":3,"sources":["../../src/main.js"],"names":["constants","SIGRTMAX","getSignals","getSignalsByName","signals","reduce","getSignalByName","signalByNameMemo","name","number","description","supported","action","forced","standard","signalsByName","getSignalsByNumber","length","signalsA","Array","from","value","getSignalByNumber","Object","assign","signal","findSignalByNumber","undefined","find","signalA","signalsByNumber"],"mappings":"AAAA,OAASA,SAAT,KAA0B,IAA1B;;AAEA,OAASC,QAAT,KAAyB,eAAzB;AACA,OAASC,UAAT,KAA2B,cAA3B;;;;AAIA,KAAMC,CAAAA,gBAAgB,CAAG,UAAY;AACnC,KAAMC,CAAAA,OAAO,CAAGF,UAAU,EAA1B;AACA,MAAOE,CAAAA,OAAO,CAACC,MAAR,CAAeC,eAAf,CAAgC,EAAhC,CAAP;AACD,CAHD;;AAKA,KAAMA,CAAAA,eAAe,CAAG;AACtBC,gBADsB;AAEtB,CAAEC,IAAF,CAAQC,MAAR,CAAgBC,WAAhB,CAA6BC,SAA7B,CAAwCC,MAAxC,CAAgDC,MAAhD,CAAwDC,QAAxD,CAFsB;AAGtB;AACA,MAAO;AACL,GAAGP,gBADE;AAEL,CAACC,IAAD,EAAQ,CAAEA,IAAF,CAAQC,MAAR,CAAgBC,WAAhB,CAA6BC,SAA7B,CAAwCC,MAAxC,CAAgDC,MAAhD,CAAwDC,QAAxD,CAFH,CAAP;;AAID,CARD;;AAUA,MAAO,MAAMC,CAAAA,aAAa,CAAGZ,gBAAgB,EAAtC;;;;;AAKP,KAAMa,CAAAA,kBAAkB,CAAG,UAAY;AACrC,KAAMZ,CAAAA,OAAO,CAAGF,UAAU,EAA1B;AACA,KAAMe,CAAAA,MAAM,CAAGhB,QAAQ,CAAG,CAA1B;AACA,KAAMiB,CAAAA,QAAQ,CAAGC,KAAK,CAACC,IAAN,CAAW,CAAEH,MAAF,CAAX,CAAuB,CAACI,KAAD,CAAQZ,MAAR;AACtCa,iBAAiB,CAACb,MAAD,CAASL,OAAT,CADF,CAAjB;;AAGA,MAAOmB,CAAAA,MAAM,CAACC,MAAP,CAAc,EAAd,CAAkB,GAAGN,QAArB,CAAP;AACD,CAPD;;AASA,KAAMI,CAAAA,iBAAiB,CAAG,SAAUb,MAAV,CAAkBL,OAAlB,CAA2B;AACnD,KAAMqB,CAAAA,MAAM,CAAGC,kBAAkB,CAACjB,MAAD,CAASL,OAAT,CAAjC;;AAEA,GAAIqB,MAAM,GAAKE,SAAf,CAA0B;AACxB,MAAO,EAAP;AACD;;AAED,KAAM,CAAEnB,IAAF,CAAQE,WAAR,CAAqBC,SAArB,CAAgCC,MAAhC,CAAwCC,MAAxC,CAAgDC,QAAhD,EAA6DW,MAAnE;AACA,MAAO;AACL,CAAChB,MAAD,EAAU;AACRD,IADQ;AAERC,MAFQ;AAGRC,WAHQ;AAIRC,SAJQ;AAKRC,MALQ;AAMRC,MANQ;AAORC,QAPQ,CADL,CAAP;;;AAWD,CAnBD;;;;AAuBA,KAAMY,CAAAA,kBAAkB,CAAG,SAAUjB,MAAV,CAAkBL,OAAlB,CAA2B;AACpD,KAAMqB,CAAAA,MAAM,CAAGrB,OAAO,CAACwB,IAAR,CAAa,CAAC,CAAEpB,IAAF,CAAD,GAAcR,SAAS,CAACI,OAAV,CAAkBI,IAAlB,IAA4BC,MAAvD,CAAf;;AAEA,GAAIgB,MAAM,GAAKE,SAAf,CAA0B;AACxB,MAAOF,CAAAA,MAAP;AACD;;AAED,MAAOrB,CAAAA,OAAO,CAACwB,IAAR,CAAa,CAACC,OAAD,GAAaA,OAAO,CAACpB,MAAR,GAAmBA,MAA7C,CAAP;AACD,CARD;;AAUA,MAAO,MAAMqB,CAAAA,eAAe,CAAGd,kBAAkB,EAA1C","sourcesContent":["import { constants } from 'os'\n\nimport { SIGRTMAX } from './realtime.js'\nimport { getSignals } from './signals.js'\n\n// Retrieve `signalsByName`, an object mapping signal name to signal properties.\n// We make sure the object is sorted by `number`.\nconst getSignalsByName = function () {\n  const signals = getSignals()\n  return signals.reduce(getSignalByName, {})\n}\n\nconst getSignalByName = function (\n  signalByNameMemo,\n  { name, number, description, supported, action, forced, standard },\n) {\n  return {\n    ...signalByNameMemo,\n    [name]: { name, number, description, supported, action, forced, standard },\n  }\n}\n\nexport const signalsByName = getSignalsByName()\n\n// Retrieve `signalsByNumber`, an object mapping signal number to signal\n// properties.\n// We make sure the object is sorted by `number`.\nconst getSignalsByNumber = function () {\n  const signals = getSignals()\n  const length = SIGRTMAX + 1\n  const signalsA = Array.from({ length }, (value, number) =>\n    getSignalByNumber(number, signals),\n  )\n  return Object.assign({}, ...signalsA)\n}\n\nconst getSignalByNumber = function (number, signals) {\n  const signal = findSignalByNumber(number, signals)\n\n  if (signal === undefined) {\n    return {}\n  }\n\n  const { name, description, supported, action, forced, standard } = signal\n  return {\n    [number]: {\n      name,\n      number,\n      description,\n      supported,\n      action,\n      forced,\n      standard,\n    },\n  }\n}\n\n// Several signals might end up sharing the same number because of OS-specific\n// numbers, in which case those prevail.\nconst findSignalByNumber = function (number, signals) {\n  const signal = signals.find(({ name }) => constants.signals[name] === number)\n\n  if (signal !== undefined) {\n    return signal\n  }\n\n  return signals.find((signalA) => signalA.number === number)\n}\n\nexport const signalsByNumber = getSignalsByNumber()\n"],"file":"src/main.js"}π/build/src/signals.js.map≈m{"version":3,"sources":["../../src/signals.js"],"names":["constants","SIGNALS","getRealtimeSignals","getSignals","realtimeSignals","signals","map","normalizeSignal","name","number","defaultNumber","description","action","forced","standard","constantSignal","supported","undefined"],"mappings":"AAAA,OAASA,SAAT,KAA0B,IAA1B;;AAEA,OAASC,OAAT,KAAwB,WAAxB;AACA,OAASC,kBAAT,KAAmC,eAAnC;;;;AAIA,MAAO,MAAMC,CAAAA,UAAU,CAAG,UAAY;AACpC,KAAMC,CAAAA,eAAe,CAAGF,kBAAkB,EAA1C;AACA,KAAMG,CAAAA,OAAO,CAAG,CAAC,GAAGJ,OAAJ,CAAa,GAAGG,eAAhB,EAAiCE,GAAjC,CAAqCC,eAArC,CAAhB;AACA,MAAOF,CAAAA,OAAP;AACD,CAJM;;;;;;;;AAYP,KAAME,CAAAA,eAAe,CAAG,SAAU;AAChCC,IADgC;AAEhCC,MAAM,CAAEC,aAFwB;AAGhCC,WAHgC;AAIhCC,MAJgC;AAKhCC,MAAM,CAAG,KALuB;AAMhCC,QANgC,CAAV;AAOrB;AACD,KAAM;AACJT,OAAO,CAAE,CAAE,CAACG,IAAD,EAAQO,cAAV,CADL;AAEFf,SAFJ;AAGA,KAAMgB,CAAAA,SAAS,CAAGD,cAAc,GAAKE,SAArC;AACA,KAAMR,CAAAA,MAAM,CAAGO,SAAS,CAAGD,cAAH,CAAoBL,aAA5C;AACA,MAAO,CAAEF,IAAF,CAAQC,MAAR,CAAgBE,WAAhB,CAA6BK,SAA7B,CAAwCJ,MAAxC,CAAgDC,MAAhD,CAAwDC,QAAxD,CAAP;AACD,CAdD","sourcesContent":["import { constants } from 'os'\n\nimport { SIGNALS } from './core.js'\nimport { getRealtimeSignals } from './realtime.js'\n\n// Retrieve list of know signals (including realtime) with information about\n// them\nexport const getSignals = function () {\n  const realtimeSignals = getRealtimeSignals()\n  const signals = [...SIGNALS, ...realtimeSignals].map(normalizeSignal)\n  return signals\n}\n\n// Normalize signal:\n//  - `number`: signal numbers are OS-specific. This is taken into account by\n//    `os.constants.signals`. However we provide a default `number` since some\n//     signals are not defined for some OS.\n//  - `forced`: set default to `false`\n//  - `supported`: set value\nconst normalizeSignal = function ({\n  name,\n  number: defaultNumber,\n  description,\n  action,\n  forced = false,\n  standard,\n}) {\n  const {\n    signals: { [name]: constantSignal },\n  } = constants\n  const supported = constantSignal !== undefined\n  const number = supported ? constantSignal : defaultNumber\n  return { name, number, description, supported, action, forced, standard }\n}\n"],"file":"src/signals.js"}™/README.md≈™[![Codecov](https://img.shields.io/codecov/c/github/ehmicky/human-signals.svg?label=tested&logo=codecov)](https://codecov.io/gh/ehmicky/human-signals)
+[![Build](https://github.com/ehmicky/human-signals/workflows/Build/badge.svg)](https://github.com/ehmicky/human-signals/actions)
+[![Node](https://img.shields.io/node/v/human-signals.svg?logo=node.js)](https://www.npmjs.com/package/human-signals)
+[![Twitter](https://img.shields.io/badge/%E2%80%8B-twitter-4cc61e.svg?logo=twitter)](https://twitter.com/intent/follow?screen_name=ehmicky)
+[![Medium](https://img.shields.io/badge/%E2%80%8B-medium-4cc61e.svg?logo=medium)](https://medium.com/@ehmicky)
+
+Human-friendly process signals.
+
+This is a map of known process signals with some information about each signal.
+
+Unlike
+[`os.constants.signals`](https://nodejs.org/api/os.html#os_signal_constants)
+this includes:
+
+- human-friendly [descriptions](#description)
+- [default actions](#action), including whether they [can be prevented](#forced)
+- whether the signal is [supported](#supported) by the current OS
+
+# Example
+
+```js
+import { signalsByName, signalsByNumber } from 'human-signals'
+
+console.log(signalsByName.SIGINT)
+// {
+//   name: 'SIGINT',
+//   number: 2,
+//   description: 'User interruption with CTRL-C',
+//   supported: true,
+//   action: 'terminate',
+//   forced: false,
+//   standard: 'ansi'
+// }
+
+console.log(signalsByNumber[8])
+// {
+//   name: 'SIGFPE',
+//   number: 8,
+//   description: 'Floating point arithmetic error',
+//   supported: true,
+//   action: 'core',
+//   forced: false,
+//   standard: 'ansi'
+// }
+```
+
+# Install
+
+```bash
+npm install human-signals
+```
+
+This package is an ES module and must be loaded using
+[an `import` or `import()` statement](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c),
+not `require()`.
+
+# Usage
+
+## signalsByName
+
+_Type_: `object`
+
+Object whose keys are signal [names](#name) and values are
+[signal objects](#signal).
+
+## signalsByNumber
+
+_Type_: `object`
+
+Object whose keys are signal [numbers](#number) and values are
+[signal objects](#signal).
+
+## signal
+
+_Type_: `object`
+
+Signal object with the following properties.
+
+### name
+
+_Type_: `string`
+
+Standard name of the signal, for example `'SIGINT'`.
+
+### number
+
+_Type_: `number`
+
+Code number of the signal, for example `2`. While most `number` are
+cross-platform, some are different between different OS.
+
+### description
+
+_Type_: `string`
+
+Human-friendly description for the signal, for example
+`'User interruption with CTRL-C'`.
+
+### supported
+
+_Type_: `boolean`
+
+Whether the current OS can handle this signal in Node.js using
+[`process.on(name, handler)`](https://nodejs.org/api/process.html#process_signal_events).
+
+The list of supported signals
+[is OS-specific](https://github.com/ehmicky/cross-platform-node-guide/blob/main/docs/6_networking_ipc/signals.md#cross-platform-signals).
+
+### action
+
+_Type_: `string`\
+_Enum_: `'terminate'`, `'core'`, `'ignore'`, `'pause'`, `'unpause'`
+
+What is the default action for this signal when it is not handled.
+
+### forced
+
+_Type_: `boolean`
+
+Whether the signal's default action cannot be prevented. This is `true` for
+`SIGTERM`, `SIGKILL` and `SIGSTOP`.
+
+### standard
+
+_Type_: `string`\
+_Enum_: `'ansi'`, `'posix'`, `'bsd'`, `'systemv'`, `'other'`
+
+Which standard defined that signal.
+
+# Support
+
+For any question, _don't hesitate_ to [submit an issue on GitHub](../../issues).
+
+Everyone is welcome regardless of personal background. We enforce a
+[Code of conduct](CODE_OF_CONDUCT.md) in order to promote a positive and
+inclusive environment.
+
+# Contributing
+
+This project was made with ‚ù§Ô∏è. The simplest way to give back is by starring and
+sharing it online.
+
+If the documentation is unclear or has a typo, please click on the page's `Edit`
+button (pencil icon) and suggest a correction.
+
+If you would like to help us fix a bug or add a new feature, please check our
+[guidelines](CONTRIBUTING.md). Pull requests are welcome!
+
+Thanks go to our wonderful contributors:
+
+<!-- ALL-CONTRIBUTORS-LIST:START -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tr>
+    <td align="center"><a href="https://twitter.com/ehmicky"><img src="https://avatars2.githubusercontent.com/u/8136211?v=4" width="100px;" alt=""/><br /><sub><b>ehmicky</b></sub></a><br /><a href="https://github.com/ehmicky/human-signals/commits?author=ehmicky" title="Code">üíª</a> <a href="#design-ehmicky" title="Design">üé®</a> <a href="#ideas-ehmicky" title="Ideas, Planning, & Feedback">ü§î</a> <a href="https://github.com/ehmicky/human-signals/commits?author=ehmicky" title="Documentation">üìñ</a></td>
+    <td align="center"><a href="http://www.electrovir.com"><img src="https://avatars0.githubusercontent.com/u/1205860?v=4" width="100px;" alt=""/><br /><sub><b>electrovir</b></sub></a><br /><a href="https://github.com/ehmicky/human-signals/commits?author=electrovir" title="Code">üíª</a></td>
+  </tr>
+</table>
+
+<!-- markdownlint-enable -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+≤/build/src/core.js≈>
+
+export const SIGNALS=[
+{
+name:"SIGHUP",
+number:1,
+action:"terminate",
+description:"Terminal closed",
+standard:"posix"},
+
+{
+name:"SIGINT",
+number:2,
+action:"terminate",
+description:"User interruption with CTRL-C",
+standard:"ansi"},
+
+{
+name:"SIGQUIT",
+number:3,
+action:"core",
+description:"User interruption with CTRL-\\",
+standard:"posix"},
+
+{
+name:"SIGILL",
+number:4,
+action:"core",
+description:"Invalid machine instruction",
+standard:"ansi"},
+
+{
+name:"SIGTRAP",
+number:5,
+action:"core",
+description:"Debugger breakpoint",
+standard:"posix"},
+
+{
+name:"SIGABRT",
+number:6,
+action:"core",
+description:"Aborted",
+standard:"ansi"},
+
+{
+name:"SIGIOT",
+number:6,
+action:"core",
+description:"Aborted",
+standard:"bsd"},
+
+{
+name:"SIGBUS",
+number:7,
+action:"core",
+description:
+"Bus error due to misaligned, non-existing address or paging error",
+standard:"bsd"},
+
+{
+name:"SIGEMT",
+number:7,
+action:"terminate",
+description:"Command should be emulated but is not implemented",
+standard:"other"},
+
+{
+name:"SIGFPE",
+number:8,
+action:"core",
+description:"Floating point arithmetic error",
+standard:"ansi"},
+
+{
+name:"SIGKILL",
+number:9,
+action:"terminate",
+description:"Forced termination",
+standard:"posix",
+forced:true},
+
+{
+name:"SIGUSR1",
+number:10,
+action:"terminate",
+description:"Application-specific signal",
+standard:"posix"},
+
+{
+name:"SIGSEGV",
+number:11,
+action:"core",
+description:"Segmentation fault",
+standard:"ansi"},
+
+{
+name:"SIGUSR2",
+number:12,
+action:"terminate",
+description:"Application-specific signal",
+standard:"posix"},
+
+{
+name:"SIGPIPE",
+number:13,
+action:"terminate",
+description:"Broken pipe or socket",
+standard:"posix"},
+
+{
+name:"SIGALRM",
+number:14,
+action:"terminate",
+description:"Timeout or timer",
+standard:"posix"},
+
+{
+name:"SIGTERM",
+number:15,
+action:"terminate",
+description:"Termination",
+standard:"ansi"},
+
+{
+name:"SIGSTKFLT",
+number:16,
+action:"terminate",
+description:"Stack is empty or overflowed",
+standard:"other"},
+
+{
+name:"SIGCHLD",
+number:17,
+action:"ignore",
+description:"Child process terminated, paused or unpaused",
+standard:"posix"},
+
+{
+name:"SIGCLD",
+number:17,
+action:"ignore",
+description:"Child process terminated, paused or unpaused",
+standard:"other"},
+
+{
+name:"SIGCONT",
+number:18,
+action:"unpause",
+description:"Unpaused",
+standard:"posix",
+forced:true},
+
+{
+name:"SIGSTOP",
+number:19,
+action:"pause",
+description:"Paused",
+standard:"posix",
+forced:true},
+
+{
+name:"SIGTSTP",
+number:20,
+action:"pause",
+description:"Paused using CTRL-Z or \"suspend\"",
+standard:"posix"},
+
+{
+name:"SIGTTIN",
+number:21,
+action:"pause",
+description:"Background process cannot read terminal input",
+standard:"posix"},
+
+{
+name:"SIGBREAK",
+number:21,
+action:"terminate",
+description:"User interruption with CTRL-BREAK",
+standard:"other"},
+
+{
+name:"SIGTTOU",
+number:22,
+action:"pause",
+description:"Background process cannot write to terminal output",
+standard:"posix"},
+
+{
+name:"SIGURG",
+number:23,
+action:"ignore",
+description:"Socket received out-of-band data",
+standard:"bsd"},
+
+{
+name:"SIGXCPU",
+number:24,
+action:"core",
+description:"Process timed out",
+standard:"bsd"},
+
+{
+name:"SIGXFSZ",
+number:25,
+action:"core",
+description:"File too big",
+standard:"bsd"},
+
+{
+name:"SIGVTALRM",
+number:26,
+action:"terminate",
+description:"Timeout or timer",
+standard:"bsd"},
+
+{
+name:"SIGPROF",
+number:27,
+action:"terminate",
+description:"Timeout or timer",
+standard:"bsd"},
+
+{
+name:"SIGWINCH",
+number:28,
+action:"ignore",
+description:"Terminal window size changed",
+standard:"bsd"},
+
+{
+name:"SIGIO",
+number:29,
+action:"terminate",
+description:"I/O is available",
+standard:"other"},
+
+{
+name:"SIGPOLL",
+number:29,
+action:"terminate",
+description:"Watched event",
+standard:"other"},
+
+{
+name:"SIGINFO",
+number:29,
+action:"ignore",
+description:"Request for process information",
+standard:"other"},
+
+{
+name:"SIGPWR",
+number:30,
+action:"terminate",
+description:"Device running out of power",
+standard:"systemv"},
+
+{
+name:"SIGSYS",
+number:31,
+action:"core",
+description:"Invalid system call",
+standard:"other"},
+
+{
+name:"SIGUNUSED",
+number:31,
+action:"terminate",
+description:"Invalid system call",
+standard:"other"}];
+//# sourceMappingURL=core.js.map≤/build/src/main.js≈import{constants}from"os";
+
+import{SIGRTMAX}from"./realtime.js";
+import{getSignals}from"./signals.js";
+
+
+
+const getSignalsByName=function(){
+const signals=getSignals();
+return signals.reduce(getSignalByName,{});
+};
+
+const getSignalByName=function(
+signalByNameMemo,
+{name,number,description,supported,action,forced,standard})
+{
+return{
+...signalByNameMemo,
+[name]:{name,number,description,supported,action,forced,standard}};
+
+};
+
+export const signalsByName=getSignalsByName();
+
+
+
+
+const getSignalsByNumber=function(){
+const signals=getSignals();
+const length=SIGRTMAX+1;
+const signalsA=Array.from({length},(value,number)=>
+getSignalByNumber(number,signals));
+
+return Object.assign({},...signalsA);
+};
+
+const getSignalByNumber=function(number,signals){
+const signal=findSignalByNumber(number,signals);
+
+if(signal===undefined){
+return{};
+}
+
+const{name,description,supported,action,forced,standard}=signal;
+return{
+[number]:{
+name,
+number,
+description,
+supported,
+action,
+forced,
+standard}};
+
+
+};
+
+
+
+const findSignalByNumber=function(number,signals){
+const signal=signals.find(({name})=>constants.signals[name]===number);
+
+if(signal!==undefined){
+return signal;
+}
+
+return signals.find((signalA)=>signalA.number===number);
+};
+
+export const signalsByNumber=getSignalsByNumber();
+//# sourceMappingURL=main.js.map®/LICENSE≈,]                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "[]"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright 2021 ehmicky <ehmicky@gmail.com>
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+µ/build/src/signals.js≈Üimport{constants}from"os";
+
+import{SIGNALS}from"./core.js";
+import{getRealtimeSignals}from"./realtime.js";
+
+
+
+export const getSignals=function(){
+const realtimeSignals=getRealtimeSignals();
+const signals=[...SIGNALS,...realtimeSignals].map(normalizeSignal);
+return signals;
+};
+
+
+
+
+
+
+
+const normalizeSignal=function({
+name,
+number:defaultNumber,
+description,
+action,
+forced=false,
+standard})
+{
+const{
+signals:{[name]:constantSignal}}=
+constants;
+const supported=constantSignal!==undefined;
+const number=supported?constantSignal:defaultNumber;
+return{name,number,description,supported,action,forced,standard};
+};
+//# sourceMappingURL=signals.js.map≠/package.json≈ó{
+  "name": "human-signals",
+  "version": "3.0.1",
+  "type": "module",
+  "exports": "./build/src/main.js",
+  "main": "./build/src/main.js",
+  "files": [
+    "build/src/**/*.{js,ts,map,json,sh,md}",
+    "examples/**/*.{js,ts,map,json,sh,md}"
+  ],
+  "scripts": {
+    "test": "gulp test"
+  },
+  "description": "Human-friendly process signals",
+  "keywords": [
+    "signal",
+    "signals",
+    "handlers",
+    "error-handling",
+    "errors",
+    "interrupts",
+    "sigterm",
+    "sigint",
+    "irq",
+    "process",
+    "exit",
+    "exit-code",
+    "status",
+    "operating-system",
+    "es6",
+    "javascript",
+    "linux",
+    "macos",
+    "windows",
+    "nodejs"
+  ],
+  "license": "Apache-2.0",
+  "homepage": "https://git.io/JeluP",
+  "repository": "ehmicky/human-signals",
+  "bugs": {
+    "url": "https://github.com/ehmicky/human-signals/issues"
+  },
+  "author": "ehmicky <ehmicky@gmail.com> (https://github.com/ehmicky)",
+  "directories": {
+    "lib": "src",
+    "test": "test"
+  },
+  "types": "build/src/main.d.ts",
+  "devDependencies": {
+    "@ehmicky/dev-tasks": "^1.0.34",
+    "ajv": "^6.12.6",
+    "test-each": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=12.20.0"
+  }
+}

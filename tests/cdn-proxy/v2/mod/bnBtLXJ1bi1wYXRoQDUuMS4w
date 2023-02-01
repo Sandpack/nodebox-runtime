@@ -1,0 +1,289 @@
+…¨/licenseÅ]MIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ª/readme.mdÅ"# npm-run-path
+
+> Get your [PATH](https://en.wikipedia.org/wiki/PATH_(variable)) prepended with locally installed binaries
+
+In [npm run scripts](https://docs.npmjs.com/cli/run-script) you can execute locally installed binaries by name. This enables the same outside npm.
+
+## Install
+
+```sh
+npm install npm-run-path
+```
+
+## Usage
+
+```js
+import childProcess from 'node:child_process';
+import {npmRunPath, npmRunPathEnv} from 'npm-run-path';
+
+console.log(process.env.PATH);
+//=> '/usr/local/bin'
+
+console.log(npmRunPath());
+//=> '/Users/sindresorhus/dev/foo/node_modules/.bin:/Users/sindresorhus/dev/node_modules/.bin:/Users/sindresorhus/node_modules/.bin:/Users/node_modules/.bin:/node_modules/.bin:/usr/local/bin'
+
+// `foo` is a locally installed binary
+childProcess.execFileSync('foo', {
+	env: npmRunPathEnv()
+});
+```
+
+## API
+
+### npmRunPath(options?)
+
+Returns the augmented PATH string.
+
+#### options
+
+Type: `object`
+
+##### cwd
+
+Type: `string | URL`\
+Default: `process.cwd()`
+
+The working directory.
+
+##### path
+
+Type: `string`\
+Default: [`PATH`](https://github.com/sindresorhus/path-key)
+
+The PATH to be appended.
+
+Set it to an empty string to exclude the default PATH.
+
+##### execPath
+
+Type: `string`\
+Default: `process.execPath`
+
+The path to the current Node.js executable. Its directory is pushed to the front of PATH.
+
+This can be either an absolute path or a path relative to the [`cwd` option](#cwd).
+
+### npmRunPathEnv(options?)
+
+Returns the augmented [`process.env`](https://nodejs.org/api/process.html#process_process_env) object.
+
+#### options
+
+Type: `object`
+
+##### cwd
+
+Type: `string | URL`\
+Default: `process.cwd()`
+
+The working directory.
+
+##### env
+
+Type: `object`
+
+Accepts an object of environment variables, like `process.env`, and modifies the PATH using the correct [PATH key](https://github.com/sindresorhus/path-key). Use this if you're modifying the PATH for use in the `child_process` options.
+
+##### execPath
+
+Type: `string`\
+Default: `process.execPath`
+
+The path to the Node.js executable to use in child processes if that is different from the current one. Its directory is pushed to the front of PATH.
+
+This can be either an absolute path or a path relative to the [`cwd` option](#cwd).
+
+## Related
+
+- [npm-run-path-cli](https://github.com/sindresorhus/npm-run-path-cli) - CLI for this module
+- [execa](https://github.com/sindresorhus/execa) - Execute a locally installed binary
+
+---
+
+<div align="center">
+	<b>
+		<a href="https://tidelift.com/subscription/pkg/npm-npm-run-path?utm_source=npm-npm-run-path&utm_medium=referral&utm_campaign=readme">Get professional support for this package with a Tidelift subscription</a>
+	</b>
+	<br>
+	<sub>
+		Tidelift helps make open source sustainable for maintainers while giving companies<br>assurances about security, maintenance, and licensing for their dependencies.
+	</sub>
+</div>
+«/index.d.tsÅÕexport interface RunPathOptions {
+	/**
+	Working directory.
+
+	@default process.cwd()
+	*/
+	readonly cwd?: string | URL;
+
+	/**
+	PATH to be appended. Default: [`PATH`](https://github.com/sindresorhus/path-key).
+
+	Set it to an empty string to exclude the default PATH.
+	*/
+	readonly path?: string;
+
+	/**
+	Path to the Node.js executable to use in child processes if that is different from the current one. Its directory is pushed to the front of PATH.
+
+	This can be either an absolute path or a path relative to the `cwd` option.
+
+	@default process.execPath
+	*/
+	readonly execPath?: string;
+}
+
+export type ProcessEnv = Record<string, string | undefined>;
+
+export interface EnvOptions {
+	/**
+	The working directory.
+
+	@default process.cwd()
+	*/
+	readonly cwd?: string | URL;
+
+	/**
+	Accepts an object of environment variables, like `process.env`, and modifies the PATH using the correct [PATH key](https://github.com/sindresorhus/path-key). Use this if you're modifying the PATH for use in the `child_process` options.
+	*/
+	readonly env?: ProcessEnv;
+
+	/**
+	The path to the current Node.js executable. Its directory is pushed to the front of PATH.
+
+	This can be either an absolute path or a path relative to the `cwd` option.
+
+	@default process.execPath
+	*/
+	readonly execPath?: string;
+}
+
+/**
+Get your [PATH](https://en.wikipedia.org/wiki/PATH_(variable)) prepended with locally installed binaries.
+
+@returns The augmented path string.
+
+@example
+```
+import childProcess from 'node:child_process';
+import {npmRunPath} from 'npm-run-path';
+
+console.log(process.env.PATH);
+//=> '/usr/local/bin'
+
+console.log(npmRunPath());
+//=> '/Users/sindresorhus/dev/foo/node_modules/.bin:/Users/sindresorhus/dev/node_modules/.bin:/Users/sindresorhus/node_modules/.bin:/Users/node_modules/.bin:/node_modules/.bin:/usr/local/bin'
+```
+*/
+export function npmRunPath(options?: RunPathOptions): string;
+
+/**
+@returns The augmented [`process.env`](https://nodejs.org/api/process.html#process_process_env) object.
+
+@example
+```
+import childProcess from 'node:child_process';
+import {npmRunPathEnv} from 'npm-run-path';
+
+// `foo` is a locally installed binary
+childProcess.execFileSync('foo', {
+	env: npmRunPathEnv()
+});
+```
+*/
+export function npmRunPathEnv(options?: EnvOptions): ProcessEnv;
+©/index.jsÅªimport process from 'node:process';
+import path from 'node:path';
+import url from 'node:url';
+import pathKey from 'path-key';
+
+export function npmRunPath(options = {}) {
+	const {
+		cwd = process.cwd(),
+		path: path_ = process.env[pathKey()],
+		execPath = process.execPath,
+	} = options;
+
+	let previous;
+	const cwdString = cwd instanceof URL ? url.fileURLToPath(cwd) : cwd;
+	let cwdPath = path.resolve(cwdString);
+	const result = [];
+
+	while (previous !== cwdPath) {
+		result.push(path.join(cwdPath, 'node_modules/.bin'));
+		previous = cwdPath;
+		cwdPath = path.resolve(cwdPath, '..');
+	}
+
+	// Ensure the running `node` binary is used.
+	result.push(path.resolve(cwdString, execPath, '..'));
+
+	return [...result, path_].join(path.delimiter);
+}
+
+export function npmRunPathEnv({env = process.env, ...options} = {}) {
+	env = {...env};
+
+	const path = pathKey({env});
+	options.path = env[path];
+	env[path] = npmRunPath(options);
+
+	return env;
+}
+­/package.jsonÅT{
+	"name": "npm-run-path",
+	"version": "5.1.0",
+	"description": "Get your PATH prepended with locally installed binaries",
+	"license": "MIT",
+	"repository": "sindresorhus/npm-run-path",
+	"funding": "https://github.com/sponsors/sindresorhus",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "https://sindresorhus.com"
+	},
+	"type": "module",
+	"exports": "./index.js",
+	"engines": {
+		"node": "^12.20.0 || ^14.13.1 || >=16.0.0"
+	},
+	"scripts": {
+		"test": "xo && ava && tsd"
+	},
+	"files": [
+		"index.js",
+		"index.d.ts"
+	],
+	"keywords": [
+		"npm",
+		"run",
+		"path",
+		"package",
+		"bin",
+		"binary",
+		"binaries",
+		"script",
+		"cli",
+		"command-line",
+		"execute",
+		"executable"
+	],
+	"dependencies": {
+		"path-key": "^4.0.0"
+	},
+	"devDependencies": {
+		"ava": "^3.15.0",
+		"tsd": "^0.17.0",
+		"xo": "^0.45.0"
+	}
+}

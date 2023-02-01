@@ -1,0 +1,696 @@
+…­/package.jsonÅŸ{
+  "name": "proxy-addr",
+  "description": "Determine address of proxied request",
+  "version": "2.0.7",
+  "author": "Douglas Christopher Wilson <doug@somethingdoug.com>",
+  "license": "MIT",
+  "keywords": [
+    "ip",
+    "proxy",
+    "x-forwarded-for"
+  ],
+  "repository": "jshttp/proxy-addr",
+  "dependencies": {
+    "forwarded": "0.2.0",
+    "ipaddr.js": "1.9.1"
+  },
+  "devDependencies": {
+    "benchmark": "2.1.4",
+    "beautify-benchmark": "0.2.4",
+    "deep-equal": "1.0.1",
+    "eslint": "7.26.0",
+    "eslint-config-standard": "14.1.1",
+    "eslint-plugin-import": "2.23.4",
+    "eslint-plugin-markdown": "2.2.0",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-promise": "4.3.1",
+    "eslint-plugin-standard": "4.1.0",
+    "mocha": "8.4.0",
+    "nyc": "15.1.0"
+  },
+  "files": [
+    "LICENSE",
+    "HISTORY.md",
+    "README.md",
+    "index.js"
+  ],
+  "engines": {
+    "node": ">= 0.10"
+  },
+  "scripts": {
+    "bench": "node benchmark/index.js",
+    "lint": "eslint .",
+    "test": "mocha --reporter spec --bail --check-leaks test/",
+    "test-ci": "nyc --reporter=lcov --reporter=text npm test",
+    "test-cov": "nyc --reporter=html --reporter=text npm test"
+  }
+}
+¨/LICENSEÅF(The MIT License)
+
+Copyright (c) 2014-2016 Douglas Christopher Wilson
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ª/README.mdÅ## proxy-addr
+
+[![NPM Version][npm-version-image]][npm-url]
+[![NPM Downloads][npm-downloads-image]][npm-url]
+[![Node.js Version][node-image]][node-url]
+[![Build Status][ci-image]][ci-url]
+[![Test Coverage][coveralls-image]][coveralls-url]
+
+Determine address of proxied request
+
+## Install
+
+This is a [Node.js](https://nodejs.org/en/) module available through the
+[npm registry](https://www.npmjs.com/). Installation is done using the
+[`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
+
+```sh
+$ npm install proxy-addr
+```
+
+## API
+
+```js
+var proxyaddr = require('proxy-addr')
+```
+
+### proxyaddr(req, trust)
+
+Return the address of the request, using the given `trust` parameter.
+
+The `trust` argument is a function that returns `true` if you trust
+the address, `false` if you don't. The closest untrusted address is
+returned.
+
+```js
+proxyaddr(req, function (addr) { return addr === '127.0.0.1' })
+proxyaddr(req, function (addr, i) { return i < 1 })
+```
+
+The `trust` arugment may also be a single IP address string or an
+array of trusted addresses, as plain IP addresses, CIDR-formatted
+strings, or IP/netmask strings.
+
+```js
+proxyaddr(req, '127.0.0.1')
+proxyaddr(req, ['127.0.0.0/8', '10.0.0.0/8'])
+proxyaddr(req, ['127.0.0.0/255.0.0.0', '192.168.0.0/255.255.0.0'])
+```
+
+This module also supports IPv6. Your IPv6 addresses will be normalized
+automatically (i.e. `fe80::00ed:1` equals `fe80:0:0:0:0:0:ed:1`).
+
+```js
+proxyaddr(req, '::1')
+proxyaddr(req, ['::1/128', 'fe80::/10'])
+```
+
+This module will automatically work with IPv4-mapped IPv6 addresses
+as well to support node.js in IPv6-only mode. This means that you do
+not have to specify both `::ffff:a00:1` and `10.0.0.1`.
+
+As a convenience, this module also takes certain pre-defined names
+in addition to IP addresses, which expand into IP addresses:
+
+```js
+proxyaddr(req, 'loopback')
+proxyaddr(req, ['loopback', 'fc00:ac:1ab5:fff::1/64'])
+```
+
+  * `loopback`: IPv4 and IPv6 loopback addresses (like `::1` and
+    `127.0.0.1`).
+  * `linklocal`: IPv4 and IPv6 link-local addresses (like
+    `fe80::1:1:1:1` and `169.254.0.1`).
+  * `uniquelocal`: IPv4 private addresses and IPv6 unique-local
+    addresses (like `fc00:ac:1ab5:fff::1` and `192.168.0.1`).
+
+When `trust` is specified as a function, it will be called for each
+address to determine if it is a trusted address. The function is
+given two arguments: `addr` and `i`, where `addr` is a string of
+the address to check and `i` is a number that represents the distance
+from the socket address.
+
+### proxyaddr.all(req, [trust])
+
+Return all the addresses of the request, optionally stopping at the
+first untrusted. This array is ordered from closest to furthest
+(i.e. `arr[0] === req.connection.remoteAddress`).
+
+```js
+proxyaddr.all(req)
+```
+
+The optional `trust` argument takes the same arguments as `trust`
+does in `proxyaddr(req, trust)`.
+
+```js
+proxyaddr.all(req, 'loopback')
+```
+
+### proxyaddr.compile(val)
+
+Compiles argument `val` into a `trust` function. This function takes
+the same arguments as `trust` does in `proxyaddr(req, trust)` and
+returns a function suitable for `proxyaddr(req, trust)`.
+
+```js
+var trust = proxyaddr.compile('loopback')
+var addr = proxyaddr(req, trust)
+```
+
+This function is meant to be optimized for use against every request.
+It is recommend to compile a trust function up-front for the trusted
+configuration and pass that to `proxyaddr(req, trust)` for each request.
+
+## Testing
+
+```sh
+$ npm test
+```
+
+## Benchmarks
+
+```sh
+$ npm run-script bench
+```
+
+## License
+
+[MIT](LICENSE)
+
+[ci-image]: https://badgen.net/github/checks/jshttp/proxy-addr/master?label=ci
+[ci-url]: https://github.com/jshttp/proxy-addr/actions?query=workflow%3Aci
+[coveralls-image]: https://badgen.net/coveralls/c/github/jshttp/proxy-addr/master
+[coveralls-url]: https://coveralls.io/r/jshttp/proxy-addr?branch=master
+[node-image]: https://badgen.net/npm/node/proxy-addr
+[node-url]: https://nodejs.org/en/download
+[npm-downloads-image]: https://badgen.net/npm/dm/proxy-addr
+[npm-url]: https://npmjs.org/package/proxy-addr
+[npm-version-image]: https://badgen.net/npm/v/proxy-addr
+©/index.jsÅp/*!
+ * proxy-addr
+ * Copyright(c) 2014-2016 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+'use strict'
+
+/**
+ * Module exports.
+ * @public
+ */
+
+module.exports = proxyaddr
+module.exports.all = alladdrs
+module.exports.compile = compile
+
+/**
+ * Module dependencies.
+ * @private
+ */
+
+var forwarded = require('forwarded')
+var ipaddr = require('ipaddr.js')
+
+/**
+ * Variables.
+ * @private
+ */
+
+var DIGIT_REGEXP = /^[0-9]+$/
+var isip = ipaddr.isValid
+var parseip = ipaddr.parse
+
+/**
+ * Pre-defined IP ranges.
+ * @private
+ */
+
+var IP_RANGES = {
+  linklocal: ['169.254.0.0/16', 'fe80::/10'],
+  loopback: ['127.0.0.1/8', '::1/128'],
+  uniquelocal: ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', 'fc00::/7']
+}
+
+/**
+ * Get all addresses in the request, optionally stopping
+ * at the first untrusted.
+ *
+ * @param {Object} request
+ * @param {Function|Array|String} [trust]
+ * @public
+ */
+
+function alladdrs (req, trust) {
+  // get addresses
+  var addrs = forwarded(req)
+
+  if (!trust) {
+    // Return all addresses
+    return addrs
+  }
+
+  if (typeof trust !== 'function') {
+    trust = compile(trust)
+  }
+
+  for (var i = 0; i < addrs.length - 1; i++) {
+    if (trust(addrs[i], i)) continue
+
+    addrs.length = i + 1
+  }
+
+  return addrs
+}
+
+/**
+ * Compile argument into trust function.
+ *
+ * @param {Array|String} val
+ * @private
+ */
+
+function compile (val) {
+  if (!val) {
+    throw new TypeError('argument is required')
+  }
+
+  var trust
+
+  if (typeof val === 'string') {
+    trust = [val]
+  } else if (Array.isArray(val)) {
+    trust = val.slice()
+  } else {
+    throw new TypeError('unsupported trust argument')
+  }
+
+  for (var i = 0; i < trust.length; i++) {
+    val = trust[i]
+
+    if (!Object.prototype.hasOwnProperty.call(IP_RANGES, val)) {
+      continue
+    }
+
+    // Splice in pre-defined range
+    val = IP_RANGES[val]
+    trust.splice.apply(trust, [i, 1].concat(val))
+    i += val.length - 1
+  }
+
+  return compileTrust(compileRangeSubnets(trust))
+}
+
+/**
+ * Compile `arr` elements into range subnets.
+ *
+ * @param {Array} arr
+ * @private
+ */
+
+function compileRangeSubnets (arr) {
+  var rangeSubnets = new Array(arr.length)
+
+  for (var i = 0; i < arr.length; i++) {
+    rangeSubnets[i] = parseipNotation(arr[i])
+  }
+
+  return rangeSubnets
+}
+
+/**
+ * Compile range subnet array into trust function.
+ *
+ * @param {Array} rangeSubnets
+ * @private
+ */
+
+function compileTrust (rangeSubnets) {
+  // Return optimized function based on length
+  var len = rangeSubnets.length
+  return len === 0
+    ? trustNone
+    : len === 1
+      ? trustSingle(rangeSubnets[0])
+      : trustMulti(rangeSubnets)
+}
+
+/**
+ * Parse IP notation string into range subnet.
+ *
+ * @param {String} note
+ * @private
+ */
+
+function parseipNotation (note) {
+  var pos = note.lastIndexOf('/')
+  var str = pos !== -1
+    ? note.substring(0, pos)
+    : note
+
+  if (!isip(str)) {
+    throw new TypeError('invalid IP address: ' + str)
+  }
+
+  var ip = parseip(str)
+
+  if (pos === -1 && ip.kind() === 'ipv6' && ip.isIPv4MappedAddress()) {
+    // Store as IPv4
+    ip = ip.toIPv4Address()
+  }
+
+  var max = ip.kind() === 'ipv6'
+    ? 128
+    : 32
+
+  var range = pos !== -1
+    ? note.substring(pos + 1, note.length)
+    : null
+
+  if (range === null) {
+    range = max
+  } else if (DIGIT_REGEXP.test(range)) {
+    range = parseInt(range, 10)
+  } else if (ip.kind() === 'ipv4' && isip(range)) {
+    range = parseNetmask(range)
+  } else {
+    range = null
+  }
+
+  if (range <= 0 || range > max) {
+    throw new TypeError('invalid range on address: ' + note)
+  }
+
+  return [ip, range]
+}
+
+/**
+ * Parse netmask string into CIDR range.
+ *
+ * @param {String} netmask
+ * @private
+ */
+
+function parseNetmask (netmask) {
+  var ip = parseip(netmask)
+  var kind = ip.kind()
+
+  return kind === 'ipv4'
+    ? ip.prefixLengthFromSubnetMask()
+    : null
+}
+
+/**
+ * Determine address of proxied request.
+ *
+ * @param {Object} request
+ * @param {Function|Array|String} trust
+ * @public
+ */
+
+function proxyaddr (req, trust) {
+  if (!req) {
+    throw new TypeError('req argument is required')
+  }
+
+  if (!trust) {
+    throw new TypeError('trust argument is required')
+  }
+
+  var addrs = alladdrs(req, trust)
+  var addr = addrs[addrs.length - 1]
+
+  return addr
+}
+
+/**
+ * Static trust function to trust nothing.
+ *
+ * @private
+ */
+
+function trustNone () {
+  return false
+}
+
+/**
+ * Compile trust function for multiple subnets.
+ *
+ * @param {Array} subnets
+ * @private
+ */
+
+function trustMulti (subnets) {
+  return function trust (addr) {
+    if (!isip(addr)) return false
+
+    var ip = parseip(addr)
+    var ipconv
+    var kind = ip.kind()
+
+    for (var i = 0; i < subnets.length; i++) {
+      var subnet = subnets[i]
+      var subnetip = subnet[0]
+      var subnetkind = subnetip.kind()
+      var subnetrange = subnet[1]
+      var trusted = ip
+
+      if (kind !== subnetkind) {
+        if (subnetkind === 'ipv4' && !ip.isIPv4MappedAddress()) {
+          // Incompatible IP addresses
+          continue
+        }
+
+        if (!ipconv) {
+          // Convert IP to match subnet IP kind
+          ipconv = subnetkind === 'ipv4'
+            ? ip.toIPv4Address()
+            : ip.toIPv4MappedAddress()
+        }
+
+        trusted = ipconv
+      }
+
+      if (trusted.match(subnetip, subnetrange)) {
+        return true
+      }
+    }
+
+    return false
+  }
+}
+
+/**
+ * Compile trust function for single subnet.
+ *
+ * @param {Object} subnet
+ * @private
+ */
+
+function trustSingle (subnet) {
+  var subnetip = subnet[0]
+  var subnetkind = subnetip.kind()
+  var subnetisipv4 = subnetkind === 'ipv4'
+  var subnetrange = subnet[1]
+
+  return function trust (addr) {
+    if (!isip(addr)) return false
+
+    var ip = parseip(addr)
+    var kind = ip.kind()
+
+    if (kind !== subnetkind) {
+      if (subnetisipv4 && !ip.isIPv4MappedAddress()) {
+        // Incompatible IP addresses
+        return false
+      }
+
+      // Convert IP to match subnet IP kind
+      ip = subnetisipv4
+        ? ip.toIPv4Address()
+        : ip.toIPv4MappedAddress()
+    }
+
+    return ip.match(subnetip, subnetrange)
+  }
+}
+«/HISTORY.mdÅ¯2.0.7 / 2021-05-31
+==================
+
+  * deps: forwarded@0.2.0
+    - Use `req.socket` over deprecated `req.connection`
+
+2.0.6 / 2020-02-24
+==================
+
+  * deps: ipaddr.js@1.9.1
+
+2.0.5 / 2019-04-16
+==================
+
+  * deps: ipaddr.js@1.9.0
+
+2.0.4 / 2018-07-26
+==================
+
+  * deps: ipaddr.js@1.8.0
+
+2.0.3 / 2018-02-19
+==================
+
+  * deps: ipaddr.js@1.6.0
+
+2.0.2 / 2017-09-24
+==================
+
+  * deps: forwarded@~0.1.2
+    - perf: improve header parsing
+    - perf: reduce overhead when no `X-Forwarded-For` header
+
+2.0.1 / 2017-09-10
+==================
+
+  * deps: forwarded@~0.1.1
+    - Fix trimming leading / trailing OWS
+    - perf: hoist regular expression
+  * deps: ipaddr.js@1.5.2
+
+2.0.0 / 2017-08-08
+==================
+
+  * Drop support for Node.js below 0.10
+
+1.1.5 / 2017-07-25
+==================
+
+  * Fix array argument being altered
+  * deps: ipaddr.js@1.4.0
+
+1.1.4 / 2017-03-24
+==================
+
+  * deps: ipaddr.js@1.3.0
+
+1.1.3 / 2017-01-14
+==================
+
+  * deps: ipaddr.js@1.2.0
+
+1.1.2 / 2016-05-29
+==================
+
+  * deps: ipaddr.js@1.1.1
+    - Fix IPv6-mapped IPv4 validation edge cases
+
+1.1.1 / 2016-05-03
+==================
+
+  * Fix regression matching mixed versions against multiple subnets
+
+1.1.0 / 2016-05-01
+==================
+
+  * Fix accepting various invalid netmasks
+    - IPv4 netmasks must be contingous
+    - IPv6 addresses cannot be used as a netmask
+  * deps: ipaddr.js@1.1.0
+
+1.0.10 / 2015-12-09
+===================
+
+  * deps: ipaddr.js@1.0.5
+    - Fix regression in `isValid` with non-string arguments
+
+1.0.9 / 2015-12-01
+==================
+
+  * deps: ipaddr.js@1.0.4
+    - Fix accepting some invalid IPv6 addresses
+    - Reject CIDRs with negative or overlong masks
+  * perf: enable strict mode
+
+1.0.8 / 2015-05-10
+==================
+
+  * deps: ipaddr.js@1.0.1
+
+1.0.7 / 2015-03-16
+==================
+
+  * deps: ipaddr.js@0.1.9
+    - Fix OOM on certain inputs to `isValid`
+
+1.0.6 / 2015-02-01
+==================
+
+  * deps: ipaddr.js@0.1.8
+
+1.0.5 / 2015-01-08
+==================
+
+  * deps: ipaddr.js@0.1.6
+
+1.0.4 / 2014-11-23
+==================
+
+  * deps: ipaddr.js@0.1.5
+    - Fix edge cases with `isValid`
+
+1.0.3 / 2014-09-21
+==================
+
+  * Use `forwarded` npm module
+
+1.0.2 / 2014-09-18
+==================
+
+  * Fix a global leak when multiple subnets are trusted
+  * Support Node.js 0.6
+  * deps: ipaddr.js@0.1.3
+
+1.0.1 / 2014-06-03
+==================
+
+  * Fix links in npm package
+
+1.0.0 / 2014-05-08
+==================
+
+  * Add `trust` argument to determine proxy trust on
+    * Accepts custom function
+    * Accepts IPv4/IPv6 address(es)
+    * Accepts subnets
+    * Accepts pre-defined names
+  * Add optional `trust` argument to `proxyaddr.all` to
+    stop at first untrusted
+  * Add `proxyaddr.compile` to pre-compile `trust` function
+    to make subsequent calls faster
+
+0.0.1 / 2014-05-04
+==================
+
+  * Fix bad npm publish
+
+0.0.0 / 2014-05-04
+==================
+
+  * Initial release

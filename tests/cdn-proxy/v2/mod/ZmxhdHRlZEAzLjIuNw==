@@ -1,0 +1,741 @@
+åß/esm.js≈}/*! (c) 2020 Andrea Giammarchi */
+const{parse:t,stringify:e}=JSON,{keys:n}=Object,o=String,c={},r=(t,e)=>e,s=t=>t instanceof o?o(t):t,l=(t,e)=>"string"==typeof e?new o(e):e,a=(t,e,r,s)=>{const l=[];for(let a=n(r),{length:f}=a,i=0;i<f;i++){const n=a[i],f=r[n];if(f instanceof o){const o=t[f];"object"!=typeof o||e.has(o)?r[n]=s.call(r,n,o):(e.add(o),r[n]=c,l.push({k:n,a:[t,e,o,s]}))}else r[n]!==c&&(r[n]=s.call(r,n,f))}for(let{length:t}=l,e=0;e<t;e++){const{k:t,a:n}=l[e];r[t]=s.call(r,t,a.apply(null,n))}return r},f=(t,e,n)=>{const c=o(e.push(n)-1);return t.set(n,c),c},i=(e,n)=>{const o=t(e,l).map(s),c=o[0],f=n||r,i="object"==typeof c&&c?a(o,new Set,c,f):c;return f.call({"":i},"",i)},p=(t,n,o)=>{const c=n&&"object"==typeof n?(t,e)=>""===t||-1<n.indexOf(t)?e:void 0:n||r,s=new Map,l=[],a=[];let i=+f(s,l,c.call({"":t},"",t)),p=!i;for(;i<l.length;)p=!0,a[i]=e(l[i++],u,o);return"["+a.join(",")+"]";function u(t,e){if(p)return p=!p,e;const n=c.call(this,t,e);switch(typeof n){case"object":if(null===n)return n;case"string":return s.get(n)||f(s,l,n)}return n}},u=e=>t(p(e)),g=t=>i(e(t));export{g as fromJSON,i as parse,p as stringify,u as toJSON};
+™/README.md≈∆# flatted
+
+[![Downloads](https://img.shields.io/npm/dm/flatted.svg)](https://www.npmjs.com/package/flatted) [![Coverage Status](https://coveralls.io/repos/github/WebReflection/flatted/badge.svg?branch=main)](https://coveralls.io/github/WebReflection/flatted?branch=main) [![Build Status](https://travis-ci.com/WebReflection/flatted.svg?branch=main)](https://travis-ci.com/WebReflection/flatted) [![License: ISC](https://img.shields.io/badge/License-ISC-yellow.svg)](https://opensource.org/licenses/ISC) ![WebReflection status](https://offline.report/status/webreflection.svg)
+
+![snow flake](./flatted.jpg)
+
+<sup>**Social Media Photo by [Matt Seymour](https://unsplash.com/@mattseymour) on [Unsplash](https://unsplash.com/)**</sup>
+
+## Announcement üì£
+
+There is a standard approach to recursion and more data-types than what JSON allows, and it's part of the [Structured Clone polyfill](https://github.com/ungap/structured-clone/#readme).
+
+Beside acting as a polyfill, its `@ungap/structured-clone/json` export provides both `stringify` and `parse`, and it's been tested for being faster than *flatted*, but its produced output is also smaller than *flatted* in general.
+
+The *@ungap/structured-clone* module is, in short, a drop in replacement for *flatted*, but it's not compatible with *flatted* specialized syntax.
+
+However, if recursion, as well as more data-types, are what you are after, or interesting for your projects/use cases, consider switching to this new module whenever you can üëç
+
+- - -
+
+A super light (0.5K) and fast circular JSON parser, directly from the creator of [CircularJSON](https://github.com/WebReflection/circular-json/#circularjson).
+
+Now available also for **[PHP](./php/flatted.php)**.
+
+```js
+npm i flatted
+```
+
+Usable via [CDN](https://unpkg.com/flatted) or as regular module.
+
+```js
+// ESM
+import {parse, stringify, toJSON, fromJSON} from 'flatted';
+
+// CJS
+const {parse, stringify, toJSON, fromJSON} = require('flatted');
+
+const a = [{}];
+a[0].a = a;
+a.push(a);
+
+stringify(a); // [["1","0"],{"a":"0"}]
+```
+
+## toJSON and fromJSON
+
+If you'd like to implicitly survive JSON serialization, these two helpers helps:
+
+```js
+import {toJSON, fromJSON} from 'flatted';
+
+class RecursiveMap extends Map {
+  static fromJSON(any) {
+    return new this(fromJSON(any));
+  }
+  toJSON() {
+    return toJSON([...this.entries()]);
+  }
+}
+
+const recursive = new RecursiveMap;
+const same = {};
+same.same = same;
+recursive.set('same', same);
+
+const asString = JSON.stringify(recursive);
+const asMap = RecursiveMap.fromJSON(JSON.parse(asString));
+asMap.get('same') === asMap.get('same').same;
+// true
+```
+
+
+## Flatted VS JSON
+
+As it is for every other specialized format capable of serializing and deserializing circular data, you should never `JSON.parse(Flatted.stringify(data))`, and you should never `Flatted.parse(JSON.stringify(data))`.
+
+The only way this could work is to `Flatted.parse(Flatted.stringify(data))`, as it is also for _CircularJSON_ or any other, otherwise there's no granted data integrity.
+
+Also please note this project serializes and deserializes only data compatible with JSON, so that sockets, or anything else with internal classes different from those allowed by JSON standard, won't be serialized and unserialized as expected.
+
+
+### New in V1: Exact same JSON API
+
+  * Added a [reviver](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse#Syntax) parameter to `.parse(string, reviver)` and revive your own objects.
+  * Added a [replacer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#Syntax) and a `space` parameter to `.stringify(object, replacer, space)` for feature parity with JSON signature.
+
+
+### Compatibility
+All ECMAScript engines compatible with `Map`, `Set`, `Object.keys`, and `Array.prototype.reduce` will work, even if polyfilled.
+
+
+### How does it work ?
+While stringifying, all Objects, including Arrays, and strings, are flattened out and replaced as unique index. `*`
+
+Once parsed, all indexes will be replaced through the flattened collection.
+
+<sup><sub>`*` represented as string to avoid conflicts with numbers</sub></sup>
+
+```js
+// logic example
+var a = [{one: 1}, {two: '2'}];
+a[0].a = a;
+// a is the main object, will be at index '0'
+// {one: 1} is the second object, index '1'
+// {two: '2'} the third, in '2', and it has a string
+// which will be found at index '3'
+
+Flatted.stringify(a);
+// [["1","2"],{"one":1,"a":"0"},{"two":"3"},"2"]
+// a[one,two]    {one: 1, a}    {two: '2'}  '2'
+```
+±/cjs/package.jsonƒ{"type":"commonjs"}¶/es.js≈èself.Flatted=function(t){"use strict";
+/*! (c) 2020 Andrea Giammarchi */const{parse:e,stringify:n}=JSON,{keys:r}=Object,s=String,o="string",c={},l="object",a=(t,e)=>e,f=t=>t instanceof s?s(t):t,i=(t,e)=>typeof e===o?new s(e):e,u=(t,e,n,o)=>{const a=[];for(let f=r(n),{length:i}=f,u=0;u<i;u++){const r=f[u],i=n[r];if(i instanceof s){const s=t[i];typeof s!==l||e.has(s)?n[r]=o.call(n,r,s):(e.add(s),n[r]=c,a.push({k:r,a:[t,e,s,o]}))}else n[r]!==c&&(n[r]=o.call(n,r,i))}for(let{length:t}=a,e=0;e<t;e++){const{k:t,a:r}=a[e];n[t]=o.call(n,t,u.apply(null,r))}return n},p=(t,e,n)=>{const r=s(e.push(n)-1);return t.set(n,r),r},y=(t,n)=>{const r=e(t,i).map(f),s=r[0],o=n||a,c=typeof s===l&&s?u(r,new Set,s,o):s;return o.call({"":c},"",c)},g=(t,e,r)=>{const s=e&&typeof e===l?(t,n)=>""===t||-1<e.indexOf(t)?n:void 0:e||a,c=new Map,f=[],i=[];let u=+p(c,f,s.call({"":t},"",t)),y=!u;for(;u<f.length;)y=!0,i[u]=n(f[u++],g,r);return"["+i.join(",")+"]";function g(t,e){if(y)return y=!y,e;const n=s.call(this,t,e);switch(typeof n){case l:if(null===n)return n;case o:return c.get(n)||p(c,f,n)}return n}};return t.fromJSON=t=>y(n(t)),t.parse=y,t.stringify=g,t.toJSON=t=>e(g(t)),t}({});
+≠/esm/index.js≈
+V/*! (c) 2020 Andrea Giammarchi */
+
+const {parse: $parse, stringify: $stringify} = JSON;
+const {keys} = Object;
+
+const Primitive = String;   // it could be Number
+const primitive = 'string'; // it could be 'number'
+
+const ignore = {};
+const object = 'object';
+
+const noop = (_, value) => value;
+
+const primitives = value => (
+  value instanceof Primitive ? Primitive(value) : value
+);
+
+const Primitives = (_, value) => (
+  typeof value === primitive ? new Primitive(value) : value
+);
+
+const revive = (input, parsed, output, $) => {
+  const lazy = [];
+  for (let ke = keys(output), {length} = ke, y = 0; y < length; y++) {
+    const k = ke[y];
+    const value = output[k];
+    if (value instanceof Primitive) {
+      const tmp = input[value];
+      if (typeof tmp === object && !parsed.has(tmp)) {
+        parsed.add(tmp);
+        output[k] = ignore;
+        lazy.push({k, a: [input, parsed, tmp, $]});
+      }
+      else
+        output[k] = $.call(output, k, tmp);
+    }
+    else if (output[k] !== ignore)
+      output[k] = $.call(output, k, value);
+  }
+  for (let {length} = lazy, i = 0; i < length; i++) {
+    const {k, a} = lazy[i];
+    output[k] = $.call(output, k, revive.apply(null, a));
+  }
+  return output;
+};
+
+const set = (known, input, value) => {
+  const index = Primitive(input.push(value) - 1);
+  known.set(value, index);
+  return index;
+};
+
+export const parse = (text, reviver) => {
+  const input = $parse(text, Primitives).map(primitives);
+  const value = input[0];
+  const $ = reviver || noop;
+  const tmp = typeof value === object && value ?
+              revive(input, new Set, value, $) :
+              value;
+  return $.call({'': tmp}, '', tmp);
+};
+
+export const stringify = (value, replacer, space) => {
+  const $ = replacer && typeof replacer === object ?
+            (k, v) => (k === '' || -1 < replacer.indexOf(k) ? v : void 0) :
+            (replacer || noop);
+  const known = new Map;
+  const input = [];
+  const output = [];
+  let i = +set(known, input, $.call({'': value}, '', value));
+  let firstRun = !i;
+  while (i < input.length) {
+    firstRun = true;
+    output[i] = $stringify(input[i++], replace, space);
+  }
+  return '[' + output.join(',') + ']';
+  function replace(key, value) {
+    if (firstRun) {
+      firstRun = !firstRun;
+      return value;
+    }
+    const after = $.call(this, key, value);
+    switch (typeof after) {
+      case object:
+        if (after === null) return after;
+      case primitive:
+        return known.get(after) || set(known, input, after);
+    }
+    return after;
+  }
+};
+
+export const toJSON = any => $parse(stringify(any));
+export const fromJSON = any => parse($stringify(any));
+ß/min.js≈¬self.Flatted=function(n){"use strict";function t(n){return t="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(n){return typeof n}:function(n){return n&&"function"==typeof Symbol&&n.constructor===Symbol&&n!==Symbol.prototype?"symbol":typeof n},t(n)
+/*! (c) 2020 Andrea Giammarchi */}var r=JSON.parse,e=JSON.stringify,o=Object.keys,u=String,f="string",i={},c="object",a=function(n,t){return t},l=function(n){return n instanceof u?u(n):n},s=function(n,r){return t(r)===f?new u(r):r},y=function n(r,e,f,a){for(var l=[],s=o(f),y=s.length,p=0;p<y;p++){var v=s[p],S=f[v];if(S instanceof u){var b=r[S];t(b)!==c||e.has(b)?f[v]=a.call(f,v,b):(e.add(b),f[v]=i,l.push({k:v,a:[r,e,b,a]}))}else f[v]!==i&&(f[v]=a.call(f,v,S))}for(var m=l.length,g=0;g<m;g++){var h=l[g],O=h.k,d=h.a;f[O]=a.call(f,O,n.apply(null,d))}return f},p=function(n,t,r){var e=u(t.push(r)-1);return n.set(r,e),e},v=function(n,e){var o=r(n,s).map(l),u=o[0],f=e||a,i=t(u)===c&&u?y(o,new Set,u,f):u;return f.call({"":i},"",i)},S=function(n,r,o){for(var u=r&&t(r)===c?function(n,t){return""===n||-1<r.indexOf(n)?t:void 0}:r||a,i=new Map,l=[],s=[],y=+p(i,l,u.call({"":n},"",n)),v=!y;y<l.length;)v=!0,s[y]=e(l[y++],S,o);return"["+s.join(",")+"]";function S(n,r){if(v)return v=!v,r;var e=u.call(this,n,r);switch(t(e)){case c:if(null===e)return e;case f:return i.get(e)||p(i,l,e)}return e}};return n.fromJSON=function(n){return v(e(n))},n.parse=v,n.stringify=S,n.toJSON=function(n){return r(S(n))},n}({});∞/php/flatted.php≈<?php
+
+/*!
+ * ISC License
+ * 
+ * Copyright (c) 2018-2021, Andrea Giammarchi, @WebReflection
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+class FlattedString {
+  public function __construct($value) {
+    $this->value = $value;
+  }
+}
+
+class Flatted {
+
+  // public utilities
+  public static function parse($json, $assoc = false, $depth = 512, $options = 0) {
+    $input = array_map(
+      'Flatted::asString',
+      array_map(
+        'Flatted::wrap',
+        json_decode($json, $assoc, $depth, $options)
+      )
+    );
+    $value = &$input[0];
+    $set = array();
+    $set[] = &$value;
+    if (is_array($value))
+      return Flatted::loop(false, array_keys($value), $input, $set, $value);
+    if (is_object($value))
+      return Flatted::loop(true, Flatted::keys($value), $input, $set, $value);
+    return $value;
+  }
+
+  public static function stringify($value, $options = 0, $depth = 512) {
+    $known = new stdClass;
+    $known->key = array();
+    $known->value = array();
+    $input = array();
+    $output = array();
+    $i = intval(Flatted::index($known, $input, $value));
+    while ($i < count($input)) {
+      $output[$i] = Flatted::transform($known, $input, $input[$i]);
+      $i++;
+    }
+    return json_encode($output, $options, $depth);
+  }
+
+  // private helpers
+  private static function asString($value) {
+    return $value instanceof FlattedString ? $value->value : $value;
+  }
+
+  private static function index(&$known, &$input, &$value) {
+    $input[] = &$value;
+    $index = strval(count($input) - 1);
+    $known->key[] = &$value;
+    $known->value[] = &$index;
+    return $index;
+  }
+
+  private static function keys(&$value) {
+    $obj = new ReflectionObject($value);
+    $props = $obj->getProperties();
+    $keys = array();
+    foreach ($props as $prop)
+      $keys[] = $prop->getName();
+    return $keys;
+  }
+
+  private static function loop($obj, $keys, &$input, &$set, &$output) {
+    foreach ($keys as $key) {
+      $value = $obj ? $output->$key : $output[$key];
+      if ($value instanceof FlattedString)
+        Flatted::ref($obj, $key, $input[$value->value], $input, $set, $output);
+    }
+    return $output;
+  }
+
+  private static function relate(&$known, &$input, &$value) {
+    if (is_string($value) || is_array($value) || is_object($value)) {
+      $key = array_search($value, $known->key, true);
+      if ($key !== false)
+        return $known->value[$key];
+      return Flatted::index($known, $input, $value);
+    }
+    return $value;
+  }
+
+  private static function ref($obj, &$key, &$value, &$input, &$set, &$output) {
+    if (is_array($value) && !in_array($value, $set, true)) {
+      $set[] = $value;
+      $value = Flatted::loop(false, array_keys($value), $input, $set, $value);
+    }
+    elseif (is_object($value) && !in_array($value, $set, true)) {
+      $set[] = $value;
+      $value = Flatted::loop(true, Flatted::keys($value), $input, $set, $value);
+    }
+    if ($obj) {
+      $output->$key = &$value;
+    }
+    else {
+      $output[$key] = &$value;
+    }
+  }
+
+  private static function transform(&$known, &$input, &$value) {
+    if (is_array($value)) {
+      return array_map(
+        function ($value) use(&$known, &$input) {
+          return Flatted::relate($known, $input, $value);
+        },
+        $value
+      );
+    }
+    if (is_object($value)) {
+      $object = new stdClass;
+      $keys = Flatted::keys($value);
+      foreach ($keys as $key)
+        $object->$key = Flatted::relate($known, $input, $value->$key);
+      return $object;
+    }
+    return $value;
+  }
+
+  private static function wrap($value) {
+    if (is_string($value)) {
+      return new FlattedString($value);
+    }
+    if (is_array($value)) {
+      return array_map('Flatted::wrap', $value);
+    }
+    if (is_object($value)) {
+      $keys = Flatted::keys($value);
+      foreach ($keys as $key) {
+        $value->$key = self::wrap($value->$key);
+      }
+      return $value;
+    }
+    return $value;
+  }
+}
+?>≠/package.json≈M{
+  "name": "flatted",
+  "version": "3.2.7",
+  "description": "A super light and fast circular JSON parser.",
+  "unpkg": "min.js",
+  "types": "types.d.ts",
+  "main": "./cjs/index.js",
+  "scripts": {
+    "build": "npm run cjs && npm run rollup:esm && npm run rollup:es && npm run rollup:babel && npm run min && npm run test && npm run size",
+    "cjs": "ascjs esm cjs",
+    "rollup:es": "rollup --config rollup/es.config.js && sed -i.bck 's/^var /self./' es.js && rm -rf es.js.bck",
+    "rollup:esm": "rollup --config rollup/esm.config.js",
+    "rollup:babel": "rollup --config rollup/babel.config.js && sed -i.bck 's/^var /self./' index.js && rm -rf index.js.bck",
+    "min": "terser index.js -c -m -o min.js",
+    "size": "cat index.js | wc -c;cat min.js | wc -c;gzip -c9 min.js | wc -c;cat min.js | brotli | wc -c; cat es.js | brotli | wc -c; cat esm.js | brotli | wc -c",
+    "test": "c8 node test/index.js",
+    "test:php": "php php/test.php",
+    "coverage": "mkdir -p ./coverage; c8 report --reporter=text-lcov > ./coverage/lcov.info"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WebReflection/flatted.git"
+  },
+  "keywords": [
+    "circular",
+    "JSON",
+    "fast",
+    "parser",
+    "minimal"
+  ],
+  "author": "Andrea Giammarchi",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/WebReflection/flatted/issues"
+  },
+  "homepage": "https://github.com/WebReflection/flatted#readme",
+  "devDependencies": {
+    "@babel/core": "^7.18.10",
+    "@babel/preset-env": "^7.18.10",
+    "@ungap/structured-clone": "^1.0.1",
+    "ascjs": "^5.0.1",
+    "c8": "^7.12.0",
+    "circular-json": "^0.5.9",
+    "circular-json-es6": "^2.0.2",
+    "jsan": "^3.1.14",
+    "rollup": "^2.78.1",
+    "rollup-plugin-babel": "^4.4.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-terser": "^7.0.2",
+    "terser": "^5.14.2"
+  },
+  "module": "./esm/index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./types.d.ts",
+      "import": "./esm/index.js",
+      "default": "./cjs/index.js"
+    },
+    "./esm": "./esm.js",
+    "./package.json": "./package.json"
+  }
+}
+´/types.d.ts≈	Pinterface Flatted {
+  /**
+   * Converts a JavaScript Object Notation (using Flatted encoding) string into an object.
+   * @param text A valid Flatted string.
+   * @param reviver A function that transforms the results. This function is called for each member of the object.
+   * If a member contains nested objects, the nested objects are transformed before the parent object is.
+   */
+  parse(
+    text: string,
+    reviver?: (this: any, key: string, value: any) => any
+  ): any;
+  /**
+   * Converts a JavaScript value to a JavaScript Object Notation (using Flatted encoding) string.
+   * @param value A JavaScript value, usually an object or array, to be converted.
+   * @param replacer A function that transforms the results.
+   * @param space Adds indentation, white space, and line break characters to the return-value JSON text to make it easier to read.
+   */
+  stringify(
+    value: any,
+    replacer?: (this: any, key: string, value: any) => any,
+    space?: string | number
+  ): string;
+  /**
+   * Converts a JavaScript value to a JavaScript Object Notation (using Flatted encoding) string.
+   * @param value A JavaScript value, usually an object or array, to be converted.
+   * @param replacer An array of strings and numbers that acts as an approved list for selecting the object properties that will be stringified.
+   * @param space Adds indentation, white space, and line break characters to the return-value JSON text to make it easier to read.
+   */
+  stringify(
+    value: any,
+    replacer?: (number | string)[] | null,
+    space?: string | number
+  ): string;
+  /**
+   * Helper to allow explicit conversions with classes.
+   * @param value The JSON to convert to JavaScript value
+   */
+  fromJSON(value: any): any;
+  /**
+   * Helper to allow explicit conversions with classes.
+   * @param value A JavaScript value, usually an object or array, to be converted.
+   */
+  toJSON(value: any): any;
+}
+
+/**
+ * Fast and minimal circular JSON parser.
+ * logic example
+```js
+var a = [{one: 1}, {two: '2'}];
+a[0].a = a;
+// a is the main object, will be at index '0'
+// {one: 1} is the second object, index '1'
+// {two: '2'} the third, in '2', and it has a string
+// which will be found at index '3'
+Flatted.stringify(a);
+// [["1","2"],{"one":1,"a":"0"},{"two":"3"},"2"]
+// a[one,two]    {one: 1, a}    {two: '2'}  '2'
+```
+ */
+declare const Flatted: Flatted;
+export = Flatted;
+≠/cjs/index.js≈
+¥'use strict';
+/*! (c) 2020 Andrea Giammarchi */
+
+const {parse: $parse, stringify: $stringify} = JSON;
+const {keys} = Object;
+
+const Primitive = String;   // it could be Number
+const primitive = 'string'; // it could be 'number'
+
+const ignore = {};
+const object = 'object';
+
+const noop = (_, value) => value;
+
+const primitives = value => (
+  value instanceof Primitive ? Primitive(value) : value
+);
+
+const Primitives = (_, value) => (
+  typeof value === primitive ? new Primitive(value) : value
+);
+
+const revive = (input, parsed, output, $) => {
+  const lazy = [];
+  for (let ke = keys(output), {length} = ke, y = 0; y < length; y++) {
+    const k = ke[y];
+    const value = output[k];
+    if (value instanceof Primitive) {
+      const tmp = input[value];
+      if (typeof tmp === object && !parsed.has(tmp)) {
+        parsed.add(tmp);
+        output[k] = ignore;
+        lazy.push({k, a: [input, parsed, tmp, $]});
+      }
+      else
+        output[k] = $.call(output, k, tmp);
+    }
+    else if (output[k] !== ignore)
+      output[k] = $.call(output, k, value);
+  }
+  for (let {length} = lazy, i = 0; i < length; i++) {
+    const {k, a} = lazy[i];
+    output[k] = $.call(output, k, revive.apply(null, a));
+  }
+  return output;
+};
+
+const set = (known, input, value) => {
+  const index = Primitive(input.push(value) - 1);
+  known.set(value, index);
+  return index;
+};
+
+const parse = (text, reviver) => {
+  const input = $parse(text, Primitives).map(primitives);
+  const value = input[0];
+  const $ = reviver || noop;
+  const tmp = typeof value === object && value ?
+              revive(input, new Set, value, $) :
+              value;
+  return $.call({'': tmp}, '', tmp);
+};
+exports.parse = parse;
+
+const stringify = (value, replacer, space) => {
+  const $ = replacer && typeof replacer === object ?
+            (k, v) => (k === '' || -1 < replacer.indexOf(k) ? v : void 0) :
+            (replacer || noop);
+  const known = new Map;
+  const input = [];
+  const output = [];
+  let i = +set(known, input, $.call({'': value}, '', value));
+  let firstRun = !i;
+  while (i < input.length) {
+    firstRun = true;
+    output[i] = $stringify(input[i++], replace, space);
+  }
+  return '[' + output.join(',') + ']';
+  function replace(key, value) {
+    if (firstRun) {
+      firstRun = !firstRun;
+      return value;
+    }
+    const after = $.call(this, key, value);
+    switch (typeof after) {
+      case object:
+        if (after === null) return after;
+      case primitive:
+        return known.get(after) || set(known, input, after);
+    }
+    return after;
+  }
+};
+exports.stringify = stringify;
+
+const toJSON = any => $parse(stringify(any));
+exports.toJSON = toJSON;
+const fromJSON = any => parse($stringify(any));
+exports.fromJSON = fromJSON;
+®/LICENSE≈ISC License
+
+Copyright (c) 2018-2020, Andrea Giammarchi, @WebReflection
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+©/index.js≈˚self.Flatted = (function (exports) {
+  'use strict';
+
+  function _typeof(obj) {
+    "@babel/helpers - typeof";
+
+    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) {
+      return typeof obj;
+    } : function (obj) {
+      return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+    }, _typeof(obj);
+  }
+
+  /*! (c) 2020 Andrea Giammarchi */
+  var $parse = JSON.parse,
+      $stringify = JSON.stringify;
+  var keys = Object.keys;
+  var Primitive = String; // it could be Number
+
+  var primitive = 'string'; // it could be 'number'
+
+  var ignore = {};
+  var object = 'object';
+
+  var noop = function noop(_, value) {
+    return value;
+  };
+
+  var primitives = function primitives(value) {
+    return value instanceof Primitive ? Primitive(value) : value;
+  };
+
+  var Primitives = function Primitives(_, value) {
+    return _typeof(value) === primitive ? new Primitive(value) : value;
+  };
+
+  var revive = function revive(input, parsed, output, $) {
+    var lazy = [];
+
+    for (var ke = keys(output), length = ke.length, y = 0; y < length; y++) {
+      var k = ke[y];
+      var value = output[k];
+
+      if (value instanceof Primitive) {
+        var tmp = input[value];
+
+        if (_typeof(tmp) === object && !parsed.has(tmp)) {
+          parsed.add(tmp);
+          output[k] = ignore;
+          lazy.push({
+            k: k,
+            a: [input, parsed, tmp, $]
+          });
+        } else output[k] = $.call(output, k, tmp);
+      } else if (output[k] !== ignore) output[k] = $.call(output, k, value);
+    }
+
+    for (var _length = lazy.length, i = 0; i < _length; i++) {
+      var _lazy$i = lazy[i],
+          _k = _lazy$i.k,
+          a = _lazy$i.a;
+      output[_k] = $.call(output, _k, revive.apply(null, a));
+    }
+
+    return output;
+  };
+
+  var set = function set(known, input, value) {
+    var index = Primitive(input.push(value) - 1);
+    known.set(value, index);
+    return index;
+  };
+
+  var parse = function parse(text, reviver) {
+    var input = $parse(text, Primitives).map(primitives);
+    var value = input[0];
+    var $ = reviver || noop;
+    var tmp = _typeof(value) === object && value ? revive(input, new Set(), value, $) : value;
+    return $.call({
+      '': tmp
+    }, '', tmp);
+  };
+  var stringify = function stringify(value, replacer, space) {
+    var $ = replacer && _typeof(replacer) === object ? function (k, v) {
+      return k === '' || -1 < replacer.indexOf(k) ? v : void 0;
+    } : replacer || noop;
+    var known = new Map();
+    var input = [];
+    var output = [];
+    var i = +set(known, input, $.call({
+      '': value
+    }, '', value));
+    var firstRun = !i;
+
+    while (i < input.length) {
+      firstRun = true;
+      output[i] = $stringify(input[i++], replace, space);
+    }
+
+    return '[' + output.join(',') + ']';
+
+    function replace(key, value) {
+      if (firstRun) {
+        firstRun = !firstRun;
+        return value;
+      }
+
+      var after = $.call(this, key, value);
+
+      switch (_typeof(after)) {
+        case object:
+          if (after === null) return after;
+
+        case primitive:
+          return known.get(after) || set(known, input, after);
+      }
+
+      return after;
+    }
+  };
+  var toJSON = function toJSON(any) {
+    return $parse(stringify(any));
+  };
+  var fromJSON = function fromJSON(any) {
+    return parse($stringify(any));
+  };
+
+  exports.fromJSON = fromJSON;
+  exports.parse = parse;
+  exports.stringify = stringify;
+  exports.toJSON = toJSON;
+
+  return exports;
+
+})({});

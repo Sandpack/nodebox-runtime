@@ -1,0 +1,456 @@
+Ü≠/package.json≈{
+  "author": "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
+  "name": "which",
+  "description": "Like which(1) unix command. Find the first instance of an executable in the PATH.",
+  "version": "2.0.2",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/isaacs/node-which.git"
+  },
+  "main": "which.js",
+  "bin": {
+    "node-which": "./bin/node-which"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "isexe": "^2.0.0"
+  },
+  "devDependencies": {
+    "mkdirp": "^0.5.0",
+    "rimraf": "^2.6.2",
+    "tap": "^14.6.9"
+  },
+  "scripts": {
+    "test": "tap",
+    "preversion": "npm test",
+    "postversion": "npm publish",
+    "prepublish": "npm run changelog",
+    "prechangelog": "bash gen-changelog.sh",
+    "changelog": "git add CHANGELOG.md",
+    "postchangelog": "git commit -m 'update changelog - '${npm_package_version}",
+    "postpublish": "git push origin --follow-tags"
+  },
+  "files": [
+    "which.js",
+    "bin/node-which"
+  ],
+  "tap": {
+    "check-coverage": true
+  },
+  "engines": {
+    "node": ">= 8"
+  }
+}
+≠/CHANGELOG.md≈
+k# Changes
+
+
+## 2.0.2
+
+* Rename bin to `node-which`
+
+## 2.0.1
+
+* generate changelog and publish on version bump
+* enforce 100% test coverage
+* Promise interface
+
+## 2.0.0
+
+* Parallel tests, modern JavaScript, and drop support for node < 8
+
+## 1.3.1
+
+* update deps
+* update travis
+
+## v1.3.0
+
+* Add nothrow option to which.sync
+* update tap
+
+## v1.2.14
+
+* appveyor: drop node 5 and 0.x
+* travis-ci: add node 6, drop 0.x
+
+## v1.2.13
+
+* test: Pass missing option to pass on windows
+* update tap
+* update isexe to 2.0.0
+* neveragain.tech pledge request
+
+## v1.2.12
+
+* Removed unused require
+
+## v1.2.11
+
+* Prevent changelog script from being included in package
+
+## v1.2.10
+
+* Use env.PATH only, not env.Path
+
+## v1.2.9
+
+* fix for paths starting with ../
+* Remove unused `is-absolute` module
+
+## v1.2.8
+
+* bullet items in changelog that contain (but don't start with) #
+
+## v1.2.7
+
+* strip 'update changelog' changelog entries out of changelog
+
+## v1.2.6
+
+* make the changelog bulleted
+
+## v1.2.5
+
+* make a changelog, and keep it up to date
+* don't include tests in package
+* Properly handle relative-path executables
+* appveyor
+* Attach error code to Not Found error
+* Make tests pass on Windows
+
+## v1.2.4
+
+* Fix typo
+
+## v1.2.3
+
+* update isexe, fix regression in pathExt handling
+
+## v1.2.2
+
+* update deps, use isexe module, test windows
+
+## v1.2.1
+
+* Sometimes windows PATH entries are quoted
+* Fixed a bug in the check for group and user mode bits. This bug was introduced during refactoring for supporting strict mode.
+* doc cli
+
+## v1.2.0
+
+* Add support for opt.all and -as cli flags
+* test the bin
+* update travis
+* Allow checking for multiple programs in bin/which
+* tap 2
+
+## v1.1.2
+
+* travis
+* Refactored and fixed undefined error on Windows
+* Support strict mode
+
+## v1.1.1
+
+* test +g exes against secondary groups, if available
+* Use windows exe semantics on cygwin & msys
+* cwd should be first in path on win32, not last
+* Handle lower-case 'env.Path' on Windows
+* Update docs
+* use single-quotes
+
+## v1.1.0
+
+* Add tests, depend on is-absolute
+
+## v1.0.9
+
+* which.js: root is allowed to execute files owned by anyone
+
+## v1.0.8
+
+* don't use graceful-fs
+
+## v1.0.7
+
+* add license to package.json
+
+## v1.0.6
+
+* isc license
+
+## 1.0.5
+
+* Awful typo
+
+## 1.0.4
+
+* Test for path absoluteness properly
+* win: Allow '' as a pathext if cmd has a . in it
+
+## 1.0.3
+
+* Remove references to execPath
+* Make `which.sync()` work on Windows by honoring the PATHEXT variable.
+* Make `isExe()` always return true on Windows.
+* MIT
+
+## 1.0.2
+
+* Only files can be exes
+
+## 1.0.1
+
+* Respect the PATHEXT env for win32 support
+* should 0755 the bin
+* binary
+* guts
+* package
+* 1st
+Ø/bin/node-which≈Ÿ#!/usr/bin/env node
+var which = require("../")
+if (process.argv.length < 3)
+  usage()
+
+function usage () {
+  console.error('usage: which [-as] program ...')
+  process.exit(1)
+}
+
+var all = false
+var silent = false
+var dashdash = false
+var args = process.argv.slice(2).filter(function (arg) {
+  if (dashdash || !/^-/.test(arg))
+    return true
+
+  if (arg === '--') {
+    dashdash = true
+    return false
+  }
+
+  var flags = arg.substr(1).split('')
+  for (var f = 0; f < flags.length; f++) {
+    var flag = flags[f]
+    switch (flag) {
+      case 's':
+        silent = true
+        break
+      case 'a':
+        all = true
+        break
+      default:
+        console.error('which: illegal option -- ' + flag)
+        usage()
+    }
+  }
+  return false
+})
+
+process.exit(args.reduce(function (pv, current) {
+  try {
+    var f = which.sync(current, { all: all })
+    if (all)
+      f = f.join('\n')
+    if (!silent)
+      console.log(f)
+    return pv;
+  } catch (e) {
+    return 1;
+  }
+}, 0))
+™/README.md≈H# which
+
+Like the unix `which` utility.
+
+Finds the first instance of a specified executable in the PATH
+environment variable.  Does not cache the results, so `hash -r` is not
+needed when the PATH changes.
+
+## USAGE
+
+```javascript
+var which = require('which')
+
+// async usage
+which('node', function (er, resolvedPath) {
+  // er is returned if no "node" is found on the PATH
+  // if it is found, then the absolute path to the exec is returned
+})
+
+// or promise
+which('node').then(resolvedPath => { ... }).catch(er => { ... not found ... })
+
+// sync usage
+// throws if not found
+var resolved = which.sync('node')
+
+// if nothrow option is used, returns null if not found
+resolved = which.sync('node', {nothrow: true})
+
+// Pass options to override the PATH and PATHEXT environment vars.
+which('node', { path: someOtherPath }, function (er, resolved) {
+  if (er)
+    throw er
+  console.log('found at %j', resolved)
+})
+```
+
+## CLI USAGE
+
+Same as the BSD `which(1)` binary.
+
+```
+usage: which [-as] program ...
+```
+
+## OPTIONS
+
+You may pass an options object as the second argument.
+
+- `path`: Use instead of the `PATH` environment variable.
+- `pathExt`: Use instead of the `PATHEXT` environment variable.
+- `all`: Return all matches, instead of just the first one.  Note that
+  this means the function returns an array of strings instead of a
+  single string.
+®/LICENSE≈˝The ISC License
+
+Copyright (c) Isaac Z. Schlueter and Contributors
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+©/which.js≈[const isWindows = process.platform === 'win32' ||
+    process.env.OSTYPE === 'cygwin' ||
+    process.env.OSTYPE === 'msys'
+
+const path = require('path')
+const COLON = isWindows ? ';' : ':'
+const isexe = require('isexe')
+
+const getNotFoundError = (cmd) =>
+  Object.assign(new Error(`not found: ${cmd}`), { code: 'ENOENT' })
+
+const getPathInfo = (cmd, opt) => {
+  const colon = opt.colon || COLON
+
+  // If it has a slash, then we don't bother searching the pathenv.
+  // just check the file itself, and that's it.
+  const pathEnv = cmd.match(/\//) || isWindows && cmd.match(/\\/) ? ['']
+    : (
+      [
+        // windows always checks the cwd first
+        ...(isWindows ? [process.cwd()] : []),
+        ...(opt.path || process.env.PATH ||
+          /* istanbul ignore next: very unusual */ '').split(colon),
+      ]
+    )
+  const pathExtExe = isWindows
+    ? opt.pathExt || process.env.PATHEXT || '.EXE;.CMD;.BAT;.COM'
+    : ''
+  const pathExt = isWindows ? pathExtExe.split(colon) : ['']
+
+  if (isWindows) {
+    if (cmd.indexOf('.') !== -1 && pathExt[0] !== '')
+      pathExt.unshift('')
+  }
+
+  return {
+    pathEnv,
+    pathExt,
+    pathExtExe,
+  }
+}
+
+const which = (cmd, opt, cb) => {
+  if (typeof opt === 'function') {
+    cb = opt
+    opt = {}
+  }
+  if (!opt)
+    opt = {}
+
+  const { pathEnv, pathExt, pathExtExe } = getPathInfo(cmd, opt)
+  const found = []
+
+  const step = i => new Promise((resolve, reject) => {
+    if (i === pathEnv.length)
+      return opt.all && found.length ? resolve(found)
+        : reject(getNotFoundError(cmd))
+
+    const ppRaw = pathEnv[i]
+    const pathPart = /^".*"$/.test(ppRaw) ? ppRaw.slice(1, -1) : ppRaw
+
+    const pCmd = path.join(pathPart, cmd)
+    const p = !pathPart && /^\.[\\\/]/.test(cmd) ? cmd.slice(0, 2) + pCmd
+      : pCmd
+
+    resolve(subStep(p, i, 0))
+  })
+
+  const subStep = (p, i, ii) => new Promise((resolve, reject) => {
+    if (ii === pathExt.length)
+      return resolve(step(i + 1))
+    const ext = pathExt[ii]
+    isexe(p + ext, { pathExt: pathExtExe }, (er, is) => {
+      if (!er && is) {
+        if (opt.all)
+          found.push(p + ext)
+        else
+          return resolve(p + ext)
+      }
+      return resolve(subStep(p, i, ii + 1))
+    })
+  })
+
+  return cb ? step(0).then(res => cb(null, res), cb) : step(0)
+}
+
+const whichSync = (cmd, opt) => {
+  opt = opt || {}
+
+  const { pathEnv, pathExt, pathExtExe } = getPathInfo(cmd, opt)
+  const found = []
+
+  for (let i = 0; i < pathEnv.length; i ++) {
+    const ppRaw = pathEnv[i]
+    const pathPart = /^".*"$/.test(ppRaw) ? ppRaw.slice(1, -1) : ppRaw
+
+    const pCmd = path.join(pathPart, cmd)
+    const p = !pathPart && /^\.[\\\/]/.test(cmd) ? cmd.slice(0, 2) + pCmd
+      : pCmd
+
+    for (let j = 0; j < pathExt.length; j ++) {
+      const cur = p + pathExt[j]
+      try {
+        const is = isexe.sync(cur, { pathExt: pathExtExe })
+        if (is) {
+          if (opt.all)
+            found.push(cur)
+          else
+            return cur
+        }
+      } catch (ex) {}
+    }
+  }
+
+  if (opt.all && found.length)
+    return found
+
+  if (opt.nothrow)
+    return null
+
+  throw getNotFoundError(cmd)
+}
+
+module.exports = which
+which.sync = whichSync

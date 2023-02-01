@@ -1,0 +1,146 @@
+äº/src/__tests__/tsconfig.jsonƒ¬{
+  "extends": "../../../../tsconfig.test.base",
+  "include": ["**/*"],
+  "references": [
+    {
+      "path": "../../"
+    },
+    {
+      "path": "../../../jestGraphQLASTSerializer"
+    }
+  ]
+}
+∞/dist/index.d.tsƒìimport { DocumentNode } from "graphql";
+export declare function removeAliases(ast: DocumentNode): DocumentNode;
+//# sourceMappingURL=index.d.ts.map®/LICENSE≈]MIT License
+
+Copyright (c) 2022 Apollo Graph, Inc. (Formerly Meteor Development Group, Inc.)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+¥/dist/index.d.ts.mapƒ∆{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":"AAOA,OAAO,EAAE,YAAY,EAAoB,MAAM,SAAS,CAAC;AAEzD,wBAAgB,aAAa,CAAC,GAAG,EAAE,YAAY,GAAG,YAAY,CAO7D"}™/README.md≈~# removeAliases
+
+The `removeAliases` function is a `graphql-js` visitor which removes aliases from all `Field` nodes. Note that this function makes no guarantees about the output being a valid GraphQL operation.
+
+For example, the following operation is no longer valid once the alias is removed since the fields can't be merged:
+
+```graphql
+query {
+  x(a: 1)
+  alias: x(a: 2)
+}
+```
+≠/src/index.ts≈√// removeAliases gets rid of GraphQL aliases, a feature by which you can tell a
+// server to return a field's data under a different name from the field name.
+// Maybe this is useful if somebody somewhere inserts random aliases into their
+// queries. Note that this function makes no guarantees about the output and its
+// validity as a GraphQL operation, for example:
+// { x(a: 1) alias: x(a:2) } (valid) will yield
+// { x(a:1) x(a:2) } (invalid)
+import { DocumentNode, FieldNode, visit } from "graphql";
+
+export function removeAliases(ast: DocumentNode): DocumentNode {
+  return visit(ast, {
+    Field(node: FieldNode): FieldNode {
+      const { alias, ...rest } = node;
+      return rest;
+    },
+  });
+}
+Ÿ$/src/__tests__/removeAliases.test.ts≈gimport gql from "graphql-tag";
+import { removeAliases } from "..";
+
+import graphQLASTSerializer from "@apollo/utils.jest-graphql-ast-serializer";
+expect.addSnapshotSerializer(graphQLASTSerializer);
+
+describe("removeAliases", () => {
+  it("removes aliases from Field nodes", () => {
+    expect(
+      removeAliases(gql`
+        query MyQuery {
+          alias: field
+          field
+          fieldWithSelections {
+            selection1
+            selection2
+          }
+          aliasedSelections: fieldWithSelections {
+            selection1
+            selection2
+          }
+        }
+      `),
+    ).toMatchInlineSnapshot(`
+      query MyQuery {
+        field
+        field
+        fieldWithSelections {
+          selection1
+          selection2
+        }
+        fieldWithSelections {
+          selection1
+          selection2
+        }
+      }
+    `);
+  });
+});
+Æ/dist/index.js≈ë"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.removeAliases = void 0;
+const graphql_1 = require("graphql");
+function removeAliases(ast) {
+    return (0, graphql_1.visit)(ast, {
+        Field(node) {
+            const { alias, ...rest } = node;
+            return rest;
+        },
+    });
+}
+exports.removeAliases = removeAliases;
+//# sourceMappingURL=index.js.map≠/package.json≈Ö{
+  "name": "@apollo/utils.removealiases",
+  "version": "1.0.0",
+  "description": "Remove aliases from a GraphQL document",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apollographql/apollo-utils.git",
+    "directory": "packages/removeAliases/"
+  },
+  "keywords": [
+    "apollo",
+    "graphql",
+    "typescript",
+    "node"
+  ],
+  "author": "Apollo <packages@apollographql.com>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=12.13.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "graphql": "14.x || 15.x || 16.x"
+  }
+}
+≤/dist/index.js.map≈D{"version":3,"file":"index.js","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":";;;AAOA,qCAAyD;AAEzD,SAAgB,aAAa,CAAC,GAAiB;IAC7C,OAAO,IAAA,eAAK,EAAC,GAAG,EAAE;QAChB,KAAK,CAAC,IAAe;YACnB,MAAM,EAAE,KAAK,EAAE,GAAG,IAAI,EAAE,GAAG,IAAI,CAAC;YAChC,OAAO,IAAI,CAAC;QACd,CAAC;KACF,CAAC,CAAC;AACL,CAAC;AAPD,sCAOC"}

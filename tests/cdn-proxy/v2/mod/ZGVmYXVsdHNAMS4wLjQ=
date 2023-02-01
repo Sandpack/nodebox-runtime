@@ -1,0 +1,140 @@
+Ö®/LICENSE≈XThe MIT License (MIT)
+
+Copyright (c) 2022 Sindre Sorhus
+Copyright (c) 2015 Elijah Insua
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+©/index.js≈var clone = require('clone');
+
+module.exports = function(options, defaults) {
+  options = options || {};
+
+  Object.keys(defaults).forEach(function(key) {
+    if (typeof options[key] === 'undefined') {
+      options[key] = clone(defaults[key]);
+    }
+  });
+
+  return options;
+};≠/package.json≈x{
+	"name": "defaults",
+	"version": "1.0.4",
+	"description": "merge single level defaults over a config object",
+	"main": "index.js",
+	"funding": "https://github.com/sponsors/sindresorhus",
+	"scripts": {
+		"test": "node test.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/sindresorhus/node-defaults.git"
+	},
+	"keywords": [
+		"config",
+		"defaults",
+		"options",
+		"object",
+		"merge",
+		"assign",
+		"properties",
+		"deep"
+	],
+	"author": "Elijah Insua <tmpvar@gmail.com>",
+	"license": "MIT",
+	"readmeFilename": "README.md",
+	"dependencies": {
+		"clone": "^1.0.2"
+	},
+	"devDependencies": {
+		"tap": "^2.0.0"
+	}
+}
+®/test.js≈var defaults = require('./'),
+    test = require('tap').test;
+
+test("ensure options is an object", function(t) {
+  var options = defaults(false, { a : true });
+  t.ok(options.a);
+  t.end()
+});
+
+test("ensure defaults override keys", function(t) {
+  var result = defaults({}, { a: false, b: true });
+  t.ok(result.b, 'b merges over undefined');
+  t.equal(result.a, false, 'a merges over undefined');
+  t.end();
+});
+
+test("ensure defined keys are not overwritten", function(t) {
+  var result = defaults({ b: false }, { a: false, b: true });
+  t.equal(result.b, false, 'b not merged');
+  t.equal(result.a, false, 'a merges over undefined');
+  t.end();
+});
+
+test("ensure defaults clone nested objects", function(t) {
+  var d = { a: [1,2,3], b: { hello : 'world' } };
+  var result = defaults({}, d);
+  t.equal(result.a.length, 3, 'objects should be clones');
+  t.ok(result.a !== d.a, 'objects should be clones');
+
+  t.equal(Object.keys(result.b).length, 1, 'objects should be clones');
+  t.ok(result.b !== d.b, 'objects should be clones');
+  t.end();
+});
+
+™/README.md≈# defaults
+
+> A simple one level options merge utility
+
+## Install
+
+```sh
+npm install defaults
+```
+
+## Usage
+
+```js
+const defaults = require('defaults');
+
+const handle = (options, fn) => {
+	options = defaults(options, {
+		timeout: 100
+	});
+
+	setTimeout(() => {
+		fn(options);
+	}, options.timeout);
+}
+
+handle({timeout: 1000}, () => {
+	// We're here 1000 ms later
+});
+
+handle({timeout: 10000}, () => {
+	// We're here 10s later
+});
+```
+
+## Summary
+
+this module exports a function that takes 2 arguments: `options` and `defaults`.  When called, it overrides all of `undefined` properties in `options` with the clones of properties defined in `defaults`
+
+Sidecases: if called with a falsy `options` value, options will be initialized to a new object before being merged onto.

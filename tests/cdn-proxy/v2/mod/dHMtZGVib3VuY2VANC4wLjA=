@@ -1,0 +1,252 @@
+ç™/README.md≈≤# TypeScript implementation of debounce function
+
+![Build Status](https://github.com/chodorowicz/ts-debounce//workflows/node-ci/badge.svg)
+[![npm](https://img.shields.io/npm/v/ts-debounce.svg)](https://www.npmjs.com/package/ts-debounce)
+[![npm bundle size (minified + gzip)](https://img.shields.io/bundlephobia/minzip/ts-debounce.svg)](https://www.npmjs.com/package/ts-debounce)
+[![npm type definitions](https://img.shields.io/npm/types/ts-debounce.svg)](https://www.npmjs.com/package/ts-debounce)
+
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+
+[![All Contributors](https://img.shields.io/badge/all_contributors-6-orange.svg?style=flat-square)](#contributors-)
+
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
+
+_Debounce_ creates a new function `g`, which when called will delay the invocation of the original function `f` until `n` milliseconds, BUT drop previous pending delayed emissions if a new invocation is made before `n` milliseconds.
+
+It's very useful for scenarios when it's better to limit the number of times the function is called. E.g. think of search input which fetches data from API. It's enough display search results after user has stopped entering characters for some time.
+
+## Install
+
+You can install this package using `npm` using the command below
+
+```bash
+npm install ts-debounce
+```
+
+If you prefer `yarn`, install using the command below
+
+```bash
+yarn add ts-debounce
+```
+
+## Function arguments
+
+```ts
+import { debounce } from "ts-debounce";
+
+const debouncedFunction = debounce(originalFunction, waitMilliseconds, options);
+```
+
+- `originalFunction`
+  - the function which we want to debounce
+- `waitMilliseconds`
+  - how many seconds must pass after most recent function call, for the original function to be called
+- `options`
+  - `isImmediate` (boolean)
+    - if set to `true` then `originalFunction` will be called immediately, but on subsequent calls of the debounced function original function won't be called, unless `waitMilliseconds` passed after last call
+  - `maxWait` (number)
+    - if defined it will call the `originalFunction` after `maxWait` time has passed, even if the debounced function is called in the meantime
+      - e.g. if `wait` is set to `100` and `maxWait` to `200`, then if the debounced function is called every 50ms, then the original function will be called after 200ms anyway
+  - `callback` (function)
+    - it is called when `originalFunction` is debounced and receives as first parameter returned data from `originalFunction`
+
+## Cancellation
+
+The returned debounced function can be cancelled by calling `cancel()` on it.
+
+```ts
+const debouncedFunction = debounce(originalFunction, waitMilliseconds, options);
+
+debouncedFunction.cancel();
+```
+
+## Promises
+
+Since v3 `ts-debounce` has Promise support. Everytime you call debounced function a promise is returned which will be resolved when the original function will be finally called. This promise will be rejected, if the debounced function will be cancelled.
+
+You can also debounce a function `f` which returns a promise. The returned promise(s) will resolve (unless cancelled) with the return value of the original function.
+
+```ts
+const asyncFunction = async () => "value";
+const g = debounce(asyncFunction);
+const returnValue = await g();
+returnValue === "value"; // true
+```
+
+## Credits & inspiration
+
+This implementation is based upon following sources:
+
+- [JavaScript Debounce Function](https://davidwalsh.name/javascript-debounce-function) by David Walsh
+- [Lodash implementation](https://lodash.com/)
+- [p-debounce](https://github.com/sindresorhus/p-debounce)
+
+## Compability
+
+- version 3 - Promise must be available in the global namespace
+- version 2 - TypeScript 3.3
+- version 1 - TypeScript 2.0
+
+## Contributors ‚ú®
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tr>
+    <td align="center"><a href="http://zacharysvoboda.com"><img src="https://avatars3.githubusercontent.com/u/5839548?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Zac</b></sub></a><br /><a href="https://github.com/chodorowicz/ts-debounce/commits?author=zacnomore" title="Code">üíª</a></td>
+    <td align="center"><a href="https://github.com/karol-majewski"><img src="https://avatars1.githubusercontent.com/u/20233319?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Karol Majewski</b></sub></a><br /><a href="https://github.com/chodorowicz/ts-debounce/commits?author=karol-majewski" title="Code">üíª</a></td>
+    <td align="center"><a href="https://github.com/Tuizi"><img src="https://avatars2.githubusercontent.com/u/2027148?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Fabien Rogeret</b></sub></a><br /><a href="https://github.com/chodorowicz/ts-debounce/commits?author=Tuizi" title="Code">üíª</a></td>
+    <td align="center"><a href="https://github.com/iheidari"><img src="https://avatars3.githubusercontent.com/u/1315090?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Iman</b></sub></a><br /><a href="https://github.com/chodorowicz/ts-debounce/commits?author=iheidari" title="Code">üíª</a></td>
+    <td align="center"><a href="https://github.com/juanmendes"><img src="https://avatars.githubusercontent.com/u/549331?v=4?s=100" width="100px;" alt=""/><br /><sub><b>juanmendes</b></sub></a><br /><a href="#ideas-juanmendes" title="Ideas, Planning, & Feedback">ü§î</a></td>
+    <td align="center"><a href="https://github.com/sanduluca"><img src="https://avatars.githubusercontent.com/u/56228534?v=4?s=100" width="100px;" alt=""/><br /><sub><b>sanduluca</b></sub></a><br /><a href="https://github.com/chodorowicz/ts-debounce/commits?author=sanduluca" title="Code">üíª</a></td>
+  </tr>
+</table>
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
+¥/dist/src/index.d.ts≈zexport declare type Options<Result> = {
+    isImmediate?: boolean;
+    maxWait?: number;
+    callback?: (data: Result) => void;
+};
+export interface DebouncedFunction<Args extends any[], F extends (...args: Args) => any> {
+    (this: ThisParameterType<F>, ...args: Args): Promise<ReturnType<F>>;
+    cancel: (reason?: any) => void;
+}
+export declare function debounce<Args extends any[], F extends (...args: Args) => any>(func: F, waitMilliseconds?: number, options?: Options<ReturnType<F>>): {
+    (this: ThisParameterType<F>, ...args: Parameters<F> & Args): Promise<ReturnType<F>>;
+    cancel: (reason?: any) => void;
+};
+π/dist/src/index.test-d.ts≈æimport { expectType } from "tsd";
+import { debounce } from "./index";
+
+const f = debounce((value: string) => value, 1000);
+
+expectType<Promise<string>>(f("foo"));
+
+// @ts-expect-error
+f(1);
+
+// inferring debounced function argument types from  the function signature
+//  and the place where the debounced function is called
+
+// real world example with addEventListener
+const inputs = document.querySelectorAll("input");
+inputs[0].addEventListener(
+  "input",
+  debounce((event) => {
+    expectType<EventTarget | null>(event.target);
+  }, 0)
+);
+
+// simplifed use case
+function testInference(g: (a: number) => void): any {
+  g(1);
+}
+
+testInference(
+  debounce((a) => {
+    expectType<number>(a);
+  })
+);
+∫/dist/src/index.esm.js.map≈g{"version":3,"file":"index.esm.js","sources":["../../src/index.ts"],"sourcesContent":["export type Options<Result> = {\n  isImmediate?: boolean;\n  maxWait?: number;\n  callback?: (data: Result) => void;\n};\n\nexport interface DebouncedFunction<\n  Args extends any[],\n  F extends (...args: Args) => any\n> {\n  (this: ThisParameterType<F>, ...args: Args): Promise<ReturnType<F>>;\n  cancel: (reason?: any) => void;\n}\n\ninterface DebouncedPromise<FunctionReturn> {\n  resolve: (result: FunctionReturn) => void;\n  reject: (reason?: any) => void;\n}\n\nexport function debounce<Args extends any[], F extends (...args: Args) => any>(\n  func: F,\n  waitMilliseconds = 50,\n  options: Options<ReturnType<F>> = {}\n): {\n  (this: ThisParameterType<F>, ...args: Parameters<F> & Args): Promise<\n    ReturnType<F>\n  >;\n  cancel: (reason?: any) => void;\n} {\n  let timeoutId: ReturnType<typeof setTimeout> | undefined;\n  const isImmediate = options.isImmediate ?? false;\n  const callback = options.callback ?? false;\n  const maxWait = options.maxWait;\n  let lastInvokeTime = Date.now();\n\n  let promises: DebouncedPromise<ReturnType<F>>[] = [];\n\n  function nextInvokeTimeout() {\n    if (maxWait !== undefined) {\n      const timeSinceLastInvocation = Date.now() - lastInvokeTime;\n\n      if (timeSinceLastInvocation + waitMilliseconds >= maxWait) {\n        return maxWait - timeSinceLastInvocation;\n      }\n    }\n\n    return waitMilliseconds;\n  }\n\n  const debouncedFunction = function (\n    this: ThisParameterType<F>,\n    ...args: Parameters<F>\n  ) {\n    const context = this;\n    return new Promise<ReturnType<F>>((resolve, reject) => {\n      const invokeFunction = function () {\n        timeoutId = undefined;\n        lastInvokeTime = Date.now();\n        if (!isImmediate) {\n          const result = func.apply(context, args);\n          callback && callback(result);\n          promises.forEach(({ resolve }) => resolve(result));\n          promises = [];\n        }\n      };\n\n      const shouldCallNow = isImmediate && timeoutId === undefined;\n\n      if (timeoutId !== undefined) {\n        clearTimeout(timeoutId);\n      }\n\n      timeoutId = setTimeout(invokeFunction, nextInvokeTimeout());\n\n      if (shouldCallNow) {\n        const result = func.apply(context, args);\n        callback && callback(result);\n        return resolve(result);\n      }\n      promises.push({ resolve, reject });\n    });\n  };\n\n  debouncedFunction.cancel = function (reason?: any) {\n    if (timeoutId !== undefined) {\n      clearTimeout(timeoutId);\n    }\n    promises.forEach(({ reject }) => reject(reason));\n    promises = [];\n  };\n\n  return debouncedFunction;\n}\n"],"names":["debounce","func","waitMilliseconds","options","timeoutId","isImmediate","callback","maxWait","lastInvokeTime","Date","now","promises","nextInvokeTimeout","undefined","timeSinceLastInvocation","debouncedFunction","args","context","this","Promise","resolve","reject","shouldCallNow","clearTimeout","setTimeout","result","apply","forEach","push","cancel","reason"],"mappings":"SAmBgBA,EACdC,EACAC,EACAC,WAOIC,WARJF,IAAAA,EAAmB,aACnBC,IAAAA,EAAkC,IAQlC,IAAME,WAAcF,EAAQE,gBACtBC,WAAWH,EAAQG,aACnBC,EAAUJ,EAAQI,QACpBC,EAAiBC,KAAKC,MAEtBC,EAA8C,GAElD,SAASC,IACP,QAAgBC,IAAZN,EAAuB,CACzB,IAAMO,EAA0BL,KAAKC,MAAQF,EAE7C,GAAIM,EAA0BZ,GAAoBK,EAChD,OAAOA,EAAUO,EAIrB,OAAOZ,EAGT,IAAMa,EAAoB,eAErBC,2BAEGC,EAAUC,KAChB,WAAWC,QAAuB,SAACC,EAASC,GAC1C,IAWMC,EAAgBjB,QAA6BQ,IAAdT,EAQrC,QANkBS,IAAdT,GACFmB,aAAanB,GAGfA,EAAYoB,WAjBW,WAGrB,GAFApB,OAAYS,EACZL,EAAiBC,KAAKC,OACjBL,EAAa,CAChB,IAAMoB,EAASxB,EAAKyB,MAAMT,EAASD,GACnCV,GAAYA,EAASmB,GACrBd,EAASgB,QAAQ,mBAAiBP,IAAdA,SAAsBK,KAC1Cd,EAAW,KAUwBC,KAEnCU,EAAe,CACjB,IAAMG,EAASxB,EAAKyB,MAAMT,EAASD,GAEnC,OADAV,GAAYA,EAASmB,GACdL,EAAQK,GAEjBd,EAASiB,KAAK,CAAER,QAAAA,EAASC,OAAAA,OAY7B,OARAN,EAAkBc,OAAS,SAAUC,QACjBjB,IAAdT,GACFmB,aAAanB,GAEfO,EAASgB,QAAQ,mBAAgBN,IAAbA,QAAoBS,KACxCnB,EAAW,IAGNI"}≤/dist/src/index.js≈Èexports.debounce=function(e,r,n){var i,o,t;void 0===r&&(r=50),void 0===n&&(n={});var a=null!=(i=n.isImmediate)&&i,u=null!=(o=n.callback)&&o,c=n.maxWait,v=Date.now(),l=[];function f(){if(void 0!==c){var e=Date.now()-v;if(e+r>=c)return c-e}return r}var d=function(){var r=[].slice.call(arguments),n=this;return new Promise(function(i,o){var c=a&&void 0===t;if(void 0!==t&&clearTimeout(t),t=setTimeout(function(){if(t=void 0,v=Date.now(),!a){var i=e.apply(n,r);u&&u(i),l.forEach(function(e){return(0,e.resolve)(i)}),l=[]}},f()),c){var d=e.apply(n,r);return u&&u(d),i(d)}l.push({resolve:i,reject:o})})};return d.cancel=function(e){void 0!==t&&clearTimeout(t),l.forEach(function(r){return(0,r.reject)(e)}),l=[]},d};
+//# sourceMappingURL=index.js.map
+∂/dist/src/index.js.map≈R{"version":3,"file":"index.js","sources":["../../src/index.ts"],"sourcesContent":["export type Options<Result> = {\n  isImmediate?: boolean;\n  maxWait?: number;\n  callback?: (data: Result) => void;\n};\n\nexport interface DebouncedFunction<\n  Args extends any[],\n  F extends (...args: Args) => any\n> {\n  (this: ThisParameterType<F>, ...args: Args): Promise<ReturnType<F>>;\n  cancel: (reason?: any) => void;\n}\n\ninterface DebouncedPromise<FunctionReturn> {\n  resolve: (result: FunctionReturn) => void;\n  reject: (reason?: any) => void;\n}\n\nexport function debounce<Args extends any[], F extends (...args: Args) => any>(\n  func: F,\n  waitMilliseconds = 50,\n  options: Options<ReturnType<F>> = {}\n): {\n  (this: ThisParameterType<F>, ...args: Parameters<F> & Args): Promise<\n    ReturnType<F>\n  >;\n  cancel: (reason?: any) => void;\n} {\n  let timeoutId: ReturnType<typeof setTimeout> | undefined;\n  const isImmediate = options.isImmediate ?? false;\n  const callback = options.callback ?? false;\n  const maxWait = options.maxWait;\n  let lastInvokeTime = Date.now();\n\n  let promises: DebouncedPromise<ReturnType<F>>[] = [];\n\n  function nextInvokeTimeout() {\n    if (maxWait !== undefined) {\n      const timeSinceLastInvocation = Date.now() - lastInvokeTime;\n\n      if (timeSinceLastInvocation + waitMilliseconds >= maxWait) {\n        return maxWait - timeSinceLastInvocation;\n      }\n    }\n\n    return waitMilliseconds;\n  }\n\n  const debouncedFunction = function (\n    this: ThisParameterType<F>,\n    ...args: Parameters<F>\n  ) {\n    const context = this;\n    return new Promise<ReturnType<F>>((resolve, reject) => {\n      const invokeFunction = function () {\n        timeoutId = undefined;\n        lastInvokeTime = Date.now();\n        if (!isImmediate) {\n          const result = func.apply(context, args);\n          callback && callback(result);\n          promises.forEach(({ resolve }) => resolve(result));\n          promises = [];\n        }\n      };\n\n      const shouldCallNow = isImmediate && timeoutId === undefined;\n\n      if (timeoutId !== undefined) {\n        clearTimeout(timeoutId);\n      }\n\n      timeoutId = setTimeout(invokeFunction, nextInvokeTimeout());\n\n      if (shouldCallNow) {\n        const result = func.apply(context, args);\n        callback && callback(result);\n        return resolve(result);\n      }\n      promises.push({ resolve, reject });\n    });\n  };\n\n  debouncedFunction.cancel = function (reason?: any) {\n    if (timeoutId !== undefined) {\n      clearTimeout(timeoutId);\n    }\n    promises.forEach(({ reject }) => reject(reason));\n    promises = [];\n  };\n\n  return debouncedFunction;\n}\n"],"names":["func","waitMilliseconds","options","timeoutId","isImmediate","callback","maxWait","lastInvokeTime","Date","now","promises","nextInvokeTimeout","undefined","timeSinceLastInvocation","debouncedFunction","args","context","this","Promise","resolve","reject","shouldCallNow","clearTimeout","setTimeout","result","apply","forEach","push","cancel","reason"],"mappings":"0BAoBEA,EACAC,EACAC,WAOIC,WARJF,IAAAA,EAAmB,aACnBC,IAAAA,EAAkC,IAQlC,IAAME,WAAcF,EAAQE,gBACtBC,WAAWH,EAAQG,aACnBC,EAAUJ,EAAQI,QACpBC,EAAiBC,KAAKC,MAEtBC,EAA8C,GAElD,SAASC,IACP,QAAgBC,IAAZN,EAAuB,CACzB,IAAMO,EAA0BL,KAAKC,MAAQF,EAE7C,GAAIM,EAA0BZ,GAAoBK,EAChD,OAAOA,EAAUO,EAIrB,OAAOZ,EAGT,IAAMa,EAAoB,eAErBC,2BAEGC,EAAUC,KAChB,WAAWC,QAAuB,SAACC,EAASC,GAC1C,IAWMC,EAAgBjB,QAA6BQ,IAAdT,EAQrC,QANkBS,IAAdT,GACFmB,aAAanB,GAGfA,EAAYoB,WAjBW,WAGrB,GAFApB,OAAYS,EACZL,EAAiBC,KAAKC,OACjBL,EAAa,CAChB,IAAMoB,EAASxB,EAAKyB,MAAMT,EAASD,GACnCV,GAAYA,EAASmB,GACrBd,EAASgB,QAAQ,mBAAiBP,IAAdA,SAAsBK,KAC1Cd,EAAW,KAUwBC,KAEnCU,EAAe,CACjB,IAAMG,EAASxB,EAAKyB,MAAMT,EAASD,GAEnC,OADAV,GAAYA,EAASmB,GACdL,EAAQK,GAEjBd,EAASiB,KAAK,CAAER,QAAAA,EAASC,OAAAA,OAY7B,OARAN,EAAkBc,OAAS,SAAUC,QACjBjB,IAAdT,GACFmB,aAAanB,GAEfO,EAASgB,QAAQ,mBAAgBN,IAAbA,QAAoBS,KACxCnB,EAAW,IAGNI"}∂/dist/src/index.umd.js≈£!function(e,n){"object"==typeof exports&&"undefined"!=typeof module?n(exports):"function"==typeof define&&define.amd?define(["exports"],n):n((e=e||self).tsDebounce={})}(this,function(e){e.debounce=function(e,n,o){var t,i,r;void 0===n&&(n=50),void 0===o&&(o={});var u=null!=(t=o.isImmediate)&&t,c=null!=(i=o.callback)&&i,a=o.maxWait,f=Date.now(),l=[];function v(){if(void 0!==a){var e=Date.now()-f;if(e+n>=a)return a-e}return n}var d=function(){var n=[].slice.call(arguments),o=this;return new Promise(function(t,i){var a=u&&void 0===r;if(void 0!==r&&clearTimeout(r),r=setTimeout(function(){if(r=void 0,f=Date.now(),!u){var t=e.apply(o,n);c&&c(t),l.forEach(function(e){return(0,e.resolve)(t)}),l=[]}},v()),a){var d=e.apply(o,n);return c&&c(d),t(d)}l.push({resolve:t,reject:i})})};return d.cancel=function(e){void 0!==r&&clearTimeout(r),l.forEach(function(n){return(0,n.reject)(e)}),l=[]},d}});
+//# sourceMappingURL=index.umd.js.map
+π/dist/src/index.modern.js≈¨function t(t,e=50,n={}){var o,c;let i;const r=null!=(o=n.isImmediate)&&o,a=null!=(c=n.callback)&&c,u=n.maxWait;let l=Date.now(),s=[];const f=function(...n){const o=this;return new Promise((c,f)=>{const v=r&&void 0===i;if(void 0!==i&&clearTimeout(i),i=setTimeout(function(){if(i=void 0,l=Date.now(),!r){const e=t.apply(o,n);a&&a(e),s.forEach(({resolve:t})=>t(e)),s=[]}},function(){if(void 0!==u){const t=Date.now()-l;if(t+e>=u)return u-t}return e}()),v){const e=t.apply(o,n);return a&&a(e),c(e)}s.push({resolve:c,reject:f})})};return f.cancel=function(t){void 0!==i&&clearTimeout(i),s.forEach(({reject:e})=>e(t)),s=[]},f}export{t as debounce};
+//# sourceMappingURL=index.modern.js.map
+∫/dist/src/index.umd.js.map≈V{"version":3,"file":"index.umd.js","sources":["../../src/index.ts"],"sourcesContent":["export type Options<Result> = {\n  isImmediate?: boolean;\n  maxWait?: number;\n  callback?: (data: Result) => void;\n};\n\nexport interface DebouncedFunction<\n  Args extends any[],\n  F extends (...args: Args) => any\n> {\n  (this: ThisParameterType<F>, ...args: Args): Promise<ReturnType<F>>;\n  cancel: (reason?: any) => void;\n}\n\ninterface DebouncedPromise<FunctionReturn> {\n  resolve: (result: FunctionReturn) => void;\n  reject: (reason?: any) => void;\n}\n\nexport function debounce<Args extends any[], F extends (...args: Args) => any>(\n  func: F,\n  waitMilliseconds = 50,\n  options: Options<ReturnType<F>> = {}\n): {\n  (this: ThisParameterType<F>, ...args: Parameters<F> & Args): Promise<\n    ReturnType<F>\n  >;\n  cancel: (reason?: any) => void;\n} {\n  let timeoutId: ReturnType<typeof setTimeout> | undefined;\n  const isImmediate = options.isImmediate ?? false;\n  const callback = options.callback ?? false;\n  const maxWait = options.maxWait;\n  let lastInvokeTime = Date.now();\n\n  let promises: DebouncedPromise<ReturnType<F>>[] = [];\n\n  function nextInvokeTimeout() {\n    if (maxWait !== undefined) {\n      const timeSinceLastInvocation = Date.now() - lastInvokeTime;\n\n      if (timeSinceLastInvocation + waitMilliseconds >= maxWait) {\n        return maxWait - timeSinceLastInvocation;\n      }\n    }\n\n    return waitMilliseconds;\n  }\n\n  const debouncedFunction = function (\n    this: ThisParameterType<F>,\n    ...args: Parameters<F>\n  ) {\n    const context = this;\n    return new Promise<ReturnType<F>>((resolve, reject) => {\n      const invokeFunction = function () {\n        timeoutId = undefined;\n        lastInvokeTime = Date.now();\n        if (!isImmediate) {\n          const result = func.apply(context, args);\n          callback && callback(result);\n          promises.forEach(({ resolve }) => resolve(result));\n          promises = [];\n        }\n      };\n\n      const shouldCallNow = isImmediate && timeoutId === undefined;\n\n      if (timeoutId !== undefined) {\n        clearTimeout(timeoutId);\n      }\n\n      timeoutId = setTimeout(invokeFunction, nextInvokeTimeout());\n\n      if (shouldCallNow) {\n        const result = func.apply(context, args);\n        callback && callback(result);\n        return resolve(result);\n      }\n      promises.push({ resolve, reject });\n    });\n  };\n\n  debouncedFunction.cancel = function (reason?: any) {\n    if (timeoutId !== undefined) {\n      clearTimeout(timeoutId);\n    }\n    promises.forEach(({ reject }) => reject(reason));\n    promises = [];\n  };\n\n  return debouncedFunction;\n}\n"],"names":["func","waitMilliseconds","options","timeoutId","isImmediate","callback","maxWait","lastInvokeTime","Date","now","promises","nextInvokeTimeout","undefined","timeSinceLastInvocation","debouncedFunction","args","context","this","Promise","resolve","reject","shouldCallNow","clearTimeout","setTimeout","result","apply","forEach","push","cancel","reason"],"mappings":"8MAoBEA,EACAC,EACAC,WAOIC,WARJF,IAAAA,EAAmB,aACnBC,IAAAA,EAAkC,IAQlC,IAAME,WAAcF,EAAQE,gBACtBC,WAAWH,EAAQG,aACnBC,EAAUJ,EAAQI,QACpBC,EAAiBC,KAAKC,MAEtBC,EAA8C,GAElD,SAASC,IACP,QAAgBC,IAAZN,EAAuB,CACzB,IAAMO,EAA0BL,KAAKC,MAAQF,EAE7C,GAAIM,EAA0BZ,GAAoBK,EAChD,OAAOA,EAAUO,EAIrB,OAAOZ,EAGT,IAAMa,EAAoB,eAErBC,2BAEGC,EAAUC,KAChB,WAAWC,QAAuB,SAACC,EAASC,GAC1C,IAWMC,EAAgBjB,QAA6BQ,IAAdT,EAQrC,QANkBS,IAAdT,GACFmB,aAAanB,GAGfA,EAAYoB,WAjBW,WAGrB,GAFApB,OAAYS,EACZL,EAAiBC,KAAKC,OACjBL,EAAa,CAChB,IAAMoB,EAASxB,EAAKyB,MAAMT,EAASD,GACnCV,GAAYA,EAASmB,GACrBd,EAASgB,QAAQ,mBAAiBP,IAAdA,SAAsBK,KAC1Cd,EAAW,KAUwBC,KAEnCU,EAAe,CACjB,IAAMG,EAASxB,EAAKyB,MAAMT,EAASD,GAEnC,OADAV,GAAYA,EAASmB,GACdL,EAAQK,GAEjBd,EAASiB,KAAK,CAAER,QAAAA,EAASC,OAAAA,OAY7B,OARAN,EAAkBc,OAAS,SAAUC,QACjBjB,IAAdT,GACFmB,aAAanB,GAEfO,EAASgB,QAAQ,mBAAgBN,IAAbA,QAAoBS,KACxCnB,EAAW,IAGNI"}®/LICENSE≈2MIT License
+
+Copyright (c) 2017 Jakub Chodorowicz
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+≠/package.json≈≤{
+  "name": "ts-debounce",
+  "version": "4.0.0",
+  "description": "TypeScript implementation of debounce",
+  "main": "dist/src/index.js",
+  "module": "dist/src/index.esm.js",
+  "types": "dist/src/index.d.ts",
+  "author": {
+    "name": "Jakub Chodorowicz",
+    "url": "https://github.com/chodorowicz"
+  },
+  "keywords": [
+    "TypeScript",
+    "ts",
+    "TS",
+    "std lib",
+    "function",
+    "debounce",
+    "wait"
+  ],
+  "files": [
+    "dist/**/*"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chodorowicz/ts-debounce"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^27.0.2",
+    "all-contributors-cli": "^6.20.0",
+    "jest": "^27.3.1",
+    "microbundle": "^0.12.4",
+    "np": "^7.5.0",
+    "prettier": "^2.4.1",
+    "ts-jest": "^27.0.7",
+    "tsd": "^0.18.0",
+    "typescript": "^4.4.4"
+  },
+  "scripts": {
+    "build": "microbundle && cp ./src/index.test-d.ts ./dist/src/",
+    "dev": "microbundle watch",
+    "prepublishOnly": "npm run build",
+    "test": "npm run test:code && npm run test:types",
+    "test:code": "jest",
+    "test:types": "tsc --noEmit && tsd",
+    "prettier:check": "prettier --check .",
+    "release": "np --no-yarn"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "(src/__tests__/.*|(\\.|/)(test|spec))\\.ts$",
+    "moduleFileExtensions": [
+      "js",
+      "ts"
+    ],
+    "timers": "fake"
+  },
+  "tsd": {
+    "directory": "src"
+  }
+}
+∂/dist/src/index.esm.js≈Ûfunction r(r,e,n){var i,t,o;void 0===e&&(e=50),void 0===n&&(n={});var a=null!=(i=n.isImmediate)&&i,u=null!=(t=n.callback)&&t,c=n.maxWait,v=Date.now(),l=[];function f(){if(void 0!==c){var r=Date.now()-v;if(r+e>=c)return c-r}return e}var d=function(){var e=[].slice.call(arguments),n=this;return new Promise(function(i,t){var c=a&&void 0===o;if(void 0!==o&&clearTimeout(o),o=setTimeout(function(){if(o=void 0,v=Date.now(),!a){var i=r.apply(n,e);u&&u(i),l.forEach(function(r){return(0,r.resolve)(i)}),l=[]}},f()),c){var d=r.apply(n,e);return u&&u(d),i(d)}l.push({resolve:i,reject:t})})};return d.cancel=function(r){void 0!==o&&clearTimeout(o),l.forEach(function(e){return(0,e.reject)(r)}),l=[]},d}export{r as debounce};
+//# sourceMappingURL=index.esm.js.map
+Ω/dist/src/index.modern.js.map≈l{"version":3,"file":"index.modern.js","sources":["../../src/index.ts"],"sourcesContent":["export type Options<Result> = {\n  isImmediate?: boolean;\n  maxWait?: number;\n  callback?: (data: Result) => void;\n};\n\nexport interface DebouncedFunction<\n  Args extends any[],\n  F extends (...args: Args) => any\n> {\n  (this: ThisParameterType<F>, ...args: Args): Promise<ReturnType<F>>;\n  cancel: (reason?: any) => void;\n}\n\ninterface DebouncedPromise<FunctionReturn> {\n  resolve: (result: FunctionReturn) => void;\n  reject: (reason?: any) => void;\n}\n\nexport function debounce<Args extends any[], F extends (...args: Args) => any>(\n  func: F,\n  waitMilliseconds = 50,\n  options: Options<ReturnType<F>> = {}\n): {\n  (this: ThisParameterType<F>, ...args: Parameters<F> & Args): Promise<\n    ReturnType<F>\n  >;\n  cancel: (reason?: any) => void;\n} {\n  let timeoutId: ReturnType<typeof setTimeout> | undefined;\n  const isImmediate = options.isImmediate ?? false;\n  const callback = options.callback ?? false;\n  const maxWait = options.maxWait;\n  let lastInvokeTime = Date.now();\n\n  let promises: DebouncedPromise<ReturnType<F>>[] = [];\n\n  function nextInvokeTimeout() {\n    if (maxWait !== undefined) {\n      const timeSinceLastInvocation = Date.now() - lastInvokeTime;\n\n      if (timeSinceLastInvocation + waitMilliseconds >= maxWait) {\n        return maxWait - timeSinceLastInvocation;\n      }\n    }\n\n    return waitMilliseconds;\n  }\n\n  const debouncedFunction = function (\n    this: ThisParameterType<F>,\n    ...args: Parameters<F>\n  ) {\n    const context = this;\n    return new Promise<ReturnType<F>>((resolve, reject) => {\n      const invokeFunction = function () {\n        timeoutId = undefined;\n        lastInvokeTime = Date.now();\n        if (!isImmediate) {\n          const result = func.apply(context, args);\n          callback && callback(result);\n          promises.forEach(({ resolve }) => resolve(result));\n          promises = [];\n        }\n      };\n\n      const shouldCallNow = isImmediate && timeoutId === undefined;\n\n      if (timeoutId !== undefined) {\n        clearTimeout(timeoutId);\n      }\n\n      timeoutId = setTimeout(invokeFunction, nextInvokeTimeout());\n\n      if (shouldCallNow) {\n        const result = func.apply(context, args);\n        callback && callback(result);\n        return resolve(result);\n      }\n      promises.push({ resolve, reject });\n    });\n  };\n\n  debouncedFunction.cancel = function (reason?: any) {\n    if (timeoutId !== undefined) {\n      clearTimeout(timeoutId);\n    }\n    promises.forEach(({ reject }) => reject(reason));\n    promises = [];\n  };\n\n  return debouncedFunction;\n}\n"],"names":["debounce","func","waitMilliseconds","options","timeoutId","isImmediate","callback","maxWait","lastInvokeTime","Date","now","promises","debouncedFunction","args","context","this","Promise","resolve","reject","shouldCallNow","undefined","clearTimeout","setTimeout","result","apply","forEach","timeSinceLastInvocation","nextInvokeTimeout","push","cancel","reason"],"mappings":"SAmBgBA,EACdC,EACAC,EAAmB,GACnBC,EAAkC,YAOlC,IAAIC,EACJ,MAAMC,WAAcF,EAAQE,gBACtBC,WAAWH,EAAQG,aACnBC,EAAUJ,EAAQI,QACxB,IAAIC,EAAiBC,KAAKC,MAEtBC,EAA8C,GAclD,MAAMC,EAAoB,YAErBC,GAEH,MAAMC,EAAUC,KAChB,WAAWC,QAAuB,CAACC,EAASC,KAC1C,MAWMC,EAAgBd,QAA6Be,IAAdhB,EAQrC,QANkBgB,IAAdhB,GACFiB,aAAajB,GAGfA,EAAYkB,WAjBW,WAGrB,GAFAlB,OAAYgB,EACZZ,EAAiBC,KAAKC,OACjBL,EAAa,CAChB,MAAMkB,EAAStB,EAAKuB,MAAMV,EAASD,GACnCP,GAAYA,EAASiB,GACrBZ,EAASc,QAAQ,EAAGR,QAAAA,KAAcA,EAAQM,IAC1CZ,EAAW,KAzBnB,WACE,QAAgBS,IAAZb,EAAuB,CACzB,MAAMmB,EAA0BjB,KAAKC,MAAQF,EAE7C,GAAIkB,EAA0BxB,GAAoBK,EAChD,OAAOA,EAAUmB,EAIrB,OAAOxB,EA0BkCyB,IAEnCR,EAAe,CACjB,MAAMI,EAAStB,EAAKuB,MAAMV,EAASD,GAEnC,OADAP,GAAYA,EAASiB,GACdN,EAAQM,GAEjBZ,EAASiB,KAAK,CAAEX,QAAAA,EAASC,OAAAA,OAY7B,OARAN,EAAkBiB,OAAS,SAAUC,QACjBV,IAAdhB,GACFiB,aAAajB,GAEfO,EAASc,QAAQ,EAAGP,OAAAA,KAAaA,EAAOY,IACxCnB,EAAW,IAGNC"}

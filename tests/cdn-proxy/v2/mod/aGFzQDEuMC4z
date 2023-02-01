@@ -1,0 +1,103 @@
+Ö¨/LICENSE-MIT≈$Copyright (c) 2013 Thiago de Arruda
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+™/README.mdƒÔ# has
+
+> Object.prototype.hasOwnProperty.call shortcut
+
+## Installation
+
+```sh
+npm install --save has
+```
+
+## Usage
+
+```js
+var has = require('has');
+
+has({}, 'hasOwnProperty'); // false
+has(Object.prototype, 'hasOwnProperty'); // true
+```
+≠/package.json≈Û{
+  "name": "has",
+  "description": "Object.prototype.hasOwnProperty.call shortcut",
+  "version": "1.0.3",
+  "homepage": "https://github.com/tarruda/has",
+  "author": {
+    "name": "Thiago de Arruda",
+    "email": "tpadilha84@gmail.com"
+  },
+ "contributors": [
+    {
+      "name": "Jordan Harband",
+      "email": "ljharb@gmail.com",
+      "url": "http://ljharb.codes"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/tarruda/has.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tarruda/has/issues"
+  },
+  "license": "MIT",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/tarruda/has/blob/master/LICENSE-MIT"
+    }
+  ],
+  "main": "./src",
+  "dependencies": {
+    "function-bind": "^1.1.1"
+  },
+  "devDependencies": {
+    "@ljharb/eslint-config": "^12.2.1",
+    "eslint": "^4.19.1",
+    "tape": "^4.9.0"
+  },
+  "engines": {
+    "node": ">= 0.4.0"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "tape test"
+  }
+}
+≠/src/index.jsƒÅ'use strict';
+
+var bind = require('function-bind');
+
+module.exports = bind.call(Function.call, Object.prototype.hasOwnProperty);
+Æ/test/index.js≈K'use strict';
+
+var test = require('tape');
+var has = require('../');
+
+test('has', function (t) {
+  t.equal(has({}, 'hasOwnProperty'), false, 'object literal does not have own property "hasOwnProperty"');
+  t.equal(has(Object.prototype, 'hasOwnProperty'), true, 'Object.prototype has own property "hasOwnProperty"');
+  t.end();
+});

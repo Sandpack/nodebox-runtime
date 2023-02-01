@@ -1,0 +1,850 @@
+Œ­/package.jsonÅÚ{
+  "name": "function-bind",
+  "version": "1.1.1",
+  "description": "Implementation of Function.prototype.bind",
+  "keywords": [
+    "function",
+    "bind",
+    "shim",
+    "es5"
+  ],
+  "author": "Raynos <raynos2@gmail.com>",
+  "repository": "git://github.com/Raynos/function-bind.git",
+  "main": "index",
+  "homepage": "https://github.com/Raynos/function-bind",
+  "contributors": [
+    {
+      "name": "Raynos"
+    },
+    {
+      "name": "Jordan Harband",
+      "url": "https://github.com/ljharb"
+    }
+  ],
+  "bugs": {
+    "url": "https://github.com/Raynos/function-bind/issues",
+    "email": "raynos2@gmail.com"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@ljharb/eslint-config": "^12.2.1",
+    "covert": "^1.1.0",
+    "eslint": "^4.5.0",
+    "jscs": "^3.0.7",
+    "tape": "^4.8.0"
+  },
+  "license": "MIT",
+  "scripts": {
+    "pretest": "npm run lint",
+    "test": "npm run tests-only",
+    "posttest": "npm run coverage -- --quiet",
+    "tests-only": "node test",
+    "coverage": "covert test/*.js",
+    "lint": "npm run jscs && npm run eslint",
+    "jscs": "jscs *.js */*.js",
+    "eslint": "eslint *.js */*.js"
+  },
+  "testling": {
+    "files": "test/index.js",
+    "browsers": [
+      "ie/8..latest",
+      "firefox/16..latest",
+      "firefox/nightly",
+      "chrome/22..latest",
+      "chrome/canary",
+      "opera/12..latest",
+      "opera/next",
+      "safari/5.1..latest",
+      "ipad/6.0..latest",
+      "iphone/6.0..latest",
+      "android-browser/4.2..latest"
+    ]
+  }
+}
+ª/README.mdÅÐ# function-bind
+
+<!--
+    [![build status][travis-svg]][travis-url]
+    [![NPM version][npm-badge-svg]][npm-url]
+    [![Coverage Status][5]][6]
+    [![gemnasium Dependency Status][7]][8]
+    [![Dependency status][deps-svg]][deps-url]
+    [![Dev Dependency status][dev-deps-svg]][dev-deps-url]
+-->
+
+<!-- [![browser support][11]][12] -->
+
+Implementation of function.prototype.bind
+
+## Example
+
+I mainly do this for unit tests I run on phantomjs.
+PhantomJS does not have Function.prototype.bind :(
+
+```js
+Function.prototype.bind = require("function-bind")
+```
+
+## Installation
+
+`npm install function-bind`
+
+## Contributors
+
+ - Raynos
+
+## MIT Licenced
+
+  [travis-svg]: https://travis-ci.org/Raynos/function-bind.svg
+  [travis-url]: https://travis-ci.org/Raynos/function-bind
+  [npm-badge-svg]: https://badge.fury.io/js/function-bind.svg
+  [npm-url]: https://npmjs.org/package/function-bind
+  [5]: https://coveralls.io/repos/Raynos/function-bind/badge.png
+  [6]: https://coveralls.io/r/Raynos/function-bind
+  [7]: https://gemnasium.com/Raynos/function-bind.png
+  [8]: https://gemnasium.com/Raynos/function-bind
+  [deps-svg]: https://david-dm.org/Raynos/function-bind.svg
+  [deps-url]: https://david-dm.org/Raynos/function-bind
+  [dev-deps-svg]: https://david-dm.org/Raynos/function-bind/dev-status.svg
+  [dev-deps-url]: https://david-dm.org/Raynos/function-bind#info=devDependencies
+  [11]: https://ci.testling.com/Raynos/function-bind.png
+  [12]: https://ci.testling.com/Raynos/function-bind
+«/.npmignoreÄü# gitignore
+.DS_Store
+.monitor
+.*.swp
+.nodemonignore
+releases
+*.log
+*.err
+fleet.json
+public/browserify
+bin/*.json
+.bin
+build
+compile
+.lock-wscript
+coverage
+node_modules
+
+# Only apps should have lockfiles
+npm-shrinkwrap.json
+package-lock.json
+yarn.lock
+©/index.jsÄ~'use strict';
+
+var implementation = require('./implementation');
+
+module.exports = Function.prototype.bind || implementation;
+¨/LICENSEÅCopyright (c) 2013 Raynos.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+«/.jscs.jsonÅ,{
+	"es3": true,
+
+	"additionalRules": [],
+
+	"requireSemicolons": true,
+
+	"disallowMultipleSpaces": true,
+
+	"disallowIdentifierNames": [],
+
+	"requireCurlyBraces": {
+		"allExcept": [],
+		"keywords": ["if", "else", "for", "while", "do", "try", "catch"]
+	},
+
+	"requireSpaceAfterKeywords": ["if", "else", "for", "while", "do", "switch", "return", "try", "catch", "function"],
+
+	"disallowSpaceAfterKeywords": [],
+
+	"disallowSpaceBeforeComma": true,
+	"disallowSpaceAfterComma": false,
+	"disallowSpaceBeforeSemicolon": true,
+
+	"disallowNodeTypes": [
+		"DebuggerStatement",
+		"ForInStatement",
+		"LabeledStatement",
+		"SwitchCase",
+		"SwitchStatement",
+		"WithStatement"
+	],
+
+	"requireObjectKeysOnNewLine": { "allExcept": ["sameLine"] },
+
+	"requireSpacesInAnonymousFunctionExpression": { "beforeOpeningRoundBrace": true, "beforeOpeningCurlyBrace": true },
+	"requireSpacesInNamedFunctionExpression": { "beforeOpeningCurlyBrace": true },
+	"disallowSpacesInNamedFunctionExpression": { "beforeOpeningRoundBrace": true },
+	"requireSpacesInFunctionDeclaration": { "beforeOpeningCurlyBrace": true },
+	"disallowSpacesInFunctionDeclaration": { "beforeOpeningRoundBrace": true },
+
+	"requireSpaceBetweenArguments": true,
+
+	"disallowSpacesInsideParentheses": true,
+
+	"disallowSpacesInsideArrayBrackets": true,
+
+	"disallowQuotedKeysInObjects": { "allExcept": ["reserved"] },
+
+	"disallowSpaceAfterObjectKeys": true,
+
+	"requireCommaBeforeLineBreak": true,
+
+	"disallowSpaceAfterPrefixUnaryOperators": ["++", "--", "+", "-", "~", "!"],
+	"requireSpaceAfterPrefixUnaryOperators": [],
+
+	"disallowSpaceBeforePostfixUnaryOperators": ["++", "--"],
+	"requireSpaceBeforePostfixUnaryOperators": [],
+
+	"disallowSpaceBeforeBinaryOperators": [],
+	"requireSpaceBeforeBinaryOperators": ["+", "-", "/", "*", "=", "==", "===", "!=", "!=="],
+
+	"requireSpaceAfterBinaryOperators": ["+", "-", "/", "*", "=", "==", "===", "!=", "!=="],
+	"disallowSpaceAfterBinaryOperators": [],
+
+	"disallowImplicitTypeConversion": ["binary", "string"],
+
+	"disallowKeywords": ["with", "eval"],
+
+	"requireKeywordsOnNewLine": [],
+	"disallowKeywordsOnNewLine": ["else"],
+
+	"requireLineFeedAtFileEnd": true,
+
+	"disallowTrailingWhitespace": true,
+
+	"disallowTrailingComma": true,
+
+	"excludeFiles": ["node_modules/**", "vendor/**"],
+
+	"disallowMultipleLineStrings": true,
+
+	"requireDotNotation": { "allExcept": ["keywords"] },
+
+	"requireParenthesesAroundIIFE": true,
+
+	"validateLineBreaks": "LF",
+
+	"validateQuoteMarks": {
+		"escape": true,
+		"mark": "'"
+	},
+
+	"disallowOperatorBeforeLineBreak": [],
+
+	"requireSpaceBeforeKeywords": [
+		"do",
+		"for",
+		"if",
+		"else",
+		"switch",
+		"case",
+		"try",
+		"catch",
+		"finally",
+		"while",
+		"with",
+		"return"
+	],
+
+	"validateAlignedFunctionParameters": {
+		"lineBreakAfterOpeningBraces": true,
+		"lineBreakBeforeClosingBraces": true
+	},
+
+	"requirePaddingNewLinesBeforeExport": true,
+
+	"validateNewlineAfterArrayElements": {
+		"maximum": 8
+	},
+
+	"requirePaddingNewLinesAfterUseStrict": true,
+
+	"disallowArrowFunctions": true,
+
+	"disallowMultiLineTernary": true,
+
+	"validateOrderInObjectKeys": "asc-insensitive",
+
+	"disallowIdenticalDestructuringNames": true,
+
+	"disallowNestedTernaries": { "maxLevel": 1 },
+
+	"requireSpaceAfterComma": { "allExcept": ["trailing"] },
+	"requireAlignedMultilineParams": false,
+
+	"requireSpacesInGenerator": {
+		"afterStar": true
+	},
+
+	"disallowSpacesInGenerator": {
+		"beforeStar": true
+	},
+
+	"disallowVar": false,
+
+	"requireArrayDestructuring": false,
+
+	"requireEnhancedObjectLiterals": false,
+
+	"requireObjectDestructuring": false,
+
+	"requireEarlyReturn": false,
+
+	"requireCapitalizedConstructorsNew": {
+		"allExcept": ["Function", "String", "Object", "Symbol", "Number", "Date", "RegExp", "Error", "Boolean", "Array"]
+	},
+
+	"requireImportAlphabetized": false,
+
+    "requireSpaceBeforeObjectValues": true,
+    "requireSpaceBeforeDestructuredValues": true,
+
+	"disallowSpacesInsideTemplateStringPlaceholders": true,
+
+    "disallowArrayDestructuringReturn": false,
+
+    "requireNewlineBeforeSingleStatementsInIf": false,
+
+	"disallowUnusedVariables": true,
+
+	"requireSpacesInsideImportedObjectBraces": true,
+
+	"requireUseStrict": true
+}
+
+®/test/index.jsÅ#// jscs:disable requireUseStrict
+
+var test = require('tape');
+
+var functionBind = require('../implementation');
+var getCurrentContext = function () { return this; };
+
+test('functionBind is a function', function (t) {
+    t.equal(typeof functionBind, 'function');
+    t.end();
+});
+
+test('non-functions', function (t) {
+    var nonFunctions = [true, false, [], {}, 42, 'foo', NaN, /a/g];
+    t.plan(nonFunctions.length);
+    for (var i = 0; i < nonFunctions.length; ++i) {
+        try { functionBind.call(nonFunctions[i]); } catch (ex) {
+            t.ok(ex instanceof TypeError, 'throws when given ' + String(nonFunctions[i]));
+        }
+    }
+    t.end();
+});
+
+test('without a context', function (t) {
+    t.test('binds properly', function (st) {
+        var args, context;
+        var namespace = {
+            func: functionBind.call(function () {
+                args = Array.prototype.slice.call(arguments);
+                context = this;
+            })
+        };
+        namespace.func(1, 2, 3);
+        st.deepEqual(args, [1, 2, 3]);
+        st.equal(context, getCurrentContext.call());
+        st.end();
+    });
+
+    t.test('binds properly, and still supplies bound arguments', function (st) {
+        var args, context;
+        var namespace = {
+            func: functionBind.call(function () {
+                args = Array.prototype.slice.call(arguments);
+                context = this;
+            }, undefined, 1, 2, 3)
+        };
+        namespace.func(4, 5, 6);
+        st.deepEqual(args, [1, 2, 3, 4, 5, 6]);
+        st.equal(context, getCurrentContext.call());
+        st.end();
+    });
+
+    t.test('returns properly', function (st) {
+        var args;
+        var namespace = {
+            func: functionBind.call(function () {
+                args = Array.prototype.slice.call(arguments);
+                return this;
+            }, null)
+        };
+        var context = namespace.func(1, 2, 3);
+        st.equal(context, getCurrentContext.call(), 'returned context is namespaced context');
+        st.deepEqual(args, [1, 2, 3], 'passed arguments are correct');
+        st.end();
+    });
+
+    t.test('returns properly with bound arguments', function (st) {
+        var args;
+        var namespace = {
+            func: functionBind.call(function () {
+                args = Array.prototype.slice.call(arguments);
+                return this;
+            }, null, 1, 2, 3)
+        };
+        var context = namespace.func(4, 5, 6);
+        st.equal(context, getCurrentContext.call(), 'returned context is namespaced context');
+        st.deepEqual(args, [1, 2, 3, 4, 5, 6], 'passed arguments are correct');
+        st.end();
+    });
+
+    t.test('called as a constructor', function (st) {
+        var thunkify = function (value) {
+            return function () { return value; };
+        };
+        st.test('returns object value', function (sst) {
+            var expectedReturnValue = [1, 2, 3];
+            var Constructor = functionBind.call(thunkify(expectedReturnValue), null);
+            var result = new Constructor();
+            sst.equal(result, expectedReturnValue);
+            sst.end();
+        });
+
+        st.test('does not return primitive value', function (sst) {
+            var Constructor = functionBind.call(thunkify(42), null);
+            var result = new Constructor();
+            sst.notEqual(result, 42);
+            sst.end();
+        });
+
+        st.test('object from bound constructor is instance of original and bound constructor', function (sst) {
+            var A = function (x) {
+                this.name = x || 'A';
+            };
+            var B = functionBind.call(A, null, 'B');
+
+            var result = new B();
+            sst.ok(result instanceof B, 'result is instance of bound constructor');
+            sst.ok(result instanceof A, 'result is instance of original constructor');
+            sst.end();
+        });
+
+        st.end();
+    });
+
+    t.end();
+});
+
+test('with a context', function (t) {
+    t.test('with no bound arguments', function (st) {
+        var args, context;
+        var boundContext = {};
+        var namespace = {
+            func: functionBind.call(function () {
+                args = Array.prototype.slice.call(arguments);
+                context = this;
+            }, boundContext)
+        };
+        namespace.func(1, 2, 3);
+        st.equal(context, boundContext, 'binds a context properly');
+        st.deepEqual(args, [1, 2, 3], 'supplies passed arguments');
+        st.end();
+    });
+
+    t.test('with bound arguments', function (st) {
+        var args, context;
+        var boundContext = {};
+        var namespace = {
+            func: functionBind.call(function () {
+                args = Array.prototype.slice.call(arguments);
+                context = this;
+            }, boundContext, 1, 2, 3)
+        };
+        namespace.func(4, 5, 6);
+        st.equal(context, boundContext, 'binds a context properly');
+        st.deepEqual(args, [1, 2, 3, 4, 5, 6], 'supplies bound and passed arguments');
+        st.end();
+    });
+
+    t.test('returns properly', function (st) {
+        var boundContext = {};
+        var args;
+        var namespace = {
+            func: functionBind.call(function () {
+                args = Array.prototype.slice.call(arguments);
+                return this;
+            }, boundContext)
+        };
+        var context = namespace.func(1, 2, 3);
+        st.equal(context, boundContext, 'returned context is bound context');
+        st.notEqual(context, getCurrentContext.call(), 'returned context is not lexical context');
+        st.deepEqual(args, [1, 2, 3], 'passed arguments are correct');
+        st.end();
+    });
+
+    t.test('returns properly with bound arguments', function (st) {
+        var boundContext = {};
+        var args;
+        var namespace = {
+            func: functionBind.call(function () {
+                args = Array.prototype.slice.call(arguments);
+                return this;
+            }, boundContext, 1, 2, 3)
+        };
+        var context = namespace.func(4, 5, 6);
+        st.equal(context, boundContext, 'returned context is bound context');
+        st.notEqual(context, getCurrentContext.call(), 'returned context is not lexical context');
+        st.deepEqual(args, [1, 2, 3, 4, 5, 6], 'passed arguments are correct');
+        st.end();
+    });
+
+    t.test('passes the correct arguments when called as a constructor', function (st) {
+        var expected = { name: 'Correct' };
+        var namespace = {
+            Func: functionBind.call(function (arg) {
+                return arg;
+            }, { name: 'Incorrect' })
+        };
+        var returned = new namespace.Func(expected);
+        st.equal(returned, expected, 'returns the right arg when called as a constructor');
+        st.end();
+    });
+
+    t.test('has the new instance\'s context when called as a constructor', function (st) {
+        var actualContext;
+        var expectedContext = { foo: 'bar' };
+        var namespace = {
+            Func: functionBind.call(function () {
+                actualContext = this;
+            }, expectedContext)
+        };
+        var result = new namespace.Func();
+        st.equal(result instanceof namespace.Func, true);
+        st.notEqual(actualContext, expectedContext);
+        st.end();
+    });
+
+    t.end();
+});
+
+test('bound function length', function (t) {
+    t.test('sets a correct length without thisArg', function (st) {
+        var subject = functionBind.call(function (a, b, c) { return a + b + c; });
+        st.equal(subject.length, 3);
+        st.equal(subject(1, 2, 3), 6);
+        st.end();
+    });
+
+    t.test('sets a correct length with thisArg', function (st) {
+        var subject = functionBind.call(function (a, b, c) { return a + b + c; }, {});
+        st.equal(subject.length, 3);
+        st.equal(subject(1, 2, 3), 6);
+        st.end();
+    });
+
+    t.test('sets a correct length without thisArg and first argument', function (st) {
+        var subject = functionBind.call(function (a, b, c) { return a + b + c; }, undefined, 1);
+        st.equal(subject.length, 2);
+        st.equal(subject(2, 3), 6);
+        st.end();
+    });
+
+    t.test('sets a correct length with thisArg and first argument', function (st) {
+        var subject = functionBind.call(function (a, b, c) { return a + b + c; }, {}, 1);
+        st.equal(subject.length, 2);
+        st.equal(subject(2, 3), 6);
+        st.end();
+    });
+
+    t.test('sets a correct length without thisArg and too many arguments', function (st) {
+        var subject = functionBind.call(function (a, b, c) { return a + b + c; }, undefined, 1, 2, 3, 4);
+        st.equal(subject.length, 0);
+        st.equal(subject(), 6);
+        st.end();
+    });
+
+    t.test('sets a correct length with thisArg and too many arguments', function (st) {
+        var subject = functionBind.call(function (a, b, c) { return a + b + c; }, {}, 1, 2, 3, 4);
+        st.equal(subject.length, 0);
+        st.equal(subject(), 6);
+        st.end();
+    });
+});
+¯/test/.eslintrcÄ°{
+	"rules": {
+		"array-bracket-newline": 0,
+		"array-element-newline": 0,
+		"max-statements-per-line": [2, { "max": 2 }],
+		"no-invalid-this": 0,
+		"no-magic-numbers": 0,
+	}
+}
+¬/.travis.ymlÅKlanguage: node_js
+os:
+ - linux
+node_js:
+  - "8.4"
+  - "7.10"
+  - "6.11"
+  - "5.12"
+  - "4.8"
+  - "iojs-v3.3"
+  - "iojs-v2.5"
+  - "iojs-v1.8"
+  - "0.12"
+  - "0.10"
+  - "0.8"
+before_install:
+  - 'if [ "${TRAVIS_NODE_VERSION}" = "0.6" ]; then npm install -g npm@1.3 ; elif [ "${TRAVIS_NODE_VERSION}" != "0.9" ]; then case "$(npm --version)" in 1.*) npm install -g npm@1.4.28 ;; 2.*) npm install -g npm@2 ;; esac ; fi'
+  - 'if [ "${TRAVIS_NODE_VERSION}" != "0.6" ] && [ "${TRAVIS_NODE_VERSION}" != "0.9" ]; then if [ "${TRAVIS_NODE_VERSION%${TRAVIS_NODE_VERSION#[0-9]}}" = "0" ] || [ "${TRAVIS_NODE_VERSION:0:4}" = "iojs" ]; then npm install -g npm@4.5 ; else npm install -g npm; fi; fi'
+install:
+  - 'if [ "${TRAVIS_NODE_VERSION}" = "0.6" ]; then nvm install 0.8 && npm install -g npm@1.3 && npm install -g npm@1.4.28 && npm install -g npm@2 && npm install && nvm use "${TRAVIS_NODE_VERSION}"; else npm install; fi;'
+script:
+  - 'if [ -n "${PRETEST-}" ]; then npm run pretest ; fi'
+  - 'if [ -n "${POSTTEST-}" ]; then npm run posttest ; fi'
+  - 'if [ -n "${COVERAGE-}" ]; then npm run coverage ; fi'
+  - 'if [ -n "${TEST-}" ]; then npm run tests-only ; fi'
+sudo: false
+env:
+  - TEST=true
+matrix:
+  fast_finish: true
+  include:
+    - node_js: "node"
+      env: PRETEST=true
+    - node_js: "4"
+      env: COVERAGE=true
+    - node_js: "8.3"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "8.2"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "8.1"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "8.0"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "7.9"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "7.8"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "7.7"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "7.6"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "7.5"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "7.4"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "7.3"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "7.2"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "7.1"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "7.0"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "6.10"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "6.9"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "6.8"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "6.7"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "6.6"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "6.5"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "6.4"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "6.3"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "6.2"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "6.1"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "6.0"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "5.11"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "5.10"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "5.9"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "5.8"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "5.7"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "5.6"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "5.5"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "5.4"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "5.3"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "5.2"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "5.1"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "5.0"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "4.7"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "4.6"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "4.5"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "4.4"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "4.3"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "4.2"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "4.1"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "4.0"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "iojs-v3.2"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "iojs-v3.1"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "iojs-v3.0"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "iojs-v2.4"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "iojs-v2.3"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "iojs-v2.2"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "iojs-v2.1"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "iojs-v2.0"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "iojs-v1.7"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "iojs-v1.6"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "iojs-v1.5"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "iojs-v1.4"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "iojs-v1.3"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "iojs-v1.2"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "iojs-v1.1"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "iojs-v1.0"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "0.11"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "0.9"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "0.6"
+      env: TEST=true ALLOW_FAILURE=true
+    - node_js: "0.4"
+      env: TEST=true ALLOW_FAILURE=true
+  allow_failures:
+    - os: osx
+    - env: TEST=true ALLOW_FAILURE=true
+®/.editorconfigÅroot = true
+
+[*]
+indent_style = tab
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+max_line_length = 120
+
+[CHANGELOG.md]
+indent_style = space
+indent_size = 2
+
+[*.json]
+max_line_length = off
+
+[Makefile]
+max_line_length = off
+ª/.eslintrcÄç{
+	"root": true,
+
+	"extends": "@ljharb",
+
+	"rules": {
+		"func-name-matching": 0,
+		"indent": [2, 4],
+		"max-nested-callbacks": [2, 3],
+		"max-params": [2, 3],
+		"max-statements": [2, 20],
+		"no-new-func": [1],
+		"strict": [0]
+	}
+}
+²/implementation.jsÅ·'use strict';
+
+/* eslint no-invalid-this: 1 */
+
+var ERROR_MESSAGE = 'Function.prototype.bind called on incompatible ';
+var slice = Array.prototype.slice;
+var toStr = Object.prototype.toString;
+var funcType = '[object Function]';
+
+module.exports = function bind(that) {
+    var target = this;
+    if (typeof target !== 'function' || toStr.call(target) !== funcType) {
+        throw new TypeError(ERROR_MESSAGE + target);
+    }
+    var args = slice.call(arguments, 1);
+
+    var bound;
+    var binder = function () {
+        if (this instanceof bound) {
+            var result = target.apply(
+                this,
+                args.concat(slice.call(arguments))
+            );
+            if (Object(result) === result) {
+                return result;
+            }
+            return this;
+        } else {
+            return target.apply(
+                that,
+                args.concat(slice.call(arguments))
+            );
+        }
+    };
+
+    var boundLength = Math.max(0, target.length - args.length);
+    var boundArgs = [];
+    for (var i = 0; i < boundLength; i++) {
+        boundArgs.push('$' + i);
+    }
+
+    bound = Function('binder', 'return function (' + boundArgs.join(',') + '){ return binder.apply(this,arguments); }')(binder);
+
+    if (target.prototype) {
+        var Empty = function Empty() {};
+        Empty.prototype = target.prototype;
+        bound.prototype = new Empty();
+        Empty.prototype = null;
+    }
+
+    return bound;
+};

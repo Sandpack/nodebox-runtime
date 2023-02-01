@@ -1,0 +1,665 @@
+Š©/index.jsÅ/*! fetch-blob. MIT License. Jimmy WÃ¤rting <https://jimmy.warting.se/opensource> */
+
+// TODO (jimmywarting): in the feature use conditional loading with top level await (requires 14.x)
+// Node has recently added whatwg stream into core
+
+import './streams.cjs'
+
+// 64 KiB (same size chrome slice theirs blob into Uint8array's)
+const POOL_SIZE = 65536
+
+/** @param {(Blob | Uint8Array)[]} parts */
+async function * toIterator (parts, clone = true) {
+  for (const part of parts) {
+    if ('stream' in part) {
+      yield * (/** @type {AsyncIterableIterator<Uint8Array>} */ (part.stream()))
+    } else if (ArrayBuffer.isView(part)) {
+      if (clone) {
+        let position = part.byteOffset
+        const end = part.byteOffset + part.byteLength
+        while (position !== end) {
+          const size = Math.min(end - position, POOL_SIZE)
+          const chunk = part.buffer.slice(position, position + size)
+          position += chunk.byteLength
+          yield new Uint8Array(chunk)
+        }
+      } else {
+        yield part
+      }
+    /* c8 ignore next 10 */
+    } else {
+      // For blobs that have arrayBuffer but no stream method (nodes buffer.Blob)
+      let position = 0, b = (/** @type {Blob} */ (part))
+      while (position !== b.size) {
+        const chunk = b.slice(position, Math.min(b.size, position + POOL_SIZE))
+        const buffer = await chunk.arrayBuffer()
+        position += buffer.byteLength
+        yield new Uint8Array(buffer)
+      }
+    }
+  }
+}
+
+const _Blob = class Blob {
+  /** @type {Array.<(Blob|Uint8Array)>} */
+  #parts = []
+  #type = ''
+  #size = 0
+  #endings = 'transparent'
+
+  /**
+   * The Blob() constructor returns a new Blob object. The content
+   * of the blob consists of the concatenation of the values given
+   * in the parameter array.
+   *
+   * @param {*} blobParts
+   * @param {{ type?: string, endings?: string }} [options]
+   */
+  constructor (blobParts = [], options = {}) {
+    if (typeof blobParts !== 'object' || blobParts === null) {
+      throw new TypeError('Failed to construct \'Blob\': The provided value cannot be converted to a sequence.')
+    }
+
+    if (typeof blobParts[Symbol.iterator] !== 'function') {
+      throw new TypeError('Failed to construct \'Blob\': The object must have a callable @@iterator property.')
+    }
+
+    if (typeof options !== 'object' && typeof options !== 'function') {
+      throw new TypeError('Failed to construct \'Blob\': parameter 2 cannot convert to dictionary.')
+    }
+
+    if (options === null) options = {}
+
+    const encoder = new TextEncoder()
+    for (const element of blobParts) {
+      let part
+      if (ArrayBuffer.isView(element)) {
+        part = new Uint8Array(element.buffer.slice(element.byteOffset, element.byteOffset + element.byteLength))
+      } else if (element instanceof ArrayBuffer) {
+        part = new Uint8Array(element.slice(0))
+      } else if (element instanceof Blob) {
+        part = element
+      } else {
+        part = encoder.encode(`${element}`)
+      }
+
+      this.#size += ArrayBuffer.isView(part) ? part.byteLength : part.size
+      this.#parts.push(part)
+    }
+
+    this.#endings = `${options.endings === undefined ? 'transparent' : options.endings}`
+    const type = options.type === undefined ? '' : String(options.type)
+    this.#type = /^[\x20-\x7E]*$/.test(type) ? type : ''
+  }
+
+  /**
+   * The Blob interface's size property returns the
+   * size of the Blob in bytes.
+   */
+  get size () {
+    return this.#size
+  }
+
+  /**
+   * The type property of a Blob object returns the MIME type of the file.
+   */
+  get type () {
+    return this.#type
+  }
+
+  /**
+   * The text() method in the Blob interface returns a Promise
+   * that resolves with a string containing the contents of
+   * the blob, interpreted as UTF-8.
+   *
+   * @return {Promise<string>}
+   */
+  async text () {
+    // More optimized than using this.arrayBuffer()
+    // that requires twice as much ram
+    const decoder = new TextDecoder()
+    let str = ''
+    for await (const part of toIterator(this.#parts, false)) {
+      str += decoder.decode(part, { stream: true })
+    }
+    // Remaining
+    str += decoder.decode()
+    return str
+  }
+
+  /**
+   * The arrayBuffer() method in the Blob interface returns a
+   * Promise that resolves with the contents of the blob as
+   * binary data contained in an ArrayBuffer.
+   *
+   * @return {Promise<ArrayBuffer>}
+   */
+  async arrayBuffer () {
+    // Easier way... Just a unnecessary overhead
+    // const view = new Uint8Array(this.size);
+    // await this.stream().getReader({mode: 'byob'}).read(view);
+    // return view.buffer;
+
+    const data = new Uint8Array(this.size)
+    let offset = 0
+    for await (const chunk of toIterator(this.#parts, false)) {
+      data.set(chunk, offset)
+      offset += chunk.length
+    }
+
+    return data.buffer
+  }
+
+  stream () {
+    const it = toIterator(this.#parts, true)
+
+    return new globalThis.ReadableStream({
+      // @ts-ignore
+      type: 'bytes',
+      async pull (ctrl) {
+        const chunk = await it.next()
+        chunk.done ? ctrl.close() : ctrl.enqueue(chunk.value)
+      },
+
+      async cancel () {
+        await it.return()
+      }
+    })
+  }
+
+  /**
+   * The Blob interface's slice() method creates and returns a
+   * new Blob object which contains data from a subset of the
+   * blob on which it's called.
+   *
+   * @param {number} [start]
+   * @param {number} [end]
+   * @param {string} [type]
+   */
+  slice (start = 0, end = this.size, type = '') {
+    const { size } = this
+
+    let relativeStart = start < 0 ? Math.max(size + start, 0) : Math.min(start, size)
+    let relativeEnd = end < 0 ? Math.max(size + end, 0) : Math.min(end, size)
+
+    const span = Math.max(relativeEnd - relativeStart, 0)
+    const parts = this.#parts
+    const blobParts = []
+    let added = 0
+
+    for (const part of parts) {
+      // don't add the overflow to new blobParts
+      if (added >= span) {
+        break
+      }
+
+      const size = ArrayBuffer.isView(part) ? part.byteLength : part.size
+      if (relativeStart && size <= relativeStart) {
+        // Skip the beginning and change the relative
+        // start & end position as we skip the unwanted parts
+        relativeStart -= size
+        relativeEnd -= size
+      } else {
+        let chunk
+        if (ArrayBuffer.isView(part)) {
+          chunk = part.subarray(relativeStart, Math.min(size, relativeEnd))
+          added += chunk.byteLength
+        } else {
+          chunk = part.slice(relativeStart, Math.min(size, relativeEnd))
+          added += chunk.size
+        }
+        relativeEnd -= size
+        blobParts.push(chunk)
+        relativeStart = 0 // All next sequential parts should start at 0
+      }
+    }
+
+    const blob = new Blob([], { type: String(type).toLowerCase() })
+    blob.#size = span
+    blob.#parts = blobParts
+
+    return blob
+  }
+
+  get [Symbol.toStringTag] () {
+    return 'Blob'
+  }
+
+  static [Symbol.hasInstance] (object) {
+    return (
+      object &&
+      typeof object === 'object' &&
+      typeof object.constructor === 'function' &&
+      (
+        typeof object.stream === 'function' ||
+        typeof object.arrayBuffer === 'function'
+      ) &&
+      /^(Blob|File)$/.test(object[Symbol.toStringTag])
+    )
+  }
+}
+
+Object.defineProperties(_Blob.prototype, {
+  size: { enumerable: true },
+  type: { enumerable: true },
+  slice: { enumerable: true }
+})
+
+/** @type {typeof globalThis.Blob} */
+export const Blob = _Blob
+export default Blob
+ª/README.mdÅò# fetch-blob
+
+[![npm version][npm-image]][npm-url]
+[![build status][ci-image]][ci-url]
+[![coverage status][codecov-image]][codecov-url]
+[![install size][install-size-image]][install-size-url]
+
+A Blob implementation in Node.js, originally from [node-fetch](https://github.com/node-fetch/node-fetch).
+
+## Installation
+
+```sh
+npm install fetch-blob
+```
+
+<details>
+  <summary>Upgrading from 2x to 3x</summary>
+
+  Updating from 2 to 3 should be a breeze since there is not many changes to the blob specification.
+  The major cause of a major release is coding standards.
+    - internal WeakMaps was replaced with private fields
+    - internal Buffer.from was replaced with TextEncoder/Decoder
+    - internal buffers was replaced with Uint8Arrays
+    - CommonJS was replaced with ESM
+    - The node stream returned by calling `blob.stream()` was replaced with whatwg streams
+    - (Read "Differences from other blobs" for more info.)
+
+</details>
+
+<details>
+  <summary>Differences from other Blobs</summary>
+
+  - Unlike NodeJS `buffer.Blob` (Added in: v15.7.0) and browser native Blob this polyfilled version can't be sent via PostMessage
+  - This blob version is more arbitrary, it can be constructed with blob parts that isn't a instance of itself
+  it has to look and behave as a blob to be accepted as a blob part.
+    - The benefit of this is that you can create other types of blobs that don't contain any internal data that has to be read in other ways, such as the `BlobDataItem` created in `from.js` that wraps a file path into a blob-like item and read lazily (nodejs plans to [implement this][fs-blobs] as well)
+  - The `blob.stream()` is the most noticeable differences. It returns a WHATWG stream now. to keep it as a node stream you would have to do:
+
+  ```js
+    import {Readable} from 'stream'
+    const stream = Readable.from(blob.stream())
+  ```
+</details>
+
+## Usage
+
+```js
+// Ways to import
+// (PS it's dependency free ESM package so regular http-import from CDN works too)
+import Blob from 'fetch-blob'
+import File from 'fetch-blob/file.js'
+
+import {Blob} from 'fetch-blob'
+import {File} from 'fetch-blob/file.js'
+
+const {Blob} = await import('fetch-blob')
+
+
+// Ways to read the blob:
+const blob = new Blob(['hello, world'])
+
+await blob.text()
+await blob.arrayBuffer()
+for await (let chunk of  blob.stream()) { ... }
+blob.stream().getReader().read()
+blob.stream().getReader({mode: 'byob'}).read(view)
+```
+
+### Blob part backed up by filesystem
+
+`fetch-blob/from.js` comes packed with tools to convert any filepath into either a Blob or a File
+It will not read the content into memory. It will only stat the file for last modified date and file size.
+
+```js
+// The default export is sync and use fs.stat to retrieve size & last modified as a blob
+import blobFromSync from 'fetch-blob/from.js'
+import {File, Blob, blobFrom, blobFromSync, fileFrom, fileFromSync} from 'fetch-blob/from.js'
+
+const fsFile = fileFromSync('./2-GiB-file.bin', 'application/octet-stream')
+const fsBlob = await blobFrom('./2-GiB-file.mp4')
+
+// Not a 4 GiB memory snapshot, just holds references
+// points to where data is located on the disk
+const blob = new Blob([fsFile, fsBlob, 'memory', new Uint8Array(10)])
+console.log(blob.size) // ~4 GiB
+```
+
+`blobFrom|blobFromSync|fileFrom|fileFromSync(path, [mimetype])`
+
+### Creating Blobs backed up by other async sources
+Our Blob & File class are more generic then any other polyfills in the way that it can accept any blob look-a-like item
+An example of this is that our blob implementation can be constructed with parts coming from [BlobDataItem](https://github.com/node-fetch/fetch-blob/blob/8ef89adad40d255a3bbd55cf38b88597c1cd5480/from.js#L32) (aka a filepath) or from [buffer.Blob](https://nodejs.org/api/buffer.html#buffer_new_buffer_blob_sources_options), It dose not have to implement all the methods - just enough that it can be read/understood by our Blob implementation. The minium requirements is that it has `Symbol.toStringTag`, `size`, `slice()` and either a `stream()` or a `arrayBuffer()` method. If you then wrap it in our Blob or File `new Blob([blobDataItem])` then you get all of the other methods that should be implemented in a blob or file
+
+An example of this could be to create a file or blob like item coming from a remote HTTP request. Or from a DataBase
+
+See the [MDN documentation](https://developer.mozilla.org/en-US/docs/Web/API/Blob) and [tests](https://github.com/node-fetch/fetch-blob/blob/master/test.js) for more details of how to use the Blob.
+
+[npm-image]: https://flat.badgen.net/npm/v/fetch-blob
+[npm-url]: https://www.npmjs.com/package/fetch-blob
+[ci-image]: https://github.com/node-fetch/fetch-blob/workflows/CI/badge.svg
+[ci-url]: https://github.com/node-fetch/fetch-blob/actions
+[codecov-image]: https://flat.badgen.net/codecov/c/github/node-fetch/fetch-blob/master
+[codecov-url]: https://codecov.io/gh/node-fetch/fetch-blob
+[install-size-image]: https://flat.badgen.net/packagephobia/install/fetch-blob
+[install-size-url]: https://packagephobia.now.sh/result?p=fetch-blob
+[fs-blobs]: https://github.com/nodejs/node/issues/37340
+ª/from.d.tsÅ3export default blobFromSync;
+/**
+ * @param {string} path filepath on the disk
+ * @param {string} [type] mimetype to use
+ */
+export function blobFromSync(path: string, type?: string): Blob;
+import File from "./file.js";
+import Blob from "./index.js";
+/**
+ * @param {string} path filepath on the disk
+ * @param {string} [type] mimetype to use
+ * @returns {Promise<Blob>}
+ */
+export function blobFrom(path: string, type?: string): Promise<Blob>;
+/**
+ * @param {string} path filepath on the disk
+ * @param {string} [type] mimetype to use
+ * @returns {Promise<File>}
+ */
+export function fileFrom(path: string, type?: string): Promise<File>;
+/**
+ * @param {string} path filepath on the disk
+ * @param {string} [type] mimetype to use
+ */
+export function fileFromSync(path: string, type?: string): File;
+export { File, Blob };
+¨/from.jsÅ
+Ximport { statSync, createReadStream, promises as fs } from 'node:fs'
+import { basename } from 'node:path'
+import DOMException from 'node-domexception'
+
+import File from './file.js'
+import Blob from './index.js'
+
+const { stat } = fs
+
+/**
+ * @param {string} path filepath on the disk
+ * @param {string} [type] mimetype to use
+ */
+const blobFromSync = (path, type) => fromBlob(statSync(path), path, type)
+
+/**
+ * @param {string} path filepath on the disk
+ * @param {string} [type] mimetype to use
+ * @returns {Promise<Blob>}
+ */
+const blobFrom = (path, type) => stat(path).then(stat => fromBlob(stat, path, type))
+
+/**
+ * @param {string} path filepath on the disk
+ * @param {string} [type] mimetype to use
+ * @returns {Promise<File>}
+ */
+const fileFrom = (path, type) => stat(path).then(stat => fromFile(stat, path, type))
+
+/**
+ * @param {string} path filepath on the disk
+ * @param {string} [type] mimetype to use
+ */
+const fileFromSync = (path, type) => fromFile(statSync(path), path, type)
+
+// @ts-ignore
+const fromBlob = (stat, path, type = '') => new Blob([new BlobDataItem({
+  path,
+  size: stat.size,
+  lastModified: stat.mtimeMs,
+  start: 0
+})], { type })
+
+// @ts-ignore
+const fromFile = (stat, path, type = '') => new File([new BlobDataItem({
+  path,
+  size: stat.size,
+  lastModified: stat.mtimeMs,
+  start: 0
+})], basename(path), { type, lastModified: stat.mtimeMs })
+
+/**
+ * This is a blob backed up by a file on the disk
+ * with minium requirement. Its wrapped around a Blob as a blobPart
+ * so you have no direct access to this.
+ *
+ * @private
+ */
+class BlobDataItem {
+  #path
+  #start
+
+  constructor (options) {
+    this.#path = options.path
+    this.#start = options.start
+    this.size = options.size
+    this.lastModified = options.lastModified
+  }
+
+  /**
+   * Slicing arguments is first validated and formatted
+   * to not be out of range by Blob.prototype.slice
+   */
+  slice (start, end) {
+    return new BlobDataItem({
+      path: this.#path,
+      lastModified: this.lastModified,
+      size: end - start,
+      start: this.#start + start
+    })
+  }
+
+  async * stream () {
+    const { mtimeMs } = await stat(this.#path)
+    if (mtimeMs > this.lastModified) {
+      throw new DOMException('The requested file could not be read, typically due to permission problems that have occurred after a reference to a file was acquired.', 'NotReadableError')
+    }
+    yield * createReadStream(this.#path, {
+      start: this.#start,
+      end: this.#start + this.size - 1
+    })
+  }
+
+  get [Symbol.toStringTag] () {
+    return 'Blob'
+  }
+}
+
+export default blobFromSync
+export { File, Blob, blobFrom, blobFromSync, fileFrom, fileFromSync }
+¨/LICENSEÅ,MIT License
+
+Copyright (c) 2019 David Frank
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+¬/streams.cjsÅD/* c8 ignore start */
+// 64 KiB (same size chrome slice theirs blob into Uint8array's)
+const POOL_SIZE = 65536
+
+if (!globalThis.ReadableStream) {
+  // `node:stream/web` got introduced in v16.5.0 as experimental
+  // and it's preferred over the polyfilled version. So we also
+  // suppress the warning that gets emitted by NodeJS for using it.
+  try {
+    const process = require('node:process')
+    const { emitWarning } = process
+    try {
+      process.emitWarning = () => {}
+      Object.assign(globalThis, require('node:stream/web'))
+      process.emitWarning = emitWarning
+    } catch (error) {
+      process.emitWarning = emitWarning
+      throw error
+    }
+  } catch (error) {
+    // fallback to polyfill implementation
+    Object.assign(globalThis, require('web-streams-polyfill/dist/ponyfill.es2018.js'))
+  }
+}
+
+try {
+  // Don't use node: prefix for this, require+node: is not supported until node v14.14
+  // Only `import()` can use prefix in 12.20 and later
+  const { Blob } = require('buffer')
+  if (Blob && !Blob.prototype.stream) {
+    Blob.prototype.stream = function name (params) {
+      let position = 0
+      const blob = this
+
+      return new ReadableStream({
+        type: 'bytes',
+        async pull (ctrl) {
+          const chunk = blob.slice(position, Math.min(blob.size, position + POOL_SIZE))
+          const buffer = await chunk.arrayBuffer()
+          position += buffer.byteLength
+          ctrl.enqueue(new Uint8Array(buffer))
+
+          if (position === blob.size) {
+            ctrl.close()
+          }
+        }
+      })
+    }
+  }
+} catch (error) {}
+/* c8 ignore end */
+­/package.jsonÅn{
+    "name": "fetch-blob",
+    "version": "3.2.0",
+    "description": "Blob & File implementation in Node.js, originally from node-fetch.",
+    "main": "index.js",
+    "type": "module",
+    "files": [
+        "from.js",
+        "file.js",
+        "file.d.ts",
+        "index.js",
+        "index.d.ts",
+        "from.d.ts",
+        "streams.cjs"
+    ],
+    "scripts": {
+        "test": "node --experimental-loader ./test/http-loader.js ./test/test-wpt-in-node.js",
+        "report": "c8 --reporter json --reporter text npm run test",
+        "coverage": "npm run report && codecov -f coverage/coverage-final.json",
+        "prepublishOnly": "tsc --declaration --emitDeclarationOnly --allowJs index.js from.js"
+    },
+    "repository": "https://github.com/node-fetch/fetch-blob.git",
+    "keywords": [
+        "blob",
+        "file",
+        "node-fetch"
+    ],
+    "engines": {
+        "node": "^12.20 || >= 14.13"
+    },
+    "author": "Jimmy WÃ¤rting <jimmy@warting.se> (https://jimmy.warting.se)",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/node-fetch/fetch-blob/issues"
+    },
+    "homepage": "https://github.com/node-fetch/fetch-blob#readme",
+    "devDependencies": {
+        "@types/node": "^17.0.9",
+        "c8": "^7.11.0",
+        "typescript": "^4.5.4"
+    },
+    "funding": [
+        {
+            "type": "github",
+            "url": "https://github.com/sponsors/jimmywarting"
+        },
+        {
+            "type": "paypal",
+            "url": "https://paypal.me/jimmywarting"
+        }
+    ],
+    "dependencies": {
+        "node-domexception": "^1.0.0",
+        "web-streams-polyfill": "^3.0.3"
+    }
+}
+«/index.d.tsÄf/** @type {typeof globalThis.Blob} */
+export const Blob: typeof globalThis.Blob;
+export default Blob;
+¨/file.jsÅÌimport Blob from './index.js'
+
+const _File = class File extends Blob {
+  #lastModified = 0
+  #name = ''
+
+  /**
+   * @param {*[]} fileBits
+   * @param {string} fileName
+   * @param {{lastModified?: number, type?: string}} options
+   */// @ts-ignore
+  constructor (fileBits, fileName, options = {}) {
+    if (arguments.length < 2) {
+      throw new TypeError(`Failed to construct 'File': 2 arguments required, but only ${arguments.length} present.`)
+    }
+    super(fileBits, options)
+
+    if (options === null) options = {}
+
+    // Simulate WebIDL type casting for NaN value in lastModified option.
+    const lastModified = options.lastModified === undefined ? Date.now() : Number(options.lastModified)
+    if (!Number.isNaN(lastModified)) {
+      this.#lastModified = lastModified
+    }
+
+    this.#name = String(fileName)
+  }
+
+  get name () {
+    return this.#name
+  }
+
+  get lastModified () {
+    return this.#lastModified
+  }
+
+  get [Symbol.toStringTag] () {
+    return 'File'
+  }
+
+  static [Symbol.hasInstance] (object) {
+    return !!object && object instanceof Blob &&
+      /^(File)$/.test(object[Symbol.toStringTag])
+  }
+}
+
+/** @type {typeof globalThis.File} */// @ts-ignore
+export const File = _File
+export default File
+ª/file.d.tsÄf/** @type {typeof globalThis.File} */ export const File: typeof globalThis.File;
+export default File;

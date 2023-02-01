@@ -1,0 +1,16 @@
+node_modules
+.DS_Store
+.turbo
+build
+internals/servers/consumer/dist/consumer.js
+internals/servers/consumer/bin
+.env*
+!.env.test
+!.env.example
+certificates
+/packages/runtime/preview/**/*.js
+*-error.log
+*.log
+/preview
+tmp
+test-results

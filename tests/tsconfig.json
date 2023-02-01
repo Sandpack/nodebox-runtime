@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig",
+  "compilerOptions": {
+    "noEmit": true,
+    "baseUrl": "../",
+    "paths": {
+      "tests": ["./tests"],
+      "@codesandbox/nodebox": ["./packages/nodebox/src"]
+    }
+  },
+  "include": ["**/*"]
+}

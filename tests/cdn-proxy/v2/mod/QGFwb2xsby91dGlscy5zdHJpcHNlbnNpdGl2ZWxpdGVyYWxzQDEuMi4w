@@ -1,0 +1,293 @@
+â®/LICENSE≈]MIT License
+
+Copyright (c) 2022 Apollo Graph, Inc. (Formerly Meteor Development Group, Inc.)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+Ÿ-/src/__tests__/stripSensitiveLiterals.test.ts≈Éimport gql from "graphql-tag";
+import { stripSensitiveLiterals } from "..";
+
+import graphQLASTSerializer from "@apollo/utils.jest-graphql-ast-serializer";
+
+expect.addSnapshotSerializer(graphQLASTSerializer);
+
+const document = gql`
+  query Foo($b: Int, $a: Boolean) {
+    user(
+      name: "hello"
+      age: 5
+      pct: 0.4
+      lst: ["a", "b", "c"]
+      obj: { a: "a", b: 1 }
+    ) {
+      ...Bar
+      ... on User {
+        hello
+        bee
+      }
+      tz
+      aliased: name
+      withInputs(
+        str: "hi"
+        int: 2
+        flt: 0.3
+        lst: ["", "", ""]
+        obj: { q: "", s: 0 }
+      )
+    }
+  }
+
+  fragment Bar on User {
+    age @skip(if: $a)
+    ...Nested
+  }
+
+  fragment Nested on User {
+    blah
+  }
+`;
+
+describe("stripSensitiveLiterals", () => {
+  it("strips only numeric and string literals with default configuration", () => {
+    expect(stripSensitiveLiterals(document)).toMatchInlineSnapshot(`
+      query Foo($b: Int, $a: Boolean) {
+        user(name: "", age: 0, pct: 0, lst: ["", "", ""], obj: {a: "", b: 0}) {
+          ...Bar
+          ... on User {
+            hello
+            bee
+          }
+          tz
+          aliased: name
+          withInputs(str: "", int: 0, flt: 0, lst: ["", "", ""], obj: {q: "", s: 0})
+        }
+      }
+
+      fragment Bar on User {
+        age @skip(if: $a)
+        ...Nested
+      }
+
+      fragment Nested on User {
+        blah
+      }
+    `);
+  });
+
+  it("strips only numeric and string literals with empty (but defined) configuration", () => {
+    expect(stripSensitiveLiterals(document, {})).toMatchInlineSnapshot(`
+      query Foo($b: Int, $a: Boolean) {
+        user(name: "", age: 0, pct: 0, lst: ["", "", ""], obj: {a: "", b: 0}) {
+          ...Bar
+          ... on User {
+            hello
+            bee
+          }
+          tz
+          aliased: name
+          withInputs(str: "", int: 0, flt: 0, lst: ["", "", ""], obj: {q: "", s: 0})
+        }
+      }
+
+      fragment Bar on User {
+        age @skip(if: $a)
+        ...Nested
+      }
+
+      fragment Nested on User {
+        blah
+      }
+    `);
+  });
+
+  it("strips only numeric and string literals with hideListAndObjectLiterals: false", () => {
+    expect(
+      stripSensitiveLiterals(document, { hideListAndObjectLiterals: false }),
+    ).toMatchInlineSnapshot(`
+      query Foo($b: Int, $a: Boolean) {
+        user(name: "", age: 0, pct: 0, lst: ["", "", ""], obj: {a: "", b: 0}) {
+          ...Bar
+          ... on User {
+            hello
+            bee
+          }
+          tz
+          aliased: name
+          withInputs(str: "", int: 0, flt: 0, lst: ["", "", ""], obj: {q: "", s: 0})
+        }
+      }
+
+      fragment Bar on User {
+        age @skip(if: $a)
+        ...Nested
+      }
+
+      fragment Nested on User {
+        blah
+      }
+    `);
+  });
+
+  it("strips all literals with hideListAndObjectLiterals: true", () => {
+    expect(
+      stripSensitiveLiterals(document, { hideListAndObjectLiterals: true }),
+    ).toMatchInlineSnapshot(`
+      query Foo($b: Int, $a: Boolean) {
+        user(name: "", age: 0, pct: 0, lst: [], obj: {}) {
+          ...Bar
+          ... on User {
+            hello
+            bee
+          }
+          tz
+          aliased: name
+          withInputs(str: "", int: 0, flt: 0, lst: [], obj: {})
+        }
+      }
+
+      fragment Bar on User {
+        age @skip(if: $a)
+        ...Nested
+      }
+
+      fragment Nested on User {
+        blah
+      }
+    `);
+  });
+});
+≠/package.json≈”{
+  "name": "@apollo/utils.stripsensitiveliterals",
+  "version": "1.2.0",
+  "description": "Remove literals from an AST which might contain PII (strings and numbers, and optionally lists and objects)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apollographql/apollo-utils.git",
+    "directory": "stripSensitiveLiterals/"
+  },
+  "keywords": [
+    "apollo",
+    "graphql",
+    "typescript",
+    "node"
+  ],
+  "author": "Apollo <packages@apollographql.com>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=12.13.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "graphql": "14.x || 15.x || 16.x"
+  }
+}
+Æ/dist/index.js≈€"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.stripSensitiveLiterals = void 0;
+const graphql_1 = require("graphql");
+function stripSensitiveLiterals(ast, options = {
+    hideListAndObjectLiterals: false,
+}) {
+    const listAndObjectVisitorIfEnabled = options.hideListAndObjectLiterals
+        ? {
+            ListValue(node) {
+                return { ...node, values: [] };
+            },
+            ObjectValue(node) {
+                return { ...node, fields: [] };
+            },
+        }
+        : {};
+    return (0, graphql_1.visit)(ast, {
+        IntValue(node) {
+            return { ...node, value: "0" };
+        },
+        FloatValue(node) {
+            return { ...node, value: "0" };
+        },
+        StringValue(node) {
+            return { ...node, value: "", block: false };
+        },
+        ...listAndObjectVisitorIfEnabled,
+    });
+}
+exports.stripSensitiveLiterals = stripSensitiveLiterals;
+//# sourceMappingURL=index.js.map¥/dist/index.d.ts.map≈{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAEV,YAAY,EAMb,MAAM,SAAS,CAAC;AAIjB,wBAAgB,sBAAsB,CACpC,GAAG,EAAE,YAAY,EACjB,OAAO,GAAE;IAAE,yBAAyB,CAAC,EAAE,OAAO,CAAA;CAE7C,GACA,YAAY,CAyBd"}∞/dist/index.d.tsƒŸimport type { DocumentNode } from "graphql";
+export declare function stripSensitiveLiterals(ast: DocumentNode, options?: {
+    hideListAndObjectLiterals?: boolean;
+}): DocumentNode;
+//# sourceMappingURL=index.d.ts.map≠/src/index.ts≈ßimport type {
+  ASTVisitor,
+  DocumentNode,
+  FloatValueNode,
+  IntValueNode,
+  ListValueNode,
+  ObjectValueNode,
+  StringValueNode,
+} from "graphql";
+import { visit } from "graphql";
+
+// Hide sensitive string and numeric literals. Optionally hide list and object literals with the option `hideListAndObjectLiterals: true`.
+export function stripSensitiveLiterals(
+  ast: DocumentNode,
+  options: { hideListAndObjectLiterals?: boolean } = {
+    hideListAndObjectLiterals: false,
+  },
+): DocumentNode {
+  const listAndObjectVisitorIfEnabled: ASTVisitor =
+    options.hideListAndObjectLiterals
+      ? {
+          ListValue(node: ListValueNode): ListValueNode {
+            return { ...node, values: [] };
+          },
+          ObjectValue(node: ObjectValueNode): ObjectValueNode {
+            return { ...node, fields: [] };
+          },
+        }
+      : {};
+
+  return visit(ast, {
+    IntValue(node): IntValueNode {
+      return { ...node, value: "0" };
+    },
+    FloatValue(node): FloatValueNode {
+      return { ...node, value: "0" };
+    },
+    StringValue(node): StringValueNode {
+      return { ...node, value: "", block: false };
+    },
+    ...listAndObjectVisitorIfEnabled,
+  });
+}
+º/src/__tests__/tsconfig.jsonƒ¬{
+  "extends": "../../../../tsconfig.test.base",
+  "include": ["**/*"],
+  "references": [
+    {
+      "path": "../../"
+    },
+    {
+      "path": "../../../jestGraphQLASTSerializer"
+    }
+  ]
+}
+≤/dist/index.js.map≈6{"version":3,"file":"index.js","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":";;;AASA,qCAAgC;AAGhC,SAAgB,sBAAsB,CACpC,GAAiB,EACjB,UAAmD;IACjD,yBAAyB,EAAE,KAAK;CACjC;IAED,MAAM,6BAA6B,GACjC,OAAO,CAAC,yBAAyB;QAC/B,CAAC,CAAC;YACE,SAAS,CAAC,IAAmB;gBAC3B,OAAO,EAAE,GAAG,IAAI,EAAE,MAAM,EAAE,EAAE,EAAE,CAAC;YACjC,CAAC;YACD,WAAW,CAAC,IAAqB;gBAC/B,OAAO,EAAE,GAAG,IAAI,EAAE,MAAM,EAAE,EAAE,EAAE,CAAC;YACjC,CAAC;SACF;QACH,CAAC,CAAC,EAAE,CAAC;IAET,OAAO,IAAA,eAAK,EAAC,GAAG,EAAE;QAChB,QAAQ,CAAC,IAAI;YACX,OAAO,EAAE,GAAG,IAAI,EAAE,KAAK,EAAE,GAAG,EAAE,CAAC;QACjC,CAAC;QACD,UAAU,CAAC,IAAI;YACb,OAAO,EAAE,GAAG,IAAI,EAAE,KAAK,EAAE,GAAG,EAAE,CAAC;QACjC,CAAC;QACD,WAAW,CAAC,IAAI;YACd,OAAO,EAAE,GAAG,IAAI,EAAE,KAAK,EAAE,EAAE,EAAE,KAAK,EAAE,KAAK,EAAE,CAAC;QAC9C,CAAC;QACD,GAAG,6BAA6B;KACjC,CAAC,CAAC;AACL,CAAC;AA9BD,wDA8BC"}

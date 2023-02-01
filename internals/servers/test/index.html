@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Server</title>
+  </head>
+  <body>
+    <script type="module" src="/nodebox/index.mjs"></script>
+    <script type="module">
+      import { Nodebox } from '/nodebox/index.mjs';
+      window.Nodebox = Nodebox;
+    </script>
+
+    <h1>Test server</h1>
+    <iframe id="frame" sandbox="allow-scripts allow-same-origin"></iframe>
+  </body>
+</html>

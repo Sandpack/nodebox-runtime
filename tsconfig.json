@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "inlineSourceMap": true,
+    "useUnknownInCatchVariables": false,
+    "resolveJsonModule": true
+  },
+  "exclude": ["node_modules", "build"]
+}

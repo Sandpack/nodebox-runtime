@@ -1,0 +1,421 @@
+ä¨/.travis.yml≈language: node_js
+sudo: false
+
+node_js:
+  - 9
+  - 8
+  - 7
+  - 6
+  - 5
+  - 4
+  - 4.0
+  - iojs-v3
+  - iojs-v2
+  - iojs-v1
+  - 0.12
+  - 0.10
+
+cache:
+  directories:
+    - node_modules
+
+after_script:
+- npm run coverage
+
+notifications:
+  email:
+    on_success: never
+    on_failure: always
+Ÿ"/benchmarks/reuseNoCodeFunction.js≈…'use strict'
+
+var reusify = require('../')
+var fib = require('./fib')
+var instance = reusify(MyObject)
+var max = 100000000
+var start = Date.now()
+
+function reuseNoCodeFunction () {
+  var obj = instance.get()
+  obj.num = 100
+  obj.func()
+  obj.num = 0
+  instance.release(obj)
+}
+
+function MyObject () {
+  this.next = null
+  var that = this
+  this.num = 0
+  this.func = function () {
+    /* eslint no-constant-condition: "off" */
+    if (null) {
+      // do nothing
+    } else {
+      fib(that.num)
+    }
+  }
+}
+
+for (var i = 0; i < max; i++) {
+  reuseNoCodeFunction()
+}
+
+var time = Date.now() - start
+console.log('Total time', time)
+console.log('Total iterations', max)
+console.log('Iteration/s', max / time * 1000)
+≠/package.json≈ˇ{
+  "name": "reusify",
+  "version": "1.0.4",
+  "description": "Reuse objects and functions with style",
+  "main": "reusify.js",
+  "scripts": {
+    "lint": "standard",
+    "test": "tape test.js | faucet",
+    "istanbul": "istanbul cover tape test.js",
+    "coverage": "npm run istanbul; cat coverage/lcov.info | coveralls"
+  },
+  "pre-commit": [
+    "lint",
+    "test"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mcollina/reusify.git"
+  },
+  "keywords": [
+    "reuse",
+    "object",
+    "performance",
+    "function",
+    "fast"
+  ],
+  "author": "Matteo Collina <hello@matteocollina.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mcollina/reusify/issues"
+  },
+  "homepage": "https://github.com/mcollina/reusify#readme",
+  "engines": {
+    "node": ">=0.10.0",
+    "iojs": ">=1.0.0"
+  },
+  "devDependencies": {
+    "coveralls": "^2.13.3",
+    "faucet": "0.0.1",
+    "istanbul": "^0.4.5",
+    "pre-commit": "^1.2.2",
+    "standard": "^10.0.3",
+    "tape": "^4.8.0"
+  }
+}
+™/README.md≈1# reusify
+
+[![npm version][npm-badge]][npm-url]
+[![Build Status][travis-badge]][travis-url]
+[![Coverage Status][coveralls-badge]][coveralls-url]
+
+Reuse your objects and functions for maximum speed. This technique will
+make any function run ~10% faster. You call your functions a
+lot, and it adds up quickly in hot code paths.
+
+```
+$ node benchmarks/createNoCodeFunction.js
+Total time 53133
+Total iterations 100000000
+Iteration/s 1882069.5236482036
+
+$ node benchmarks/reuseNoCodeFunction.js
+Total time 50617
+Total iterations 100000000
+Iteration/s 1975620.838848608
+```
+
+The above benchmark uses fibonacci to simulate a real high-cpu load.
+The actual numbers might differ for your use case, but the difference
+should not.
+
+The benchmark was taken using Node v6.10.0.
+
+This library was extracted from
+[fastparallel](http://npm.im/fastparallel).
+
+## Example
+
+```js
+var reusify = require('reusify')
+var fib = require('reusify/benchmarks/fib')
+var instance = reusify(MyObject)
+
+// get an object from the cache,
+// or creates a new one when cache is empty
+var obj = instance.get()
+
+// set the state
+obj.num = 100
+obj.func()
+
+// reset the state.
+// if the state contains any external object
+// do not use delete operator (it is slow)
+// prefer set them to null
+obj.num = 0
+
+// store an object in the cache
+instance.release(obj)
+
+function MyObject () {
+  // you need to define this property
+  // so V8 can compile MyObject into an
+  // hidden class
+  this.next = null
+  this.num = 0
+
+  var that = this
+
+  // this function is never reallocated,
+  // so it can be optimized by V8
+  this.func = function () {
+    if (null) {
+      // do nothing
+    } else {
+      // calculates fibonacci
+      fib(that.num)
+    }
+  }
+}
+```
+
+The above example was intended for synchronous code, let's see async:
+```js
+var reusify = require('reusify')
+var instance = reusify(MyObject)
+
+for (var i = 0; i < 100; i++) {
+  getData(i, console.log)
+}
+
+function getData (value, cb) {
+  var obj = instance.get()
+
+  obj.value = value
+  obj.cb = cb
+  obj.run()
+}
+
+function MyObject () {
+  this.next = null
+  this.value = null
+
+  var that = this
+
+  this.run = function () {
+    asyncOperation(that.value, that.handle)
+  }
+
+  this.handle = function (err, result) {
+    that.cb(err, result)
+    that.value = null
+    that.cb = null
+    instance.release(that)
+  }
+}
+```
+
+Also note how in the above examples, the code, that consumes an istance of `MyObject`,
+reset the state to initial condition, just before storing it in the cache.
+That's needed so that every subsequent request for an instance from the cache,
+could get a clean instance.
+
+## Why
+
+It is faster because V8 doesn't have to collect all the functions you
+create. On a short-lived benchmark, it is as fast as creating the
+nested function, but on a longer time frame it creates less
+pressure on the garbage collector.
+
+## Other examples
+If you want to see some complex example, checkout [middie](https://github.com/fastify/middie) and [steed](https://github.com/mcollina/steed).
+
+## Acknowledgements
+
+Thanks to [Trevor Norris](https://github.com/trevnorris) for
+getting me down the rabbit hole of performance, and thanks to [Mathias
+Buss](http://github.com/mafintosh) for suggesting me to share this
+trick.
+
+## License
+
+MIT
+
+[npm-badge]: https://badge.fury.io/js/reusify.svg
+[npm-url]: https://badge.fury.io/js/reusify
+[travis-badge]: https://api.travis-ci.org/mcollina/reusify.svg
+[travis-url]: https://travis-ci.org/mcollina/reusify
+[coveralls-badge]: https://coveralls.io/repos/mcollina/reusify/badge.svg?branch=master&service=github
+[coveralls-url]:  https://coveralls.io/github/mcollina/reusify?branch=master
+®/test.js≈†'use strict'
+
+var test = require('tape')
+var reusify = require('./')
+
+test('reuse objects', function (t) {
+  t.plan(6)
+
+  function MyObject () {
+    t.pass('constructor called')
+    this.next = null
+  }
+
+  var instance = reusify(MyObject)
+  var obj = instance.get()
+
+  t.notEqual(obj, instance.get(), 'two instance created')
+  t.notOk(obj.next, 'next must be null')
+
+  instance.release(obj)
+
+  // the internals keeps a hot copy ready for reuse
+  // putting this one back in the queue
+  instance.release(instance.get())
+
+  // comparing the old one with the one we got
+  // never do this in real code, after release you
+  // should never reuse that instance
+  t.equal(obj, instance.get(), 'instance must be reused')
+})
+
+test('reuse more than 2 objects', function (t) {
+  function MyObject () {
+    t.pass('constructor called')
+    this.next = null
+  }
+
+  var instance = reusify(MyObject)
+  var obj = instance.get()
+  var obj2 = instance.get()
+  var obj3 = instance.get()
+
+  t.notOk(obj.next, 'next must be null')
+  t.notOk(obj2.next, 'next must be null')
+  t.notOk(obj3.next, 'next must be null')
+
+  t.notEqual(obj, obj2)
+  t.notEqual(obj, obj3)
+  t.notEqual(obj3, obj2)
+
+  instance.release(obj)
+  instance.release(obj2)
+  instance.release(obj3)
+
+  // skip one
+  instance.get()
+
+  var obj4 = instance.get()
+  var obj5 = instance.get()
+  var obj6 = instance.get()
+
+  t.equal(obj4, obj)
+  t.equal(obj5, obj2)
+  t.equal(obj6, obj3)
+  t.end()
+})
+Ÿ#/benchmarks/createNoCodeFunction.js≈N'use strict'
+
+var fib = require('./fib')
+var max = 100000000
+var start = Date.now()
+
+// create a funcion with the typical error
+// pattern, that delegates the heavy load
+// to something else
+function createNoCodeFunction () {
+  /* eslint no-constant-condition: "off" */
+  var num = 100
+
+  ;(function () {
+    if (null) {
+      // do nothing
+    } else {
+      fib(num)
+    }
+  })()
+}
+
+for (var i = 0; i < max; i++) {
+  createNoCodeFunction()
+}
+
+var time = Date.now() - start
+console.log('Total time', time)
+console.log('Total iterations', max)
+console.log('Iteration/s', max / time * 1000)
+®/LICENSE≈:The MIT License (MIT)
+
+Copyright (c) 2015 Matteo Collina
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Ø/.coveralls.ymlƒ.repo_token: yIxhFqtaaz5iGVYfie9mODehFYogm8S8L
+≤/benchmarks/fib.jsƒ±'use strict'
+
+function fib (num) {
+  var fib = []
+
+  fib[0] = 0
+  fib[1] = 1
+  for (var i = 2; i <= num; i++) {
+    fib[i] = fib[i - 2] + fib[i - 1]
+  }
+}
+
+module.exports = fib
+´/reusify.js≈∆'use strict'
+
+function reusify (Constructor) {
+  var head = new Constructor()
+  var tail = head
+
+  function get () {
+    var current = head
+
+    if (current.next) {
+      head = current.next
+    } else {
+      head = new Constructor()
+      tail = head
+    }
+
+    current.next = null
+
+    return current
+  }
+
+  function release (obj) {
+    tail.next = obj
+    tail = obj
+  }
+
+  return {
+    get: get,
+    release: release
+  }
+}
+
+module.exports = reusify

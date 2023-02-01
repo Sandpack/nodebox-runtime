@@ -1,0 +1,826 @@
+‡«/index.d.tsÅ“import {URL} from 'node:url'; // TODO: Remove this when https://github.com/DefinitelyTyped/DefinitelyTyped/issues/34960 is fixed.
+import {Options as FastGlobOptions, Entry} from 'fast-glob';
+
+export type GlobEntry = Entry;
+
+export interface GlobTask {
+	readonly patterns: string[];
+	readonly options: Options;
+}
+
+export type ExpandDirectoriesOption =
+	| boolean
+	| readonly string[]
+	| {files?: readonly string[]; extensions?: readonly string[]};
+
+type FastGlobOptionsWithoutCwd = Omit<FastGlobOptions, 'cwd'>;
+
+export interface Options extends FastGlobOptionsWithoutCwd {
+	/**
+	If set to `true`, `globby` will automatically glob directories for you. If you define an `Array` it will only glob files that matches the patterns inside the `Array`. You can also define an `Object` with `files` and `extensions` like in the example below.
+
+	Note that if you set this option to `false`, you won't get back matched directories unless you set `onlyFiles: false`.
+
+	@default true
+
+	@example
+	```
+	import {globby} from 'globby';
+
+	const paths = await globby('images', {
+		expandDirectories: {
+			files: ['cat', 'unicorn', '*.jpg'],
+			extensions: ['png']
+		}
+	});
+
+	console.log(paths);
+	//=> ['cat.png', 'unicorn.png', 'cow.jpg', 'rainbow.jpg']
+	```
+	*/
+	readonly expandDirectories?: ExpandDirectoriesOption;
+
+	/**
+	Respect ignore patterns in `.gitignore` files that apply to the globbed files.
+
+	@default false
+	*/
+	readonly gitignore?: boolean;
+
+	/**
+	Glob patterns to look for ignore files, which are then used to ignore globbed files.
+
+	This is a more generic form of the `gitignore` option, allowing you to find ignore files with a [compatible syntax](http://git-scm.com/docs/gitignore). For instance, this works with Babel's `.babelignore`, Prettier's `.prettierignore`, or ESLint's `.eslintignore` files.
+
+	@default undefined
+	*/
+	readonly ignoreFiles?: string | readonly string[];
+
+	/**
+	The current working directory in which to search.
+
+	@default process.cwd()
+	*/
+	readonly cwd?: URL | string;
+}
+
+export interface GitignoreOptions {
+	readonly cwd?: URL | string;
+}
+
+export type GlobbyFilterFunction = (path: URL | string) => boolean;
+
+/**
+Find files and directories using glob patterns.
+
+Note that glob patterns can only contain forward-slashes, not backward-slashes, so if you want to construct a glob pattern from path components, you need to use `path.posix.join()` instead of `path.join()`.
+
+@param patterns - See the supported [glob patterns](https://github.com/sindresorhus/globby#globbing-patterns).
+@param options - See the [`fast-glob` options](https://github.com/mrmlnc/fast-glob#options-3) in addition to the ones in this package.
+@returns The matching paths.
+
+@example
+```
+import {globby} from 'globby';
+
+const paths = await globby(['*', '!cake']);
+
+console.log(paths);
+//=> ['unicorn', 'rainbow']
+```
+*/
+export function globby(
+	patterns: string | readonly string[],
+	options: Options & {objectMode: true}
+): Promise<GlobEntry[]>;
+export function globby(
+	patterns: string | readonly string[],
+	options?: Options
+): Promise<string[]>;
+
+/**
+Find files and directories using glob patterns.
+
+Note that glob patterns can only contain forward-slashes, not backward-slashes, so if you want to construct a glob pattern from path components, you need to use `path.posix.join()` instead of `path.join()`.
+
+@param patterns - See the supported [glob patterns](https://github.com/sindresorhus/globby#globbing-patterns).
+@param options - See the [`fast-glob` options](https://github.com/mrmlnc/fast-glob#options-3) in addition to the ones in this package.
+@returns The matching paths.
+*/
+export function globbySync(
+	patterns: string | readonly string[],
+	options: Options & {objectMode: true}
+): GlobEntry[];
+export function globbySync(
+	patterns: string | readonly string[],
+	options?: Options
+): string[];
+
+/**
+Find files and directories using glob patterns.
+
+Note that glob patterns can only contain forward-slashes, not backward-slashes, so if you want to construct a glob pattern from path components, you need to use `path.posix.join()` instead of `path.join()`.
+
+@param patterns - See the supported [glob patterns](https://github.com/sindresorhus/globby#globbing-patterns).
+@param options - See the [`fast-glob` options](https://github.com/mrmlnc/fast-glob#options-3) in addition to the ones in this package.
+@returns The stream of matching paths.
+
+@example
+```
+import {globbyStream} from 'globby';
+
+for await (const path of globbyStream('*.tmp')) {
+	console.log(path);
+}
+```
+*/
+export function globbyStream(
+	patterns: string | readonly string[],
+	options?: Options
+): NodeJS.ReadableStream;
+
+/**
+Note that you should avoid running the same tasks multiple times as they contain a file system cache. Instead, run this method each time to ensure file system changes are taken into consideration.
+
+@param patterns - See the supported [glob patterns](https://github.com/sindresorhus/globby#globbing-patterns).
+@param options - See the [`fast-glob` options](https://github.com/mrmlnc/fast-glob#options-3) in addition to the ones in this package.
+@returns An object in the format `{pattern: string, options: object}`, which can be passed as arguments to [`fast-glob`](https://github.com/mrmlnc/fast-glob). This is useful for other globbing-related packages.
+*/
+export function generateGlobTasks(
+	patterns: string | readonly string[],
+	options?: Options
+): Promise<GlobTask[]>;
+
+/**
+@see generateGlobTasks
+
+@returns An object in the format `{pattern: string, options: object}`, which can be passed as arguments to [`fast-glob`](https://github.com/mrmlnc/fast-glob). This is useful for other globbing-related packages.
+*/
+export function generateGlobTasksSync(
+	patterns: string | readonly string[],
+	options?: Options
+): GlobTask[];
+
+/**
+Note that the options affect the results.
+
+This function is backed by [`fast-glob`](https://github.com/mrmlnc/fast-glob#isdynamicpatternpattern-options).
+
+@param patterns - See the supported [glob patterns](https://github.com/sindresorhus/globby#globbing-patterns).
+@param options - See the [`fast-glob` options](https://github.com/mrmlnc/fast-glob#options-3).
+@returns Whether there are any special glob characters in the `patterns`.
+*/
+export function isDynamicPattern(
+	patterns: string | readonly string[],
+	options?: FastGlobOptionsWithoutCwd & {
+		/**
+		The current working directory in which to search.
+
+		@default process.cwd()
+		*/
+		readonly cwd?: URL | string;
+	}
+): boolean;
+
+/**
+`.gitignore` files matched by the ignore config are not used for the resulting filter function.
+
+@returns A filter function indicating whether a given path is ignored via a `.gitignore` file.
+
+@example
+```
+import {isGitIgnored} from 'globby';
+
+const isIgnored = await isGitIgnored();
+
+console.log(isIgnored('some/file'));
+```
+*/
+export function isGitIgnored(options?: GitignoreOptions): Promise<GlobbyFilterFunction>;
+
+/**
+@see isGitIgnored
+
+@returns A filter function indicating whether a given path is ignored via a `.gitignore` file.
+*/
+export function isGitIgnoredSync(options?: GitignoreOptions): GlobbyFilterFunction;
+¨/licenseÅ]MIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ª/ignore.jsÅ
+import process from 'node:process';
+import fs from 'node:fs';
+import path from 'node:path';
+import fastGlob from 'fast-glob';
+import gitIgnore from 'ignore';
+import slash from 'slash';
+import {toPath, isNegativePattern} from './utilities.js';
+
+const ignoreFilesGlobOptions = {
+	ignore: [
+		'**/node_modules',
+		'**/flow-typed',
+		'**/coverage',
+		'**/.git',
+	],
+	absolute: true,
+	dot: true,
+};
+
+export const GITIGNORE_FILES_PATTERN = '**/.gitignore';
+
+const applyBaseToPattern = (pattern, base) => isNegativePattern(pattern)
+	? '!' + path.posix.join(base, pattern.slice(1))
+	: path.posix.join(base, pattern);
+
+const parseIgnoreFile = (file, cwd) => {
+	const base = slash(path.relative(cwd, path.dirname(file.filePath)));
+
+	return file.content
+		.split(/\r?\n/)
+		.filter(line => line && !line.startsWith('#'))
+		.map(pattern => applyBaseToPattern(pattern, base));
+};
+
+const toRelativePath = (fileOrDirectory, cwd) => {
+	cwd = slash(cwd);
+	if (path.isAbsolute(fileOrDirectory)) {
+		if (slash(fileOrDirectory).startsWith(cwd)) {
+			return path.relative(cwd, fileOrDirectory);
+		}
+
+		throw new Error(`Path ${fileOrDirectory} is not in cwd ${cwd}`);
+	}
+
+	return fileOrDirectory;
+};
+
+const getIsIgnoredPredicate = (files, cwd) => {
+	const patterns = files.flatMap(file => parseIgnoreFile(file, cwd));
+	const ignores = gitIgnore().add(patterns);
+
+	return fileOrDirectory => {
+		fileOrDirectory = toPath(fileOrDirectory);
+		fileOrDirectory = toRelativePath(fileOrDirectory, cwd);
+		return fileOrDirectory ? ignores.ignores(slash(fileOrDirectory)) : false;
+	};
+};
+
+const normalizeOptions = (options = {}) => ({
+	cwd: toPath(options.cwd) || process.cwd(),
+});
+
+export const isIgnoredByIgnoreFiles = async (patterns, options) => {
+	const {cwd} = normalizeOptions(options);
+
+	const paths = await fastGlob(patterns, {cwd, ...ignoreFilesGlobOptions});
+
+	const files = await Promise.all(
+		paths.map(async filePath => ({
+			filePath,
+			content: await fs.promises.readFile(filePath, 'utf8'),
+		})),
+	);
+
+	return getIsIgnoredPredicate(files, cwd);
+};
+
+export const isIgnoredByIgnoreFilesSync = (patterns, options) => {
+	const {cwd} = normalizeOptions(options);
+
+	const paths = fastGlob.sync(patterns, {cwd, ...ignoreFilesGlobOptions});
+
+	const files = paths.map(filePath => ({
+		filePath,
+		content: fs.readFileSync(filePath, 'utf8'),
+	}));
+
+	return getIsIgnoredPredicate(files, cwd);
+};
+
+export const isGitIgnored = options => isIgnoredByIgnoreFiles(GITIGNORE_FILES_PATTERN, options);
+export const isGitIgnoredSync = options => isIgnoredByIgnoreFilesSync(GITIGNORE_FILES_PATTERN, options);
+©/index.jsÅAimport fs from 'node:fs';
+import nodePath from 'node:path';
+import merge2 from 'merge2';
+import fastGlob from 'fast-glob';
+import dirGlob from 'dir-glob';
+import {
+	GITIGNORE_FILES_PATTERN,
+	isIgnoredByIgnoreFiles,
+	isIgnoredByIgnoreFilesSync,
+} from './ignore.js';
+import {FilterStream, toPath, isNegativePattern} from './utilities.js';
+
+const assertPatternsInput = patterns => {
+	if (patterns.some(pattern => typeof pattern !== 'string')) {
+		throw new TypeError('Patterns must be a string or an array of strings');
+	}
+};
+
+const toPatternsArray = patterns => {
+	patterns = [...new Set([patterns].flat())];
+	assertPatternsInput(patterns);
+	return patterns;
+};
+
+const checkCwdOption = options => {
+	if (!options.cwd) {
+		return;
+	}
+
+	let stat;
+	try {
+		stat = fs.statSync(options.cwd);
+	} catch {
+		return;
+	}
+
+	if (!stat.isDirectory()) {
+		throw new Error('The `cwd` option must be a path to a directory');
+	}
+};
+
+const normalizeOptions = (options = {}) => {
+	options = {
+		ignore: [],
+		expandDirectories: true,
+		...options,
+		cwd: toPath(options.cwd),
+	};
+
+	checkCwdOption(options);
+
+	return options;
+};
+
+const normalizeArguments = fn => async (patterns, options) => fn(toPatternsArray(patterns), normalizeOptions(options));
+const normalizeArgumentsSync = fn => (patterns, options) => fn(toPatternsArray(patterns), normalizeOptions(options));
+
+const getIgnoreFilesPatterns = options => {
+	const {ignoreFiles, gitignore} = options;
+
+	const patterns = ignoreFiles ? toPatternsArray(ignoreFiles) : [];
+	if (gitignore) {
+		patterns.push(GITIGNORE_FILES_PATTERN);
+	}
+
+	return patterns;
+};
+
+const getFilter = async options => {
+	const ignoreFilesPatterns = getIgnoreFilesPatterns(options);
+	return createFilterFunction(
+		ignoreFilesPatterns.length > 0 && await isIgnoredByIgnoreFiles(ignoreFilesPatterns, {cwd: options.cwd}),
+	);
+};
+
+const getFilterSync = options => {
+	const ignoreFilesPatterns = getIgnoreFilesPatterns(options);
+	return createFilterFunction(
+		ignoreFilesPatterns.length > 0 && isIgnoredByIgnoreFilesSync(ignoreFilesPatterns, {cwd: options.cwd}),
+	);
+};
+
+const createFilterFunction = isIgnored => {
+	const seen = new Set();
+
+	return fastGlobResult => {
+		const path = fastGlobResult.path || fastGlobResult;
+		const pathKey = nodePath.normalize(path);
+		const seenOrIgnored = seen.has(pathKey) || (isIgnored && isIgnored(path));
+		seen.add(pathKey);
+		return !seenOrIgnored;
+	};
+};
+
+const unionFastGlobResults = (results, filter) => results.flat().filter(fastGlobResult => filter(fastGlobResult));
+const unionFastGlobStreams = (streams, filter) => merge2(streams).pipe(new FilterStream(fastGlobResult => filter(fastGlobResult)));
+
+const convertNegativePatterns = (patterns, options) => {
+	const tasks = [];
+
+	while (patterns.length > 0) {
+		const index = patterns.findIndex(pattern => isNegativePattern(pattern));
+
+		if (index === -1) {
+			tasks.push({patterns, options});
+			break;
+		}
+
+		const ignorePattern = patterns[index].slice(1);
+
+		for (const task of tasks) {
+			task.options.ignore.push(ignorePattern);
+		}
+
+		if (index !== 0) {
+			tasks.push({
+				patterns: patterns.slice(0, index),
+				options: {
+					...options,
+					ignore: [
+						...options.ignore,
+						ignorePattern,
+					],
+				},
+			});
+		}
+
+		patterns = patterns.slice(index + 1);
+	}
+
+	return tasks;
+};
+
+const getDirGlobOptions = (options, cwd) => ({
+	...(cwd ? {cwd} : {}),
+	...(Array.isArray(options) ? {files: options} : options),
+});
+
+const generateTasks = async (patterns, options) => {
+	const globTasks = convertNegativePatterns(patterns, options);
+
+	const {cwd, expandDirectories} = options;
+
+	if (!expandDirectories) {
+		return globTasks;
+	}
+
+	const patternExpandOptions = getDirGlobOptions(expandDirectories, cwd);
+	const ignoreExpandOptions = cwd ? {cwd} : undefined;
+
+	return Promise.all(
+		globTasks.map(async task => {
+			let {patterns, options} = task;
+
+			[
+				patterns,
+				options.ignore,
+			] = await Promise.all([
+				dirGlob(patterns, patternExpandOptions),
+				dirGlob(options.ignore, ignoreExpandOptions),
+			]);
+
+			return {patterns, options};
+		}),
+	);
+};
+
+const generateTasksSync = (patterns, options) => {
+	const globTasks = convertNegativePatterns(patterns, options);
+
+	const {cwd, expandDirectories} = options;
+
+	if (!expandDirectories) {
+		return globTasks;
+	}
+
+	const patternExpandOptions = getDirGlobOptions(expandDirectories, cwd);
+	const ignoreExpandOptions = cwd ? {cwd} : undefined;
+
+	return globTasks.map(task => {
+		let {patterns, options} = task;
+		patterns = dirGlob.sync(patterns, patternExpandOptions);
+		options.ignore = dirGlob.sync(options.ignore, ignoreExpandOptions);
+		return {patterns, options};
+	});
+};
+
+export const globby = normalizeArguments(async (patterns, options) => {
+	const [
+		tasks,
+		filter,
+	] = await Promise.all([
+		generateTasks(patterns, options),
+		getFilter(options),
+	]);
+	const results = await Promise.all(tasks.map(task => fastGlob(task.patterns, task.options)));
+
+	return unionFastGlobResults(results, filter);
+});
+
+export const globbySync = normalizeArgumentsSync((patterns, options) => {
+	const tasks = generateTasksSync(patterns, options);
+	const filter = getFilterSync(options);
+	const results = tasks.map(task => fastGlob.sync(task.patterns, task.options));
+
+	return unionFastGlobResults(results, filter);
+});
+
+export const globbyStream = normalizeArgumentsSync((patterns, options) => {
+	const tasks = generateTasksSync(patterns, options);
+	const filter = getFilterSync(options);
+	const streams = tasks.map(task => fastGlob.stream(task.patterns, task.options));
+
+	return unionFastGlobStreams(streams, filter);
+});
+
+export const isDynamicPattern = normalizeArgumentsSync(
+	(patterns, options) => patterns.some(pattern => fastGlob.isDynamicPattern(pattern, options)),
+);
+
+export const generateGlobTasks = normalizeArguments(generateTasks);
+export const generateGlobTasksSync = normalizeArgumentsSync(generateTasksSync);
+
+export {
+	isGitIgnored,
+	isGitIgnoredSync,
+} from './ignore.js';
+­/utilities.jsÅÎimport {fileURLToPath} from 'node:url';
+import {Transform} from 'node:stream';
+
+export const toPath = urlOrPath => urlOrPath instanceof URL ? fileURLToPath(urlOrPath) : urlOrPath;
+
+export class FilterStream extends Transform {
+	constructor(filter) {
+		super({
+			objectMode: true,
+			transform(data, encoding, callback) {
+				callback(undefined, filter(data) ? data : undefined);
+			},
+		});
+	}
+}
+
+export const isNegativePattern = pattern => pattern[0] === '!';
+­/package.jsonÅA{
+	"name": "globby",
+	"version": "13.1.3",
+	"description": "User-friendly glob matching",
+	"license": "MIT",
+	"repository": "sindresorhus/globby",
+	"funding": "https://github.com/sponsors/sindresorhus",
+	"author": {
+		"email": "sindresorhus@gmail.com",
+		"name": "Sindre Sorhus",
+		"url": "https://sindresorhus.com"
+	},
+	"type": "module",
+	"exports": "./index.js",
+	"engines": {
+		"node": "^12.20.0 || ^14.13.1 || >=16.0.0"
+	},
+	"scripts": {
+		"bench": "npm update @globby/main-branch glob-stream fast-glob && node bench.js",
+		"test": "xo && ava && tsd"
+	},
+	"files": [
+		"index.js",
+		"index.d.ts",
+		"ignore.js",
+		"utilities.js"
+	],
+	"keywords": [
+		"all",
+		"array",
+		"directories",
+		"expand",
+		"files",
+		"filesystem",
+		"filter",
+		"find",
+		"fnmatch",
+		"folders",
+		"fs",
+		"glob",
+		"globbing",
+		"globs",
+		"gulpfriendly",
+		"match",
+		"matcher",
+		"minimatch",
+		"multi",
+		"multiple",
+		"paths",
+		"pattern",
+		"patterns",
+		"traverse",
+		"util",
+		"utility",
+		"wildcard",
+		"wildcards",
+		"promise",
+		"gitignore",
+		"git"
+	],
+	"dependencies": {
+		"dir-glob": "^3.0.1",
+		"fast-glob": "^3.2.11",
+		"ignore": "^5.2.0",
+		"merge2": "^1.4.1",
+		"slash": "^4.0.0"
+	},
+	"devDependencies": {
+		"@globby/main-branch": "sindresorhus/globby#main",
+		"@types/node": "^17.0.10",
+		"ava": "^4.0.1",
+		"benchmark": "2.1.4",
+		"get-stream": "^6.0.1",
+		"glob-stream": "^7.0.0",
+		"rimraf": "^3.0.2",
+		"tsd": "^0.19.1",
+		"typescript": "^4.5.5",
+		"xo": "^0.47.0"
+	},
+	"xo": {
+		"ignores": [
+			"fixtures"
+		]
+	},
+	"ava": {
+		"files": [
+			"!tests/utilities.js"
+		],
+		"workerThreads": false
+	}
+}
+ª/readme.mdÅ¨# globby
+
+> User-friendly glob matching
+
+Based on [`fast-glob`](https://github.com/mrmlnc/fast-glob) but adds a bunch of useful features.
+
+## Features
+
+- Promise API
+- Multiple patterns
+- Negated patterns: `['foo*', '!foobar']`
+- Expands directories: `foo` â†’ `foo/**/*`
+- Supports `.gitignore` and similar ignore config files
+- Supports `URL` as `cwd`
+
+## Install
+
+```
+$ npm install globby
+```
+
+## Usage
+
+```
+â”œâ”€â”€ unicorn
+â”œâ”€â”€ cake
+â””â”€â”€ rainbow
+```
+
+```js
+import {globby} from 'globby';
+
+const paths = await globby(['*', '!cake']);
+
+console.log(paths);
+//=> ['unicorn', 'rainbow']
+```
+
+## API
+
+Note that glob patterns can only contain forward-slashes, not backward-slashes, so if you want to construct a glob pattern from path components, you need to use `path.posix.join()` instead of `path.join()`.
+
+### globby(patterns, options?)
+
+Returns a `Promise<string[]>` of matching paths.
+
+#### patterns
+
+Type: `string | string[]`
+
+See supported `minimatch` [patterns](https://github.com/isaacs/minimatch#usage).
+
+#### options
+
+Type: `object`
+
+See the [`fast-glob` options](https://github.com/mrmlnc/fast-glob#options-3) in addition to the ones below.
+
+##### expandDirectories
+
+Type: `boolean | string[] | object`\
+Default: `true`
+
+If set to `true`, `globby` will automatically glob directories for you. If you define an `Array` it will only glob files that matches the patterns inside the `Array`. You can also define an `object` with `files` and `extensions` like below:
+
+```js
+import {globby} from 'globby';
+
+(async () => {
+	const paths = await globby('images', {
+		expandDirectories: {
+			files: ['cat', 'unicorn', '*.jpg'],
+			extensions: ['png']
+		}
+	});
+
+	console.log(paths);
+	//=> ['cat.png', 'unicorn.png', 'cow.jpg', 'rainbow.jpg']
+})();
+```
+
+Note that if you set this option to `false`, you won't get back matched directories unless you set `onlyFiles: false`.
+
+##### gitignore
+
+Type: `boolean`\
+Default: `false`
+
+Respect ignore patterns in `.gitignore` files that apply to the globbed files.
+
+##### ignoreFiles
+
+Type: `string | string[]`\
+Default: `undefined`
+
+Glob patterns to look for ignore files, which are then used to ignore globbed files.
+
+This is a more generic form of the `gitignore` option, allowing you to find ignore files with a [compatible syntax](http://git-scm.com/docs/gitignore). For instance, this works with Babel's `.babelignore`, Prettier's `.prettierignore`, or ESLint's `.eslintignore` files.
+
+### globbySync(patterns, options?)
+
+Returns `string[]` of matching paths.
+
+### globbyStream(patterns, options?)
+
+Returns a [`stream.Readable`](https://nodejs.org/api/stream.html#stream_readable_streams) of matching paths.
+
+Since Node.js 10, [readable streams are iterable](https://nodejs.org/api/stream.html#stream_readable_symbol_asynciterator), so you can loop over glob matches in a [`for await...of` loop](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of) like this:
+
+```js
+import {globbyStream} from 'globby';
+
+(async () => {
+	for await (const path of globbyStream('*.tmp')) {
+		console.log(path);
+	}
+})();
+```
+
+### generateGlobTasks(patterns, options?)
+
+Returns an `Promise<object[]>` in the format `{patterns: string[], options: Object}`, which can be passed as arguments to [`fast-glob`](https://github.com/mrmlnc/fast-glob). This is useful for other globbing-related packages.
+
+Note that you should avoid running the same tasks multiple times as they contain a file system cache. Instead, run this method each time to ensure file system changes are taken into consideration.
+
+### generateGlobTasksSync(patterns, options?)
+
+Returns an `object[]` in the format `{patterns: string[], options: Object}`, which can be passed as arguments to [`fast-glob`](https://github.com/mrmlnc/fast-glob). This is useful for other globbing-related packages.
+
+Takes the same arguments as `generateGlobTasks`.
+
+### isDynamicPattern(patterns, options?)
+
+Returns a `boolean` of whether there are any special glob characters in the `patterns`.
+
+Note that the options affect the results.
+
+This function is backed by [`fast-glob`](https://github.com/mrmlnc/fast-glob#isdynamicpatternpattern-options).
+
+### isGitIgnored(options?)
+
+Returns a `Promise<(path: URL | string) => boolean>` indicating whether a given path is ignored via a `.gitignore` file.
+
+Takes `cwd?: URL | string` as options.
+
+```js
+import {isGitIgnored} from 'globby';
+
+const isIgnored = await isGitIgnored();
+
+console.log(isIgnored('some/file'));
+```
+
+### isGitIgnoredSync(options?)
+
+Returns a `(path: URL | string) => boolean` indicating whether a given path is ignored via a `.gitignore` file.
+
+Takes `cwd?: URL | string` as options.
+
+## Globbing patterns
+
+Just a quick overview.
+
+- `*` matches any number of characters, but not `/`
+- `?` matches a single character, but not `/`
+- `**` matches any number of characters, including `/`, as long as it's the only thing in a path part
+- `{}` allows for a comma-separated list of "or" expressions
+- `!` at the beginning of a pattern will negate the match
+
+[Various patterns and expected matches.](https://github.com/sindresorhus/multimatch/blob/main/test/test.js)
+
+## globby for enterprise
+
+Available as part of the Tidelift Subscription.
+
+The maintainers of globby and thousands of other packages are working with Tidelift to deliver commercial support and maintenance for the open source dependencies you use to build your applications. Save time, reduce risk, and improve code health, while paying the maintainers of the exact dependencies you use. [Learn more.](https://tidelift.com/subscription/pkg/npm-globby?utm_source=npm-globby&utm_medium=referral&utm_campaign=enterprise&utm_term=repo)
+
+## Related
+
+- [multimatch](https://github.com/sindresorhus/multimatch) - Match against a list instead of the filesystem
+- [matcher](https://github.com/sindresorhus/matcher) - Simple wildcard matching
+- [del](https://github.com/sindresorhus/del) - Delete files and directories
+- [make-dir](https://github.com/sindresorhus/make-dir) - Make a directory and its parents if needed

@@ -1,0 +1,212 @@
+à≠/package.json≈<{
+  "name": "@apollo/cache-control-types",
+  "version": "1.0.2",
+  "description": "TypeScript types for Apollo Server info.cacheControl",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apollographql/apollo-utils.git",
+    "directory": "packages/cache-control-types/"
+  },
+  "keywords": [
+    "apollo",
+    "graphql",
+    "typescript",
+    "node"
+  ],
+  "author": "Apollo <packages@apollographql.com>",
+  "license": "MIT",
+  "peerDependencies": {
+    "graphql": "14.x || 15.x || 16.x"
+  }
+}
+®/LICENSE≈]MIT License
+
+Copyright (c) 2022 Apollo Graph, Inc. (Formerly Meteor Development Group, Inc.)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+Æ/dist/index.js≈W"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.cacheControlFromInfo = exports.maybeCacheControlFromInfo = void 0;
+function maybeCacheControlFromInfo(info) {
+    var _a, _b;
+    if ((_b = (_a = info.cacheControl) === null || _a === void 0 ? void 0 : _a.cacheHint) === null || _b === void 0 ? void 0 : _b.restrict) {
+        return info.cacheControl;
+    }
+    return null;
+}
+exports.maybeCacheControlFromInfo = maybeCacheControlFromInfo;
+function cacheControlFromInfo(info) {
+    var _a, _b;
+    if (!("cacheControl" in info)) {
+        throw new Error("The `info` argument does not appear to have a cacheControl field. " +
+            "Check that you are using Apollo Server 3 or newer and that you aren't using " +
+            "ApolloServerPluginCacheControlDisabled.");
+    }
+    if (!((_b = (_a = info.cacheControl) === null || _a === void 0 ? void 0 : _a.cacheHint) === null || _b === void 0 ? void 0 : _b.restrict)) {
+        throw new Error("The `info` argument has a cacheControl field but it does not appear to be from Apollo" +
+            "Server 3 or newer. Check that you are using Apollo Server 3 or newer and that you aren't using " +
+            "ApolloServerPluginCacheControlDisabled.");
+    }
+    return info.cacheControl;
+}
+exports.cacheControlFromInfo = cacheControlFromInfo;
+//# sourceMappingURL=index.js.map∞/dist/index.d.ts≈ªimport type { GraphQLCompositeType, GraphQLResolveInfo } from "graphql";
+export declare type CacheScope = "PUBLIC" | "PRIVATE";
+export interface CacheHint {
+    maxAge?: number;
+    scope?: CacheScope;
+}
+export interface CachePolicy extends CacheHint {
+    replace(hint: CacheHint): void;
+    restrict(hint: CacheHint): void;
+    policyIfCacheable(): Required<CacheHint> | null;
+}
+export interface ResolveInfoCacheControl {
+    cacheHint: CachePolicy;
+    setCacheHint(hint: CacheHint): void;
+    cacheHintFromType(t: GraphQLCompositeType): CacheHint | undefined;
+}
+export interface GraphQLResolveInfoWithCacheControl extends Omit<GraphQLResolveInfo, "cacheControl"> {
+    cacheControl: ResolveInfoCacheControl;
+}
+export declare function maybeCacheControlFromInfo(info: GraphQLResolveInfo): ResolveInfoCacheControl | null;
+export declare function cacheControlFromInfo(info: GraphQLResolveInfo): ResolveInfoCacheControl;
+//# sourceMappingURL=index.d.ts.map≤/dist/index.js.map≈{{"version":3,"file":"index.js","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":";;;AAmFA,SAAgB,yBAAyB,CACvC,IAAwB;;IAExB,IAAI,MAAA,MAAC,IAAY,CAAC,YAAY,0CAAE,SAAS,0CAAE,QAAQ,EAAE;QACnD,OAAQ,IAAY,CAAC,YAAY,CAAC;KACnC;IACD,OAAO,IAAI,CAAC;AACd,CAAC;AAPD,8DAOC;AAKD,SAAgB,oBAAoB,CAClC,IAAwB;;IAExB,IAAI,CAAC,CAAC,cAAc,IAAI,IAAI,CAAC,EAAE;QAC7B,MAAM,IAAI,KAAK,CACb,oEAAoE;YAClE,8EAA8E;YAC9E,yCAAyC,CAC5C,CAAC;KACH;IACD,IAAI,CAAC,CAAA,MAAA,MAAC,IAAY,CAAC,YAAY,0CAAE,SAAS,0CAAE,QAAQ,CAAA,EAAE;QACpD,MAAM,IAAI,KAAK,CACb,uFAAuF;YACrF,iGAAiG;YACjG,yCAAyC,CAC5C,CAAC;KACH;IACD,OAAQ,IAAY,CAAC,YAAY,CAAC;AACpC,CAAC;AAlBD,oDAkBC"}≠/src/index.ts≈Õ// NOTE: Once Apollo Server 4 is released, move this package into the
+// apollo-server repo. We're placing it in the apollo-utils repo for now to
+// enable us to make non-alpha releases that can be used on the apollo-server
+// version-4 branch.
+
+import type { GraphQLCompositeType, GraphQLResolveInfo } from "graphql";
+
+/**
+ * CacheScope represents whether cacheable data should be shared across sessions
+ * (PUBLIC) or considered session-specific (PRIVATE).
+ */
+export type CacheScope = "PUBLIC" | "PRIVATE";
+
+/**
+ * CacheHint represents a contribution to an overall cache policy. It can
+ * specify a maxAge and/or a scope.
+ */
+export interface CacheHint {
+  maxAge?: number;
+  scope?: CacheScope;
+}
+
+/**
+ * CachePolicy is a mutable CacheHint with helpful methods for updating its
+ * fields.
+ */
+export interface CachePolicy extends CacheHint {
+  /**
+   * Mutate this CachePolicy by replacing each field defined in `hint`. This can
+   * make the policy more restrictive or less restrictive.
+   */
+  replace(hint: CacheHint): void;
+
+  /**
+   * Mutate this CachePolicy by restricting each field defined in `hint`. This
+   * can only make the policy more restrictive: a previously defined `maxAge`
+   * can only be reduced, and a previously Private scope cannot be made Public.
+   */
+  restrict(hint: CacheHint): void;
+
+  /**
+   * If this policy has a positive `maxAge`, then return a copy of itself as a
+   * `CacheHint` with both fields defined. Otherwise return null.
+   */
+  policyIfCacheable(): Required<CacheHint> | null;
+}
+
+/**
+ * When using Apollo Server with the cache control plugin (on by default), an
+ * object of this kind is available to resolvers on `info.cacheControl`.
+ */
+export interface ResolveInfoCacheControl {
+  cacheHint: CachePolicy;
+  // Shorthand for `cacheHint.replace(hint)`; also for compatibility with
+  // the Apollo Server 2.x API.
+  setCacheHint(hint: CacheHint): void;
+
+  cacheHintFromType(t: GraphQLCompositeType): CacheHint | undefined;
+}
+
+/** When using Apollo Server with the cache control plugin (on by default), the
+ * `info` argument to resolvers can be considered to be of this type. (You can
+ * use this type with the customResolveInfo option to the graphql-code-generator
+ * typescript-resolvers plugin, for example.) */
+export interface GraphQLResolveInfoWithCacheControl
+  extends Omit<GraphQLResolveInfo, "cacheControl"> {
+  // Why the Omit above? If you happen to have AS2 `apollo-cache-control` or AS3
+  // `apollo-server-core` in your TypeScript build, then there's an ambient
+  // `declare module` floating around that monkey-patches GraphQLResolveInfo to
+  // have a cacheControl field. This led to lots of problems, which is why in
+  // AS4 we're moving towards the approach in this file where don't assume every
+  // GraphQLResolveInfo is a GraphQLResolveInfoWithCacheControl. The AS3 type is
+  // very slightly incompatible with the type in the file, since we changed
+  // CacheScope to be a union of strings rather than an enum. They have the same
+  // runtime representation so it's safe to ignore, but in order for the
+  // `extends` to not error out if you're building with the old ambient
+  // definition floating around too, we need the Omit.
+  cacheControl: ResolveInfoCacheControl;
+}
+
+/** Given an `info` resolver argument, returns the cacheControl field if it
+ * exists and appears to be from Apollo Server 3 or newer; returns null
+ * otherwise.*/
+export function maybeCacheControlFromInfo(
+  info: GraphQLResolveInfo,
+): ResolveInfoCacheControl | null {
+  if ((info as any).cacheControl?.cacheHint?.restrict) {
+    return (info as any).cacheControl;
+  }
+  return null;
+}
+
+/** Given an `info` resolver argument, returns the cacheControl field if it
+ * exists and appears to be from Apollo Server 3 or newer; throws
+ * otherwise.*/
+export function cacheControlFromInfo(
+  info: GraphQLResolveInfo,
+): ResolveInfoCacheControl {
+  if (!("cacheControl" in info)) {
+    throw new Error(
+      "The `info` argument does not appear to have a cacheControl field. " +
+        "Check that you are using Apollo Server 3 or newer and that you aren't using " +
+        "ApolloServerPluginCacheControlDisabled.",
+    );
+  }
+  if (!(info as any).cacheControl?.cacheHint?.restrict) {
+    throw new Error(
+      "The `info` argument has a cacheControl field but it does not appear to be from Apollo" +
+        "Server 3 or newer. Check that you are using Apollo Server 3 or newer and that you aren't using " +
+        "ApolloServerPluginCacheControlDisabled.",
+    );
+  }
+  return (info as any).cacheControl;
+}
+™/README.md≈# Cache Control types
+
+This package exports various TypeScript types related to Apollo Server's cache
+policy calculation.
+
+Specifically, it gives a type-safe way to get the `info.cacheControl` field in resolvers. Either declare your resolver's `info` argument to be of type `GraphQLResolveInfoWithCacheControl` (perhaps with the graphql-code-generator typescript-resolvers customResolveInfo option), or use the `maybeCacheControlFromInfo` or `cacheControlFromInfo` functions to extract `info.cacheControl` in a type-safe way.
+¥/dist/index.d.ts.map≈[{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":"AAKA,OAAO,KAAK,EAAE,oBAAoB,EAAE,kBAAkB,EAAE,MAAM,SAAS,CAAC;AAMxE,oBAAY,UAAU,GAAG,QAAQ,GAAG,SAAS,CAAC;AAM9C,MAAM,WAAW,SAAS;IACxB,MAAM,CAAC,EAAE,MAAM,CAAC;IAChB,KAAK,CAAC,EAAE,UAAU,CAAC;CACpB;AAMD,MAAM,WAAW,WAAY,SAAQ,SAAS;IAK5C,OAAO,CAAC,IAAI,EAAE,SAAS,GAAG,IAAI,CAAC;IAO/B,QAAQ,CAAC,IAAI,EAAE,SAAS,GAAG,IAAI,CAAC;IAMhC,iBAAiB,IAAI,QAAQ,CAAC,SAAS,CAAC,GAAG,IAAI,CAAC;CACjD;AAMD,MAAM,WAAW,uBAAuB;IACtC,SAAS,EAAE,WAAW,CAAC;IAGvB,YAAY,CAAC,IAAI,EAAE,SAAS,GAAG,IAAI,CAAC;IAEpC,iBAAiB,CAAC,CAAC,EAAE,oBAAoB,GAAG,SAAS,GAAG,SAAS,CAAC;CACnE;AAMD,MAAM,WAAW,kCACf,SAAQ,IAAI,CAAC,kBAAkB,EAAE,cAAc,CAAC;IAYhD,YAAY,EAAE,uBAAuB,CAAC;CACvC;AAKD,wBAAgB,yBAAyB,CACvC,IAAI,EAAE,kBAAkB,GACvB,uBAAuB,GAAG,IAAI,CAKhC;AAKD,wBAAgB,oBAAoB,CAClC,IAAI,EAAE,kBAAkB,GACvB,uBAAuB,CAgBzB"}

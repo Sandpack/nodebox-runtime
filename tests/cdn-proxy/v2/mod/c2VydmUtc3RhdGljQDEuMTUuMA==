@@ -1,0 +1,1005 @@
+…­/package.jsonÅu{
+  "name": "serve-static",
+  "description": "Serve static files",
+  "version": "1.15.0",
+  "author": "Douglas Christopher Wilson <doug@somethingdoug.com>",
+  "license": "MIT",
+  "repository": "expressjs/serve-static",
+  "dependencies": {
+    "encodeurl": "~1.0.2",
+    "escape-html": "~1.0.3",
+    "parseurl": "~1.3.3",
+    "send": "0.18.0"
+  },
+  "devDependencies": {
+    "eslint": "7.32.0",
+    "eslint-config-standard": "14.1.1",
+    "eslint-plugin-import": "2.25.4",
+    "eslint-plugin-markdown": "2.2.1",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-promise": "5.2.0",
+    "eslint-plugin-standard": "4.1.0",
+    "mocha": "9.2.2",
+    "nyc": "15.1.0",
+    "safe-buffer": "5.2.1",
+    "supertest": "6.2.2"
+  },
+  "files": [
+    "LICENSE",
+    "HISTORY.md",
+    "index.js"
+  ],
+  "engines": {
+    "node": ">= 0.8.0"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "mocha --reporter spec --bail --check-leaks test/",
+    "test-ci": "nyc --reporter=lcov --reporter=text npm test",
+    "test-cov": "nyc --reporter=html --reporter=text npm test",
+    "version": "node scripts/version-history.js && git add HISTORY.md"
+  }
+}
+¨/LICENSEÅ¥(The MIT License)
+
+Copyright (c) 2010 Sencha Inc.
+Copyright (c) 2011 LearnBoost
+Copyright (c) 2011 TJ Holowaychuk
+Copyright (c) 2014-2016 Douglas Christopher Wilson
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+©/index.jsÅÚ/*!
+ * serve-static
+ * Copyright(c) 2010 Sencha Inc.
+ * Copyright(c) 2011 TJ Holowaychuk
+ * Copyright(c) 2014-2016 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+'use strict'
+
+/**
+ * Module dependencies.
+ * @private
+ */
+
+var encodeUrl = require('encodeurl')
+var escapeHtml = require('escape-html')
+var parseUrl = require('parseurl')
+var resolve = require('path').resolve
+var send = require('send')
+var url = require('url')
+
+/**
+ * Module exports.
+ * @public
+ */
+
+module.exports = serveStatic
+module.exports.mime = send.mime
+
+/**
+ * @param {string} root
+ * @param {object} [options]
+ * @return {function}
+ * @public
+ */
+
+function serveStatic (root, options) {
+  if (!root) {
+    throw new TypeError('root path required')
+  }
+
+  if (typeof root !== 'string') {
+    throw new TypeError('root path must be a string')
+  }
+
+  // copy options object
+  var opts = Object.create(options || null)
+
+  // fall-though
+  var fallthrough = opts.fallthrough !== false
+
+  // default redirect
+  var redirect = opts.redirect !== false
+
+  // headers listener
+  var setHeaders = opts.setHeaders
+
+  if (setHeaders && typeof setHeaders !== 'function') {
+    throw new TypeError('option setHeaders must be function')
+  }
+
+  // setup options for send
+  opts.maxage = opts.maxage || opts.maxAge || 0
+  opts.root = resolve(root)
+
+  // construct directory listener
+  var onDirectory = redirect
+    ? createRedirectDirectoryListener()
+    : createNotFoundDirectoryListener()
+
+  return function serveStatic (req, res, next) {
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      if (fallthrough) {
+        return next()
+      }
+
+      // method not allowed
+      res.statusCode = 405
+      res.setHeader('Allow', 'GET, HEAD')
+      res.setHeader('Content-Length', '0')
+      res.end()
+      return
+    }
+
+    var forwardError = !fallthrough
+    var originalUrl = parseUrl.original(req)
+    var path = parseUrl(req).pathname
+
+    // make sure redirect occurs at mount
+    if (path === '/' && originalUrl.pathname.substr(-1) !== '/') {
+      path = ''
+    }
+
+    // create send stream
+    var stream = send(req, path, opts)
+
+    // add directory handler
+    stream.on('directory', onDirectory)
+
+    // add headers listener
+    if (setHeaders) {
+      stream.on('headers', setHeaders)
+    }
+
+    // add file listener for fallthrough
+    if (fallthrough) {
+      stream.on('file', function onFile () {
+        // once file is determined, always forward error
+        forwardError = true
+      })
+    }
+
+    // forward errors
+    stream.on('error', function error (err) {
+      if (forwardError || !(err.statusCode < 500)) {
+        next(err)
+        return
+      }
+
+      next()
+    })
+
+    // pipe
+    stream.pipe(res)
+  }
+}
+
+/**
+ * Collapse all leading slashes into a single slash
+ * @private
+ */
+function collapseLeadingSlashes (str) {
+  for (var i = 0; i < str.length; i++) {
+    if (str.charCodeAt(i) !== 0x2f /* / */) {
+      break
+    }
+  }
+
+  return i > 1
+    ? '/' + str.substr(i)
+    : str
+}
+
+/**
+ * Create a minimal HTML document.
+ *
+ * @param {string} title
+ * @param {string} body
+ * @private
+ */
+
+function createHtmlDocument (title, body) {
+  return '<!DOCTYPE html>\n' +
+    '<html lang="en">\n' +
+    '<head>\n' +
+    '<meta charset="utf-8">\n' +
+    '<title>' + title + '</title>\n' +
+    '</head>\n' +
+    '<body>\n' +
+    '<pre>' + body + '</pre>\n' +
+    '</body>\n' +
+    '</html>\n'
+}
+
+/**
+ * Create a directory listener that just 404s.
+ * @private
+ */
+
+function createNotFoundDirectoryListener () {
+  return function notFound () {
+    this.error(404)
+  }
+}
+
+/**
+ * Create a directory listener that performs a redirect.
+ * @private
+ */
+
+function createRedirectDirectoryListener () {
+  return function redirect (res) {
+    if (this.hasTrailingSlash()) {
+      this.error(404)
+      return
+    }
+
+    // get original URL
+    var originalUrl = parseUrl.original(this.req)
+
+    // append trailing slash
+    originalUrl.path = null
+    originalUrl.pathname = collapseLeadingSlashes(originalUrl.pathname + '/')
+
+    // reformat the URL
+    var loc = encodeUrl(url.format(originalUrl))
+    var doc = createHtmlDocument('Redirecting', 'Redirecting to <a href="' + escapeHtml(loc) + '">' +
+      escapeHtml(loc) + '</a>')
+
+    // send redirect response
+    res.statusCode = 301
+    res.setHeader('Content-Type', 'text/html; charset=UTF-8')
+    res.setHeader('Content-Length', Buffer.byteLength(doc))
+    res.setHeader('Content-Security-Policy', "default-src 'none'")
+    res.setHeader('X-Content-Type-Options', 'nosniff')
+    res.setHeader('Location', loc)
+    res.end(doc)
+  }
+}
+«/HISTORY.mdÅ))1.15.0 / 2022-03-24
+===================
+
+  * deps: send@0.18.0
+    - Fix emitted 416 error missing headers property
+    - Limit the headers removed for 304 response
+    - deps: depd@2.0.0
+    - deps: destroy@1.2.0
+    - deps: http-errors@2.0.0
+    - deps: on-finished@2.4.1
+    - deps: statuses@2.0.1
+
+1.14.2 / 2021-12-15
+===================
+
+  * deps: send@0.17.2
+    - deps: http-errors@1.8.1
+    - deps: ms@2.1.3
+    - pref: ignore empty http tokens
+
+1.14.1 / 2019-05-10
+===================
+
+  * Set stricter CSP header in redirect response
+  * deps: send@0.17.1
+    - deps: range-parser@~1.2.1
+
+1.14.0 / 2019-05-07
+===================
+
+  * deps: parseurl@~1.3.3
+  * deps: send@0.17.0
+    - deps: http-errors@~1.7.2
+    - deps: mime@1.6.0
+    - deps: ms@2.1.1
+    - deps: statuses@~1.5.0
+    - perf: remove redundant `path.normalize` call
+
+1.13.2 / 2018-02-07
+===================
+
+  * Fix incorrect end tag in redirects
+  * deps: encodeurl@~1.0.2
+    - Fix encoding `%` as last character
+  * deps: send@0.16.2
+    - deps: depd@~1.1.2
+    - deps: encodeurl@~1.0.2
+    - deps: statuses@~1.4.0
+
+1.13.1 / 2017-09-29
+===================
+
+  * Fix regression when `root` is incorrectly set to a file
+  * deps: send@0.16.1
+
+1.13.0 / 2017-09-27
+===================
+
+  * deps: send@0.16.0
+    - Add 70 new types for file extensions
+    - Add `immutable` option
+    - Fix missing `</html>` in default error & redirects
+    - Set charset as "UTF-8" for .js and .json
+    - Use instance methods on steam to check for listeners
+    - deps: mime@1.4.1
+    - perf: improve path validation speed
+
+1.12.6 / 2017-09-22
+===================
+
+  * deps: send@0.15.6
+    - deps: debug@2.6.9
+    - perf: improve `If-Match` token parsing
+  * perf: improve slash collapsing
+
+1.12.5 / 2017-09-21
+===================
+
+  * deps: parseurl@~1.3.2
+    - perf: reduce overhead for full URLs
+    - perf: unroll the "fast-path" `RegExp`
+  * deps: send@0.15.5
+    - Fix handling of modified headers with invalid dates
+    - deps: etag@~1.8.1
+    - deps: fresh@0.5.2
+
+1.12.4 / 2017-08-05
+===================
+
+  * deps: send@0.15.4
+    - deps: debug@2.6.8
+    - deps: depd@~1.1.1
+    - deps: http-errors@~1.6.2
+
+1.12.3 / 2017-05-16
+===================
+
+  * deps: send@0.15.3
+    - deps: debug@2.6.7
+
+1.12.2 / 2017-04-26
+===================
+
+  * deps: send@0.15.2
+    - deps: debug@2.6.4
+
+1.12.1 / 2017-03-04
+===================
+
+  * deps: send@0.15.1
+    - Fix issue when `Date.parse` does not return `NaN` on invalid date
+    - Fix strict violation in broken environments
+
+1.12.0 / 2017-02-25
+===================
+
+  * Send complete HTML document in redirect response
+  * Set default CSP header in redirect response
+  * deps: send@0.15.0
+    - Fix false detection of `no-cache` request directive
+    - Fix incorrect result when `If-None-Match` has both `*` and ETags
+    - Fix weak `ETag` matching to match spec
+    - Remove usage of `res._headers` private field
+    - Support `If-Match` and `If-Unmodified-Since` headers
+    - Use `res.getHeaderNames()` when available
+    - Use `res.headersSent` when available
+    - deps: debug@2.6.1
+    - deps: etag@~1.8.0
+    - deps: fresh@0.5.0
+    - deps: http-errors@~1.6.1
+
+1.11.2 / 2017-01-23
+===================
+
+  * deps: send@0.14.2
+    - deps: http-errors@~1.5.1
+    - deps: ms@0.7.2
+    - deps: statuses@~1.3.1
+
+1.11.1 / 2016-06-10
+===================
+
+  * Fix redirect error when `req.url` contains raw non-URL characters
+  * deps: send@0.14.1
+
+1.11.0 / 2016-06-07
+===================
+
+  * Use status code 301 for redirects
+  * deps: send@0.14.0
+    - Add `acceptRanges` option
+    - Add `cacheControl` option
+    - Attempt to combine multiple ranges into single range
+    - Correctly inherit from `Stream` class
+    - Fix `Content-Range` header in 416 responses when using `start`/`end` options
+    - Fix `Content-Range` header missing from default 416 responses
+    - Ignore non-byte `Range` headers
+    - deps: http-errors@~1.5.0
+    - deps: range-parser@~1.2.0
+    - deps: statuses@~1.3.0
+    - perf: remove argument reassignment
+
+1.10.3 / 2016-05-30
+===================
+
+  * deps: send@0.13.2
+    - Fix invalid `Content-Type` header when `send.mime.default_type` unset
+
+1.10.2 / 2016-01-19
+===================
+
+  * deps: parseurl@~1.3.1
+    - perf: enable strict mode
+
+1.10.1 / 2016-01-16
+===================
+
+  * deps: escape-html@~1.0.3
+    - perf: enable strict mode
+    - perf: optimize string replacement
+    - perf: use faster string coercion
+  * deps: send@0.13.1
+    - deps: depd@~1.1.0
+    - deps: destroy@~1.0.4
+    - deps: escape-html@~1.0.3
+    - deps: range-parser@~1.0.3
+
+1.10.0 / 2015-06-17
+===================
+
+  * Add `fallthrough` option
+    - Allows declaring this middleware is the final destination
+    - Provides better integration with Express patterns
+  * Fix reading options from options prototype
+  * Improve the default redirect response headers
+  * deps: escape-html@1.0.2
+  * deps: send@0.13.0
+    - Allow Node.js HTTP server to set `Date` response header
+    - Fix incorrectly removing `Content-Location` on 304 response
+    - Improve the default redirect response headers
+    - Send appropriate headers on default error response
+    - Use `http-errors` for standard emitted errors
+    - Use `statuses` instead of `http` module for status messages
+    - deps: escape-html@1.0.2
+    - deps: etag@~1.7.0
+    - deps: fresh@0.3.0
+    - deps: on-finished@~2.3.0
+    - perf: enable strict mode
+    - perf: remove unnecessary array allocations
+  * perf: enable strict mode
+  * perf: remove argument reassignment
+
+1.9.3 / 2015-05-14
+==================
+
+  * deps: send@0.12.3
+    - deps: debug@~2.2.0
+    - deps: depd@~1.0.1
+    - deps: etag@~1.6.0
+    - deps: ms@0.7.1
+    - deps: on-finished@~2.2.1
+
+1.9.2 / 2015-03-14
+==================
+
+  * deps: send@0.12.2
+    - Throw errors early for invalid `extensions` or `index` options
+    - deps: debug@~2.1.3
+
+1.9.1 / 2015-02-17
+==================
+
+  * deps: send@0.12.1
+    - Fix regression sending zero-length files
+
+1.9.0 / 2015-02-16
+==================
+
+  * deps: send@0.12.0
+    - Always read the stat size from the file
+    - Fix mutating passed-in `options`
+    - deps: mime@1.3.4
+
+1.8.1 / 2015-01-20
+==================
+
+  * Fix redirect loop in Node.js 0.11.14
+  * deps: send@0.11.1
+    - Fix root path disclosure
+
+1.8.0 / 2015-01-05
+==================
+
+  * deps: send@0.11.0
+    - deps: debug@~2.1.1
+    - deps: etag@~1.5.1
+    - deps: ms@0.7.0
+    - deps: on-finished@~2.2.0
+
+1.7.2 / 2015-01-02
+==================
+
+  * Fix potential open redirect when mounted at root
+
+1.7.1 / 2014-10-22
+==================
+
+  * deps: send@0.10.1
+    - deps: on-finished@~2.1.1
+
+1.7.0 / 2014-10-15
+==================
+
+  * deps: send@0.10.0
+    - deps: debug@~2.1.0
+    - deps: depd@~1.0.0
+    - deps: etag@~1.5.0
+
+1.6.5 / 2015-02-04
+==================
+
+  * Fix potential open redirect when mounted at root
+    - Back-ported from v1.7.2
+
+1.6.4 / 2014-10-08
+==================
+
+  * Fix redirect loop when index file serving disabled
+
+1.6.3 / 2014-09-24
+==================
+
+  * deps: send@0.9.3
+    - deps: etag@~1.4.0
+
+1.6.2 / 2014-09-15
+==================
+
+  * deps: send@0.9.2
+    - deps: depd@0.4.5
+    - deps: etag@~1.3.1
+    - deps: range-parser@~1.0.2
+
+1.6.1 / 2014-09-07
+==================
+
+  * deps: send@0.9.1
+    - deps: fresh@0.2.4
+
+1.6.0 / 2014-09-07
+==================
+
+  * deps: send@0.9.0
+    - Add `lastModified` option
+    - Use `etag` to generate `ETag` header
+    - deps: debug@~2.0.0
+
+1.5.4 / 2014-09-04
+==================
+
+  * deps: send@0.8.5
+    - Fix a path traversal issue when using `root`
+    - Fix malicious path detection for empty string path
+
+1.5.3 / 2014-08-17
+==================
+
+  * deps: send@0.8.3
+
+1.5.2 / 2014-08-14
+==================
+
+  * deps: send@0.8.2
+    - Work around `fd` leak in Node.js 0.10 for `fs.ReadStream`
+
+1.5.1 / 2014-08-09
+==================
+
+  * Fix parsing of weird `req.originalUrl` values
+  * deps: parseurl@~1.3.0
+  * deps: utils-merge@1.0.0
+
+1.5.0 / 2014-08-05
+==================
+
+  * deps: send@0.8.1
+    - Add `extensions` option
+
+1.4.4 / 2014-08-04
+==================
+
+  * deps: send@0.7.4
+    - Fix serving index files without root dir
+
+1.4.3 / 2014-07-29
+==================
+
+  * deps: send@0.7.3
+    - Fix incorrect 403 on Windows and Node.js 0.11
+
+1.4.2 / 2014-07-27
+==================
+
+  * deps: send@0.7.2
+    - deps: depd@0.4.4
+
+1.4.1 / 2014-07-26
+==================
+
+  * deps: send@0.7.1
+    - deps: depd@0.4.3
+
+1.4.0 / 2014-07-21
+==================
+
+  * deps: parseurl@~1.2.0
+    - Cache URLs based on original value
+    - Remove no-longer-needed URL mis-parse work-around
+    - Simplify the "fast-path" `RegExp`
+  * deps: send@0.7.0
+    - Add `dotfiles` option
+    - deps: debug@1.0.4
+    - deps: depd@0.4.2
+
+1.3.2 / 2014-07-11
+==================
+
+  * deps: send@0.6.0
+    - Cap `maxAge` value to 1 year
+    - deps: debug@1.0.3
+
+1.3.1 / 2014-07-09
+==================
+
+  * deps: parseurl@~1.1.3
+    - faster parsing of href-only URLs
+
+1.3.0 / 2014-06-28
+==================
+
+  * Add `setHeaders` option
+  * Include HTML link in redirect response
+  * deps: send@0.5.0
+    - Accept string for `maxAge` (converted by `ms`)
+
+1.2.3 / 2014-06-11
+==================
+
+  * deps: send@0.4.3
+    - Do not throw un-catchable error on file open race condition
+    - Use `escape-html` for HTML escaping
+    - deps: debug@1.0.2
+    - deps: finished@1.2.2
+    - deps: fresh@0.2.2
+
+1.2.2 / 2014-06-09
+==================
+
+  * deps: send@0.4.2
+    - fix "event emitter leak" warnings
+    - deps: debug@1.0.1
+    - deps: finished@1.2.1
+
+1.2.1 / 2014-06-02
+==================
+
+  * use `escape-html` for escaping
+  * deps: send@0.4.1
+    - Send `max-age` in `Cache-Control` in correct format
+
+1.2.0 / 2014-05-29
+==================
+
+  * deps: send@0.4.0
+    - Calculate ETag with md5 for reduced collisions
+    - Fix wrong behavior when index file matches directory
+    - Ignore stream errors after request ends
+    - Skip directories in index file search
+    - deps: debug@0.8.1
+
+1.1.0 / 2014-04-24
+==================
+
+  * Accept options directly to `send` module
+  * deps: send@0.3.0
+
+1.0.4 / 2014-04-07
+==================
+
+  * Resolve relative paths at middleware setup
+  * Use parseurl to parse the URL from request
+
+1.0.3 / 2014-03-20
+==================
+
+  * Do not rely on connect-like environments
+
+1.0.2 / 2014-03-06
+==================
+
+  * deps: send@0.2.0
+
+1.0.1 / 2014-03-05
+==================
+
+  * Add mime export for back-compat
+
+1.0.0 / 2014-03-05
+==================
+
+  * Genesis from `connect`
+ª/README.mdÅ„# serve-static
+
+[![NPM Version][npm-version-image]][npm-url]
+[![NPM Downloads][npm-downloads-image]][npm-url]
+[![Linux Build][github-actions-ci-image]][github-actions-ci-url]
+[![Windows Build][appveyor-image]][appveyor-url]
+[![Test Coverage][coveralls-image]][coveralls-url]
+
+## Install
+
+This is a [Node.js](https://nodejs.org/en/) module available through the
+[npm registry](https://www.npmjs.com/). Installation is done using the
+[`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
+
+```sh
+$ npm install serve-static
+```
+
+## API
+
+```js
+var serveStatic = require('serve-static')
+```
+
+### serveStatic(root, options)
+
+Create a new middleware function to serve files from within a given root
+directory. The file to serve will be determined by combining `req.url`
+with the provided root directory. When a file is not found, instead of
+sending a 404 response, this module will instead call `next()` to move on
+to the next middleware, allowing for stacking and fall-backs.
+
+#### Options
+
+##### acceptRanges
+
+Enable or disable accepting ranged requests, defaults to true.
+Disabling this will not send `Accept-Ranges` and ignore the contents
+of the `Range` request header.
+
+##### cacheControl
+
+Enable or disable setting `Cache-Control` response header, defaults to
+true. Disabling this will ignore the `immutable` and `maxAge` options.
+
+##### dotfiles
+
+ Set how "dotfiles" are treated when encountered. A dotfile is a file
+or directory that begins with a dot ("."). Note this check is done on
+the path itself without checking if the path actually exists on the
+disk. If `root` is specified, only the dotfiles above the root are
+checked (i.e. the root itself can be within a dotfile when set
+to "deny").
+
+  - `'allow'` No special treatment for dotfiles.
+  - `'deny'` Deny a request for a dotfile and 403/`next()`.
+  - `'ignore'` Pretend like the dotfile does not exist and 404/`next()`.
+
+The default value is similar to `'ignore'`, with the exception that this
+default will not ignore the files within a directory that begins with a dot.
+
+##### etag
+
+Enable or disable etag generation, defaults to true.
+
+##### extensions
+
+Set file extension fallbacks. When set, if a file is not found, the given
+extensions will be added to the file name and search for. The first that
+exists will be served. Example: `['html', 'htm']`.
+
+The default value is `false`.
+
+##### fallthrough
+
+Set the middleware to have client errors fall-through as just unhandled
+requests, otherwise forward a client error. The difference is that client
+errors like a bad request or a request to a non-existent file will cause
+this middleware to simply `next()` to your next middleware when this value
+is `true`. When this value is `false`, these errors (even 404s), will invoke
+`next(err)`.
+
+Typically `true` is desired such that multiple physical directories can be
+mapped to the same web address or for routes to fill in non-existent files.
+
+The value `false` can be used if this middleware is mounted at a path that
+is designed to be strictly a single file system directory, which allows for
+short-circuiting 404s for less overhead. This middleware will also reply to
+all methods.
+
+The default value is `true`.
+
+##### immutable
+
+Enable or disable the `immutable` directive in the `Cache-Control` response
+header, defaults to `false`. If set to `true`, the `maxAge` option should
+also be specified to enable caching. The `immutable` directive will prevent
+supported clients from making conditional requests during the life of the
+`maxAge` option to check if the file has changed.
+
+##### index
+
+By default this module will send "index.html" files in response to a request
+on a directory. To disable this set `false` or to supply a new index pass a
+string or an array in preferred order.
+
+##### lastModified
+
+Enable or disable `Last-Modified` header, defaults to true. Uses the file
+system's last modified value.
+
+##### maxAge
+
+Provide a max-age in milliseconds for http caching, defaults to 0. This
+can also be a string accepted by the [ms](https://www.npmjs.org/package/ms#readme)
+module.
+
+##### redirect
+
+Redirect to trailing "/" when the pathname is a dir. Defaults to `true`.
+
+##### setHeaders
+
+Function to set custom headers on response. Alterations to the headers need to
+occur synchronously. The function is called as `fn(res, path, stat)`, where
+the arguments are:
+
+  - `res` the response object
+  - `path` the file path that is being sent
+  - `stat` the stat object of the file that is being sent
+
+## Examples
+
+### Serve files with vanilla node.js http server
+
+```js
+var finalhandler = require('finalhandler')
+var http = require('http')
+var serveStatic = require('serve-static')
+
+// Serve up public/ftp folder
+var serve = serveStatic('public/ftp', { index: ['index.html', 'index.htm'] })
+
+// Create server
+var server = http.createServer(function onRequest (req, res) {
+  serve(req, res, finalhandler(req, res))
+})
+
+// Listen
+server.listen(3000)
+```
+
+### Serve all files as downloads
+
+```js
+var contentDisposition = require('content-disposition')
+var finalhandler = require('finalhandler')
+var http = require('http')
+var serveStatic = require('serve-static')
+
+// Serve up public/ftp folder
+var serve = serveStatic('public/ftp', {
+  index: false,
+  setHeaders: setHeaders
+})
+
+// Set header to force download
+function setHeaders (res, path) {
+  res.setHeader('Content-Disposition', contentDisposition(path))
+}
+
+// Create server
+var server = http.createServer(function onRequest (req, res) {
+  serve(req, res, finalhandler(req, res))
+})
+
+// Listen
+server.listen(3000)
+```
+
+### Serving using express
+
+#### Simple
+
+This is a simple example of using Express.
+
+```js
+var express = require('express')
+var serveStatic = require('serve-static')
+
+var app = express()
+
+app.use(serveStatic('public/ftp', { index: ['default.html', 'default.htm'] }))
+app.listen(3000)
+```
+
+#### Multiple roots
+
+This example shows a simple way to search through multiple directories.
+Files are searched for in `public-optimized/` first, then `public/` second
+as a fallback.
+
+```js
+var express = require('express')
+var path = require('path')
+var serveStatic = require('serve-static')
+
+var app = express()
+
+app.use(serveStatic(path.join(__dirname, 'public-optimized')))
+app.use(serveStatic(path.join(__dirname, 'public')))
+app.listen(3000)
+```
+
+#### Different settings for paths
+
+This example shows how to set a different max age depending on the served
+file type. In this example, HTML files are not cached, while everything else
+is for 1 day.
+
+```js
+var express = require('express')
+var path = require('path')
+var serveStatic = require('serve-static')
+
+var app = express()
+
+app.use(serveStatic(path.join(__dirname, 'public'), {
+  maxAge: '1d',
+  setHeaders: setCustomCacheControl
+}))
+
+app.listen(3000)
+
+function setCustomCacheControl (res, path) {
+  if (serveStatic.mime.lookup(path) === 'text/html') {
+    // Custom Cache-Control for HTML files
+    res.setHeader('Cache-Control', 'public, max-age=0')
+  }
+}
+```
+
+## License
+
+[MIT](LICENSE)
+
+[appveyor-image]: https://badgen.net/appveyor/ci/dougwilson/serve-static/master?label=windows
+[appveyor-url]: https://ci.appveyor.com/project/dougwilson/serve-static
+[coveralls-image]: https://badgen.net/coveralls/c/github/expressjs/serve-static/master
+[coveralls-url]: https://coveralls.io/r/expressjs/serve-static?branch=master
+[github-actions-ci-image]: https://badgen.net/github/checks/expressjs/serve-static/master?label=linux
+[github-actions-ci-url]: https://github.com/expressjs/serve-static/actions/workflows/ci.yml
+[node-image]: https://badgen.net/npm/node/serve-static
+[node-url]: https://nodejs.org/en/download/
+[npm-downloads-image]: https://badgen.net/npm/dm/serve-static
+[npm-url]: https://npmjs.org/package/serve-static
+[npm-version-image]: https://badgen.net/npm/v/serve-static

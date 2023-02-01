@@ -1,0 +1,460 @@
+ˆ«/windows.jsÅzmodule.exports = isexe
+isexe.sync = sync
+
+var fs = require('fs')
+
+function checkPathExt (path, options) {
+  var pathext = options.pathExt !== undefined ?
+    options.pathExt : process.env.PATHEXT
+
+  if (!pathext) {
+    return true
+  }
+
+  pathext = pathext.split(';')
+  if (pathext.indexOf('') !== -1) {
+    return true
+  }
+  for (var i = 0; i < pathext.length; i++) {
+    var p = pathext[i].toLowerCase()
+    if (p && path.substr(-p.length).toLowerCase() === p) {
+      return true
+    }
+  }
+  return false
+}
+
+function checkStat (stat, path, options) {
+  if (!stat.isSymbolicLink() && !stat.isFile()) {
+    return false
+  }
+  return checkPathExt(path, options)
+}
+
+function isexe (path, options, cb) {
+  fs.stat(path, function (er, stat) {
+    cb(er, er ? false : checkStat(stat, path, options))
+  })
+}
+
+function sync (path, options) {
+  return checkStat(fs.statSync(path), path, options)
+}
+¨/mode.jsÅmodule.exports = isexe
+isexe.sync = sync
+
+var fs = require('fs')
+
+function isexe (path, options, cb) {
+  fs.stat(path, function (er, stat) {
+    cb(er, er ? false : checkStat(stat, options))
+  })
+}
+
+function sync (path, options) {
+  return checkStat(fs.statSync(path), options)
+}
+
+function checkStat (stat, options) {
+  return stat.isFile() && checkMode(stat, options)
+}
+
+function checkMode (stat, options) {
+  var mod = stat.mode
+  var uid = stat.uid
+  var gid = stat.gid
+
+  var myUid = options.uid !== undefined ?
+    options.uid : process.getuid && process.getuid()
+  var myGid = options.gid !== undefined ?
+    options.gid : process.getgid && process.getgid()
+
+  var u = parseInt('100', 8)
+  var g = parseInt('010', 8)
+  var o = parseInt('001', 8)
+  var ug = u | g
+
+  var ret = (mod & o) ||
+    (mod & g) && gid === myGid ||
+    (mod & u) && uid === myUid ||
+    (mod & ug) && myUid === 0
+
+  return ret
+}
+ª/README.mdÅs# isexe
+
+Minimal module to check if a file is executable, and a normal file.
+
+Uses `fs.stat` and tests against the `PATHEXT` environment variable on
+Windows.
+
+## USAGE
+
+```javascript
+var isexe = require('isexe')
+isexe('some-file-name', function (err, isExe) {
+  if (err) {
+    console.error('probably file does not exist or something', err)
+  } else if (isExe) {
+    console.error('this thing can be run')
+  } else {
+    console.error('cannot be run')
+  }
+})
+
+// same thing but synchronous, throws errors
+var isExe = isexe.sync('some-file-name')
+
+// treat errors as just "not executable"
+isexe('maybe-missing-file', { ignoreErrors: true }, callback)
+var isExe = isexe.sync('maybe-missing-file', { ignoreErrors: true })
+```
+
+## API
+
+### `isexe(path, [options], [callback])`
+
+Check if the path is executable.  If no callback provided, and a
+global `Promise` object is available, then a Promise will be returned.
+
+Will raise whatever errors may be raised by `fs.stat`, unless
+`options.ignoreErrors` is set to true.
+
+### `isexe.sync(path, [options])`
+
+Same as `isexe` but returns the value and throws any errors raised.
+
+### Options
+
+* `ignoreErrors` Treat all errors as "no, this is not executable", but
+  don't raise them.
+* `uid` Number to use as the user id
+* `gid` Number to use as the group id
+* `pathExt` List of path extensions to use instead of `PATHEXT`
+  environment variable on Windows.
+«/.npmignoreÄ.nyc_output/
+coverage/
+®/test/basic.jsÅ„var t = require('tap')
+var fs = require('fs')
+var path = require('path')
+var fixture = path.resolve(__dirname, 'fixtures')
+var meow = fixture + '/meow.cat'
+var mine = fixture + '/mine.cat'
+var ours = fixture + '/ours.cat'
+var fail = fixture + '/fail.false'
+var noent = fixture + '/enoent.exe'
+var mkdirp = require('mkdirp')
+var rimraf = require('rimraf')
+
+var isWindows = process.platform === 'win32'
+var hasAccess = typeof fs.access === 'function'
+var winSkip = isWindows && 'windows'
+var accessSkip = !hasAccess && 'no fs.access function'
+var hasPromise = typeof Promise === 'function'
+var promiseSkip = !hasPromise && 'no global Promise'
+
+function reset () {
+  delete require.cache[require.resolve('../')]
+  return require('../')
+}
+
+t.test('setup fixtures', function (t) {
+  rimraf.sync(fixture)
+  mkdirp.sync(fixture)
+  fs.writeFileSync(meow, '#!/usr/bin/env cat\nmeow\n')
+  fs.chmodSync(meow, parseInt('0755', 8))
+  fs.writeFileSync(fail, '#!/usr/bin/env false\n')
+  fs.chmodSync(fail, parseInt('0644', 8))
+  fs.writeFileSync(mine, '#!/usr/bin/env cat\nmine\n')
+  fs.chmodSync(mine, parseInt('0744', 8))
+  fs.writeFileSync(ours, '#!/usr/bin/env cat\nours\n')
+  fs.chmodSync(ours, parseInt('0754', 8))
+  t.end()
+})
+
+t.test('promise', { skip: promiseSkip }, function (t) {
+  var isexe = reset()
+  t.test('meow async', function (t) {
+    isexe(meow).then(function (is) {
+      t.ok(is)
+      t.end()
+    })
+  })
+  t.test('fail async', function (t) {
+    isexe(fail).then(function (is) {
+      t.notOk(is)
+      t.end()
+    })
+  })
+  t.test('noent async', function (t) {
+    isexe(noent).catch(function (er) {
+      t.ok(er)
+      t.end()
+    })
+  })
+  t.test('noent ignore async', function (t) {
+    isexe(noent, { ignoreErrors: true }).then(function (is) {
+      t.notOk(is)
+      t.end()
+    })
+  })
+  t.end()
+})
+
+t.test('no promise', function (t) {
+  global.Promise = null
+  var isexe = reset()
+  t.throws('try to meow a promise', function () {
+    isexe(meow)
+  })
+  t.end()
+})
+
+t.test('access', { skip: accessSkip || winSkip }, function (t) {
+  runTest(t)
+})
+
+t.test('mode', { skip: winSkip }, function (t) {
+  delete fs.access
+  delete fs.accessSync
+  var isexe = reset()
+  t.ok(isexe.sync(ours, { uid: 0, gid: 0 }))
+  t.ok(isexe.sync(mine, { uid: 0, gid: 0 }))
+  runTest(t)
+})
+
+t.test('windows', function (t) {
+  global.TESTING_WINDOWS = true
+  var pathExt = '.EXE;.CAT;.CMD;.COM'
+  t.test('pathExt option', function (t) {
+    runTest(t, { pathExt: '.EXE;.CAT;.CMD;.COM' })
+  })
+  t.test('pathExt env', function (t) {
+    process.env.PATHEXT = pathExt
+    runTest(t)
+  })
+  t.test('no pathExt', function (t) {
+    // with a pathExt of '', any filename is fine.
+    // so the "fail" one would still pass.
+    runTest(t, { pathExt: '', skipFail: true })
+  })
+  t.test('pathext with empty entry', function (t) {
+    // with a pathExt of '', any filename is fine.
+    // so the "fail" one would still pass.
+    runTest(t, { pathExt: ';' + pathExt, skipFail: true })
+  })
+  t.end()
+})
+
+t.test('cleanup', function (t) {
+  rimraf.sync(fixture)
+  t.end()
+})
+
+function runTest (t, options) {
+  var isexe = reset()
+
+  var optionsIgnore = Object.create(options || {})
+  optionsIgnore.ignoreErrors = true
+
+  if (!options || !options.skipFail) {
+    t.notOk(isexe.sync(fail, options))
+  }
+  t.notOk(isexe.sync(noent, optionsIgnore))
+  if (!options) {
+    t.ok(isexe.sync(meow))
+  } else {
+    t.ok(isexe.sync(meow, options))
+  }
+
+  t.ok(isexe.sync(mine, options))
+  t.ok(isexe.sync(ours, options))
+  t.throws(function () {
+    isexe.sync(noent, options)
+  })
+
+  t.test('meow async', function (t) {
+    if (!options) {
+      isexe(meow, function (er, is) {
+        if (er) {
+          throw er
+        }
+        t.ok(is)
+        t.end()
+      })
+    } else {
+      isexe(meow, options, function (er, is) {
+        if (er) {
+          throw er
+        }
+        t.ok(is)
+        t.end()
+      })
+    }
+  })
+
+  t.test('mine async', function (t) {
+    isexe(mine, options, function (er, is) {
+      if (er) {
+        throw er
+      }
+      t.ok(is)
+      t.end()
+    })
+  })
+
+  t.test('ours async', function (t) {
+    isexe(ours, options, function (er, is) {
+      if (er) {
+        throw er
+      }
+      t.ok(is)
+      t.end()
+    })
+  })
+
+  if (!options || !options.skipFail) {
+    t.test('fail async', function (t) {
+      isexe(fail, options, function (er, is) {
+        if (er) {
+          throw er
+        }
+        t.notOk(is)
+        t.end()
+      })
+    })
+  }
+
+  t.test('noent async', function (t) {
+    isexe(noent, options, function (er, is) {
+      t.ok(er)
+      t.notOk(is)
+      t.end()
+    })
+  })
+
+  t.test('noent ignore async', function (t) {
+    isexe(noent, optionsIgnore, function (er, is) {
+      if (er) {
+        throw er
+      }
+      t.notOk(is)
+      t.end()
+    })
+  })
+
+  t.test('directory is not executable', function (t) {
+    isexe(__dirname, options, function (er, is) {
+      if (er) {
+        throw er
+      }
+      t.notOk(is)
+      t.end()
+    })
+  })
+
+  t.end()
+}
+¨/LICENSEÅýThe ISC License
+
+Copyright (c) Isaac Z. Schlueter and Contributors
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+­/package.jsonÅ{
+  "name": "isexe",
+  "version": "2.0.0",
+  "description": "Minimal module to check if a file is executable.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "devDependencies": {
+    "mkdirp": "^0.5.1",
+    "rimraf": "^2.5.0",
+    "tap": "^10.3.0"
+  },
+  "scripts": {
+    "test": "tap test/*.js --100",
+    "preversion": "npm test",
+    "postversion": "npm publish",
+    "postpublish": "git push origin --all; git push origin --tags"
+  },
+  "author": "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me/)",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/isaacs/isexe.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/isaacs/isexe/issues"
+  },
+  "homepage": "https://github.com/isaacs/isexe#readme"
+}
+©/index.jsÅ¨var fs = require('fs')
+var core
+if (process.platform === 'win32' || global.TESTING_WINDOWS) {
+  core = require('./windows.js')
+} else {
+  core = require('./mode.js')
+}
+
+module.exports = isexe
+isexe.sync = sync
+
+function isexe (path, options, cb) {
+  if (typeof options === 'function') {
+    cb = options
+    options = {}
+  }
+
+  if (!cb) {
+    if (typeof Promise !== 'function') {
+      throw new TypeError('callback not provided')
+    }
+
+    return new Promise(function (resolve, reject) {
+      isexe(path, options || {}, function (er, is) {
+        if (er) {
+          reject(er)
+        } else {
+          resolve(is)
+        }
+      })
+    })
+  }
+
+  core(path, options || {}, function (er, is) {
+    // ignore EACCES because that just means we aren't allowed to run it
+    if (er) {
+      if (er.code === 'EACCES' || options && options.ignoreErrors) {
+        er = null
+        is = false
+      }
+    }
+    cb(er, is)
+  })
+}
+
+function sync (path, options) {
+  // my kingdom for a filtered catch
+  try {
+    return core.sync(path, options || {})
+  } catch (er) {
+    if (options && options.ignoreErrors || er.code === 'EACCES') {
+      return false
+    } else {
+      throw er
+    }
+  }
+}

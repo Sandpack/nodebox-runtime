@@ -1,0 +1,530 @@
+†ª/README.mdÅÁ# @mdit-vue/plugin-toc
+
+[![npm](https://badgen.net/npm/v/@mdit-vue/plugin-toc)](https://www.npmjs.com/package/@mdit-vue/plugin-toc)
+[![license](https://badgen.net/github/license/mdit-vue/mdit-vue)](https://github.com/mdit-vue/mdit-vue/blob/main/LICENSE)
+
+A [markdown-it](https://github.com/markdown-it/markdown-it) plugin to generate table-of-contents (TOC) that compatible with [Vue.js](https://vuejs.org).
+
+This plugin is basically a fork of [markdown-it-toc-done-right](https://github.com/nagaozen/markdown-it-toc-done-right), with following enhancement:
+
+- Allows `html_inline` tags in headings to support vue components.
+- Supports [containerTag](#containertag), [listTag](#listtag) and [linkTag](#linktag).
+- Only allows array in [level](#level) option.
+- Code refactor and optimizations.
+
+## Install
+
+```sh
+npm i @mdit-vue/plugin-toc
+```
+
+## Usage
+
+```ts
+import MarkdownIt from 'markdown-it';
+import { tocPlugin } from '@mdit-vue/plugin-toc';
+
+const md = MarkdownIt({ html: true }).use(tocPlugin, {
+  // options
+});
+```
+
+## Options
+
+### pattern
+
+- Type: `RegExp`
+
+- Default: `/^\[\[toc\]\]$/i`
+
+- Details:
+
+  The pattern serving as the TOC placeholder in your markdown.
+
+### slugify
+
+- Type: `(str: string) => string`
+
+- Default: `slugify` from `@mdit-vue/shared`
+
+- Details:
+
+  A custom slugification function.
+
+  The default slugify function comes from [@mdit-vue/shared](https://github.com/mdit-vue/mdit-vue/tree/main/packages/shared) package.
+
+  When using this plugin with [markdown-it-anchor](https://github.com/valeriangalliat/markdown-it-anchor) (recommended), this option will be ignored because the `id` of the headings have already been determined by markdown-it-anchor's `slugify` option.
+
+### format
+
+- Type: `(str: string) => string`
+
+- Details:
+
+  A function for formatting headings.
+
+### level
+
+- Type: `number[]`
+
+- Default: `[2, 3]`
+
+- Details:
+
+  Heading level that going to be included in the TOC.
+
+  When using this plugin with [markdown-it-anchor](https://github.com/valeriangalliat/markdown-it-anchor) (recommended), this option should be a subset of markdown-it-anchor's `level` option to ensure the target links are existed.
+
+### containerTag
+
+- Type: `string`
+
+- Default: `'nav'`
+
+- Details:
+
+  HTML tag of the TOC container.
+
+### containerClass
+
+- Type: `string`
+
+- Default: `'table-of-contents'`
+
+- Details:
+
+  The class for the TOC container.
+
+### listTag
+
+- Type: `'ul' | 'ol'`
+
+- Default: `'ul'`
+
+- Details:
+
+  HTML tag of the TOC list.
+
+### listClass
+
+- Type: `string`
+
+- Default: `''`
+
+- Details:
+
+  The class for the TOC list.
+
+### itemClass
+
+- Type: `string`
+
+- Default: `''`
+
+- Details:
+
+  The class for the `<li>` tag.
+
+### linkTag
+
+- Type: `'a' | 'router-link'`
+
+- Default: `'a'`
+
+- Details:
+
+  The tag of the link inside the `<li>` tag.
+
+  You can set this option to render to links as [vue-router's router-link](https://router.vuejs.org/guide/#html).
+
+### linkClass
+
+- Type: `string`
+
+- Default: `''`
+
+- Details:
+
+  The class for the link inside the `<li>` tag.
+¨/LICENSEÅIThe MIT License (MIT)
+
+Copyright (c) 2022-present, mdit-vue Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+­/package.jsonÅÚ{
+  "name": "@mdit-vue/plugin-toc",
+  "version": "0.11.1",
+  "description": "A markdown-it plugin to generate table-of-contents that compatible with Vue.js",
+  "keywords": [
+    "markdown-it",
+    "markdown-it-plugin",
+    "vue",
+    "toc",
+    "table-of-contents"
+  ],
+  "homepage": "https://github.com/mdit-vue",
+  "bugs": {
+    "url": "https://github.com/mdit-vue/mdit-vue/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mdit-vue/mdit-vue.git"
+  },
+  "license": "MIT",
+  "author": "meteorlxy <meteor.lxy@foxmail.com>",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "./dist"
+  ],
+  "scripts": {
+    "build": "unbuild",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@mdit-vue/shared": "0.11.0",
+    "@mdit-vue/types": "0.11.0",
+    "@types/markdown-it": "^12.2.3",
+    "markdown-it": "^13.0.1"
+  },
+  "devDependencies": {
+    "markdown-it-anchor": "^8.6.4"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "gitHead": "98828479d07c7bc52d178a00cdb92c166eff09ee"
+}
+¯/dist/index.mjsÅ¹import { htmlEscape, resolveHeadersFromTokens, slugify } from '@mdit-vue/shared';
+
+const createRenderHeaders = ({
+  listTag,
+  listClass,
+  itemClass,
+  linkTag,
+  linkClass
+}) => {
+  const listTagString = htmlEscape(listTag);
+  const listClassString = listClass ? ` class="${htmlEscape(listClass)}"` : "";
+  const itemTagString = "li";
+  const itemClassString = itemClass ? ` class="${htmlEscape(itemClass)}"` : "";
+  const linkTagString = htmlEscape(linkTag);
+  const linkClassString = linkClass ? ` class="${htmlEscape(linkClass)}"` : "";
+  const linkTo = (link) => linkTag === "router-link" ? ` to="${link}"` : ` href="${link}"`;
+  const renderHeaders = (headers) => `<${listTagString}${listClassString}>${headers.map(
+    (header) => `<${itemTagString}${itemClassString}${itemClassString}><${linkTagString}${linkClassString}${linkTo(header.link)}>${header.title}</${linkTagString}>${header.children.length > 0 ? renderHeaders(header.children) : ""}</${itemTagString}>`
+  ).join("")}</${listTagString}>`;
+  return renderHeaders;
+};
+
+const createTocBlockRule = ({
+  pattern,
+  containerTag,
+  containerClass
+}) => {
+  return (state, startLine, endLine, silent) => {
+    if (state.sCount[startLine] - state.blkIndent >= 4) {
+      return false;
+    }
+    const pos = state.bMarks[startLine] + state.tShift[startLine];
+    const max = state.eMarks[startLine];
+    const lineFirstToken = state.src.slice(pos, max).split(" ")[0];
+    if (!pattern.test(lineFirstToken))
+      return false;
+    if (silent)
+      return true;
+    state.line = startLine + 1;
+    const tokenOpen = state.push("toc_open", containerTag, 1);
+    tokenOpen.markup = "";
+    tokenOpen.map = [startLine, state.line];
+    if (containerClass) {
+      tokenOpen.attrSet("class", containerClass);
+    }
+    const tokenBody = state.push("toc_body", "", 0);
+    tokenBody.markup = lineFirstToken;
+    tokenBody.map = [startLine, state.line];
+    tokenBody.hidden = true;
+    const tokenClose = state.push("toc_close", containerTag, -1);
+    tokenClose.markup = "";
+    tokenBody.map = [startLine, state.line];
+    return true;
+  };
+};
+
+const tocPlugin = (md, {
+  pattern = /^\[\[toc\]\]$/i,
+  slugify: slugify$1 = slugify,
+  format,
+  level = [2, 3],
+  containerTag = "nav",
+  containerClass = "table-of-contents",
+  listTag = "ul",
+  listClass = "",
+  itemClass = "",
+  linkTag = "a",
+  linkClass = ""
+} = {}) => {
+  md.block.ruler.before(
+    "heading",
+    "toc",
+    createTocBlockRule({
+      pattern,
+      containerTag,
+      containerClass
+    }),
+    {
+      alt: ["paragraph", "reference", "blockquote"]
+    }
+  );
+  const renderHeaders = createRenderHeaders({
+    listTag,
+    listClass,
+    itemClass,
+    linkTag,
+    linkClass
+  });
+  md.renderer.rules.toc_body = (tokens) => renderHeaders(
+    resolveHeadersFromTokens(tokens, {
+      level,
+      shouldAllowHtml: true,
+      shouldEscapeText: true,
+      slugify: slugify$1,
+      format
+    })
+  );
+};
+
+export { createRenderHeaders, createTocBlockRule, tocPlugin };
+°/dist/index.d.tsÅ
+¡import { MarkdownItHeader } from '@mdit-vue/types';
+import ParserBlock from 'markdown-it/lib/parser_block.js';
+import MarkdownIt from 'markdown-it';
+
+/**
+ * Options of @mdit-vue/plugin-toc
+ */
+interface TocPluginOptions {
+    /**
+     * The pattern serving as the TOC placeholder in your markdown
+     *
+     * @default /^\[\[toc\]\]$/i
+     */
+    pattern?: RegExp;
+    /**
+     * A custom slugification function
+     *
+     * Should use the same slugify function with markdown-it-anchor
+     * to ensure the link is matched
+     */
+    slugify?: (str: string) => string;
+    /**
+     * A function for formatting headings
+     */
+    format?: (str: string) => string;
+    /**
+     * Heading level that going to be included in the TOC
+     *
+     * Should be a subset of markdown-it-anchor's `level` option
+     * to ensure the link is existed
+     *
+     * @default [2,3]
+     */
+    level?: number[];
+    /**
+     * HTML tag of the TOC container
+     *
+     * @default 'nav'
+     */
+    containerTag?: string;
+    /**
+     * The class for the TOC container
+     *
+     * @default 'table-of-contents'
+     */
+    containerClass?: string;
+    /**
+     * HTML tag of the TOC list
+     *
+     * @default 'ul'
+     */
+    listTag?: 'ul' | 'ol';
+    /**
+     * The class for the TOC list
+     *
+     * @default ''
+     */
+    listClass?: string;
+    /**
+     * The class for the `<li>` tag
+     *
+     * @default ''
+     */
+    itemClass?: string;
+    /**
+     * The tag of the link inside `<li>` tag
+     *
+     * @default 'a'
+     */
+    linkTag?: 'a' | 'router-link';
+    /**
+     * The class for the link inside the `<li>` tag
+     *
+     * @default ''
+     */
+    linkClass?: string;
+}
+
+declare type RenderHeadersFn = (headers: MarkdownItHeader[]) => string;
+declare const createRenderHeaders: ({ listTag, listClass, itemClass, linkTag, linkClass, }: Pick<Required<TocPluginOptions>, 'listTag' | 'listClass' | 'itemClass' | 'linkTag' | 'linkClass'>) => RenderHeadersFn;
+
+/**
+ * Forked and modified from markdown-it-toc-done-right
+ *
+ * - remove the `inlineOptions` support
+ * - use markdown-it default renderer to render token whenever possible
+ *
+ * @see https://github.com/nagaozen/markdown-it-toc-done-right
+ */
+declare const createTocBlockRule: ({ pattern, containerTag, containerClass, }: Pick<Required<TocPluginOptions>, 'pattern' | 'containerTag' | 'containerClass'>) => ParserBlock.RuleBlock;
+
+/**
+ * Generate table of contents
+ *
+ * Forked and modified from markdown-it-toc-done-right:
+ *
+ * @see https://github.com/nagaozen/markdown-it-toc-done-right
+ */
+declare const tocPlugin: MarkdownIt.PluginWithOptions<TocPluginOptions>;
+
+export { TocPluginOptions, createRenderHeaders, createTocBlockRule, tocPlugin };
+¯/dist/index.cjsÅA'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+const shared = require('@mdit-vue/shared');
+
+const createRenderHeaders = ({
+  listTag,
+  listClass,
+  itemClass,
+  linkTag,
+  linkClass
+}) => {
+  const listTagString = shared.htmlEscape(listTag);
+  const listClassString = listClass ? ` class="${shared.htmlEscape(listClass)}"` : "";
+  const itemTagString = "li";
+  const itemClassString = itemClass ? ` class="${shared.htmlEscape(itemClass)}"` : "";
+  const linkTagString = shared.htmlEscape(linkTag);
+  const linkClassString = linkClass ? ` class="${shared.htmlEscape(linkClass)}"` : "";
+  const linkTo = (link) => linkTag === "router-link" ? ` to="${link}"` : ` href="${link}"`;
+  const renderHeaders = (headers) => `<${listTagString}${listClassString}>${headers.map(
+    (header) => `<${itemTagString}${itemClassString}${itemClassString}><${linkTagString}${linkClassString}${linkTo(header.link)}>${header.title}</${linkTagString}>${header.children.length > 0 ? renderHeaders(header.children) : ""}</${itemTagString}>`
+  ).join("")}</${listTagString}>`;
+  return renderHeaders;
+};
+
+const createTocBlockRule = ({
+  pattern,
+  containerTag,
+  containerClass
+}) => {
+  return (state, startLine, endLine, silent) => {
+    if (state.sCount[startLine] - state.blkIndent >= 4) {
+      return false;
+    }
+    const pos = state.bMarks[startLine] + state.tShift[startLine];
+    const max = state.eMarks[startLine];
+    const lineFirstToken = state.src.slice(pos, max).split(" ")[0];
+    if (!pattern.test(lineFirstToken))
+      return false;
+    if (silent)
+      return true;
+    state.line = startLine + 1;
+    const tokenOpen = state.push("toc_open", containerTag, 1);
+    tokenOpen.markup = "";
+    tokenOpen.map = [startLine, state.line];
+    if (containerClass) {
+      tokenOpen.attrSet("class", containerClass);
+    }
+    const tokenBody = state.push("toc_body", "", 0);
+    tokenBody.markup = lineFirstToken;
+    tokenBody.map = [startLine, state.line];
+    tokenBody.hidden = true;
+    const tokenClose = state.push("toc_close", containerTag, -1);
+    tokenClose.markup = "";
+    tokenBody.map = [startLine, state.line];
+    return true;
+  };
+};
+
+const tocPlugin = (md, {
+  pattern = /^\[\[toc\]\]$/i,
+  slugify = shared.slugify,
+  format,
+  level = [2, 3],
+  containerTag = "nav",
+  containerClass = "table-of-contents",
+  listTag = "ul",
+  listClass = "",
+  itemClass = "",
+  linkTag = "a",
+  linkClass = ""
+} = {}) => {
+  md.block.ruler.before(
+    "heading",
+    "toc",
+    createTocBlockRule({
+      pattern,
+      containerTag,
+      containerClass
+    }),
+    {
+      alt: ["paragraph", "reference", "blockquote"]
+    }
+  );
+  const renderHeaders = createRenderHeaders({
+    listTag,
+    listClass,
+    itemClass,
+    linkTag,
+    linkClass
+  });
+  md.renderer.rules.toc_body = (tokens) => renderHeaders(
+    shared.resolveHeadersFromTokens(tokens, {
+      level,
+      shouldAllowHtml: true,
+      shouldEscapeText: true,
+      slugify,
+      format
+    })
+  );
+};
+
+exports.createRenderHeaders = createRenderHeaders;
+exports.createTocBlockRule = createTocBlockRule;
+exports.tocPlugin = tocPlugin;

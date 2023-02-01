@@ -1,0 +1,466 @@
+ç¥/.github/FUNDING.yml≈F# These are supported funding model platforms
+
+github: [ljharb]
+patreon: # Replace with a single Patreon username
+open_collective: # Replace with a single Open Collective username
+ko_fi: # Replace with a single Ko-fi username
+tidelift: npm/has-symbols
+community_bridge: # Replace with a single Community Bridge project-name e.g., cloud-foundry
+liberapay: # Replace with a single Liberapay username
+issuehunt: # Replace with a single IssueHunt username
+otechie: # Replace with a single Otechie username
+custom: # Replace with up to 4 custom sponsorship URLs e.g., ['link1', 'link2']
+™/README.md≈¸# has-symbols <sup>[![Version Badge][2]][1]</sup>
+
+[![github actions][actions-image]][actions-url]
+[![coverage][codecov-image]][codecov-url]
+[![dependency status][5]][6]
+[![dev dependency status][7]][8]
+[![License][license-image]][license-url]
+[![Downloads][downloads-image]][downloads-url]
+
+[![npm badge][11]][1]
+
+Determine if the JS environment has Symbol support. Supports spec, or shams.
+
+## Example
+
+```js
+var hasSymbols = require('has-symbols');
+
+hasSymbols() === true; // if the environment has native Symbol support. Not polyfillable, not forgeable.
+
+var hasSymbolsKinda = require('has-symbols/shams');
+hasSymbolsKinda() === true; // if the environment has a Symbol sham that mostly follows the spec.
+```
+
+## Supported Symbol shams
+ - get-own-property-symbols [npm](https://www.npmjs.com/package/get-own-property-symbols) | [github](https://github.com/WebReflection/get-own-property-symbols)
+ - core-js [npm](https://www.npmjs.com/package/core-js) | [github](https://github.com/zloirock/core-js)
+
+## Tests
+Simply clone the repo, `npm install`, and run `npm test`
+
+[1]: https://npmjs.org/package/has-symbols
+[2]: https://versionbadg.es/inspect-js/has-symbols.svg
+[5]: https://david-dm.org/inspect-js/has-symbols.svg
+[6]: https://david-dm.org/inspect-js/has-symbols
+[7]: https://david-dm.org/inspect-js/has-symbols/dev-status.svg
+[8]: https://david-dm.org/inspect-js/has-symbols#info=devDependencies
+[11]: https://nodei.co/npm/has-symbols.png?downloads=true&stars=true
+[license-image]: https://img.shields.io/npm/l/has-symbols.svg
+[license-url]: LICENSE
+[downloads-image]: https://img.shields.io/npm/dm/has-symbols.svg
+[downloads-url]: https://npm-stat.com/charts.html?package=has-symbols
+[codecov-image]: https://codecov.io/gh/inspect-js/has-symbols/branch/main/graphs/badge.svg
+[codecov-url]: https://app.codecov.io/gh/inspect-js/has-symbols/
+[actions-image]: https://img.shields.io/endpoint?url=https://github-actions-badge-u3jn4tfpocch.runkit.sh/inspect-js/has-symbols
+[actions-url]: https://github.com/inspect-js/has-symbols/actions
+©/index.js≈§'use strict';
+
+var origSymbol = typeof Symbol !== 'undefined' && Symbol;
+var hasSymbolSham = require('./shams');
+
+module.exports = function hasNativeSymbols() {
+	if (typeof origSymbol !== 'function') { return false; }
+	if (typeof Symbol !== 'function') { return false; }
+	if (typeof origSymbol('foo') !== 'symbol') { return false; }
+	if (typeof Symbol('bar') !== 'symbol') { return false; }
+
+	return hasSymbolSham();
+};
+Ÿ'/test/shams/get-own-property-symbols.js≈Æ'use strict';
+
+var test = require('tape');
+
+if (typeof Symbol === 'function' && typeof Symbol() === 'symbol') {
+	test('has native Symbol support', function (t) {
+		t.equal(typeof Symbol, 'function');
+		t.equal(typeof Symbol(), 'symbol');
+		t.end();
+	});
+	return;
+}
+
+var hasSymbols = require('../../shams');
+
+test('polyfilled Symbols', function (t) {
+	/* eslint-disable global-require */
+	t.equal(hasSymbols(), false, 'hasSymbols is false before polyfilling');
+
+	require('get-own-property-symbols');
+
+	require('../tests')(t);
+
+	var hasSymbolsAfter = hasSymbols();
+	t.equal(hasSymbolsAfter, true, 'hasSymbols is true after polyfilling');
+	/* eslint-enable global-require */
+	t.end();
+});
+ß/.nycrcƒã{
+	"all": true,
+	"check-coverage": false,
+	"reporter": ["text-summary", "text", "html", "json"],
+	"exclude": [
+		"coverage",
+		"test"
+	]
+}
+Æ/test/index.js≈é'use strict';
+
+var test = require('tape');
+var hasSymbols = require('../');
+var runSymbolTests = require('./tests');
+
+test('interface', function (t) {
+	t.equal(typeof hasSymbols, 'function', 'is a function');
+	t.equal(typeof hasSymbols(), 'boolean', 'returns a boolean');
+	t.end();
+});
+
+test('Symbols are supported', { skip: !hasSymbols() }, function (t) {
+	runSymbolTests(t);
+	t.end();
+});
+
+test('Symbols are not supported', { skip: hasSymbols() }, function (t) {
+	t.equal(typeof Symbol, 'undefined', 'global Symbol is undefined');
+	t.equal(typeof Object.getOwnPropertySymbols, 'undefined', 'Object.getOwnPropertySymbols does not exist');
+	t.end();
+});
+©/shams.js≈·'use strict';
+
+/* eslint complexity: [2, 18], max-statements: [2, 33] */
+module.exports = function hasSymbols() {
+	if (typeof Symbol !== 'function' || typeof Object.getOwnPropertySymbols !== 'function') { return false; }
+	if (typeof Symbol.iterator === 'symbol') { return true; }
+
+	var obj = {};
+	var sym = Symbol('test');
+	var symObj = Object(sym);
+	if (typeof sym === 'string') { return false; }
+
+	if (Object.prototype.toString.call(sym) !== '[object Symbol]') { return false; }
+	if (Object.prototype.toString.call(symObj) !== '[object Symbol]') { return false; }
+
+	// temp disabled per https://github.com/ljharb/object.assign/issues/17
+	// if (sym instanceof Symbol) { return false; }
+	// temp disabled per https://github.com/WebReflection/get-own-property-symbols/issues/4
+	// if (!(symObj instanceof Symbol)) { return false; }
+
+	// if (typeof Symbol.prototype.toString !== 'function') { return false; }
+	// if (String(sym) !== Symbol.prototype.toString.call(sym)) { return false; }
+
+	var symVal = 42;
+	obj[sym] = symVal;
+	for (sym in obj) { return false; } // eslint-disable-line no-restricted-syntax, no-unreachable-loop
+	if (typeof Object.keys === 'function' && Object.keys(obj).length !== 0) { return false; }
+
+	if (typeof Object.getOwnPropertyNames === 'function' && Object.getOwnPropertyNames(obj).length !== 0) { return false; }
+
+	var syms = Object.getOwnPropertySymbols(obj);
+	if (syms.length !== 1 || syms[0] !== sym) { return false; }
+
+	if (!Object.prototype.propertyIsEnumerable.call(obj, sym)) { return false; }
+
+	if (typeof Object.getOwnPropertyDescriptor === 'function') {
+		var descriptor = Object.getOwnPropertyDescriptor(obj, sym);
+		if (descriptor.value !== symVal || descriptor.enumerable !== true) { return false; }
+	}
+
+	return true;
+};
+Æ/test/tests.js≈Â'use strict';
+
+// eslint-disable-next-line consistent-return
+module.exports = function runSymbolTests(t) {
+	t.equal(typeof Symbol, 'function', 'global Symbol is a function');
+
+	if (typeof Symbol !== 'function') { return false; }
+
+	t.notEqual(Symbol(), Symbol(), 'two symbols are not equal');
+
+	/*
+	t.equal(
+		Symbol.prototype.toString.call(Symbol('foo')),
+		Symbol.prototype.toString.call(Symbol('foo')),
+		'two symbols with the same description stringify the same'
+	);
+	*/
+
+	/*
+	var foo = Symbol('foo');
+
+	t.notEqual(
+		String(foo),
+		String(Symbol('bar')),
+		'two symbols with different descriptions do not stringify the same'
+	);
+	*/
+
+	t.equal(typeof Symbol.prototype.toString, 'function', 'Symbol#toString is a function');
+	// t.equal(String(foo), Symbol.prototype.toString.call(foo), 'Symbol#toString equals String of the same symbol');
+
+	t.equal(typeof Object.getOwnPropertySymbols, 'function', 'Object.getOwnPropertySymbols is a function');
+
+	var obj = {};
+	var sym = Symbol('test');
+	var symObj = Object(sym);
+	t.notEqual(typeof sym, 'string', 'Symbol is not a string');
+	t.equal(Object.prototype.toString.call(sym), '[object Symbol]', 'symbol primitive Object#toStrings properly');
+	t.equal(Object.prototype.toString.call(symObj), '[object Symbol]', 'symbol primitive Object#toStrings properly');
+
+	var symVal = 42;
+	obj[sym] = symVal;
+	// eslint-disable-next-line no-restricted-syntax
+	for (sym in obj) { t.fail('symbol property key was found in for..in of object'); }
+
+	t.deepEqual(Object.keys(obj), [], 'no enumerable own keys on symbol-valued object');
+	t.deepEqual(Object.getOwnPropertyNames(obj), [], 'no own names on symbol-valued object');
+	t.deepEqual(Object.getOwnPropertySymbols(obj), [sym], 'one own symbol on symbol-valued object');
+	t.equal(Object.prototype.propertyIsEnumerable.call(obj, sym), true, 'symbol is enumerable');
+	t.deepEqual(Object.getOwnPropertyDescriptor(obj, sym), {
+		configurable: true,
+		enumerable: true,
+		value: 42,
+		writable: true
+	}, 'property descriptor is correct');
+};
+™/.eslintrcƒ§{
+	"root": true,
+
+	"extends": "@ljharb",
+
+	"rules": {
+		"max-statements-per-line": [2, { "max": 2 }],
+		"no-magic-numbers": 0,
+		"multiline-comment-style": 0,
+	}
+}
+∂/test/shams/core-js.js≈”'use strict';
+
+var test = require('tape');
+
+if (typeof Symbol === 'function' && typeof Symbol() === 'symbol') {
+	test('has native Symbol support', function (t) {
+		t.equal(typeof Symbol, 'function');
+		t.equal(typeof Symbol(), 'symbol');
+		t.end();
+	});
+	return;
+}
+
+var hasSymbols = require('../../shams');
+
+test('polyfilled Symbols', function (t) {
+	/* eslint-disable global-require */
+	t.equal(hasSymbols(), false, 'hasSymbols is false before polyfilling');
+	require('core-js/fn/symbol');
+	require('core-js/fn/symbol/to-string-tag');
+
+	require('../tests')(t);
+
+	var hasSymbolsAfter = hasSymbols();
+	t.equal(hasSymbolsAfter, true, 'hasSymbols is true after polyfilling');
+	/* eslint-enable global-require */
+	t.end();
+});
+≠/CHANGELOG.md≈
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [v1.0.3](https://github.com/inspect-js/has-symbols/compare/v1.0.2...v1.0.3) - 2022-03-01
+
+### Commits
+
+- [actions] use `node/install` instead of `node/run`; use `codecov` action [`518b28f`](https://github.com/inspect-js/has-symbols/commit/518b28f6c5a516cbccae30794e40aa9f738b1693)
+- [meta] add `bugs` and `homepage` fields; reorder package.json [`c480b13`](https://github.com/inspect-js/has-symbols/commit/c480b13fd6802b557e1cef9749872cb5fdeef744)
+- [actions] reuse common workflows [`01d0ee0`](https://github.com/inspect-js/has-symbols/commit/01d0ee0a8d97c0947f5edb73eb722027a77b2b07)
+- [actions] update codecov uploader [`6424ebe`](https://github.com/inspect-js/has-symbols/commit/6424ebe86b2c9c7c3d2e9bd4413a4e4f168cb275)
+- [Dev Deps] update `eslint`, `@ljharb/eslint-config`, `aud`, `auto-changelog`, `tape` [`dfa7e7f`](https://github.com/inspect-js/has-symbols/commit/dfa7e7ff38b594645d8c8222aab895157fa7e282)
+- [Dev Deps] update `eslint`, `@ljharb/eslint-config`, `safe-publish-latest`, `tape` [`0c8d436`](https://github.com/inspect-js/has-symbols/commit/0c8d43685c45189cea9018191d4fd7eca91c9d02)
+- [Dev Deps] update `eslint`, `@ljharb/eslint-config`, `aud`, `tape` [`9026554`](https://github.com/inspect-js/has-symbols/commit/902655442a1bf88e72b42345494ef0c60f5d36ab)
+- [readme] add actions and codecov badges [`eaa9682`](https://github.com/inspect-js/has-symbols/commit/eaa9682f990f481d3acf7a1c7600bec36f7b3adc)
+- [Dev Deps] update `eslint`, `tape` [`bc7a3ba`](https://github.com/inspect-js/has-symbols/commit/bc7a3ba46f27b7743f8a2579732d59d1b9ac791e)
+- [Dev Deps] update `eslint`, `auto-changelog` [`0ace00a`](https://github.com/inspect-js/has-symbols/commit/0ace00af08a88cdd1e6ce0d60357d941c60c2d9f)
+- [meta] use `prepublishOnly` script for npm 7+ [`093f72b`](https://github.com/inspect-js/has-symbols/commit/093f72bc2b0ed00c781f444922a5034257bf561d)
+- [Tests] test on all 16 minors [`9b80d3d`](https://github.com/inspect-js/has-symbols/commit/9b80d3d9102529f04c20ec5b1fcc6e38426c6b03)
+
+## [v1.0.2](https://github.com/inspect-js/has-symbols/compare/v1.0.1...v1.0.2) - 2021-02-27
+
+### Fixed
+
+- [Fix] use a universal way to get the original Symbol [`#11`](https://github.com/inspect-js/has-symbols/issues/11)
+
+### Commits
+
+- [Tests] migrate tests to Github Actions [`90ae798`](https://github.com/inspect-js/has-symbols/commit/90ae79820bdfe7bc703d67f5f3c5e205f98556d3)
+- [meta] do not publish github action workflow files [`29e60a1`](https://github.com/inspect-js/has-symbols/commit/29e60a1b7c25c7f1acf7acff4a9320d0d10c49b4)
+- [Tests] run `nyc` on all tests [`8476b91`](https://github.com/inspect-js/has-symbols/commit/8476b915650d360915abe2522505abf4b0e8f0ae)
+- [readme] fix repo URLs, remove defunct badges [`126288e`](https://github.com/inspect-js/has-symbols/commit/126288ecc1797c0a40247a6b78bcb2e0bc5d7036)
+- [Dev Deps] update `eslint`, `@ljharb/eslint-config`, `aud`, `auto-changelog`, `core-js`, `get-own-property-symbols` [`d84bdfa`](https://github.com/inspect-js/has-symbols/commit/d84bdfa48ac5188abbb4904b42614cd6c030940a)
+- [Tests] fix linting errors [`0df3070`](https://github.com/inspect-js/has-symbols/commit/0df3070b981b6c9f2ee530c09189a7f5c6def839)
+- [actions] add "Allow Edits" workflow [`1e6bc29`](https://github.com/inspect-js/has-symbols/commit/1e6bc29b188f32b9648657b07eda08504be5aa9c)
+- [Dev Deps] update `eslint`, `@ljharb/eslint-config`, `tape` [`36cea2a`](https://github.com/inspect-js/has-symbols/commit/36cea2addd4e6ec435f35a2656b4e9ef82498e9b)
+- [Dev Deps] update `eslint`, `@ljharb/eslint-config`, `aud`, `tape` [`1278338`](https://github.com/inspect-js/has-symbols/commit/127833801865fbc2cc8979beb9ca869c7bfe8222)
+- [Dev Deps] update `eslint`, `@ljharb/eslint-config`, `aud`, `tape` [`1493254`](https://github.com/inspect-js/has-symbols/commit/1493254eda13db5fb8fc5e4a3e8324b3d196029d)
+- [Dev Deps] update `eslint`, `@ljharb/eslint-config`, `core-js` [`b090bf2`](https://github.com/inspect-js/has-symbols/commit/b090bf214d3679a30edc1e2d729d466ab5183e1d)
+- [actions] switch Automatic Rebase workflow to `pull_request_target` event [`4addb7a`](https://github.com/inspect-js/has-symbols/commit/4addb7ab4dc73f927ae99928d68817554fc21dc0)
+- [Dev Deps] update `auto-changelog`, `tape` [`81d0baf`](https://github.com/inspect-js/has-symbols/commit/81d0baf3816096a89a8558e8043895f7a7d10d8b)
+- [Dev Deps] update `auto-changelog`; add `aud` [`1a4e561`](https://github.com/inspect-js/has-symbols/commit/1a4e5612c25d91c3a03d509721d02630bc4fe3da)
+- [readme] remove unused testling URLs [`3000941`](https://github.com/inspect-js/has-symbols/commit/3000941f958046e923ed8152edb1ef4a599e6fcc)
+- [Tests] only audit prod deps [`692e974`](https://github.com/inspect-js/has-symbols/commit/692e9743c912410e9440207631a643a34b4741a1)
+- [Dev Deps] update `@ljharb/eslint-config` [`51c946c`](https://github.com/inspect-js/has-symbols/commit/51c946c7f6baa793ec5390bb5a45cdce16b4ba76)
+
+## [v1.0.1](https://github.com/inspect-js/has-symbols/compare/v1.0.0...v1.0.1) - 2019-11-16
+
+### Commits
+
+- [Tests] use shared travis-ci configs [`ce396c9`](https://github.com/inspect-js/has-symbols/commit/ce396c9419ff11c43d0da5d05cdbb79f7fb42229)
+- [Tests] up to `node` `v12.4`, `v11.15`, `v10.15`, `v9.11`, `v8.15`, `v7.10`, `v6.17`, `v4.9`; use `nvm install-latest-npm` [`0690732`](https://github.com/inspect-js/has-symbols/commit/0690732801f47ab429f39ba1962f522d5c462d6b)
+- [meta] add `auto-changelog` [`2163d0b`](https://github.com/inspect-js/has-symbols/commit/2163d0b7f36343076b8f947cd1667dd1750f26fc)
+- [Dev Deps] update `eslint`, `@ljharb/eslint-config`, `core-js`, `safe-publish-latest`, `tape` [`8e0951f`](https://github.com/inspect-js/has-symbols/commit/8e0951f1a7a2e52068222b7bb73511761e6e4d9c)
+- [actions] add automatic rebasing / merge commit blocking [`b09cdb7`](https://github.com/inspect-js/has-symbols/commit/b09cdb7cd7ee39e7a769878f56e2d6066f5ccd1d)
+- [Dev Deps] update `eslint`, `@ljharb/eslint-config`, `safe-publish-latest`, `core-js`, `get-own-property-symbols`, `tape` [`1dd42cd`](https://github.com/inspect-js/has-symbols/commit/1dd42cd86183ed0c50f99b1062345c458babca91)
+- [meta] create FUNDING.yml [`aa57a17`](https://github.com/inspect-js/has-symbols/commit/aa57a17b19708906d1927f821ea8e73394d84ca4)
+- Only apps should have lockfiles [`a2d8bea`](https://github.com/inspect-js/has-symbols/commit/a2d8bea23a97d15c09eaf60f5b107fcf9a4d57aa)
+- [Tests] use `npx aud` instead of `nsp` or `npm audit` with hoops [`9e96cb7`](https://github.com/inspect-js/has-symbols/commit/9e96cb783746cbed0c10ef78e599a8eaa7ebe193)
+- [meta] add `funding` field [`a0b32cf`](https://github.com/inspect-js/has-symbols/commit/a0b32cf68e803f963c1639b6d47b0a9d6440bab0)
+- [Dev Deps] update `safe-publish-latest` [`cb9f0a5`](https://github.com/inspect-js/has-symbols/commit/cb9f0a521a3a1790f1064d437edd33bb6c3d6af0)
+
+## v1.0.0 - 2016-09-19
+
+### Commits
+
+- Tests. [`ecb6eb9`](https://github.com/inspect-js/has-symbols/commit/ecb6eb934e4883137f3f93b965ba5e0a98df430d)
+- package.json [`88a337c`](https://github.com/inspect-js/has-symbols/commit/88a337cee0864a0da35f5d19e69ff0ef0150e46a)
+- Initial commit [`42e1e55`](https://github.com/inspect-js/has-symbols/commit/42e1e5502536a2b8ac529c9443984acd14836b1c)
+- Initial implementation. [`33f5cc6`](https://github.com/inspect-js/has-symbols/commit/33f5cc6cdff86e2194b081ee842bfdc63caf43fb)
+- read me [`01f1170`](https://github.com/inspect-js/has-symbols/commit/01f1170188ff7cb1558aa297f6ba5b516c6d7b0c)
+®/LICENSE≈/MIT License
+
+Copyright (c) 2016 Jordan Harband
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+≠/package.json≈
+X{
+	"name": "has-symbols",
+	"version": "1.0.3",
+	"description": "Determine if the JS environment has Symbol support. Supports spec, or shams.",
+	"main": "index.js",
+	"scripts": {
+		"prepublishOnly": "safe-publish-latest",
+		"prepublish": "not-in-publish || npm run prepublishOnly",
+		"pretest": "npm run --silent lint",
+		"test": "npm run tests-only",
+		"posttest": "aud --production",
+		"tests-only": "npm run test:stock && npm run test:staging && npm run test:shams",
+		"test:stock": "nyc node test",
+		"test:staging": "nyc node --harmony --es-staging test",
+		"test:shams": "npm run --silent test:shams:getownpropertysymbols && npm run --silent test:shams:corejs",
+		"test:shams:corejs": "nyc node test/shams/core-js.js",
+		"test:shams:getownpropertysymbols": "nyc node test/shams/get-own-property-symbols.js",
+		"lint": "eslint --ext=js,mjs .",
+		"version": "auto-changelog && git add CHANGELOG.md",
+		"postversion": "auto-changelog && git add CHANGELOG.md && git commit --no-edit --amend && git tag -f \"v$(node -e \"console.log(require('./package.json').version)\")\""
+	},
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/inspect-js/has-symbols.git"
+	},
+	"keywords": [
+		"Symbol",
+		"symbols",
+		"typeof",
+		"sham",
+		"polyfill",
+		"native",
+		"core-js",
+		"ES6"
+	],
+	"author": {
+		"name": "Jordan Harband",
+		"email": "ljharb@gmail.com",
+		"url": "http://ljharb.codes"
+	},
+	"contributors": [
+		{
+			"name": "Jordan Harband",
+			"email": "ljharb@gmail.com",
+			"url": "http://ljharb.codes"
+		}
+	],
+	"funding": {
+		"url": "https://github.com/sponsors/ljharb"
+	},
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/ljharb/has-symbols/issues"
+	},
+	"homepage": "https://github.com/ljharb/has-symbols#readme",
+	"devDependencies": {
+		"@ljharb/eslint-config": "^20.2.3",
+		"aud": "^2.0.0",
+		"auto-changelog": "^2.4.0",
+		"core-js": "^2.6.12",
+		"eslint": "=8.8.0",
+		"get-own-property-symbols": "^0.9.5",
+		"nyc": "^10.3.2",
+		"safe-publish-latest": "^2.0.0",
+		"tape": "^5.5.2"
+	},
+	"testling": {
+		"files": "test/index.js",
+		"browsers": [
+			"iexplore/6.0..latest",
+			"firefox/3.0..6.0",
+			"firefox/15.0..latest",
+			"firefox/nightly",
+			"chrome/4.0..10.0",
+			"chrome/20.0..latest",
+			"chrome/canary",
+			"opera/10.0..latest",
+			"opera/next",
+			"safari/4.0..latest",
+			"ipad/6.0..latest",
+			"iphone/6.0..latest",
+			"android-browser/4.2"
+		]
+	},
+	"engines": {
+		"node": ">= 0.4"
+	},
+	"auto-changelog": {
+		"output": "CHANGELOG.md",
+		"template": "keepachangelog",
+		"unreleased": false,
+		"commitLimit": false,
+		"backfillLimit": false,
+		"hideCredit": true
+	},
+	"greenkeeper": {
+		"ignore": [
+			"core-js"
+		]
+	}
+}

@@ -1,0 +1,1065 @@
+Ü™/Readme.md≈'# depd
+
+[![NPM Version][npm-version-image]][npm-url]
+[![NPM Downloads][npm-downloads-image]][npm-url]
+[![Node.js Version][node-image]][node-url]
+[![Linux Build][travis-image]][travis-url]
+[![Windows Build][appveyor-image]][appveyor-url]
+[![Coverage Status][coveralls-image]][coveralls-url]
+
+Deprecate all the things
+
+> With great modules comes great responsibility; mark things deprecated!
+
+## Install
+
+This module is installed directly using `npm`:
+
+```sh
+$ npm install depd
+```
+
+This module can also be bundled with systems like
+[Browserify](http://browserify.org/) or [webpack](https://webpack.github.io/),
+though by default this module will alter it's API to no longer display or
+track deprecations.
+
+## API
+
+<!-- eslint-disable no-unused-vars -->
+
+```js
+var deprecate = require('depd')('my-module')
+```
+
+This library allows you to display deprecation messages to your users.
+This library goes above and beyond with deprecation warnings by
+introspection of the call stack (but only the bits that it is interested
+in).
+
+Instead of just warning on the first invocation of a deprecated
+function and never again, this module will warn on the first invocation
+of a deprecated function per unique call site, making it ideal to alert
+users of all deprecated uses across the code base, rather than just
+whatever happens to execute first.
+
+The deprecation warnings from this module also include the file and line
+information for the call into the module that the deprecated function was
+in.
+
+**NOTE** this library has a similar interface to the `debug` module, and
+this module uses the calling file to get the boundary for the call stacks,
+so you should always create a new `deprecate` object in each file and not
+within some central file.
+
+### depd(namespace)
+
+Create a new deprecate function that uses the given namespace name in the
+messages and will display the call site prior to the stack entering the
+file this function was called from. It is highly suggested you use the
+name of your module as the namespace.
+
+### deprecate(message)
+
+Call this function from deprecated code to display a deprecation message.
+This message will appear once per unique caller site. Caller site is the
+first call site in the stack in a different file from the caller of this
+function.
+
+If the message is omitted, a message is generated for you based on the site
+of the `deprecate()` call and will display the name of the function called,
+similar to the name displayed in a stack trace.
+
+### deprecate.function(fn, message)
+
+Call this function to wrap a given function in a deprecation message on any
+call to the function. An optional message can be supplied to provide a custom
+message.
+
+### deprecate.property(obj, prop, message)
+
+Call this function to wrap a given property on object in a deprecation message
+on any accessing or setting of the property. An optional message can be supplied
+to provide a custom message.
+
+The method must be called on the object where the property belongs (not
+inherited from the prototype).
+
+If the property is a data descriptor, it will be converted to an accessor
+descriptor in order to display the deprecation message.
+
+### process.on('deprecation', fn)
+
+This module will allow easy capturing of deprecation errors by emitting the
+errors as the type "deprecation" on the global `process`. If there are no
+listeners for this type, the errors are written to STDERR as normal, but if
+there are any listeners, nothing will be written to STDERR and instead only
+emitted. From there, you can write the errors in a different format or to a
+logging source.
+
+The error represents the deprecation and is emitted only once with the same
+rules as writing to STDERR. The error has the following properties:
+
+  - `message` - This is the message given by the library
+  - `name` - This is always `'DeprecationError'`
+  - `namespace` - This is the namespace the deprecation came from
+  - `stack` - This is the stack of the call to the deprecated thing
+
+Example `error.stack` output:
+
+```
+DeprecationError: my-cool-module deprecated oldfunction
+    at Object.<anonymous> ([eval]-wrapper:6:22)
+    at Module._compile (module.js:456:26)
+    at evalScript (node.js:532:25)
+    at startup (node.js:80:7)
+    at node.js:902:3
+```
+
+### process.env.NO_DEPRECATION
+
+As a user of modules that are deprecated, the environment variable `NO_DEPRECATION`
+is provided as a quick solution to silencing deprecation warnings from being
+output. The format of this is similar to that of `DEBUG`:
+
+```sh
+$ NO_DEPRECATION=my-module,othermod node app.js
+```
+
+This will suppress deprecations from being output for "my-module" and "othermod".
+The value is a list of comma-separated namespaces. To suppress every warning
+across all namespaces, use the value `*` for a namespace.
+
+Providing the argument `--no-deprecation` to the `node` executable will suppress
+all deprecations (only available in Node.js 0.8 or higher).
+
+**NOTE** This will not suppress the deperecations given to any "deprecation"
+event listeners, just the output to STDERR.
+
+### process.env.TRACE_DEPRECATION
+
+As a user of modules that are deprecated, the environment variable `TRACE_DEPRECATION`
+is provided as a solution to getting more detailed location information in deprecation
+warnings by including the entire stack trace. The format of this is the same as
+`NO_DEPRECATION`:
+
+```sh
+$ TRACE_DEPRECATION=my-module,othermod node app.js
+```
+
+This will include stack traces for deprecations being output for "my-module" and
+"othermod". The value is a list of comma-separated namespaces. To trace every
+warning across all namespaces, use the value `*` for a namespace.
+
+Providing the argument `--trace-deprecation` to the `node` executable will trace
+all deprecations (only available in Node.js 0.8 or higher).
+
+**NOTE** This will not trace the deperecations silenced by `NO_DEPRECATION`.
+
+## Display
+
+![message](files/message.png)
+
+When a user calls a function in your library that you mark deprecated, they
+will see the following written to STDERR (in the given colors, similar colors
+and layout to the `debug` module):
+
+```
+bright cyan    bright yellow
+|              |          reset       cyan
+|              |          |           |
+‚ñº              ‚ñº          ‚ñº           ‚ñº
+my-cool-module deprecated oldfunction [eval]-wrapper:6:22
+‚ñ≤              ‚ñ≤          ‚ñ≤           ‚ñ≤
+|              |          |           |
+namespace      |          |           location of mycoolmod.oldfunction() call
+               |          deprecation message
+               the word "deprecated"
+```
+
+If the user redirects their STDERR to a file or somewhere that does not support
+colors, they see (similar layout to the `debug` module):
+
+```
+Sun, 15 Jun 2014 05:21:37 GMT my-cool-module deprecated oldfunction at [eval]-wrapper:6:22
+‚ñ≤                             ‚ñ≤              ‚ñ≤          ‚ñ≤              ‚ñ≤
+|                             |              |          |              |
+timestamp of message          namespace      |          |             location of mycoolmod.oldfunction() call
+                                             |          deprecation message
+                                             the word "deprecated"
+```
+
+## Examples
+
+### Deprecating all calls to a function
+
+This will display a deprecated message about "oldfunction" being deprecated
+from "my-module" on STDERR.
+
+```js
+var deprecate = require('depd')('my-cool-module')
+
+// message automatically derived from function name
+// Object.oldfunction
+exports.oldfunction = deprecate.function(function oldfunction () {
+  // all calls to function are deprecated
+})
+
+// specific message
+exports.oldfunction = deprecate.function(function () {
+  // all calls to function are deprecated
+}, 'oldfunction')
+```
+
+### Conditionally deprecating a function call
+
+This will display a deprecated message about "weirdfunction" being deprecated
+from "my-module" on STDERR when called with less than 2 arguments.
+
+```js
+var deprecate = require('depd')('my-cool-module')
+
+exports.weirdfunction = function () {
+  if (arguments.length < 2) {
+    // calls with 0 or 1 args are deprecated
+    deprecate('weirdfunction args < 2')
+  }
+}
+```
+
+When calling `deprecate` as a function, the warning is counted per call site
+within your own module, so you can display different deprecations depending
+on different situations and the users will still get all the warnings:
+
+```js
+var deprecate = require('depd')('my-cool-module')
+
+exports.weirdfunction = function () {
+  if (arguments.length < 2) {
+    // calls with 0 or 1 args are deprecated
+    deprecate('weirdfunction args < 2')
+  } else if (typeof arguments[0] !== 'string') {
+    // calls with non-string first argument are deprecated
+    deprecate('weirdfunction non-string first arg')
+  }
+}
+```
+
+### Deprecating property access
+
+This will display a deprecated message about "oldprop" being deprecated
+from "my-module" on STDERR when accessed. A deprecation will be displayed
+when setting the value and when getting the value.
+
+```js
+var deprecate = require('depd')('my-cool-module')
+
+exports.oldprop = 'something'
+
+// message automatically derives from property name
+deprecate.property(exports, 'oldprop')
+
+// explicit message
+deprecate.property(exports, 'oldprop', 'oldprop >= 0.10')
+```
+
+## License
+
+[MIT](LICENSE)
+
+[appveyor-image]: https://badgen.net/appveyor/ci/dougwilson/nodejs-depd/master?label=windows
+[appveyor-url]: https://ci.appveyor.com/project/dougwilson/nodejs-depd
+[coveralls-image]: https://badgen.net/coveralls/c/github/dougwilson/nodejs-depd/master
+[coveralls-url]: https://coveralls.io/r/dougwilson/nodejs-depd?branch=master
+[node-image]: https://badgen.net/npm/node/depd
+[node-url]: https://nodejs.org/en/download/
+[npm-downloads-image]: https://badgen.net/npm/dm/depd
+[npm-url]: https://npmjs.org/package/depd
+[npm-version-image]: https://badgen.net/npm/v/depd
+[travis-image]: https://badgen.net/travis/dougwilson/nodejs-depd/master?label=linux
+[travis-url]: https://travis-ci.org/dougwilson/nodejs-depd
+©/index.js≈*¥/*!
+ * depd
+ * Copyright(c) 2014-2018 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+/**
+ * Module dependencies.
+ */
+
+var relative = require('path').relative
+
+/**
+ * Module exports.
+ */
+
+module.exports = depd
+
+/**
+ * Get the path to base files on.
+ */
+
+var basePath = process.cwd()
+
+/**
+ * Determine if namespace is contained in the string.
+ */
+
+function containsNamespace (str, namespace) {
+  var vals = str.split(/[ ,]+/)
+  var ns = String(namespace).toLowerCase()
+
+  for (var i = 0; i < vals.length; i++) {
+    var val = vals[i]
+
+    // namespace contained
+    if (val && (val === '*' || val.toLowerCase() === ns)) {
+      return true
+    }
+  }
+
+  return false
+}
+
+/**
+ * Convert a data descriptor to accessor descriptor.
+ */
+
+function convertDataDescriptorToAccessor (obj, prop, message) {
+  var descriptor = Object.getOwnPropertyDescriptor(obj, prop)
+  var value = descriptor.value
+
+  descriptor.get = function getter () { return value }
+
+  if (descriptor.writable) {
+    descriptor.set = function setter (val) { return (value = val) }
+  }
+
+  delete descriptor.value
+  delete descriptor.writable
+
+  Object.defineProperty(obj, prop, descriptor)
+
+  return descriptor
+}
+
+/**
+ * Create arguments string to keep arity.
+ */
+
+function createArgumentsString (arity) {
+  var str = ''
+
+  for (var i = 0; i < arity; i++) {
+    str += ', arg' + i
+  }
+
+  return str.substr(2)
+}
+
+/**
+ * Create stack string from stack.
+ */
+
+function createStackString (stack) {
+  var str = this.name + ': ' + this.namespace
+
+  if (this.message) {
+    str += ' deprecated ' + this.message
+  }
+
+  for (var i = 0; i < stack.length; i++) {
+    str += '\n    at ' + stack[i].toString()
+  }
+
+  return str
+}
+
+/**
+ * Create deprecate for namespace in caller.
+ */
+
+function depd (namespace) {
+  if (!namespace) {
+    throw new TypeError('argument namespace is required')
+  }
+
+  var stack = getStack()
+  var site = callSiteLocation(stack[1])
+  var file = site[0]
+
+  function deprecate (message) {
+    // call to self as log
+    log.call(deprecate, message)
+  }
+
+  deprecate._file = file
+  deprecate._ignored = isignored(namespace)
+  deprecate._namespace = namespace
+  deprecate._traced = istraced(namespace)
+  deprecate._warned = Object.create(null)
+
+  deprecate.function = wrapfunction
+  deprecate.property = wrapproperty
+
+  return deprecate
+}
+
+/**
+ * Determine if event emitter has listeners of a given type.
+ *
+ * The way to do this check is done three different ways in Node.js >= 0.8
+ * so this consolidates them into a minimal set using instance methods.
+ *
+ * @param {EventEmitter} emitter
+ * @param {string} type
+ * @returns {boolean}
+ * @private
+ */
+
+function eehaslisteners (emitter, type) {
+  var count = typeof emitter.listenerCount !== 'function'
+    ? emitter.listeners(type).length
+    : emitter.listenerCount(type)
+
+  return count > 0
+}
+
+/**
+ * Determine if namespace is ignored.
+ */
+
+function isignored (namespace) {
+  if (process.noDeprecation) {
+    // --no-deprecation support
+    return true
+  }
+
+  var str = process.env.NO_DEPRECATION || ''
+
+  // namespace ignored
+  return containsNamespace(str, namespace)
+}
+
+/**
+ * Determine if namespace is traced.
+ */
+
+function istraced (namespace) {
+  if (process.traceDeprecation) {
+    // --trace-deprecation support
+    return true
+  }
+
+  var str = process.env.TRACE_DEPRECATION || ''
+
+  // namespace traced
+  return containsNamespace(str, namespace)
+}
+
+/**
+ * Display deprecation message.
+ */
+
+function log (message, site) {
+  var haslisteners = eehaslisteners(process, 'deprecation')
+
+  // abort early if no destination
+  if (!haslisteners && this._ignored) {
+    return
+  }
+
+  var caller
+  var callFile
+  var callSite
+  var depSite
+  var i = 0
+  var seen = false
+  var stack = getStack()
+  var file = this._file
+
+  if (site) {
+    // provided site
+    depSite = site
+    callSite = callSiteLocation(stack[1])
+    callSite.name = depSite.name
+    file = callSite[0]
+  } else {
+    // get call site
+    i = 2
+    depSite = callSiteLocation(stack[i])
+    callSite = depSite
+  }
+
+  // get caller of deprecated thing in relation to file
+  for (; i < stack.length; i++) {
+    caller = callSiteLocation(stack[i])
+    callFile = caller[0]
+
+    if (callFile === file) {
+      seen = true
+    } else if (callFile === this._file) {
+      file = this._file
+    } else if (seen) {
+      break
+    }
+  }
+
+  var key = caller
+    ? depSite.join(':') + '__' + caller.join(':')
+    : undefined
+
+  if (key !== undefined && key in this._warned) {
+    // already warned
+    return
+  }
+
+  this._warned[key] = true
+
+  // generate automatic message from call site
+  var msg = message
+  if (!msg) {
+    msg = callSite === depSite || !callSite.name
+      ? defaultMessage(depSite)
+      : defaultMessage(callSite)
+  }
+
+  // emit deprecation if listeners exist
+  if (haslisteners) {
+    var err = DeprecationError(this._namespace, msg, stack.slice(i))
+    process.emit('deprecation', err)
+    return
+  }
+
+  // format and write message
+  var format = process.stderr.isTTY
+    ? formatColor
+    : formatPlain
+  var output = format.call(this, msg, caller, stack.slice(i))
+  process.stderr.write(output + '\n', 'utf8')
+}
+
+/**
+ * Get call site location as array.
+ */
+
+function callSiteLocation (callSite) {
+  var file = callSite.getFileName() || '<anonymous>'
+  var line = callSite.getLineNumber()
+  var colm = callSite.getColumnNumber()
+
+  if (callSite.isEval()) {
+    file = callSite.getEvalOrigin() + ', ' + file
+  }
+
+  var site = [file, line, colm]
+
+  site.callSite = callSite
+  site.name = callSite.getFunctionName()
+
+  return site
+}
+
+/**
+ * Generate a default message from the site.
+ */
+
+function defaultMessage (site) {
+  var callSite = site.callSite
+  var funcName = site.name
+
+  // make useful anonymous name
+  if (!funcName) {
+    funcName = '<anonymous@' + formatLocation(site) + '>'
+  }
+
+  var context = callSite.getThis()
+  var typeName = context && callSite.getTypeName()
+
+  // ignore useless type name
+  if (typeName === 'Object') {
+    typeName = undefined
+  }
+
+  // make useful type name
+  if (typeName === 'Function') {
+    typeName = context.name || typeName
+  }
+
+  return typeName && callSite.getMethodName()
+    ? typeName + '.' + funcName
+    : funcName
+}
+
+/**
+ * Format deprecation message without color.
+ */
+
+function formatPlain (msg, caller, stack) {
+  var timestamp = new Date().toUTCString()
+
+  var formatted = timestamp +
+    ' ' + this._namespace +
+    ' deprecated ' + msg
+
+  // add stack trace
+  if (this._traced) {
+    for (var i = 0; i < stack.length; i++) {
+      formatted += '\n    at ' + stack[i].toString()
+    }
+
+    return formatted
+  }
+
+  if (caller) {
+    formatted += ' at ' + formatLocation(caller)
+  }
+
+  return formatted
+}
+
+/**
+ * Format deprecation message with color.
+ */
+
+function formatColor (msg, caller, stack) {
+  var formatted = '\x1b[36;1m' + this._namespace + '\x1b[22;39m' + // bold cyan
+    ' \x1b[33;1mdeprecated\x1b[22;39m' + // bold yellow
+    ' \x1b[0m' + msg + '\x1b[39m' // reset
+
+  // add stack trace
+  if (this._traced) {
+    for (var i = 0; i < stack.length; i++) {
+      formatted += '\n    \x1b[36mat ' + stack[i].toString() + '\x1b[39m' // cyan
+    }
+
+    return formatted
+  }
+
+  if (caller) {
+    formatted += ' \x1b[36m' + formatLocation(caller) + '\x1b[39m' // cyan
+  }
+
+  return formatted
+}
+
+/**
+ * Format call site location.
+ */
+
+function formatLocation (callSite) {
+  return relative(basePath, callSite[0]) +
+    ':' + callSite[1] +
+    ':' + callSite[2]
+}
+
+/**
+ * Get the stack as array of call sites.
+ */
+
+function getStack () {
+  var limit = Error.stackTraceLimit
+  var obj = {}
+  var prep = Error.prepareStackTrace
+
+  Error.prepareStackTrace = prepareObjectStackTrace
+  Error.stackTraceLimit = Math.max(10, limit)
+
+  // capture the stack
+  Error.captureStackTrace(obj)
+
+  // slice this function off the top
+  var stack = obj.stack.slice(1)
+
+  Error.prepareStackTrace = prep
+  Error.stackTraceLimit = limit
+
+  return stack
+}
+
+/**
+ * Capture call site stack from v8.
+ */
+
+function prepareObjectStackTrace (obj, stack) {
+  return stack
+}
+
+/**
+ * Return a wrapped function in a deprecation message.
+ */
+
+function wrapfunction (fn, message) {
+  if (typeof fn !== 'function') {
+    throw new TypeError('argument fn must be a function')
+  }
+
+  var args = createArgumentsString(fn.length)
+  var stack = getStack()
+  var site = callSiteLocation(stack[1])
+
+  site.name = fn.name
+
+  // eslint-disable-next-line no-new-func
+  var deprecatedfn = new Function('fn', 'log', 'deprecate', 'message', 'site',
+    '"use strict"\n' +
+    'return function (' + args + ') {' +
+    'log.call(deprecate, message, site)\n' +
+    'return fn.apply(this, arguments)\n' +
+    '}')(fn, log, this, message, site)
+
+  return deprecatedfn
+}
+
+/**
+ * Wrap property in a deprecation message.
+ */
+
+function wrapproperty (obj, prop, message) {
+  if (!obj || (typeof obj !== 'object' && typeof obj !== 'function')) {
+    throw new TypeError('argument obj must be object')
+  }
+
+  var descriptor = Object.getOwnPropertyDescriptor(obj, prop)
+
+  if (!descriptor) {
+    throw new TypeError('must call property on owner object')
+  }
+
+  if (!descriptor.configurable) {
+    throw new TypeError('property must be configurable')
+  }
+
+  var deprecate = this
+  var stack = getStack()
+  var site = callSiteLocation(stack[1])
+
+  // set site name
+  site.name = prop
+
+  // convert data descriptor
+  if ('value' in descriptor) {
+    descriptor = convertDataDescriptorToAccessor(obj, prop, message)
+  }
+
+  var get = descriptor.get
+  var set = descriptor.set
+
+  // wrap getter
+  if (typeof get === 'function') {
+    descriptor.get = function getter () {
+      log.call(deprecate, message, site)
+      return get.apply(this, arguments)
+    }
+  }
+
+  // wrap setter
+  if (typeof set === 'function') {
+    descriptor.set = function setter () {
+      log.call(deprecate, message, site)
+      return set.apply(this, arguments)
+    }
+  }
+
+  Object.defineProperty(obj, prop, descriptor)
+}
+
+/**
+ * Create DeprecationError for deprecation
+ */
+
+function DeprecationError (namespace, message, stack) {
+  var error = new Error()
+  var stackString
+
+  Object.defineProperty(error, 'constructor', {
+    value: DeprecationError
+  })
+
+  Object.defineProperty(error, 'message', {
+    configurable: true,
+    enumerable: false,
+    value: message,
+    writable: true
+  })
+
+  Object.defineProperty(error, 'name', {
+    enumerable: false,
+    configurable: true,
+    value: 'DeprecationError',
+    writable: true
+  })
+
+  Object.defineProperty(error, 'namespace', {
+    configurable: true,
+    enumerable: false,
+    value: namespace,
+    writable: true
+  })
+
+  Object.defineProperty(error, 'stack', {
+    configurable: true,
+    enumerable: false,
+    get: function () {
+      if (stackString !== undefined) {
+        return stackString
+      }
+
+      // prepare stack trace
+      return (stackString = createStackString.call(this, stack))
+    },
+    set: function setter (val) {
+      stackString = val
+    }
+  })
+
+  return error
+}
+´/History.md≈–2.0.0 / 2018-10-26
+==================
+
+  * Drop support for Node.js 0.6
+  * Replace internal `eval` usage with `Function` constructor
+  * Use instance methods on `process` to check for listeners
+
+1.1.2 / 2018-01-11
+==================
+
+  * perf: remove argument reassignment
+  * Support Node.js 0.6 to 9.x
+
+1.1.1 / 2017-07-27
+==================
+
+  * Remove unnecessary `Buffer` loading
+  * Support Node.js 0.6 to 8.x
+
+1.1.0 / 2015-09-14
+==================
+
+  * Enable strict mode in more places
+  * Support io.js 3.x
+  * Support io.js 2.x
+  * Support web browser loading
+    - Requires bundler like Browserify or webpack
+
+1.0.1 / 2015-04-07
+==================
+
+  * Fix `TypeError`s when under `'use strict'` code
+  * Fix useless type name on auto-generated messages
+  * Support io.js 1.x
+  * Support Node.js 0.12
+
+1.0.0 / 2014-09-17
+==================
+
+  * No changes
+
+0.4.5 / 2014-09-09
+==================
+
+  * Improve call speed to functions using the function wrapper
+  * Support Node.js 0.6
+
+0.4.4 / 2014-07-27
+==================
+
+  * Work-around v8 generating empty stack traces
+
+0.4.3 / 2014-07-26
+==================
+
+  * Fix exception when global `Error.stackTraceLimit` is too low
+
+0.4.2 / 2014-07-19
+==================
+
+  * Correct call site for wrapped functions and properties
+
+0.4.1 / 2014-07-19
+==================
+
+  * Improve automatic message generation for function properties
+
+0.4.0 / 2014-07-19
+==================
+
+  * Add `TRACE_DEPRECATION` environment variable
+  * Remove non-standard grey color from color output
+  * Support `--no-deprecation` argument
+  * Support `--trace-deprecation` argument
+  * Support `deprecate.property(fn, prop, message)`
+
+0.3.0 / 2014-06-16
+==================
+
+  * Add `NO_DEPRECATION` environment variable
+
+0.2.0 / 2014-06-15
+==================
+
+  * Add `deprecate.property(obj, prop, message)`
+  * Remove `supports-color` dependency for node.js 0.8
+
+0.1.0 / 2014-06-15
+==================
+
+  * Add `deprecate.function(fn, message)`
+  * Add `process.on('deprecation', fn)` emitter
+  * Automatically generate message when omitted from `deprecate()`
+
+0.0.1 / 2014-06-15
+==================
+
+  * Fix warning for dynamic calls at singe call site
+
+0.0.0 / 2014-06-15
+==================
+
+  * Initial implementation
+≠/package.json≈7{
+  "name": "depd",
+  "description": "Deprecate all the things",
+  "version": "2.0.0",
+  "author": "Douglas Christopher Wilson <doug@somethingdoug.com>",
+  "license": "MIT",
+  "keywords": [
+    "deprecate",
+    "deprecated"
+  ],
+  "repository": "dougwilson/nodejs-depd",
+  "browser": "lib/browser/index.js",
+  "devDependencies": {
+    "benchmark": "2.1.4",
+    "beautify-benchmark": "0.2.4",
+    "eslint": "5.7.0",
+    "eslint-config-standard": "12.0.0",
+    "eslint-plugin-import": "2.14.0",
+    "eslint-plugin-markdown": "1.0.0-beta.7",
+    "eslint-plugin-node": "7.0.1",
+    "eslint-plugin-promise": "4.0.1",
+    "eslint-plugin-standard": "4.0.0",
+    "istanbul": "0.4.5",
+    "mocha": "5.2.0",
+    "safe-buffer": "5.1.2",
+    "uid-safe": "2.1.5"
+  },
+  "files": [
+    "lib/",
+    "History.md",
+    "LICENSE",
+    "index.js",
+    "Readme.md"
+  ],
+  "engines": {
+    "node": ">= 0.8"
+  },
+  "scripts": {
+    "bench": "node benchmark/index.js",
+    "lint": "eslint --plugin markdown --ext js,md .",
+    "test": "mocha --reporter spec --bail test/",
+    "test-ci": "istanbul cover --print=none node_modules/mocha/bin/_mocha -- --reporter spec test/ && istanbul report lcovonly text-summary",
+    "test-cov": "istanbul cover --print=none node_modules/mocha/bin/_mocha -- --reporter dot test/ && istanbul report lcov text-summary"
+  }
+}
+®/LICENSE≈F(The MIT License)
+
+Copyright (c) 2014-2018 Douglas Christopher Wilson
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+µ/lib/browser/index.js≈Ë/*!
+ * depd
+ * Copyright(c) 2015 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+'use strict'
+
+/**
+ * Module exports.
+ * @public
+ */
+
+module.exports = depd
+
+/**
+ * Create deprecate for namespace in caller.
+ */
+
+function depd (namespace) {
+  if (!namespace) {
+    throw new TypeError('argument namespace is required')
+  }
+
+  function deprecate (message) {
+    // no-op in browser
+  }
+
+  deprecate._file = undefined
+  deprecate._ignored = true
+  deprecate._namespace = namespace
+  deprecate._traced = false
+  deprecate._warned = Object.create(null)
+
+  deprecate.function = wrapfunction
+  deprecate.property = wrapproperty
+
+  return deprecate
+}
+
+/**
+ * Return a wrapped function in a deprecation message.
+ *
+ * This is a no-op version of the wrapper, which does nothing but call
+ * validation.
+ */
+
+function wrapfunction (fn, message) {
+  if (typeof fn !== 'function') {
+    throw new TypeError('argument fn must be a function')
+  }
+
+  return fn
+}
+
+/**
+ * Wrap property in a deprecation message.
+ *
+ * This is a no-op version of the wrapper, which does nothing but call
+ * validation.
+ */
+
+function wrapproperty (obj, prop, message) {
+  if (!obj || (typeof obj !== 'object' && typeof obj !== 'function')) {
+    throw new TypeError('argument obj must be object')
+  }
+
+  var descriptor = Object.getOwnPropertyDescriptor(obj, prop)
+
+  if (!descriptor) {
+    throw new TypeError('must call property on owner object')
+  }
+
+  if (!descriptor.configurable) {
+    throw new TypeError('property must be configurable')
+  }
+}

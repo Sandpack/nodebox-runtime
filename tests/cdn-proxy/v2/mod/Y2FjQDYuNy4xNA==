@@ -1,0 +1,2913 @@
+è≠/package.json≈	÷{
+  "name": "cac",
+  "version": "6.7.14",
+  "description": "Simple yet powerful framework for building command-line apps.",
+  "repository": {
+    "url": "egoist/cac",
+    "type": "git"
+  },
+  "main": "index-compat.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./index-compat.js"
+    },
+    "./package.json": "./package.json",
+    "./*": "./*"
+  },
+  "files": [
+    "dist",
+    "!**/__test__/**",
+    "/mod.js",
+    "/mod.ts",
+    "/deno",
+    "/index-compat.js"
+  ],
+  "scripts": {
+    "test": "jest",
+    "test:cov": "jest --coverage",
+    "build:deno": "node -r sucrase/register scripts/build-deno.ts",
+    "build:node": "rollup -c",
+    "build": "yarn build:deno && yarn build:node",
+    "toc": "markdown-toc -i README.md",
+    "prepublishOnly": "npm run build && cp mod.js mod.mjs",
+    "docs:api": "typedoc --out api-doc --readme none --exclude \"**/__test__/**\" --theme minimal"
+  },
+  "author": "egoist <0x142857@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.12.10",
+    "@babel/plugin-syntax-typescript": "^7.12.1",
+    "@rollup/plugin-commonjs": "^17.0.0",
+    "@rollup/plugin-node-resolve": "^11.0.0",
+    "@types/fs-extra": "^9.0.5",
+    "@types/jest": "^26.0.19",
+    "@types/mri": "^1.1.0",
+    "cz-conventional-changelog": "^2.1.0",
+    "esbuild": "^0.8.21",
+    "eslint-config-rem": "^3.0.0",
+    "execa": "^5.0.0",
+    "fs-extra": "^9.0.1",
+    "globby": "^11.0.1",
+    "husky": "^1.2.0",
+    "jest": "^24.9.0",
+    "lint-staged": "^8.1.0",
+    "markdown-toc": "^1.2.0",
+    "mri": "^1.1.6",
+    "prettier": "^2.2.1",
+    "rollup": "^2.34.2",
+    "rollup-plugin-dts": "^2.0.1",
+    "rollup-plugin-esbuild": "^2.6.1",
+    "semantic-release": "^17.3.0",
+    "sucrase": "^3.16.0",
+    "ts-jest": "^26.4.4",
+    "ts-node": "^9.1.1",
+    "typedoc": "^0.19.2",
+    "typescript": "^4.1.2"
+  },
+  "engines": {
+    "node": ">=8"
+  },
+  "release": {
+    "branch": "master"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "lint-staged": {
+    "linters": {
+      "*.{js,json,ts}": [
+        "prettier --write",
+        "git add"
+      ],
+      "*.md": [
+        "markdown-toc -i",
+        "prettier --write",
+        "git add"
+      ]
+    },
+    "ignore": [
+      "dist/**",
+      "mod.js"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm t && lint-staged"
+    }
+  }
+}
+ß/mod.tsƒ,// For Deno
+export * from './deno/index.ts'
+¨/deno/CAC.ts≈≈import { EventEmitter } from "https://deno.land/std@0.114.0/node/events.ts";
+import mri from "https://cdn.skypack.dev/mri";
+import Command, { GlobalCommand, CommandConfig, HelpCallback, CommandExample } from "./Command.ts";
+import { OptionConfig } from "./Option.ts";
+import { getMriOptions, setDotProp, setByType, getFileName, camelcaseOptionName } from "./utils.ts";
+import { processArgs } from "./deno.ts";
+interface ParsedArgv {
+  args: ReadonlyArray<string>;
+  options: {
+    [k: string]: any;
+  };
+}
+
+class CAC extends EventEmitter {
+  /** The program name to display in help and version message */
+  name: string;
+  commands: Command[];
+  globalCommand: GlobalCommand;
+  matchedCommand?: Command;
+  matchedCommandName?: string;
+  /**
+   * Raw CLI arguments
+   */
+
+  rawArgs: string[];
+  /**
+   * Parsed CLI arguments
+   */
+
+  args: ParsedArgv['args'];
+  /**
+   * Parsed CLI options, camelCased
+   */
+
+  options: ParsedArgv['options'];
+  showHelpOnExit?: boolean;
+  showVersionOnExit?: boolean;
+  /**
+   * @param name The program name to display in help and version message
+   */
+
+  constructor(name = '') {
+    super();
+    this.name = name;
+    this.commands = [];
+    this.rawArgs = [];
+    this.args = [];
+    this.options = {};
+    this.globalCommand = new GlobalCommand(this);
+    this.globalCommand.usage('<command> [options]');
+  }
+  /**
+   * Add a global usage text.
+   *
+   * This is not used by sub-commands.
+   */
+
+
+  usage(text: string) {
+    this.globalCommand.usage(text);
+    return this;
+  }
+  /**
+   * Add a sub-command
+   */
+
+
+  command(rawName: string, description?: string, config?: CommandConfig) {
+    const command = new Command(rawName, description || '', config, this);
+    command.globalCommand = this.globalCommand;
+    this.commands.push(command);
+    return command;
+  }
+  /**
+   * Add a global CLI option.
+   *
+   * Which is also applied to sub-commands.
+   */
+
+
+  option(rawName: string, description: string, config?: OptionConfig) {
+    this.globalCommand.option(rawName, description, config);
+    return this;
+  }
+  /**
+   * Show help message when `-h, --help` flags appear.
+   *
+   */
+
+
+  help(callback?: HelpCallback) {
+    this.globalCommand.option('-h, --help', 'Display this message');
+    this.globalCommand.helpCallback = callback;
+    this.showHelpOnExit = true;
+    return this;
+  }
+  /**
+   * Show version number when `-v, --version` flags appear.
+   *
+   */
+
+
+  version(version: string, customFlags = '-v, --version') {
+    this.globalCommand.version(version, customFlags);
+    this.showVersionOnExit = true;
+    return this;
+  }
+  /**
+   * Add a global example.
+   *
+   * This example added here will not be used by sub-commands.
+   */
+
+
+  example(example: CommandExample) {
+    this.globalCommand.example(example);
+    return this;
+  }
+  /**
+   * Output the corresponding help message
+   * When a sub-command is matched, output the help message for the command
+   * Otherwise output the global one.
+   *
+   */
+
+
+  outputHelp() {
+    if (this.matchedCommand) {
+      this.matchedCommand.outputHelp();
+    } else {
+      this.globalCommand.outputHelp();
+    }
+  }
+  /**
+   * Output the version number.
+   *
+   */
+
+
+  outputVersion() {
+    this.globalCommand.outputVersion();
+  }
+
+  private setParsedInfo({
+    args,
+    options
+  }: ParsedArgv, matchedCommand?: Command, matchedCommandName?: string) {
+    this.args = args;
+    this.options = options;
+
+    if (matchedCommand) {
+      this.matchedCommand = matchedCommand;
+    }
+
+    if (matchedCommandName) {
+      this.matchedCommandName = matchedCommandName;
+    }
+
+    return this;
+  }
+
+  unsetMatchedCommand() {
+    this.matchedCommand = undefined;
+    this.matchedCommandName = undefined;
+  }
+  /**
+   * Parse argv
+   */
+
+
+  parse(argv = processArgs, {
+    /** Whether to run the action for matched command */
+    run = true
+  } = {}): ParsedArgv {
+    this.rawArgs = argv;
+
+    if (!this.name) {
+      this.name = argv[1] ? getFileName(argv[1]) : 'cli';
+    }
+
+    let shouldParse = true; // Search sub-commands
+
+    for (const command of this.commands) {
+      const parsed = this.mri(argv.slice(2), command);
+      const commandName = parsed.args[0];
+
+      if (command.isMatched(commandName)) {
+        shouldParse = false;
+        const parsedInfo = { ...parsed,
+          args: parsed.args.slice(1)
+        };
+        this.setParsedInfo(parsedInfo, command, commandName);
+        this.emit(`command:${commandName}`, command);
+      }
+    }
+
+    if (shouldParse) {
+      // Search the default command
+      for (const command of this.commands) {
+        if (command.name === '') {
+          shouldParse = false;
+          const parsed = this.mri(argv.slice(2), command);
+          this.setParsedInfo(parsed, command);
+          this.emit(`command:!`, command);
+        }
+      }
+    }
+
+    if (shouldParse) {
+      const parsed = this.mri(argv.slice(2));
+      this.setParsedInfo(parsed);
+    }
+
+    if (this.options.help && this.showHelpOnExit) {
+      this.outputHelp();
+      run = false;
+      this.unsetMatchedCommand();
+    }
+
+    if (this.options.version && this.showVersionOnExit && this.matchedCommandName == null) {
+      this.outputVersion();
+      run = false;
+      this.unsetMatchedCommand();
+    }
+
+    const parsedArgv = {
+      args: this.args,
+      options: this.options
+    };
+
+    if (run) {
+      this.runMatchedCommand();
+    }
+
+    if (!this.matchedCommand && this.args[0]) {
+      this.emit('command:*');
+    }
+
+    return parsedArgv;
+  }
+
+  private mri(argv: string[],
+  /** Matched command */
+  command?: Command): ParsedArgv {
+    // All added options
+    const cliOptions = [...this.globalCommand.options, ...(command ? command.options : [])];
+    const mriOptions = getMriOptions(cliOptions); // Extract everything after `--` since mri doesn't support it
+
+    let argsAfterDoubleDashes: string[] = [];
+    const doubleDashesIndex = argv.indexOf('--');
+
+    if (doubleDashesIndex > -1) {
+      argsAfterDoubleDashes = argv.slice(doubleDashesIndex + 1);
+      argv = argv.slice(0, doubleDashesIndex);
+    }
+
+    let parsed = mri(argv, mriOptions);
+    parsed = Object.keys(parsed).reduce((res, name) => {
+      return { ...res,
+        [camelcaseOptionName(name)]: parsed[name]
+      };
+    }, {
+      _: []
+    });
+    const args = parsed._;
+    const options: {
+      [k: string]: any;
+    } = {
+      '--': argsAfterDoubleDashes
+    }; // Set option default value
+
+    const ignoreDefault = command && command.config.ignoreOptionDefaultValue ? command.config.ignoreOptionDefaultValue : this.globalCommand.config.ignoreOptionDefaultValue;
+    let transforms = Object.create(null);
+
+    for (const cliOption of cliOptions) {
+      if (!ignoreDefault && cliOption.config.default !== undefined) {
+        for (const name of cliOption.names) {
+          options[name] = cliOption.config.default;
+        }
+      } // If options type is defined
+
+
+      if (Array.isArray(cliOption.config.type)) {
+        if (transforms[cliOption.name] === undefined) {
+          transforms[cliOption.name] = Object.create(null);
+          transforms[cliOption.name]['shouldTransform'] = true;
+          transforms[cliOption.name]['transformFunction'] = cliOption.config.type[0];
+        }
+      }
+    } // Set option values (support dot-nested property name)
+
+
+    for (const key of Object.keys(parsed)) {
+      if (key !== '_') {
+        const keys = key.split('.');
+        setDotProp(options, keys, parsed[key]);
+        setByType(options, transforms);
+      }
+    }
+
+    return {
+      args,
+      options
+    };
+  }
+
+  runMatchedCommand() {
+    const {
+      args,
+      options,
+      matchedCommand: command
+    } = this;
+    if (!command || !command.commandAction) return;
+    command.checkUnknownOptions();
+    command.checkOptionValue();
+    command.checkRequiredArgs();
+    const actionArgs: any[] = [];
+    command.args.forEach((arg, index) => {
+      if (arg.variadic) {
+        actionArgs.push(args.slice(index));
+      } else {
+        actionArgs.push(args[index]);
+      }
+    });
+    actionArgs.push(options);
+    return command.commandAction.apply(this, actionArgs);
+  }
+
+}
+
+export default CAC;ß/mod.jsƒG// Deno users should use mod.ts instead
+export * from './deno/index.ts'™/README.md≈=ö<img width="945" alt="2017-07-26 9 27 05" src="https://user-images.githubusercontent.com/8784712/28623641-373450f4-7249-11e7-854d-1b076dab274d.png">
+
+[![NPM version](https://img.shields.io/npm/v/cac.svg?style=flat)](https://npmjs.com/package/cac) [![NPM downloads](https://img.shields.io/npm/dm/cac.svg?style=flat)](https://npmjs.com/package/cac) [![CircleCI](https://circleci.com/gh/cacjs/cac/tree/master.svg?style=shield)](https://circleci.com/gh/cacjs/cac/tree/master) [![Codecov](https://badgen.net/codecov/c/github/cacjs/cac/master)](https://codecov.io/gh/cacjs/cac) [![donate](https://img.shields.io/badge/$-donate-ff69b4.svg?maxAge=2592000&style=flat)](https://github.com/egoist/donate) [![chat](https://img.shields.io/badge/chat-on%20discord-7289DA.svg?style=flat)](https://chat.egoist.moe) [![install size](https://badgen.net/packagephobia/install/cac)](https://packagephobia.now.sh/result?p=cac)
+
+## Introduction
+
+**C**ommand **A**nd **C**onquer is a JavaScript library for building CLI apps.
+
+## Features
+
+- **Super light-weight**: No dependency, just a single file.
+- **Easy to learn**. There're only 4 APIs you need to learn for building simple CLIs: `cli.option` `cli.version` `cli.help` `cli.parse`.
+- **Yet so powerful**. Enable features like default command, git-like subcommands, validation for required arguments and options, variadic arguments, dot-nested options, automated help message generation and so on.
+- **Developer friendly**. Written in TypeScript.
+
+## Table of Contents
+
+<!-- toc -->
+
+- [Install](#install)
+- [Usage](#usage)
+  - [Simple Parsing](#simple-parsing)
+  - [Display Help Message and Version](#display-help-message-and-version)
+  - [Command-specific Options](#command-specific-options)
+  - [Dash in option names](#dash-in-option-names)
+  - [Brackets](#brackets)
+  - [Negated Options](#negated-options)
+  - [Variadic Arguments](#variadic-arguments)
+  - [Dot-nested Options](#dot-nested-options)
+  - [Default Command](#default-command)
+  - [Supply an array as option value](#supply-an-array-as-option-value)
+  - [Error Handling](#error-handling)
+  - [With TypeScript](#with-typescript)
+  - [With Deno](#with-deno)
+- [Projects Using CAC](#projects-using-cac)
+- [References](#references)
+  - [CLI Instance](#cli-instance)
+    - [cac(name?)](#cacname)
+    - [cli.command(name, description, config?)](#clicommandname-description-config)
+    - [cli.option(name, description, config?)](#clioptionname-description-config)
+    - [cli.parse(argv?)](#cliparseargv)
+    - [cli.version(version, customFlags?)](#cliversionversion-customflags)
+    - [cli.help(callback?)](#clihelpcallback)
+    - [cli.outputHelp()](#clioutputhelp)
+    - [cli.usage(text)](#cliusagetext)
+  - [Command Instance](#command-instance)
+    - [command.option()](#commandoption)
+    - [command.action(callback)](#commandactioncallback)
+    - [command.alias(name)](#commandaliasname)
+    - [command.allowUnknownOptions()](#commandallowunknownoptions)
+    - [command.example(example)](#commandexampleexample)
+    - [command.usage(text)](#commandusagetext)
+  - [Events](#events)
+- [FAQ](#faq)
+  - [How is the name written and pronounced?](#how-is-the-name-written-and-pronounced)
+  - [Why not use Commander.js?](#why-not-use-commanderjs)
+- [Project Stats](#project-stats)
+- [Contributing](#contributing)
+- [Author](#author)
+
+<!-- tocstop -->
+
+## Install
+
+```bash
+yarn add cac
+```
+
+## Usage
+
+### Simple Parsing
+
+Use CAC as simple argument parser:
+
+```js
+// examples/basic-usage.js
+const cli = require('cac')()
+
+cli.option('--type <type>', 'Choose a project type', {
+  default: 'node',
+})
+
+const parsed = cli.parse()
+
+console.log(JSON.stringify(parsed, null, 2))
+```
+
+<img width="500" alt="2018-11-26 12 28 03" src="https://user-images.githubusercontent.com/8784712/48981576-2a871000-f112-11e8-8151-80f61e9b9908.png">
+
+### Display Help Message and Version
+
+```js
+// examples/help.js
+const cli = require('cac')()
+
+cli.option('--type [type]', 'Choose a project type', {
+  default: 'node',
+})
+cli.option('--name <name>', 'Provide your name')
+
+cli.command('lint [...files]', 'Lint files').action((files, options) => {
+  console.log(files, options)
+})
+
+// Display help message when `-h` or `--help` appears
+cli.help()
+// Display version number when `-v` or `--version` appears
+// It's also used in help message
+cli.version('0.0.0')
+
+cli.parse()
+```
+
+<img width="500" alt="2018-11-25 8 21 14" src="https://user-images.githubusercontent.com/8784712/48979012-acb20d00-f0ef-11e8-9cc6-8ffca00ab78a.png">
+
+### Command-specific Options
+
+You can attach options to a command.
+
+```js
+const cli = require('cac')()
+
+cli
+  .command('rm <dir>', 'Remove a dir')
+  .option('-r, --recursive', 'Remove recursively')
+  .action((dir, options) => {
+    console.log('remove ' + dir + (options.recursive ? ' recursively' : ''))
+  })
+
+cli.help()
+
+cli.parse()
+```
+
+A command's options are validated when the command is used. Any unknown options will be reported as an error. However, if an action-based command does not define an action, then the options are not validated. If you really want to use unknown options, use [`command.allowUnknownOptions`](#commandallowunknownoptions).
+
+<img alt="command options" width="500" src="https://user-images.githubusercontent.com/8784712/49065552-49dc8500-f259-11e8-9c7b-a7c32d70920e.png">
+
+### Dash in option names
+
+Options in kebab-case should be referenced in camelCase in your code:
+
+```js
+cli
+  .command('dev', 'Start dev server')
+  .option('--clear-screen', 'Clear screen')
+  .action((options) => {
+    console.log(options.clearScreen)
+  })
+```
+
+In fact `--clear-screen` and `--clearScreen` are both mapped to `options.clearScreen`.
+
+### Brackets
+
+When using brackets in command name, angled brackets indicate required command arguments, while square bracket indicate optional arguments.
+
+When using brackets in option name, angled brackets indicate that a string / number value is required, while square bracket indicate that the value can also be `true`.
+
+```js
+const cli = require('cac')()
+
+cli
+  .command('deploy <folder>', 'Deploy a folder to AWS')
+  .option('--scale [level]', 'Scaling level')
+  .action((folder, options) => {
+    // ...
+  })
+
+cli
+  .command('build [project]', 'Build a project')
+  .option('--out <dir>', 'Output directory')
+  .action((folder, options) => {
+    // ...
+  })
+
+cli.parse()
+```
+
+### Negated Options
+
+To allow an option whose value is `false`, you need to manually specify a negated option:
+
+```js
+cli
+  .command('build [project]', 'Build a project')
+  .option('--no-config', 'Disable config file')
+  .option('--config <path>', 'Use a custom config file')
+```
+
+This will let CAC set the default value of `config` to true, and you can use `--no-config` flag to set it to `false`.
+
+### Variadic Arguments
+
+The last argument of a command can be variadic, and only the last argument. To make an argument variadic you have to add `...` to the start of argument name, just like the rest operator in JavaScript. Here is an example:
+
+```js
+const cli = require('cac')()
+
+cli
+  .command('build <entry> [...otherFiles]', 'Build your app')
+  .option('--foo', 'Foo option')
+  .action((entry, otherFiles, options) => {
+    console.log(entry)
+    console.log(otherFiles)
+    console.log(options)
+  })
+
+cli.help()
+
+cli.parse()
+```
+
+<img width="500" alt="2018-11-25 8 25 30" src="https://user-images.githubusercontent.com/8784712/48979056-47125080-f0f0-11e8-9d8f-3219e0beb0ed.png">
+
+### Dot-nested Options
+
+Dot-nested options will be merged into a single option.
+
+```js
+const cli = require('cac')()
+
+cli
+  .command('build', 'desc')
+  .option('--env <env>', 'Set envs')
+  .example('--env.API_SECRET xxx')
+  .action((options) => {
+    console.log(options)
+  })
+
+cli.help()
+
+cli.parse()
+```
+
+<img width="500" alt="2018-11-25 9 37 53" src="https://user-images.githubusercontent.com/8784712/48979771-6ada9400-f0fa-11e8-8192-e541b2cfd9da.png">
+
+### Default Command
+
+Register a command that will be used when no other command is matched.
+
+```js
+const cli = require('cac')()
+
+cli
+  // Simply omit the command name, just brackets
+  .command('[...files]', 'Build files')
+  .option('--minimize', 'Minimize output')
+  .action((files, options) => {
+    console.log(files)
+    console.log(options.minimize)
+  })
+
+cli.parse()
+```
+
+### Supply an array as option value
+
+```bash
+node cli.js --include project-a
+# The parsed options will be:
+# { include: 'project-a' }
+
+node cli.js --include project-a --include project-b
+# The parsed options will be:
+# { include: ['project-a', 'project-b'] }
+```
+
+### Error Handling
+
+To handle command errors globally:
+
+```js
+try {
+  // Parse CLI args without running the command
+  cli.parse(process.argv, { run: false })
+  // Run the command yourself
+  // You only need `await` when your command action returns a Promise
+  await cli.runMatchedCommand()
+} catch (error) {
+  // Handle error here..
+  // e.g.
+  // console.error(error.stack)
+  // process.exit(1)
+}
+```
+
+### With TypeScript
+
+First you need `@types/node` to be installed as a dev dependency in your project:
+
+```bash
+yarn add @types/node --dev
+```
+
+Then everything just works out of the box:
+
+```js
+const { cac } = require('cac')
+// OR ES modules
+import { cac } from 'cac'
+```
+
+### With Deno
+
+```ts
+import { cac } from 'https://unpkg.com/cac/mod.ts'
+
+const cli = cac('my-program')
+```
+
+## Projects Using CAC
+
+Projects that use **CAC**:
+
+- [VuePress](https://github.com/vuejs/vuepress): :memo: Minimalistic Vue-powered static site generator.
+- [SAO](https://github.com/egoist/sao): ‚öîÔ∏è Futuristic scaffolding tool.
+- [DocPad](https://github.com/docpad/docpad): üèπ Powerful Static Site Generator.
+- [Poi](https://github.com/egoist/poi): ‚ö°Ô∏è Delightful web development.
+- [bili](https://github.com/egoist/bili): ü•Ç Schweizer Armeemesser for bundling JavaScript libraries.
+- [Lad](https://github.com/ladjs/lad): üë¶ Lad scaffolds a Koa webapp and API framework for Node.js.
+- [Lass](https://github.com/lassjs/lass): üíÅüèª Scaffold a modern package boilerplate for Node.js.
+- [Foy](https://github.com/zaaack/foy): üèó A lightweight and modern task runner and build tool for general purpose.
+- [Vuese](https://github.com/vuese/vuese): ü§ó One-stop solution for vue component documentation.
+- [NUT](https://github.com/nut-project/nut): üå∞ A framework born for microfrontends
+- Feel free to add yours here...
+
+## References
+
+**üíÅ Check out [the generated docs](https://cac-api-doc.egoist.sh/classes/_cac_.cac.html) from source code if you want a more in-depth API references.**
+
+Below is a brief overview.
+
+### CLI Instance
+
+CLI instance is created by invoking the `cac` function:
+
+```js
+const cac = require('cac')
+const cli = cac()
+```
+
+#### cac(name?)
+
+Create a CLI instance, optionally specify the program name which will be used to display in help and version message. When not set we use the basename of `argv[1]`.
+
+#### cli.command(name, description, config?)
+
+- Type: `(name: string, description: string) => Command`
+
+Create a command instance.
+
+The option also accepts a third argument `config` for additional command config:
+
+- `config.allowUnknownOptions`: `boolean` Allow unknown options in this command.
+- `config.ignoreOptionDefaultValue`: `boolean` Don't use the options's default value in parsed options, only display them in help message.
+
+#### cli.option(name, description, config?)
+
+- Type: `(name: string, description: string, config?: OptionConfig) => CLI`
+
+Add a global option.
+
+The option also accepts a third argument `config` for additional option config:
+
+- `config.default`: Default value for the option.
+- `config.type`: `any[]` When set to `[]`, the option value returns an array type. You can also use a conversion function such as `[String]`, which will invoke the option value with `String`.
+
+#### cli.parse(argv?)
+
+- Type: `(argv = process.argv) => ParsedArgv`
+
+```ts
+interface ParsedArgv {
+  args: string[]
+  options: {
+    [k: string]: any
+  }
+}
+```
+
+When this method is called, `cli.rawArgs` `cli.args` `cli.options` `cli.matchedCommand` will also be available.
+
+#### cli.version(version, customFlags?)
+
+- Type: `(version: string, customFlags = '-v, --version') => CLI`
+
+Output version number when `-v, --version` flag appears.
+
+#### cli.help(callback?)
+
+- Type: `(callback?: HelpCallback) => CLI`
+
+Output help message when `-h, --help` flag appears.
+
+Optional `callback` allows post-processing of help text before it is displayed:
+
+```ts
+type HelpCallback = (sections: HelpSection[]) => void
+
+interface HelpSection {
+  title?: string
+  body: string
+}
+```
+
+#### cli.outputHelp()
+
+- Type: `() => CLI`
+
+Output help message.
+
+#### cli.usage(text)
+
+- Type: `(text: string) => CLI`
+
+Add a global usage text. This is not used by sub-commands.
+
+### Command Instance
+
+Command instance is created by invoking the `cli.command` method:
+
+```js
+const command = cli.command('build [...files]', 'Build given files')
+```
+
+#### command.option()
+
+Basically the same as `cli.option` but this adds the option to specific command.
+
+#### command.action(callback)
+
+- Type: `(callback: ActionCallback) => Command`
+
+Use a callback function as the command action when the command matches user inputs.
+
+```ts
+type ActionCallback = (
+  // Parsed CLI args
+  // The last arg will be an array if it's a variadic argument
+  ...args: string | string[] | number | number[]
+  // Parsed CLI options
+  options: Options
+) => any
+
+interface Options {
+  [k: string]: any
+}
+```
+
+#### command.alias(name)
+
+- Type: `(name: string) => Command`
+
+Add an alias name to this command, the `name` here can't contain brackets.
+
+#### command.allowUnknownOptions()
+
+- Type: `() => Command`
+
+Allow unknown options in this command, by default CAC will log an error when unknown options are used.
+
+#### command.example(example)
+
+- Type: `(example: CommandExample) => Command`
+
+Add an example which will be displayed at the end of help message.
+
+```ts
+type CommandExample = ((name: string) => string) | string
+```
+
+#### command.usage(text)
+
+- Type: `(text: string) => Command`
+
+Add a usage text for this command.
+
+### Events
+
+Listen to commands:
+
+```js
+// Listen to the `foo` command
+cli.on('command:foo', () => {
+  // Do something
+})
+
+// Listen to the default command
+cli.on('command:!', () => {
+  // Do something
+})
+
+// Listen to unknown commands
+cli.on('command:*', () => {
+  console.error('Invalid command: %s', cli.args.join(' '))
+  process.exit(1)
+})
+```
+
+## FAQ
+
+### How is the name written and pronounced?
+
+CAC, or cac, pronounced `C-A-C`.
+
+This project is dedicated to our lovely C.C. sama. Maybe CAC stands for C&C as well :P
+
+<img src="http://i.giphy.com/v3FeH4swox9mg.gif" width="400"/>
+
+### Why not use Commander.js?
+
+CAC is very similar to Commander.js, while the latter does not support dot nested options, i.e. something like `--env.API_SECRET foo`. Besides, you can't use unknown options in Commander.js either.
+
+_And maybe more..._
+
+Basically I made CAC to fulfill my own needs for building CLI apps like [Poi](https://poi.js.org), [SAO](https://sao.vercel.app) and all my CLI apps. It's small, simple but powerful :P
+
+## Project Stats
+
+![Alt](https://repobeats.axiom.co/api/embed/58caf6203631bcdb9bbe22f0728a0af1683dc0bb.svg 'Repobeats analytics image')
+
+## Contributing
+
+1. Fork it!
+2. Create your feature branch: `git checkout -b my-new-feature`
+3. Commit your changes: `git commit -am 'Add some feature'`
+4. Push to the branch: `git push origin my-new-feature`
+5. Submit a pull request :D
+
+## Author
+
+**CAC** ¬© [EGOIST](https://github.com/egoist), Released under the [MIT](./LICENSE) License.<br>
+Authored and maintained by egoist with help from contributors ([list](https://github.com/cacjs/cac/contributors)).
+
+> [Website](https://egoist.sh) ¬∑ GitHub [@egoist](https://github.com/egoist) ¬∑ Twitter [@\_egoistlily](https://twitter.com/_egoistlily)
+Æ/dist/index.js≈F∑'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+var events = require('events');
+
+function toArr(any) {
+	return any == null ? [] : Array.isArray(any) ? any : [any];
+}
+
+function toVal(out, key, val, opts) {
+	var x, old=out[key], nxt=(
+		!!~opts.string.indexOf(key) ? (val == null || val === true ? '' : String(val))
+		: typeof val === 'boolean' ? val
+		: !!~opts.boolean.indexOf(key) ? (val === 'false' ? false : val === 'true' || (out._.push((x = +val,x * 0 === 0) ? x : val),!!val))
+		: (x = +val,x * 0 === 0) ? x : val
+	);
+	out[key] = old == null ? nxt : (Array.isArray(old) ? old.concat(nxt) : [old, nxt]);
+}
+
+function mri2 (args, opts) {
+	args = args || [];
+	opts = opts || {};
+
+	var k, arr, arg, name, val, out={ _:[] };
+	var i=0, j=0, idx=0, len=args.length;
+
+	const alibi = opts.alias !== void 0;
+	const strict = opts.unknown !== void 0;
+	const defaults = opts.default !== void 0;
+
+	opts.alias = opts.alias || {};
+	opts.string = toArr(opts.string);
+	opts.boolean = toArr(opts.boolean);
+
+	if (alibi) {
+		for (k in opts.alias) {
+			arr = opts.alias[k] = toArr(opts.alias[k]);
+			for (i=0; i < arr.length; i++) {
+				(opts.alias[arr[i]] = arr.concat(k)).splice(i, 1);
+			}
+		}
+	}
+
+	for (i=opts.boolean.length; i-- > 0;) {
+		arr = opts.alias[opts.boolean[i]] || [];
+		for (j=arr.length; j-- > 0;) opts.boolean.push(arr[j]);
+	}
+
+	for (i=opts.string.length; i-- > 0;) {
+		arr = opts.alias[opts.string[i]] || [];
+		for (j=arr.length; j-- > 0;) opts.string.push(arr[j]);
+	}
+
+	if (defaults) {
+		for (k in opts.default) {
+			name = typeof opts.default[k];
+			arr = opts.alias[k] = opts.alias[k] || [];
+			if (opts[name] !== void 0) {
+				opts[name].push(k);
+				for (i=0; i < arr.length; i++) {
+					opts[name].push(arr[i]);
+				}
+			}
+		}
+	}
+
+	const keys = strict ? Object.keys(opts.alias) : [];
+
+	for (i=0; i < len; i++) {
+		arg = args[i];
+
+		if (arg === '--') {
+			out._ = out._.concat(args.slice(++i));
+			break;
+		}
+
+		for (j=0; j < arg.length; j++) {
+			if (arg.charCodeAt(j) !== 45) break; // "-"
+		}
+
+		if (j === 0) {
+			out._.push(arg);
+		} else if (arg.substring(j, j + 3) === 'no-') {
+			name = arg.substring(j + 3);
+			if (strict && !~keys.indexOf(name)) {
+				return opts.unknown(arg);
+			}
+			out[name] = false;
+		} else {
+			for (idx=j+1; idx < arg.length; idx++) {
+				if (arg.charCodeAt(idx) === 61) break; // "="
+			}
+
+			name = arg.substring(j, idx);
+			val = arg.substring(++idx) || (i+1 === len || (''+args[i+1]).charCodeAt(0) === 45 || args[++i]);
+			arr = (j === 2 ? [name] : name);
+
+			for (idx=0; idx < arr.length; idx++) {
+				name = arr[idx];
+				if (strict && !~keys.indexOf(name)) return opts.unknown('-'.repeat(j) + name);
+				toVal(out, name, (idx + 1 < arr.length) || val, opts);
+			}
+		}
+	}
+
+	if (defaults) {
+		for (k in opts.default) {
+			if (out[k] === void 0) {
+				out[k] = opts.default[k];
+			}
+		}
+	}
+
+	if (alibi) {
+		for (k in out) {
+			arr = opts.alias[k] || [];
+			while (arr.length > 0) {
+				out[arr.shift()] = out[k];
+			}
+		}
+	}
+
+	return out;
+}
+
+const removeBrackets = (v) => v.replace(/[<[].+/, "").trim();
+const findAllBrackets = (v) => {
+  const ANGLED_BRACKET_RE_GLOBAL = /<([^>]+)>/g;
+  const SQUARE_BRACKET_RE_GLOBAL = /\[([^\]]+)\]/g;
+  const res = [];
+  const parse = (match) => {
+    let variadic = false;
+    let value = match[1];
+    if (value.startsWith("...")) {
+      value = value.slice(3);
+      variadic = true;
+    }
+    return {
+      required: match[0].startsWith("<"),
+      value,
+      variadic
+    };
+  };
+  let angledMatch;
+  while (angledMatch = ANGLED_BRACKET_RE_GLOBAL.exec(v)) {
+    res.push(parse(angledMatch));
+  }
+  let squareMatch;
+  while (squareMatch = SQUARE_BRACKET_RE_GLOBAL.exec(v)) {
+    res.push(parse(squareMatch));
+  }
+  return res;
+};
+const getMriOptions = (options) => {
+  const result = {alias: {}, boolean: []};
+  for (const [index, option] of options.entries()) {
+    if (option.names.length > 1) {
+      result.alias[option.names[0]] = option.names.slice(1);
+    }
+    if (option.isBoolean) {
+      if (option.negated) {
+        const hasStringTypeOption = options.some((o, i) => {
+          return i !== index && o.names.some((name) => option.names.includes(name)) && typeof o.required === "boolean";
+        });
+        if (!hasStringTypeOption) {
+          result.boolean.push(option.names[0]);
+        }
+      } else {
+        result.boolean.push(option.names[0]);
+      }
+    }
+  }
+  return result;
+};
+const findLongest = (arr) => {
+  return arr.sort((a, b) => {
+    return a.length > b.length ? -1 : 1;
+  })[0];
+};
+const padRight = (str, length) => {
+  return str.length >= length ? str : `${str}${" ".repeat(length - str.length)}`;
+};
+const camelcase = (input) => {
+  return input.replace(/([a-z])-([a-z])/g, (_, p1, p2) => {
+    return p1 + p2.toUpperCase();
+  });
+};
+const setDotProp = (obj, keys, val) => {
+  let i = 0;
+  let length = keys.length;
+  let t = obj;
+  let x;
+  for (; i < length; ++i) {
+    x = t[keys[i]];
+    t = t[keys[i]] = i === length - 1 ? val : x != null ? x : !!~keys[i + 1].indexOf(".") || !(+keys[i + 1] > -1) ? {} : [];
+  }
+};
+const setByType = (obj, transforms) => {
+  for (const key of Object.keys(transforms)) {
+    const transform = transforms[key];
+    if (transform.shouldTransform) {
+      obj[key] = Array.prototype.concat.call([], obj[key]);
+      if (typeof transform.transformFunction === "function") {
+        obj[key] = obj[key].map(transform.transformFunction);
+      }
+    }
+  }
+};
+const getFileName = (input) => {
+  const m = /([^\\\/]+)$/.exec(input);
+  return m ? m[1] : "";
+};
+const camelcaseOptionName = (name) => {
+  return name.split(".").map((v, i) => {
+    return i === 0 ? camelcase(v) : v;
+  }).join(".");
+};
+class CACError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = this.constructor.name;
+    if (typeof Error.captureStackTrace === "function") {
+      Error.captureStackTrace(this, this.constructor);
+    } else {
+      this.stack = new Error(message).stack;
+    }
+  }
+}
+
+class Option {
+  constructor(rawName, description, config) {
+    this.rawName = rawName;
+    this.description = description;
+    this.config = Object.assign({}, config);
+    rawName = rawName.replace(/\.\*/g, "");
+    this.negated = false;
+    this.names = removeBrackets(rawName).split(",").map((v) => {
+      let name = v.trim().replace(/^-{1,2}/, "");
+      if (name.startsWith("no-")) {
+        this.negated = true;
+        name = name.replace(/^no-/, "");
+      }
+      return camelcaseOptionName(name);
+    }).sort((a, b) => a.length > b.length ? 1 : -1);
+    this.name = this.names[this.names.length - 1];
+    if (this.negated && this.config.default == null) {
+      this.config.default = true;
+    }
+    if (rawName.includes("<")) {
+      this.required = true;
+    } else if (rawName.includes("[")) {
+      this.required = false;
+    } else {
+      this.isBoolean = true;
+    }
+  }
+}
+
+const processArgs = process.argv;
+const platformInfo = `${process.platform}-${process.arch} node-${process.version}`;
+
+class Command {
+  constructor(rawName, description, config = {}, cli) {
+    this.rawName = rawName;
+    this.description = description;
+    this.config = config;
+    this.cli = cli;
+    this.options = [];
+    this.aliasNames = [];
+    this.name = removeBrackets(rawName);
+    this.args = findAllBrackets(rawName);
+    this.examples = [];
+  }
+  usage(text) {
+    this.usageText = text;
+    return this;
+  }
+  allowUnknownOptions() {
+    this.config.allowUnknownOptions = true;
+    return this;
+  }
+  ignoreOptionDefaultValue() {
+    this.config.ignoreOptionDefaultValue = true;
+    return this;
+  }
+  version(version, customFlags = "-v, --version") {
+    this.versionNumber = version;
+    this.option(customFlags, "Display version number");
+    return this;
+  }
+  example(example) {
+    this.examples.push(example);
+    return this;
+  }
+  option(rawName, description, config) {
+    const option = new Option(rawName, description, config);
+    this.options.push(option);
+    return this;
+  }
+  alias(name) {
+    this.aliasNames.push(name);
+    return this;
+  }
+  action(callback) {
+    this.commandAction = callback;
+    return this;
+  }
+  isMatched(name) {
+    return this.name === name || this.aliasNames.includes(name);
+  }
+  get isDefaultCommand() {
+    return this.name === "" || this.aliasNames.includes("!");
+  }
+  get isGlobalCommand() {
+    return this instanceof GlobalCommand;
+  }
+  hasOption(name) {
+    name = name.split(".")[0];
+    return this.options.find((option) => {
+      return option.names.includes(name);
+    });
+  }
+  outputHelp() {
+    const {name, commands} = this.cli;
+    const {
+      versionNumber,
+      options: globalOptions,
+      helpCallback
+    } = this.cli.globalCommand;
+    let sections = [
+      {
+        body: `${name}${versionNumber ? `/${versionNumber}` : ""}`
+      }
+    ];
+    sections.push({
+      title: "Usage",
+      body: `  $ ${name} ${this.usageText || this.rawName}`
+    });
+    const showCommands = (this.isGlobalCommand || this.isDefaultCommand) && commands.length > 0;
+    if (showCommands) {
+      const longestCommandName = findLongest(commands.map((command) => command.rawName));
+      sections.push({
+        title: "Commands",
+        body: commands.map((command) => {
+          return `  ${padRight(command.rawName, longestCommandName.length)}  ${command.description}`;
+        }).join("\n")
+      });
+      sections.push({
+        title: `For more info, run any command with the \`--help\` flag`,
+        body: commands.map((command) => `  $ ${name}${command.name === "" ? "" : ` ${command.name}`} --help`).join("\n")
+      });
+    }
+    let options = this.isGlobalCommand ? globalOptions : [...this.options, ...globalOptions || []];
+    if (!this.isGlobalCommand && !this.isDefaultCommand) {
+      options = options.filter((option) => option.name !== "version");
+    }
+    if (options.length > 0) {
+      const longestOptionName = findLongest(options.map((option) => option.rawName));
+      sections.push({
+        title: "Options",
+        body: options.map((option) => {
+          return `  ${padRight(option.rawName, longestOptionName.length)}  ${option.description} ${option.config.default === void 0 ? "" : `(default: ${option.config.default})`}`;
+        }).join("\n")
+      });
+    }
+    if (this.examples.length > 0) {
+      sections.push({
+        title: "Examples",
+        body: this.examples.map((example) => {
+          if (typeof example === "function") {
+            return example(name);
+          }
+          return example;
+        }).join("\n")
+      });
+    }
+    if (helpCallback) {
+      sections = helpCallback(sections) || sections;
+    }
+    console.log(sections.map((section) => {
+      return section.title ? `${section.title}:
+${section.body}` : section.body;
+    }).join("\n\n"));
+  }
+  outputVersion() {
+    const {name} = this.cli;
+    const {versionNumber} = this.cli.globalCommand;
+    if (versionNumber) {
+      console.log(`${name}/${versionNumber} ${platformInfo}`);
+    }
+  }
+  checkRequiredArgs() {
+    const minimalArgsCount = this.args.filter((arg) => arg.required).length;
+    if (this.cli.args.length < minimalArgsCount) {
+      throw new CACError(`missing required args for command \`${this.rawName}\``);
+    }
+  }
+  checkUnknownOptions() {
+    const {options, globalCommand} = this.cli;
+    if (!this.config.allowUnknownOptions) {
+      for (const name of Object.keys(options)) {
+        if (name !== "--" && !this.hasOption(name) && !globalCommand.hasOption(name)) {
+          throw new CACError(`Unknown option \`${name.length > 1 ? `--${name}` : `-${name}`}\``);
+        }
+      }
+    }
+  }
+  checkOptionValue() {
+    const {options: parsedOptions, globalCommand} = this.cli;
+    const options = [...globalCommand.options, ...this.options];
+    for (const option of options) {
+      const value = parsedOptions[option.name.split(".")[0]];
+      if (option.required) {
+        const hasNegated = options.some((o) => o.negated && o.names.includes(option.name));
+        if (value === true || value === false && !hasNegated) {
+          throw new CACError(`option \`${option.rawName}\` value is missing`);
+        }
+      }
+    }
+  }
+}
+class GlobalCommand extends Command {
+  constructor(cli) {
+    super("@@global@@", "", {}, cli);
+  }
+}
+
+var __assign = Object.assign;
+class CAC extends events.EventEmitter {
+  constructor(name = "") {
+    super();
+    this.name = name;
+    this.commands = [];
+    this.rawArgs = [];
+    this.args = [];
+    this.options = {};
+    this.globalCommand = new GlobalCommand(this);
+    this.globalCommand.usage("<command> [options]");
+  }
+  usage(text) {
+    this.globalCommand.usage(text);
+    return this;
+  }
+  command(rawName, description, config) {
+    const command = new Command(rawName, description || "", config, this);
+    command.globalCommand = this.globalCommand;
+    this.commands.push(command);
+    return command;
+  }
+  option(rawName, description, config) {
+    this.globalCommand.option(rawName, description, config);
+    return this;
+  }
+  help(callback) {
+    this.globalCommand.option("-h, --help", "Display this message");
+    this.globalCommand.helpCallback = callback;
+    this.showHelpOnExit = true;
+    return this;
+  }
+  version(version, customFlags = "-v, --version") {
+    this.globalCommand.version(version, customFlags);
+    this.showVersionOnExit = true;
+    return this;
+  }
+  example(example) {
+    this.globalCommand.example(example);
+    return this;
+  }
+  outputHelp() {
+    if (this.matchedCommand) {
+      this.matchedCommand.outputHelp();
+    } else {
+      this.globalCommand.outputHelp();
+    }
+  }
+  outputVersion() {
+    this.globalCommand.outputVersion();
+  }
+  setParsedInfo({args, options}, matchedCommand, matchedCommandName) {
+    this.args = args;
+    this.options = options;
+    if (matchedCommand) {
+      this.matchedCommand = matchedCommand;
+    }
+    if (matchedCommandName) {
+      this.matchedCommandName = matchedCommandName;
+    }
+    return this;
+  }
+  unsetMatchedCommand() {
+    this.matchedCommand = void 0;
+    this.matchedCommandName = void 0;
+  }
+  parse(argv = processArgs, {
+    run = true
+  } = {}) {
+    this.rawArgs = argv;
+    if (!this.name) {
+      this.name = argv[1] ? getFileName(argv[1]) : "cli";
+    }
+    let shouldParse = true;
+    for (const command of this.commands) {
+      const parsed = this.mri(argv.slice(2), command);
+      const commandName = parsed.args[0];
+      if (command.isMatched(commandName)) {
+        shouldParse = false;
+        const parsedInfo = __assign(__assign({}, parsed), {
+          args: parsed.args.slice(1)
+        });
+        this.setParsedInfo(parsedInfo, command, commandName);
+        this.emit(`command:${commandName}`, command);
+      }
+    }
+    if (shouldParse) {
+      for (const command of this.commands) {
+        if (command.name === "") {
+          shouldParse = false;
+          const parsed = this.mri(argv.slice(2), command);
+          this.setParsedInfo(parsed, command);
+          this.emit(`command:!`, command);
+        }
+      }
+    }
+    if (shouldParse) {
+      const parsed = this.mri(argv.slice(2));
+      this.setParsedInfo(parsed);
+    }
+    if (this.options.help && this.showHelpOnExit) {
+      this.outputHelp();
+      run = false;
+      this.unsetMatchedCommand();
+    }
+    if (this.options.version && this.showVersionOnExit && this.matchedCommandName == null) {
+      this.outputVersion();
+      run = false;
+      this.unsetMatchedCommand();
+    }
+    const parsedArgv = {args: this.args, options: this.options};
+    if (run) {
+      this.runMatchedCommand();
+    }
+    if (!this.matchedCommand && this.args[0]) {
+      this.emit("command:*");
+    }
+    return parsedArgv;
+  }
+  mri(argv, command) {
+    const cliOptions = [
+      ...this.globalCommand.options,
+      ...command ? command.options : []
+    ];
+    const mriOptions = getMriOptions(cliOptions);
+    let argsAfterDoubleDashes = [];
+    const doubleDashesIndex = argv.indexOf("--");
+    if (doubleDashesIndex > -1) {
+      argsAfterDoubleDashes = argv.slice(doubleDashesIndex + 1);
+      argv = argv.slice(0, doubleDashesIndex);
+    }
+    let parsed = mri2(argv, mriOptions);
+    parsed = Object.keys(parsed).reduce((res, name) => {
+      return __assign(__assign({}, res), {
+        [camelcaseOptionName(name)]: parsed[name]
+      });
+    }, {_: []});
+    const args = parsed._;
+    const options = {
+      "--": argsAfterDoubleDashes
+    };
+    const ignoreDefault = command && command.config.ignoreOptionDefaultValue ? command.config.ignoreOptionDefaultValue : this.globalCommand.config.ignoreOptionDefaultValue;
+    let transforms = Object.create(null);
+    for (const cliOption of cliOptions) {
+      if (!ignoreDefault && cliOption.config.default !== void 0) {
+        for (const name of cliOption.names) {
+          options[name] = cliOption.config.default;
+        }
+      }
+      if (Array.isArray(cliOption.config.type)) {
+        if (transforms[cliOption.name] === void 0) {
+          transforms[cliOption.name] = Object.create(null);
+          transforms[cliOption.name]["shouldTransform"] = true;
+          transforms[cliOption.name]["transformFunction"] = cliOption.config.type[0];
+        }
+      }
+    }
+    for (const key of Object.keys(parsed)) {
+      if (key !== "_") {
+        const keys = key.split(".");
+        setDotProp(options, keys, parsed[key]);
+        setByType(options, transforms);
+      }
+    }
+    return {
+      args,
+      options
+    };
+  }
+  runMatchedCommand() {
+    const {args, options, matchedCommand: command} = this;
+    if (!command || !command.commandAction)
+      return;
+    command.checkUnknownOptions();
+    command.checkOptionValue();
+    command.checkRequiredArgs();
+    const actionArgs = [];
+    command.args.forEach((arg, index) => {
+      if (arg.variadic) {
+        actionArgs.push(args.slice(index));
+      } else {
+        actionArgs.push(args[index]);
+      }
+    });
+    actionArgs.push(options);
+    return command.commandAction.apply(this, actionArgs);
+  }
+}
+
+const cac = (name = "") => new CAC(name);
+
+exports.CAC = CAC;
+exports.Command = Command;
+exports.cac = cac;
+exports.default = cac;
+∞/dist/index.d.ts≈ƒimport { EventEmitter } from 'events';
+
+interface OptionConfig {
+    default?: any;
+    type?: any[];
+}
+declare class Option {
+    rawName: string;
+    description: string;
+    /** Option name */
+    name: string;
+    /** Option name and aliases */
+    names: string[];
+    isBoolean?: boolean;
+    required?: boolean;
+    config: OptionConfig;
+    negated: boolean;
+    constructor(rawName: string, description: string, config?: OptionConfig);
+}
+
+interface CommandArg {
+    required: boolean;
+    value: string;
+    variadic: boolean;
+}
+interface HelpSection {
+    title?: string;
+    body: string;
+}
+interface CommandConfig {
+    allowUnknownOptions?: boolean;
+    ignoreOptionDefaultValue?: boolean;
+}
+declare type HelpCallback = (sections: HelpSection[]) => void | HelpSection[];
+declare type CommandExample = ((bin: string) => string) | string;
+declare class Command {
+    rawName: string;
+    description: string;
+    config: CommandConfig;
+    cli: CAC;
+    options: Option[];
+    aliasNames: string[];
+    name: string;
+    args: CommandArg[];
+    commandAction?: (...args: any[]) => any;
+    usageText?: string;
+    versionNumber?: string;
+    examples: CommandExample[];
+    helpCallback?: HelpCallback;
+    globalCommand?: GlobalCommand;
+    constructor(rawName: string, description: string, config: CommandConfig, cli: CAC);
+    usage(text: string): this;
+    allowUnknownOptions(): this;
+    ignoreOptionDefaultValue(): this;
+    version(version: string, customFlags?: string): this;
+    example(example: CommandExample): this;
+    /**
+     * Add a option for this command
+     * @param rawName Raw option name(s)
+     * @param description Option description
+     * @param config Option config
+     */
+    option(rawName: string, description: string, config?: OptionConfig): this;
+    alias(name: string): this;
+    action(callback: (...args: any[]) => any): this;
+    /**
+     * Check if a command name is matched by this command
+     * @param name Command name
+     */
+    isMatched(name: string): boolean;
+    get isDefaultCommand(): boolean;
+    get isGlobalCommand(): boolean;
+    /**
+     * Check if an option is registered in this command
+     * @param name Option name
+     */
+    hasOption(name: string): Option | undefined;
+    outputHelp(): void;
+    outputVersion(): void;
+    checkRequiredArgs(): void;
+    /**
+     * Check if the parsed options contain any unknown options
+     *
+     * Exit and output error when true
+     */
+    checkUnknownOptions(): void;
+    /**
+     * Check if the required string-type options exist
+     */
+    checkOptionValue(): void;
+}
+declare class GlobalCommand extends Command {
+    constructor(cli: CAC);
+}
+
+interface ParsedArgv {
+    args: ReadonlyArray<string>;
+    options: {
+        [k: string]: any;
+    };
+}
+declare class CAC extends EventEmitter {
+    /** The program name to display in help and version message */
+    name: string;
+    commands: Command[];
+    globalCommand: GlobalCommand;
+    matchedCommand?: Command;
+    matchedCommandName?: string;
+    /**
+     * Raw CLI arguments
+     */
+    rawArgs: string[];
+    /**
+     * Parsed CLI arguments
+     */
+    args: ParsedArgv['args'];
+    /**
+     * Parsed CLI options, camelCased
+     */
+    options: ParsedArgv['options'];
+    showHelpOnExit?: boolean;
+    showVersionOnExit?: boolean;
+    /**
+     * @param name The program name to display in help and version message
+     */
+    constructor(name?: string);
+    /**
+     * Add a global usage text.
+     *
+     * This is not used by sub-commands.
+     */
+    usage(text: string): this;
+    /**
+     * Add a sub-command
+     */
+    command(rawName: string, description?: string, config?: CommandConfig): Command;
+    /**
+     * Add a global CLI option.
+     *
+     * Which is also applied to sub-commands.
+     */
+    option(rawName: string, description: string, config?: OptionConfig): this;
+    /**
+     * Show help message when `-h, --help` flags appear.
+     *
+     */
+    help(callback?: HelpCallback): this;
+    /**
+     * Show version number when `-v, --version` flags appear.
+     *
+     */
+    version(version: string, customFlags?: string): this;
+    /**
+     * Add a global example.
+     *
+     * This example added here will not be used by sub-commands.
+     */
+    example(example: CommandExample): this;
+    /**
+     * Output the corresponding help message
+     * When a sub-command is matched, output the help message for the command
+     * Otherwise output the global one.
+     *
+     */
+    outputHelp(): void;
+    /**
+     * Output the version number.
+     *
+     */
+    outputVersion(): void;
+    private setParsedInfo;
+    unsetMatchedCommand(): void;
+    /**
+     * Parse argv
+     */
+    parse(argv?: string[], { 
+    /** Whether to run the action for matched command */
+    run, }?: {
+        run?: boolean | undefined;
+    }): ParsedArgv;
+    private mri;
+    runMatchedCommand(): any;
+}
+
+/**
+ * @param name The program name to display in help and version message
+ */
+declare const cac: (name?: string) => CAC;
+
+export default cac;
+export { CAC, Command, cac };
+∞/deno/Command.ts≈Qimport CAC from "./CAC.ts";
+import Option, { OptionConfig } from "./Option.ts";
+import { removeBrackets, findAllBrackets, findLongest, padRight, CACError } from "./utils.ts";
+import { platformInfo } from "./deno.ts";
+interface CommandArg {
+  required: boolean;
+  value: string;
+  variadic: boolean;
+}
+interface HelpSection {
+  title?: string;
+  body: string;
+}
+interface CommandConfig {
+  allowUnknownOptions?: boolean;
+  ignoreOptionDefaultValue?: boolean;
+}
+type HelpCallback = (sections: HelpSection[]) => void | HelpSection[];
+type CommandExample = ((bin: string) => string) | string;
+
+class Command {
+  options: Option[];
+  aliasNames: string[];
+  /* Parsed command name */
+
+  name: string;
+  args: CommandArg[];
+  commandAction?: (...args: any[]) => any;
+  usageText?: string;
+  versionNumber?: string;
+  examples: CommandExample[];
+  helpCallback?: HelpCallback;
+  globalCommand?: GlobalCommand;
+
+  constructor(public rawName: string, public description: string, public config: CommandConfig = {}, public cli: CAC) {
+    this.options = [];
+    this.aliasNames = [];
+    this.name = removeBrackets(rawName);
+    this.args = findAllBrackets(rawName);
+    this.examples = [];
+  }
+
+  usage(text: string) {
+    this.usageText = text;
+    return this;
+  }
+
+  allowUnknownOptions() {
+    this.config.allowUnknownOptions = true;
+    return this;
+  }
+
+  ignoreOptionDefaultValue() {
+    this.config.ignoreOptionDefaultValue = true;
+    return this;
+  }
+
+  version(version: string, customFlags = '-v, --version') {
+    this.versionNumber = version;
+    this.option(customFlags, 'Display version number');
+    return this;
+  }
+
+  example(example: CommandExample) {
+    this.examples.push(example);
+    return this;
+  }
+  /**
+   * Add a option for this command
+   * @param rawName Raw option name(s)
+   * @param description Option description
+   * @param config Option config
+   */
+
+
+  option(rawName: string, description: string, config?: OptionConfig) {
+    const option = new Option(rawName, description, config);
+    this.options.push(option);
+    return this;
+  }
+
+  alias(name: string) {
+    this.aliasNames.push(name);
+    return this;
+  }
+
+  action(callback: (...args: any[]) => any) {
+    this.commandAction = callback;
+    return this;
+  }
+  /**
+   * Check if a command name is matched by this command
+   * @param name Command name
+   */
+
+
+  isMatched(name: string) {
+    return this.name === name || this.aliasNames.includes(name);
+  }
+
+  get isDefaultCommand() {
+    return this.name === '' || this.aliasNames.includes('!');
+  }
+
+  get isGlobalCommand(): boolean {
+    return this instanceof GlobalCommand;
+  }
+  /**
+   * Check if an option is registered in this command
+   * @param name Option name
+   */
+
+
+  hasOption(name: string) {
+    name = name.split('.')[0];
+    return this.options.find(option => {
+      return option.names.includes(name);
+    });
+  }
+
+  outputHelp() {
+    const {
+      name,
+      commands
+    } = this.cli;
+    const {
+      versionNumber,
+      options: globalOptions,
+      helpCallback
+    } = this.cli.globalCommand;
+    let sections: HelpSection[] = [{
+      body: `${name}${versionNumber ? `/${versionNumber}` : ''}`
+    }];
+    sections.push({
+      title: 'Usage',
+      body: `  $ ${name} ${this.usageText || this.rawName}`
+    });
+    const showCommands = (this.isGlobalCommand || this.isDefaultCommand) && commands.length > 0;
+
+    if (showCommands) {
+      const longestCommandName = findLongest(commands.map(command => command.rawName));
+      sections.push({
+        title: 'Commands',
+        body: commands.map(command => {
+          return `  ${padRight(command.rawName, longestCommandName.length)}  ${command.description}`;
+        }).join('\n')
+      });
+      sections.push({
+        title: `For more info, run any command with the \`--help\` flag`,
+        body: commands.map(command => `  $ ${name}${command.name === '' ? '' : ` ${command.name}`} --help`).join('\n')
+      });
+    }
+
+    let options = this.isGlobalCommand ? globalOptions : [...this.options, ...(globalOptions || [])];
+
+    if (!this.isGlobalCommand && !this.isDefaultCommand) {
+      options = options.filter(option => option.name !== 'version');
+    }
+
+    if (options.length > 0) {
+      const longestOptionName = findLongest(options.map(option => option.rawName));
+      sections.push({
+        title: 'Options',
+        body: options.map(option => {
+          return `  ${padRight(option.rawName, longestOptionName.length)}  ${option.description} ${option.config.default === undefined ? '' : `(default: ${option.config.default})`}`;
+        }).join('\n')
+      });
+    }
+
+    if (this.examples.length > 0) {
+      sections.push({
+        title: 'Examples',
+        body: this.examples.map(example => {
+          if (typeof example === 'function') {
+            return example(name);
+          }
+
+          return example;
+        }).join('\n')
+      });
+    }
+
+    if (helpCallback) {
+      sections = helpCallback(sections) || sections;
+    }
+
+    console.log(sections.map(section => {
+      return section.title ? `${section.title}:\n${section.body}` : section.body;
+    }).join('\n\n'));
+  }
+
+  outputVersion() {
+    const {
+      name
+    } = this.cli;
+    const {
+      versionNumber
+    } = this.cli.globalCommand;
+
+    if (versionNumber) {
+      console.log(`${name}/${versionNumber} ${platformInfo}`);
+    }
+  }
+
+  checkRequiredArgs() {
+    const minimalArgsCount = this.args.filter(arg => arg.required).length;
+
+    if (this.cli.args.length < minimalArgsCount) {
+      throw new CACError(`missing required args for command \`${this.rawName}\``);
+    }
+  }
+  /**
+   * Check if the parsed options contain any unknown options
+   *
+   * Exit and output error when true
+   */
+
+
+  checkUnknownOptions() {
+    const {
+      options,
+      globalCommand
+    } = this.cli;
+
+    if (!this.config.allowUnknownOptions) {
+      for (const name of Object.keys(options)) {
+        if (name !== '--' && !this.hasOption(name) && !globalCommand.hasOption(name)) {
+          throw new CACError(`Unknown option \`${name.length > 1 ? `--${name}` : `-${name}`}\``);
+        }
+      }
+    }
+  }
+  /**
+   * Check if the required string-type options exist
+   */
+
+
+  checkOptionValue() {
+    const {
+      options: parsedOptions,
+      globalCommand
+    } = this.cli;
+    const options = [...globalCommand.options, ...this.options];
+
+    for (const option of options) {
+      const value = parsedOptions[option.name.split('.')[0]]; // Check required option value
+
+      if (option.required) {
+        const hasNegated = options.some(o => o.negated && o.names.includes(option.name));
+
+        if (value === true || value === false && !hasNegated) {
+          throw new CACError(`option \`${option.rawName}\` value is missing`);
+        }
+      }
+    }
+  }
+
+}
+
+class GlobalCommand extends Command {
+  constructor(cli: CAC) {
+    super('@@global@@', '', {}, cli);
+  }
+
+}
+
+export type { HelpCallback, CommandExample, CommandConfig };
+export { GlobalCommand };
+export default Command;Æ/deno/index.tsƒÏimport CAC from "./CAC.ts";
+import Command from "./Command.ts";
+/**
+ * @param name The program name to display in help and version message
+ */
+
+const cac = (name = '') => new CAC(name);
+
+export default cac;
+export { cac, CAC, Command };Ø/dist/index.mjs≈FBimport { EventEmitter } from 'events';
+
+function toArr(any) {
+	return any == null ? [] : Array.isArray(any) ? any : [any];
+}
+
+function toVal(out, key, val, opts) {
+	var x, old=out[key], nxt=(
+		!!~opts.string.indexOf(key) ? (val == null || val === true ? '' : String(val))
+		: typeof val === 'boolean' ? val
+		: !!~opts.boolean.indexOf(key) ? (val === 'false' ? false : val === 'true' || (out._.push((x = +val,x * 0 === 0) ? x : val),!!val))
+		: (x = +val,x * 0 === 0) ? x : val
+	);
+	out[key] = old == null ? nxt : (Array.isArray(old) ? old.concat(nxt) : [old, nxt]);
+}
+
+function mri2 (args, opts) {
+	args = args || [];
+	opts = opts || {};
+
+	var k, arr, arg, name, val, out={ _:[] };
+	var i=0, j=0, idx=0, len=args.length;
+
+	const alibi = opts.alias !== void 0;
+	const strict = opts.unknown !== void 0;
+	const defaults = opts.default !== void 0;
+
+	opts.alias = opts.alias || {};
+	opts.string = toArr(opts.string);
+	opts.boolean = toArr(opts.boolean);
+
+	if (alibi) {
+		for (k in opts.alias) {
+			arr = opts.alias[k] = toArr(opts.alias[k]);
+			for (i=0; i < arr.length; i++) {
+				(opts.alias[arr[i]] = arr.concat(k)).splice(i, 1);
+			}
+		}
+	}
+
+	for (i=opts.boolean.length; i-- > 0;) {
+		arr = opts.alias[opts.boolean[i]] || [];
+		for (j=arr.length; j-- > 0;) opts.boolean.push(arr[j]);
+	}
+
+	for (i=opts.string.length; i-- > 0;) {
+		arr = opts.alias[opts.string[i]] || [];
+		for (j=arr.length; j-- > 0;) opts.string.push(arr[j]);
+	}
+
+	if (defaults) {
+		for (k in opts.default) {
+			name = typeof opts.default[k];
+			arr = opts.alias[k] = opts.alias[k] || [];
+			if (opts[name] !== void 0) {
+				opts[name].push(k);
+				for (i=0; i < arr.length; i++) {
+					opts[name].push(arr[i]);
+				}
+			}
+		}
+	}
+
+	const keys = strict ? Object.keys(opts.alias) : [];
+
+	for (i=0; i < len; i++) {
+		arg = args[i];
+
+		if (arg === '--') {
+			out._ = out._.concat(args.slice(++i));
+			break;
+		}
+
+		for (j=0; j < arg.length; j++) {
+			if (arg.charCodeAt(j) !== 45) break; // "-"
+		}
+
+		if (j === 0) {
+			out._.push(arg);
+		} else if (arg.substring(j, j + 3) === 'no-') {
+			name = arg.substring(j + 3);
+			if (strict && !~keys.indexOf(name)) {
+				return opts.unknown(arg);
+			}
+			out[name] = false;
+		} else {
+			for (idx=j+1; idx < arg.length; idx++) {
+				if (arg.charCodeAt(idx) === 61) break; // "="
+			}
+
+			name = arg.substring(j, idx);
+			val = arg.substring(++idx) || (i+1 === len || (''+args[i+1]).charCodeAt(0) === 45 || args[++i]);
+			arr = (j === 2 ? [name] : name);
+
+			for (idx=0; idx < arr.length; idx++) {
+				name = arr[idx];
+				if (strict && !~keys.indexOf(name)) return opts.unknown('-'.repeat(j) + name);
+				toVal(out, name, (idx + 1 < arr.length) || val, opts);
+			}
+		}
+	}
+
+	if (defaults) {
+		for (k in opts.default) {
+			if (out[k] === void 0) {
+				out[k] = opts.default[k];
+			}
+		}
+	}
+
+	if (alibi) {
+		for (k in out) {
+			arr = opts.alias[k] || [];
+			while (arr.length > 0) {
+				out[arr.shift()] = out[k];
+			}
+		}
+	}
+
+	return out;
+}
+
+const removeBrackets = (v) => v.replace(/[<[].+/, "").trim();
+const findAllBrackets = (v) => {
+  const ANGLED_BRACKET_RE_GLOBAL = /<([^>]+)>/g;
+  const SQUARE_BRACKET_RE_GLOBAL = /\[([^\]]+)\]/g;
+  const res = [];
+  const parse = (match) => {
+    let variadic = false;
+    let value = match[1];
+    if (value.startsWith("...")) {
+      value = value.slice(3);
+      variadic = true;
+    }
+    return {
+      required: match[0].startsWith("<"),
+      value,
+      variadic
+    };
+  };
+  let angledMatch;
+  while (angledMatch = ANGLED_BRACKET_RE_GLOBAL.exec(v)) {
+    res.push(parse(angledMatch));
+  }
+  let squareMatch;
+  while (squareMatch = SQUARE_BRACKET_RE_GLOBAL.exec(v)) {
+    res.push(parse(squareMatch));
+  }
+  return res;
+};
+const getMriOptions = (options) => {
+  const result = {alias: {}, boolean: []};
+  for (const [index, option] of options.entries()) {
+    if (option.names.length > 1) {
+      result.alias[option.names[0]] = option.names.slice(1);
+    }
+    if (option.isBoolean) {
+      if (option.negated) {
+        const hasStringTypeOption = options.some((o, i) => {
+          return i !== index && o.names.some((name) => option.names.includes(name)) && typeof o.required === "boolean";
+        });
+        if (!hasStringTypeOption) {
+          result.boolean.push(option.names[0]);
+        }
+      } else {
+        result.boolean.push(option.names[0]);
+      }
+    }
+  }
+  return result;
+};
+const findLongest = (arr) => {
+  return arr.sort((a, b) => {
+    return a.length > b.length ? -1 : 1;
+  })[0];
+};
+const padRight = (str, length) => {
+  return str.length >= length ? str : `${str}${" ".repeat(length - str.length)}`;
+};
+const camelcase = (input) => {
+  return input.replace(/([a-z])-([a-z])/g, (_, p1, p2) => {
+    return p1 + p2.toUpperCase();
+  });
+};
+const setDotProp = (obj, keys, val) => {
+  let i = 0;
+  let length = keys.length;
+  let t = obj;
+  let x;
+  for (; i < length; ++i) {
+    x = t[keys[i]];
+    t = t[keys[i]] = i === length - 1 ? val : x != null ? x : !!~keys[i + 1].indexOf(".") || !(+keys[i + 1] > -1) ? {} : [];
+  }
+};
+const setByType = (obj, transforms) => {
+  for (const key of Object.keys(transforms)) {
+    const transform = transforms[key];
+    if (transform.shouldTransform) {
+      obj[key] = Array.prototype.concat.call([], obj[key]);
+      if (typeof transform.transformFunction === "function") {
+        obj[key] = obj[key].map(transform.transformFunction);
+      }
+    }
+  }
+};
+const getFileName = (input) => {
+  const m = /([^\\\/]+)$/.exec(input);
+  return m ? m[1] : "";
+};
+const camelcaseOptionName = (name) => {
+  return name.split(".").map((v, i) => {
+    return i === 0 ? camelcase(v) : v;
+  }).join(".");
+};
+class CACError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = this.constructor.name;
+    if (typeof Error.captureStackTrace === "function") {
+      Error.captureStackTrace(this, this.constructor);
+    } else {
+      this.stack = new Error(message).stack;
+    }
+  }
+}
+
+class Option {
+  constructor(rawName, description, config) {
+    this.rawName = rawName;
+    this.description = description;
+    this.config = Object.assign({}, config);
+    rawName = rawName.replace(/\.\*/g, "");
+    this.negated = false;
+    this.names = removeBrackets(rawName).split(",").map((v) => {
+      let name = v.trim().replace(/^-{1,2}/, "");
+      if (name.startsWith("no-")) {
+        this.negated = true;
+        name = name.replace(/^no-/, "");
+      }
+      return camelcaseOptionName(name);
+    }).sort((a, b) => a.length > b.length ? 1 : -1);
+    this.name = this.names[this.names.length - 1];
+    if (this.negated && this.config.default == null) {
+      this.config.default = true;
+    }
+    if (rawName.includes("<")) {
+      this.required = true;
+    } else if (rawName.includes("[")) {
+      this.required = false;
+    } else {
+      this.isBoolean = true;
+    }
+  }
+}
+
+const processArgs = process.argv;
+const platformInfo = `${process.platform}-${process.arch} node-${process.version}`;
+
+class Command {
+  constructor(rawName, description, config = {}, cli) {
+    this.rawName = rawName;
+    this.description = description;
+    this.config = config;
+    this.cli = cli;
+    this.options = [];
+    this.aliasNames = [];
+    this.name = removeBrackets(rawName);
+    this.args = findAllBrackets(rawName);
+    this.examples = [];
+  }
+  usage(text) {
+    this.usageText = text;
+    return this;
+  }
+  allowUnknownOptions() {
+    this.config.allowUnknownOptions = true;
+    return this;
+  }
+  ignoreOptionDefaultValue() {
+    this.config.ignoreOptionDefaultValue = true;
+    return this;
+  }
+  version(version, customFlags = "-v, --version") {
+    this.versionNumber = version;
+    this.option(customFlags, "Display version number");
+    return this;
+  }
+  example(example) {
+    this.examples.push(example);
+    return this;
+  }
+  option(rawName, description, config) {
+    const option = new Option(rawName, description, config);
+    this.options.push(option);
+    return this;
+  }
+  alias(name) {
+    this.aliasNames.push(name);
+    return this;
+  }
+  action(callback) {
+    this.commandAction = callback;
+    return this;
+  }
+  isMatched(name) {
+    return this.name === name || this.aliasNames.includes(name);
+  }
+  get isDefaultCommand() {
+    return this.name === "" || this.aliasNames.includes("!");
+  }
+  get isGlobalCommand() {
+    return this instanceof GlobalCommand;
+  }
+  hasOption(name) {
+    name = name.split(".")[0];
+    return this.options.find((option) => {
+      return option.names.includes(name);
+    });
+  }
+  outputHelp() {
+    const {name, commands} = this.cli;
+    const {
+      versionNumber,
+      options: globalOptions,
+      helpCallback
+    } = this.cli.globalCommand;
+    let sections = [
+      {
+        body: `${name}${versionNumber ? `/${versionNumber}` : ""}`
+      }
+    ];
+    sections.push({
+      title: "Usage",
+      body: `  $ ${name} ${this.usageText || this.rawName}`
+    });
+    const showCommands = (this.isGlobalCommand || this.isDefaultCommand) && commands.length > 0;
+    if (showCommands) {
+      const longestCommandName = findLongest(commands.map((command) => command.rawName));
+      sections.push({
+        title: "Commands",
+        body: commands.map((command) => {
+          return `  ${padRight(command.rawName, longestCommandName.length)}  ${command.description}`;
+        }).join("\n")
+      });
+      sections.push({
+        title: `For more info, run any command with the \`--help\` flag`,
+        body: commands.map((command) => `  $ ${name}${command.name === "" ? "" : ` ${command.name}`} --help`).join("\n")
+      });
+    }
+    let options = this.isGlobalCommand ? globalOptions : [...this.options, ...globalOptions || []];
+    if (!this.isGlobalCommand && !this.isDefaultCommand) {
+      options = options.filter((option) => option.name !== "version");
+    }
+    if (options.length > 0) {
+      const longestOptionName = findLongest(options.map((option) => option.rawName));
+      sections.push({
+        title: "Options",
+        body: options.map((option) => {
+          return `  ${padRight(option.rawName, longestOptionName.length)}  ${option.description} ${option.config.default === void 0 ? "" : `(default: ${option.config.default})`}`;
+        }).join("\n")
+      });
+    }
+    if (this.examples.length > 0) {
+      sections.push({
+        title: "Examples",
+        body: this.examples.map((example) => {
+          if (typeof example === "function") {
+            return example(name);
+          }
+          return example;
+        }).join("\n")
+      });
+    }
+    if (helpCallback) {
+      sections = helpCallback(sections) || sections;
+    }
+    console.log(sections.map((section) => {
+      return section.title ? `${section.title}:
+${section.body}` : section.body;
+    }).join("\n\n"));
+  }
+  outputVersion() {
+    const {name} = this.cli;
+    const {versionNumber} = this.cli.globalCommand;
+    if (versionNumber) {
+      console.log(`${name}/${versionNumber} ${platformInfo}`);
+    }
+  }
+  checkRequiredArgs() {
+    const minimalArgsCount = this.args.filter((arg) => arg.required).length;
+    if (this.cli.args.length < minimalArgsCount) {
+      throw new CACError(`missing required args for command \`${this.rawName}\``);
+    }
+  }
+  checkUnknownOptions() {
+    const {options, globalCommand} = this.cli;
+    if (!this.config.allowUnknownOptions) {
+      for (const name of Object.keys(options)) {
+        if (name !== "--" && !this.hasOption(name) && !globalCommand.hasOption(name)) {
+          throw new CACError(`Unknown option \`${name.length > 1 ? `--${name}` : `-${name}`}\``);
+        }
+      }
+    }
+  }
+  checkOptionValue() {
+    const {options: parsedOptions, globalCommand} = this.cli;
+    const options = [...globalCommand.options, ...this.options];
+    for (const option of options) {
+      const value = parsedOptions[option.name.split(".")[0]];
+      if (option.required) {
+        const hasNegated = options.some((o) => o.negated && o.names.includes(option.name));
+        if (value === true || value === false && !hasNegated) {
+          throw new CACError(`option \`${option.rawName}\` value is missing`);
+        }
+      }
+    }
+  }
+}
+class GlobalCommand extends Command {
+  constructor(cli) {
+    super("@@global@@", "", {}, cli);
+  }
+}
+
+var __assign = Object.assign;
+class CAC extends EventEmitter {
+  constructor(name = "") {
+    super();
+    this.name = name;
+    this.commands = [];
+    this.rawArgs = [];
+    this.args = [];
+    this.options = {};
+    this.globalCommand = new GlobalCommand(this);
+    this.globalCommand.usage("<command> [options]");
+  }
+  usage(text) {
+    this.globalCommand.usage(text);
+    return this;
+  }
+  command(rawName, description, config) {
+    const command = new Command(rawName, description || "", config, this);
+    command.globalCommand = this.globalCommand;
+    this.commands.push(command);
+    return command;
+  }
+  option(rawName, description, config) {
+    this.globalCommand.option(rawName, description, config);
+    return this;
+  }
+  help(callback) {
+    this.globalCommand.option("-h, --help", "Display this message");
+    this.globalCommand.helpCallback = callback;
+    this.showHelpOnExit = true;
+    return this;
+  }
+  version(version, customFlags = "-v, --version") {
+    this.globalCommand.version(version, customFlags);
+    this.showVersionOnExit = true;
+    return this;
+  }
+  example(example) {
+    this.globalCommand.example(example);
+    return this;
+  }
+  outputHelp() {
+    if (this.matchedCommand) {
+      this.matchedCommand.outputHelp();
+    } else {
+      this.globalCommand.outputHelp();
+    }
+  }
+  outputVersion() {
+    this.globalCommand.outputVersion();
+  }
+  setParsedInfo({args, options}, matchedCommand, matchedCommandName) {
+    this.args = args;
+    this.options = options;
+    if (matchedCommand) {
+      this.matchedCommand = matchedCommand;
+    }
+    if (matchedCommandName) {
+      this.matchedCommandName = matchedCommandName;
+    }
+    return this;
+  }
+  unsetMatchedCommand() {
+    this.matchedCommand = void 0;
+    this.matchedCommandName = void 0;
+  }
+  parse(argv = processArgs, {
+    run = true
+  } = {}) {
+    this.rawArgs = argv;
+    if (!this.name) {
+      this.name = argv[1] ? getFileName(argv[1]) : "cli";
+    }
+    let shouldParse = true;
+    for (const command of this.commands) {
+      const parsed = this.mri(argv.slice(2), command);
+      const commandName = parsed.args[0];
+      if (command.isMatched(commandName)) {
+        shouldParse = false;
+        const parsedInfo = __assign(__assign({}, parsed), {
+          args: parsed.args.slice(1)
+        });
+        this.setParsedInfo(parsedInfo, command, commandName);
+        this.emit(`command:${commandName}`, command);
+      }
+    }
+    if (shouldParse) {
+      for (const command of this.commands) {
+        if (command.name === "") {
+          shouldParse = false;
+          const parsed = this.mri(argv.slice(2), command);
+          this.setParsedInfo(parsed, command);
+          this.emit(`command:!`, command);
+        }
+      }
+    }
+    if (shouldParse) {
+      const parsed = this.mri(argv.slice(2));
+      this.setParsedInfo(parsed);
+    }
+    if (this.options.help && this.showHelpOnExit) {
+      this.outputHelp();
+      run = false;
+      this.unsetMatchedCommand();
+    }
+    if (this.options.version && this.showVersionOnExit && this.matchedCommandName == null) {
+      this.outputVersion();
+      run = false;
+      this.unsetMatchedCommand();
+    }
+    const parsedArgv = {args: this.args, options: this.options};
+    if (run) {
+      this.runMatchedCommand();
+    }
+    if (!this.matchedCommand && this.args[0]) {
+      this.emit("command:*");
+    }
+    return parsedArgv;
+  }
+  mri(argv, command) {
+    const cliOptions = [
+      ...this.globalCommand.options,
+      ...command ? command.options : []
+    ];
+    const mriOptions = getMriOptions(cliOptions);
+    let argsAfterDoubleDashes = [];
+    const doubleDashesIndex = argv.indexOf("--");
+    if (doubleDashesIndex > -1) {
+      argsAfterDoubleDashes = argv.slice(doubleDashesIndex + 1);
+      argv = argv.slice(0, doubleDashesIndex);
+    }
+    let parsed = mri2(argv, mriOptions);
+    parsed = Object.keys(parsed).reduce((res, name) => {
+      return __assign(__assign({}, res), {
+        [camelcaseOptionName(name)]: parsed[name]
+      });
+    }, {_: []});
+    const args = parsed._;
+    const options = {
+      "--": argsAfterDoubleDashes
+    };
+    const ignoreDefault = command && command.config.ignoreOptionDefaultValue ? command.config.ignoreOptionDefaultValue : this.globalCommand.config.ignoreOptionDefaultValue;
+    let transforms = Object.create(null);
+    for (const cliOption of cliOptions) {
+      if (!ignoreDefault && cliOption.config.default !== void 0) {
+        for (const name of cliOption.names) {
+          options[name] = cliOption.config.default;
+        }
+      }
+      if (Array.isArray(cliOption.config.type)) {
+        if (transforms[cliOption.name] === void 0) {
+          transforms[cliOption.name] = Object.create(null);
+          transforms[cliOption.name]["shouldTransform"] = true;
+          transforms[cliOption.name]["transformFunction"] = cliOption.config.type[0];
+        }
+      }
+    }
+    for (const key of Object.keys(parsed)) {
+      if (key !== "_") {
+        const keys = key.split(".");
+        setDotProp(options, keys, parsed[key]);
+        setByType(options, transforms);
+      }
+    }
+    return {
+      args,
+      options
+    };
+  }
+  runMatchedCommand() {
+    const {args, options, matchedCommand: command} = this;
+    if (!command || !command.commandAction)
+      return;
+    command.checkUnknownOptions();
+    command.checkOptionValue();
+    command.checkRequiredArgs();
+    const actionArgs = [];
+    command.args.forEach((arg, index) => {
+      if (arg.variadic) {
+        actionArgs.push(args.slice(index));
+      } else {
+        actionArgs.push(args[index]);
+      }
+    });
+    actionArgs.push(options);
+    return command.commandAction.apply(this, actionArgs);
+  }
+}
+
+const cac = (name = "") => new CAC(name);
+
+export default cac;
+export { CAC, Command, cac };
+®/LICENSE≈]The MIT License (MIT)
+
+Copyright (c) EGOIST <0x142857@gmail.com> (https://github.com/egoist)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+≠/deno/deno.tsƒÔ// Ignore the TypeScript errors
+// Since this file will only be used in Deno runtime
+export const processArgs = ['deno', 'cli'].concat(Deno.args);
+export const platformInfo = `${Deno.build.os}-${Deno.build.arch} deno-${Deno.version.deno}`;Æ/deno/utils.ts≈
+import Option from "./Option.ts";
+export const removeBrackets = (v: string) => v.replace(/[<[].+/, '').trim();
+export const findAllBrackets = (v: string) => {
+  const ANGLED_BRACKET_RE_GLOBAL = /<([^>]+)>/g;
+  const SQUARE_BRACKET_RE_GLOBAL = /\[([^\]]+)\]/g;
+  const res = [];
+
+  const parse = (match: string[]) => {
+    let variadic = false;
+    let value = match[1];
+
+    if (value.startsWith('...')) {
+      value = value.slice(3);
+      variadic = true;
+    }
+
+    return {
+      required: match[0].startsWith('<'),
+      value,
+      variadic
+    };
+  };
+
+  let angledMatch;
+
+  while (angledMatch = ANGLED_BRACKET_RE_GLOBAL.exec(v)) {
+    res.push(parse(angledMatch));
+  }
+
+  let squareMatch;
+
+  while (squareMatch = SQUARE_BRACKET_RE_GLOBAL.exec(v)) {
+    res.push(parse(squareMatch));
+  }
+
+  return res;
+};
+interface MriOptions {
+  alias: {
+    [k: string]: string[];
+  };
+  boolean: string[];
+}
+export const getMriOptions = (options: Option[]) => {
+  const result: MriOptions = {
+    alias: {},
+    boolean: []
+  };
+
+  for (const [index, option] of options.entries()) {
+    // We do not set default values in mri options
+    // Since its type (typeof) will be used to cast parsed arguments.
+    // Which mean `--foo foo` will be parsed as `{foo: true}` if we have `{default:{foo: true}}`
+    // Set alias
+    if (option.names.length > 1) {
+      result.alias[option.names[0]] = option.names.slice(1);
+    } // Set boolean
+
+
+    if (option.isBoolean) {
+      if (option.negated) {
+        // For negated option
+        // We only set it to `boolean` type when there's no string-type option with the same name
+        const hasStringTypeOption = options.some((o, i) => {
+          return i !== index && o.names.some(name => option.names.includes(name)) && typeof o.required === 'boolean';
+        });
+
+        if (!hasStringTypeOption) {
+          result.boolean.push(option.names[0]);
+        }
+      } else {
+        result.boolean.push(option.names[0]);
+      }
+    }
+  }
+
+  return result;
+};
+export const findLongest = (arr: string[]) => {
+  return arr.sort((a, b) => {
+    return a.length > b.length ? -1 : 1;
+  })[0];
+};
+export const padRight = (str: string, length: number) => {
+  return str.length >= length ? str : `${str}${' '.repeat(length - str.length)}`;
+};
+export const camelcase = (input: string) => {
+  return input.replace(/([a-z])-([a-z])/g, (_, p1, p2) => {
+    return p1 + p2.toUpperCase();
+  });
+};
+export const setDotProp = (obj: {
+  [k: string]: any;
+}, keys: string[], val: any) => {
+  let i = 0;
+  let length = keys.length;
+  let t = obj;
+  let x;
+
+  for (; i < length; ++i) {
+    x = t[keys[i]];
+    t = t[keys[i]] = i === length - 1 ? val : x != null ? x : !!~keys[i + 1].indexOf('.') || !(+keys[i + 1] > -1) ? {} : [];
+  }
+};
+export const setByType = (obj: {
+  [k: string]: any;
+}, transforms: {
+  [k: string]: any;
+}) => {
+  for (const key of Object.keys(transforms)) {
+    const transform = transforms[key];
+
+    if (transform.shouldTransform) {
+      obj[key] = Array.prototype.concat.call([], obj[key]);
+
+      if (typeof transform.transformFunction === 'function') {
+        obj[key] = obj[key].map(transform.transformFunction);
+      }
+    }
+  }
+};
+export const getFileName = (input: string) => {
+  const m = /([^\\\/]+)$/.exec(input);
+  return m ? m[1] : '';
+};
+export const camelcaseOptionName = (name: string) => {
+  // Camelcase the option name
+  // Don't camelcase anything after the dot `.`
+  return name.split('.').map((v, i) => {
+    return i === 0 ? camelcase(v) : v;
+  }).join('.');
+};
+export class CACError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = this.constructor.name;
+
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, this.constructor);
+    } else {
+      this.stack = new Error(message).stack;
+    }
+  }
+
+}∞/index-compat.jsƒ∏const { cac, CAC, Command } = require('./dist/index')
+
+// For backwards compatibility
+module.exports = cac
+
+Object.assign(module.exports, {
+  default: cac,
+  cac,
+  CAC,
+  Command,
+})
+Ø/deno/Option.ts≈Ÿimport { removeBrackets, camelcaseOptionName } from "./utils.ts";
+interface OptionConfig {
+  default?: any;
+  type?: any[];
+}
+export default class Option {
+  /** Option name */
+  name: string;
+  /** Option name and aliases */
+
+  names: string[];
+  isBoolean?: boolean; // `required` will be a boolean for options with brackets
+
+  required?: boolean;
+  config: OptionConfig;
+  negated: boolean;
+
+  constructor(public rawName: string, public description: string, config?: OptionConfig) {
+    this.config = Object.assign({}, config); // You may use cli.option('--env.* [value]', 'desc') to denote a dot-nested option
+
+    rawName = rawName.replace(/\.\*/g, '');
+    this.negated = false;
+    this.names = removeBrackets(rawName).split(',').map((v: string) => {
+      let name = v.trim().replace(/^-{1,2}/, '');
+
+      if (name.startsWith('no-')) {
+        this.negated = true;
+        name = name.replace(/^no-/, '');
+      }
+
+      return camelcaseOptionName(name);
+    }).sort((a, b) => a.length > b.length ? 1 : -1); // Sort names
+    // Use the longest name (last one) as actual option name
+
+    this.name = this.names[this.names.length - 1];
+
+    if (this.negated && this.config.default == null) {
+      this.config.default = true;
+    }
+
+    if (rawName.includes('<')) {
+      this.required = true;
+    } else if (rawName.includes('[')) {
+      this.required = false;
+    } else {
+      // No arg needed, it's boolean flag
+      this.isBoolean = true;
+    }
+  }
+
+}
+export type { OptionConfig };

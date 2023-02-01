@@ -1,0 +1,629 @@
+ä∏/lib/util/readShebang.js≈%'use strict';
+
+const fs = require('fs');
+const shebangCommand = require('shebang-command');
+
+function readShebang(command) {
+    // Read the first 150 bytes from the file
+    const size = 150;
+    const buffer = Buffer.alloc(size);
+
+    let fd;
+
+    try {
+        fd = fs.openSync(command, 'r');
+        fs.readSync(fd, buffer, 0, size, 0);
+        fs.closeSync(fd);
+    } catch (e) { /* Empty */ }
+
+    // Attempt to extract shebang (null is returned if not a shebang)
+    return shebangCommand(buffer.toString());
+}
+
+module.exports = readShebang;
+≠/package.json≈w{
+  "name": "cross-spawn",
+  "version": "7.0.3",
+  "description": "Cross platform child_process#spawn and child_process#spawnSync",
+  "keywords": [
+    "spawn",
+    "spawnSync",
+    "windows",
+    "cross-platform",
+    "path-ext",
+    "shebang",
+    "cmd",
+    "execute"
+  ],
+  "author": "Andr√© Cruz <andre@moxy.studio>",
+  "homepage": "https://github.com/moxystudio/node-cross-spawn",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:moxystudio/node-cross-spawn.git"
+  },
+  "license": "MIT",
+  "main": "index.js",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "test": "jest --env node --coverage",
+    "prerelease": "npm t && npm run lint",
+    "release": "standard-version",
+    "postrelease": "git push --follow-tags origin HEAD && npm publish"
+  },
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "git add"
+    ]
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "dependencies": {
+    "path-key": "^3.1.0",
+    "shebang-command": "^2.0.0",
+    "which": "^2.0.1"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^8.1.0",
+    "@commitlint/config-conventional": "^8.1.0",
+    "babel-core": "^6.26.3",
+    "babel-jest": "^24.9.0",
+    "babel-preset-moxy": "^3.1.0",
+    "eslint": "^5.16.0",
+    "eslint-config-moxy": "^7.1.0",
+    "husky": "^3.0.5",
+    "jest": "^24.9.0",
+    "lint-staged": "^9.2.5",
+    "mkdirp": "^0.5.1",
+    "rimraf": "^3.0.0",
+    "standard-version": "^7.0.0"
+  },
+  "engines": {
+    "node": ">= 8"
+  }
+}
+™/README.md≈x# cross-spawn
+
+[![NPM version][npm-image]][npm-url] [![Downloads][downloads-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Build status][appveyor-image]][appveyor-url] [![Coverage Status][codecov-image]][codecov-url] [![Dependency status][david-dm-image]][david-dm-url] [![Dev Dependency status][david-dm-dev-image]][david-dm-dev-url]
+
+[npm-url]:https://npmjs.org/package/cross-spawn
+[downloads-image]:https://img.shields.io/npm/dm/cross-spawn.svg
+[npm-image]:https://img.shields.io/npm/v/cross-spawn.svg
+[travis-url]:https://travis-ci.org/moxystudio/node-cross-spawn
+[travis-image]:https://img.shields.io/travis/moxystudio/node-cross-spawn/master.svg
+[appveyor-url]:https://ci.appveyor.com/project/satazor/node-cross-spawn
+[appveyor-image]:https://img.shields.io/appveyor/ci/satazor/node-cross-spawn/master.svg
+[codecov-url]:https://codecov.io/gh/moxystudio/node-cross-spawn
+[codecov-image]:https://img.shields.io/codecov/c/github/moxystudio/node-cross-spawn/master.svg
+[david-dm-url]:https://david-dm.org/moxystudio/node-cross-spawn
+[david-dm-image]:https://img.shields.io/david/moxystudio/node-cross-spawn.svg
+[david-dm-dev-url]:https://david-dm.org/moxystudio/node-cross-spawn?type=dev
+[david-dm-dev-image]:https://img.shields.io/david/dev/moxystudio/node-cross-spawn.svg
+
+A cross platform solution to node's spawn and spawnSync.
+
+
+## Installation
+
+Node.js version 8 and up:
+`$ npm install cross-spawn`
+
+Node.js version 7 and under:
+`$ npm install cross-spawn@6`
+
+## Why
+
+Node has issues when using spawn on Windows:
+
+- It ignores [PATHEXT](https://github.com/joyent/node/issues/2318)
+- It does not support [shebangs](https://en.wikipedia.org/wiki/Shebang_(Unix))
+- Has problems running commands with [spaces](https://github.com/nodejs/node/issues/7367)
+- Has problems running commands with posix relative paths (e.g.: `./my-folder/my-executable`)
+- Has an [issue](https://github.com/moxystudio/node-cross-spawn/issues/82) with command shims (files in `node_modules/.bin/`), where arguments with quotes and parenthesis would result in [invalid syntax error](https://github.com/moxystudio/node-cross-spawn/blob/e77b8f22a416db46b6196767bcd35601d7e11d54/test/index.test.js#L149)
+- No `options.shell` support on node `<v4.8`
+
+All these issues are handled correctly by `cross-spawn`.
+There are some known modules, such as [win-spawn](https://github.com/ForbesLindesay/win-spawn), that try to solve this but they are either broken or provide faulty escaping of shell arguments.
+
+
+## Usage
+
+Exactly the same way as node's [`spawn`](https://nodejs.org/api/child_process.html#child_process_child_process_spawn_command_args_options) or [`spawnSync`](https://nodejs.org/api/child_process.html#child_process_child_process_spawnsync_command_args_options), so it's a drop in replacement.
+
+
+```js
+const spawn = require('cross-spawn');
+
+// Spawn NPM asynchronously
+const child = spawn('npm', ['list', '-g', '-depth', '0'], { stdio: 'inherit' });
+
+// Spawn NPM synchronously
+const result = spawn.sync('npm', ['list', '-g', '-depth', '0'], { stdio: 'inherit' });
+```
+
+
+## Caveats
+
+### Using `options.shell` as an alternative to `cross-spawn`
+
+Starting from node `v4.8`, `spawn` has a `shell` option that allows you run commands from within a shell. This new option solves
+the [PATHEXT](https://github.com/joyent/node/issues/2318) issue but:
+
+- It's not supported in node `<v4.8`
+- You must manually escape the command and arguments which is very error prone, specially when passing user input
+- There are a lot of other unresolved issues from the [Why](#why) section that you must take into account
+
+If you are using the `shell` option to spawn a command in a cross platform way, consider using `cross-spawn` instead. You have been warned.
+
+### `options.shell` support
+
+While `cross-spawn` adds support for `options.shell` in node `<v4.8`, all of its enhancements are disabled.
+
+This mimics the Node.js behavior. More specifically, the command and its arguments will not be automatically escaped nor shebang support will be offered. This is by design because if you are using `options.shell` you are probably targeting a specific platform anyway and you don't want things to get into your way.
+
+### Shebangs support
+
+While `cross-spawn` handles shebangs on Windows, its support is limited. More specifically, it just supports `#!/usr/bin/env <program>` where `<program>` must not contain any arguments.   
+If you would like to have the shebang support improved, feel free to contribute via a pull-request.
+
+Remember to always test your code on Windows!
+
+
+## Tests
+
+`$ npm test`   
+`$ npm test -- --watch` during development
+
+
+## License
+
+Released under the [MIT License](https://www.opensource.org/licenses/mit-license.php).
+≠/lib/parse.js≈˘'use strict';
+
+const path = require('path');
+const resolveCommand = require('./util/resolveCommand');
+const escape = require('./util/escape');
+const readShebang = require('./util/readShebang');
+
+const isWin = process.platform === 'win32';
+const isExecutableRegExp = /\.(?:com|exe)$/i;
+const isCmdShimRegExp = /node_modules[\\/].bin[\\/][^\\/]+\.cmd$/i;
+
+function detectShebang(parsed) {
+    parsed.file = resolveCommand(parsed);
+
+    const shebang = parsed.file && readShebang(parsed.file);
+
+    if (shebang) {
+        parsed.args.unshift(parsed.file);
+        parsed.command = shebang;
+
+        return resolveCommand(parsed);
+    }
+
+    return parsed.file;
+}
+
+function parseNonShell(parsed) {
+    if (!isWin) {
+        return parsed;
+    }
+
+    // Detect & add support for shebangs
+    const commandFile = detectShebang(parsed);
+
+    // We don't need a shell if the command filename is an executable
+    const needsShell = !isExecutableRegExp.test(commandFile);
+
+    // If a shell is required, use cmd.exe and take care of escaping everything correctly
+    // Note that `forceShell` is an hidden option used only in tests
+    if (parsed.options.forceShell || needsShell) {
+        // Need to double escape meta chars if the command is a cmd-shim located in `node_modules/.bin/`
+        // The cmd-shim simply calls execute the package bin file with NodeJS, proxying any argument
+        // Because the escape of metachars with ^ gets interpreted when the cmd.exe is first called,
+        // we need to double escape them
+        const needsDoubleEscapeMetaChars = isCmdShimRegExp.test(commandFile);
+
+        // Normalize posix paths into OS compatible paths (e.g.: foo/bar -> foo\bar)
+        // This is necessary otherwise it will always fail with ENOENT in those cases
+        parsed.command = path.normalize(parsed.command);
+
+        // Escape command & arguments
+        parsed.command = escape.command(parsed.command);
+        parsed.args = parsed.args.map((arg) => escape.argument(arg, needsDoubleEscapeMetaChars));
+
+        const shellCommand = [parsed.command].concat(parsed.args).join(' ');
+
+        parsed.args = ['/d', '/s', '/c', `"${shellCommand}"`];
+        parsed.command = process.env.comspec || 'cmd.exe';
+        parsed.options.windowsVerbatimArguments = true; // Tell node's spawn that the arguments are already escaped
+    }
+
+    return parsed;
+}
+
+function parse(command, args, options) {
+    // Normalize arguments, similar to nodejs
+    if (args && !Array.isArray(args)) {
+        options = args;
+        args = null;
+    }
+
+    args = args ? args.slice(0) : []; // Clone array to avoid changing the original
+    options = Object.assign({}, options); // Clone object to avoid changing the original
+
+    // Build our parsed object
+    const parsed = {
+        command,
+        args,
+        options,
+        file: undefined,
+        original: {
+            command,
+            args,
+        },
+    };
+
+    // Delegate further parsing to shell or non-shell
+    return options.shell ? parsed : parseNonShell(parsed);
+}
+
+module.exports = parse;
+®/LICENSE≈QThe MIT License (MIT)
+
+Copyright (c) 2018 Made With MOXY Lda <hello@moxy.studio>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+Æ/lib/enoent.js≈»'use strict';
+
+const isWin = process.platform === 'win32';
+
+function notFoundError(original, syscall) {
+    return Object.assign(new Error(`${syscall} ${original.command} ENOENT`), {
+        code: 'ENOENT',
+        errno: 'ENOENT',
+        syscall: `${syscall} ${original.command}`,
+        path: original.command,
+        spawnargs: original.args,
+    });
+}
+
+function hookChildProcess(cp, parsed) {
+    if (!isWin) {
+        return;
+    }
+
+    const originalEmit = cp.emit;
+
+    cp.emit = function (name, arg1) {
+        // If emitting "exit" event and exit code is 1, we need to check if
+        // the command exists and emit an "error" instead
+        // See https://github.com/IndigoUnited/node-cross-spawn/issues/16
+        if (name === 'exit') {
+            const err = verifyENOENT(arg1, parsed, 'spawn');
+
+            if (err) {
+                return originalEmit.call(cp, 'error', err);
+            }
+        }
+
+        return originalEmit.apply(cp, arguments); // eslint-disable-line prefer-rest-params
+    };
+}
+
+function verifyENOENT(status, parsed) {
+    if (isWin && status === 1 && !parsed.file) {
+        return notFoundError(parsed.original, 'spawn');
+    }
+
+    return null;
+}
+
+function verifyENOENTSync(status, parsed) {
+    if (isWin && status === 1 && !parsed.file) {
+        return notFoundError(parsed.original, 'spawnSync');
+    }
+
+    return null;
+}
+
+module.exports = {
+    hookChildProcess,
+    verifyENOENT,
+    verifyENOENTSync,
+    notFoundError,
+};
+≠/CHANGELOG.md≈`# Changelog
+
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+### [7.0.3](https://github.com/moxystudio/node-cross-spawn/compare/v7.0.2...v7.0.3) (2020-05-25)
+
+
+### Bug Fixes
+
+* detect path key based on correct environment ([#133](https://github.com/moxystudio/node-cross-spawn/issues/133)) ([159e7e9](https://github.com/moxystudio/node-cross-spawn/commit/159e7e9785e57451cba034ae51719f97135074ae))
+
+### [7.0.2](https://github.com/moxystudio/node-cross-spawn/compare/v7.0.1...v7.0.2) (2020-04-04)
+
+
+### Bug Fixes
+
+* fix worker threads in Node >=11.10.0 ([#132](https://github.com/moxystudio/node-cross-spawn/issues/132)) ([6c5b4f0](https://github.com/moxystudio/node-cross-spawn/commit/6c5b4f015814a6c4f6b33230dfd1a860aedc0aaf))
+
+### [7.0.1](https://github.com/moxystudio/node-cross-spawn/compare/v7.0.0...v7.0.1) (2019-10-07)
+
+
+### Bug Fixes
+
+* **core:** support worker threads ([#127](https://github.com/moxystudio/node-cross-spawn/issues/127)) ([cfd49c9](https://github.com/moxystudio/node-cross-spawn/commit/cfd49c9))
+
+## [7.0.0](https://github.com/moxystudio/node-cross-spawn/compare/v6.0.5...v7.0.0) (2019-09-03)
+
+
+### ‚ö† BREAKING CHANGES
+
+* drop support for Node.js < 8
+
+* drop support for versions below Node.js 8 ([#125](https://github.com/moxystudio/node-cross-spawn/issues/125)) ([16feb53](https://github.com/moxystudio/node-cross-spawn/commit/16feb53))
+
+<a name="6.0.5"></a>
+## [6.0.5](https://github.com/moxystudio/node-cross-spawn/compare/v6.0.4...v6.0.5) (2018-03-02)
+
+
+### Bug Fixes
+
+* avoid using deprecated Buffer constructor ([#94](https://github.com/moxystudio/node-cross-spawn/issues/94)) ([d5770df](https://github.com/moxystudio/node-cross-spawn/commit/d5770df)), closes [/nodejs.org/api/deprecations.html#deprecations_dep0005](https://github.com//nodejs.org/api/deprecations.html/issues/deprecations_dep0005)
+
+
+
+<a name="6.0.4"></a>
+## [6.0.4](https://github.com/moxystudio/node-cross-spawn/compare/v6.0.3...v6.0.4) (2018-01-31)
+
+
+### Bug Fixes
+
+* fix paths being incorrectly normalized on unix ([06ee3c6](https://github.com/moxystudio/node-cross-spawn/commit/06ee3c6)), closes [#90](https://github.com/moxystudio/node-cross-spawn/issues/90)
+
+
+
+<a name="6.0.3"></a>
+## [6.0.3](https://github.com/moxystudio/node-cross-spawn/compare/v6.0.2...v6.0.3) (2018-01-23)
+
+
+
+<a name="6.0.2"></a>
+## [6.0.2](https://github.com/moxystudio/node-cross-spawn/compare/v6.0.1...v6.0.2) (2018-01-23)
+
+
+
+<a name="6.0.1"></a>
+## [6.0.1](https://github.com/moxystudio/node-cross-spawn/compare/v6.0.0...v6.0.1) (2018-01-23)
+
+
+
+<a name="6.0.0"></a>
+# [6.0.0](https://github.com/moxystudio/node-cross-spawn/compare/5.1.0...6.0.0) (2018-01-23)
+
+
+### Bug Fixes
+
+* fix certain arguments not being correctly escaped or causing batch syntax error ([900cf10](https://github.com/moxystudio/node-cross-spawn/commit/900cf10)), closes [#82](https://github.com/moxystudio/node-cross-spawn/issues/82) [#51](https://github.com/moxystudio/node-cross-spawn/issues/51)
+* fix commands as posix relatixe paths not working correctly, e.g.: `./my-command` ([900cf10](https://github.com/moxystudio/node-cross-spawn/commit/900cf10))
+* fix `options` argument being mutated ([900cf10](https://github.com/moxystudio/node-cross-spawn/commit/900cf10))
+* fix commands resolution when PATH was actually Path ([900cf10](https://github.com/moxystudio/node-cross-spawn/commit/900cf10))
+
+
+### Features
+
+* improve compliance with node's ENOENT errors ([900cf10](https://github.com/moxystudio/node-cross-spawn/commit/900cf10))
+* improve detection of node's shell option support ([900cf10](https://github.com/moxystudio/node-cross-spawn/commit/900cf10))
+
+
+### Chores
+
+* upgrade tooling
+* upgrate project to es6 (node v4)
+
+
+### BREAKING CHANGES
+
+* remove support for older nodejs versions, only `node >= 4` is supported
+
+
+<a name="5.1.0"></a>
+## [5.1.0](https://github.com/moxystudio/node-cross-spawn/compare/5.0.1...5.1.0) (2017-02-26)
+
+
+### Bug Fixes
+
+* fix `options.shell` support for NodeJS [v4.8](https://github.com/nodejs/node/blob/master/doc/changelogs/CHANGELOG_V4.md#4.8.0)
+
+
+<a name="5.0.1"></a>
+## [5.0.1](https://github.com/moxystudio/node-cross-spawn/compare/5.0.0...5.0.1) (2016-11-04)
+
+
+### Bug Fixes
+
+* fix `options.shell` support for NodeJS v7
+
+
+<a name="5.0.0"></a>
+# [5.0.0](https://github.com/moxystudio/node-cross-spawn/compare/4.0.2...5.0.0) (2016-10-30)
+
+
+## Features
+
+* add support for `options.shell`
+* improve parsing of shebangs by using [`shebang-command`](https://github.com/kevva/shebang-command) module
+
+
+## Chores
+
+* refactor some code to make it more clear
+* update README caveats
+≥/lib/util/escape.js≈î'use strict';
+
+// See http://www.robvanderwoude.com/escapechars.php
+const metaCharsRegExp = /([()\][%!^"`<>&|;, *?])/g;
+
+function escapeCommand(arg) {
+    // Escape meta chars
+    arg = arg.replace(metaCharsRegExp, '^$1');
+
+    return arg;
+}
+
+function escapeArgument(arg, doubleEscapeMetaChars) {
+    // Convert to string
+    arg = `${arg}`;
+
+    // Algorithm below is based on https://qntm.org/cmd
+
+    // Sequence of backslashes followed by a double quote:
+    // double up all the backslashes and escape the double quote
+    arg = arg.replace(/(\\*)"/g, '$1$1\\"');
+
+    // Sequence of backslashes followed by the end of the string
+    // (which will become a double quote later):
+    // double up all the backslashes
+    arg = arg.replace(/(\\*)$/, '$1$1');
+
+    // All other backslashes occur literally
+
+    // Quote the whole thing:
+    arg = `"${arg}"`;
+
+    // Escape meta chars
+    arg = arg.replace(metaCharsRegExp, '^$1');
+
+    // Double escape meta chars if necessary
+    if (doubleEscapeMetaChars) {
+        arg = arg.replace(metaCharsRegExp, '^$1');
+    }
+
+    return arg;
+}
+
+module.exports.command = escapeCommand;
+module.exports.argument = escapeArgument;
+©/index.js≈®'use strict';
+
+const cp = require('child_process');
+const parse = require('./lib/parse');
+const enoent = require('./lib/enoent');
+
+function spawn(command, args, options) {
+    // Parse the arguments
+    const parsed = parse(command, args, options);
+
+    // Spawn the child process
+    const spawned = cp.spawn(parsed.command, parsed.args, parsed.options);
+
+    // Hook into child process "exit" event to emit an error if the command
+    // does not exists, see: https://github.com/IndigoUnited/node-cross-spawn/issues/16
+    enoent.hookChildProcess(spawned, parsed);
+
+    return spawned;
+}
+
+function spawnSync(command, args, options) {
+    // Parse the arguments
+    const parsed = parse(command, args, options);
+
+    // Spawn the child process
+    const result = cp.spawnSync(parsed.command, parsed.args, parsed.options);
+
+    // Analyze if the command does not exist, see: https://github.com/IndigoUnited/node-cross-spawn/issues/16
+    result.error = result.error || enoent.verifyENOENTSync(result.status, parsed);
+
+    return result;
+}
+
+module.exports = spawn;
+module.exports.spawn = spawn;
+module.exports.sync = spawnSync;
+
+module.exports._parse = parse;
+module.exports._enoent = enoent;
+ª/lib/util/resolveCommand.js≈'use strict';
+
+const path = require('path');
+const which = require('which');
+const getPathKey = require('path-key');
+
+function resolveCommandAttempt(parsed, withoutPathExt) {
+    const env = parsed.options.env || process.env;
+    const cwd = process.cwd();
+    const hasCustomCwd = parsed.options.cwd != null;
+    // Worker threads do not have process.chdir()
+    const shouldSwitchCwd = hasCustomCwd && process.chdir !== undefined && !process.chdir.disabled;
+
+    // If a custom `cwd` was specified, we need to change the process cwd
+    // because `which` will do stat calls but does not support a custom cwd
+    if (shouldSwitchCwd) {
+        try {
+            process.chdir(parsed.options.cwd);
+        } catch (err) {
+            /* Empty */
+        }
+    }
+
+    let resolved;
+
+    try {
+        resolved = which.sync(parsed.command, {
+            path: env[getPathKey({ env })],
+            pathExt: withoutPathExt ? path.delimiter : undefined,
+        });
+    } catch (e) {
+        /* Empty */
+    } finally {
+        if (shouldSwitchCwd) {
+            process.chdir(cwd);
+        }
+    }
+
+    // If we successfully resolved, ensure that an absolute path is returned
+    // Note that when a custom `cwd` was used, we need to resolve to an absolute path based on it
+    if (resolved) {
+        resolved = path.resolve(hasCustomCwd ? parsed.options.cwd : '', resolved);
+    }
+
+    return resolved;
+}
+
+function resolveCommand(parsed) {
+    return resolveCommandAttempt(parsed) || resolveCommandAttempt(parsed, true);
+}
+
+module.exports = resolveCommand;

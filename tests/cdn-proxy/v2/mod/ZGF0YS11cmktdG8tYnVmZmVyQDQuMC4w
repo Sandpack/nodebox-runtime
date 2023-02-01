@@ -1,0 +1,500 @@
+å∂/dist/test/test.js.map≈G{"version":3,"file":"test.js","sourceRoot":"","sources":["../../test/test.ts"],"names":[],"mappings":"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"}≤/dist/test/test.js≈/**
+ * Module dependencies.
+ */
+import assert from 'assert';
+import dataUriToBuffer from '../src';
+describe('data-uri-to-buffer', function () {
+    it('should decode bare-bones Data URIs', function () {
+        var uri = 'data:,Hello%2C%20World!';
+        var buf = dataUriToBuffer(uri);
+        assert.equal('text/plain', buf.type);
+        assert.equal('text/plain;charset=US-ASCII', buf.typeFull);
+        assert.equal('US-ASCII', buf.charset);
+        assert.equal('Hello, World!', buf.toString());
+    });
+    it('should decode bare-bones "base64" Data URIs', function () {
+        var uri = 'data:text/plain;base64,SGVsbG8sIFdvcmxkIQ%3D%3D';
+        var buf = dataUriToBuffer(uri);
+        assert.equal('text/plain', buf.type);
+        assert.equal('Hello, World!', buf.toString());
+    });
+    it('should decode plain-text Data URIs', function () {
+        var html = '<!DOCTYPE html>' +
+            '<html lang="en">' +
+            '<head><title>Embedded Window</title></head>' +
+            '<body><h1>42</h1></body>' +
+            '</html>';
+        // Escape the HTML for URL formatting
+        var uri = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+        var buf = dataUriToBuffer(uri);
+        assert.equal('text/html', buf.type);
+        assert.equal('utf-8', buf.charset);
+        assert.equal(html, buf.toString());
+    });
+    // the next 4 tests are from:
+    // https://bug161965.bugzilla.mozilla.org/attachment.cgi?id=94670&action=view
+    it('should decode "ISO-8859-8 in Base64" URIs', function () {
+        var uri = 'data:text/plain;charset=iso-8859-8-i;base64,+ezl7Q==';
+        var buf = dataUriToBuffer(uri);
+        assert.equal('text/plain', buf.type);
+        assert.equal('iso-8859-8-i', buf.charset);
+        assert.equal(4, buf.length);
+        assert.equal(0xf9, buf[0]);
+        assert.equal(0xec, buf[1]);
+        assert.equal(0xe5, buf[2]);
+        assert.equal(0xed, buf[3]);
+    });
+    it('should decode "ISO-8859-8 in URL-encoding" URIs', function () {
+        var uri = 'data:text/plain;charset=iso-8859-8-i,%f9%ec%e5%ed';
+        var buf = dataUriToBuffer(uri);
+        assert.equal('text/plain', buf.type);
+        assert.equal('iso-8859-8-i', buf.charset);
+        assert.equal(4, buf.length);
+        assert.equal(0xf9, buf[0]);
+        assert.equal(0xec, buf[1]);
+        assert.equal(0xe5, buf[2]);
+        assert.equal(0xed, buf[3]);
+    });
+    it('should decode "UTF-8 in Base64" URIs', function () {
+        var uri = 'data:text/plain;charset=UTF-8;base64,16nXnNeV150=';
+        var buf = dataUriToBuffer(uri);
+        assert.equal('text/plain', buf.type);
+        assert.equal('UTF-8', buf.charset);
+        assert.equal(8, buf.length);
+        assert.equal('◊©◊ú◊ï◊ù', buf.toString('utf8'));
+    });
+    it('should decode "UTF-8 in URL-encoding" URIs', function () {
+        var uri = 'data:text/plain;charset=UTF-8,%d7%a9%d7%9c%d7%95%d7%9d';
+        var buf = dataUriToBuffer(uri);
+        assert.equal('text/plain', buf.type);
+        assert.equal('UTF-8', buf.charset);
+        assert.equal(8, buf.length);
+        assert.equal('◊©◊ú◊ï◊ù', buf.toString('utf8'));
+    });
+    // this next one is from Wikipedia IIRC
+    it('should decode "base64" Data URIs with newlines', function () {
+        var uri = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\n' +
+            'AAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO\n' +
+            '9TXL0Y4OHwAAAABJRU5ErkJggg==';
+        var buf = dataUriToBuffer(uri);
+        assert.equal('image/png', buf.type);
+        assert.equal('iVBORw0KGgoAAAANSUhEUgAAAAUA' +
+            'AAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO' +
+            '9TXL0Y4OHwAAAABJRU5ErkJggg==', buf.toString('base64'));
+    });
+    it('should decode a plain-text URI with a space character in it', function () {
+        var uri = 'data:,foo bar';
+        var buf = dataUriToBuffer(uri);
+        assert.equal('text/plain', buf.type);
+        assert.equal('foo bar', buf.toString());
+    });
+    it('should decode data with a "," comma char', function () {
+        var uri = 'data:,a,b';
+        var buf = dataUriToBuffer(uri);
+        assert.equal('text/plain', buf.type);
+        assert.equal('a,b', buf.toString());
+    });
+    it('should decode data with traditionally reserved characters like ";"', function () {
+        var uri = 'data:,;test';
+        var buf = dataUriToBuffer(uri);
+        assert.equal('text/plain', buf.type);
+        assert.equal(';test', buf.toString());
+    });
+    it('should not default to US-ASCII if main type is provided', function () {
+        var uri = 'data:text/plain,abc';
+        var buf = dataUriToBuffer(uri);
+        assert.equal('text/plain', buf.type);
+        assert.equal('text/plain', buf.typeFull);
+        assert.equal('', buf.charset);
+        assert.equal('abc', buf.toString());
+    });
+    it('should default to text/plain if main type is not provided', function () {
+        var uri = 'data:;charset=UTF-8,abc';
+        var buf = dataUriToBuffer(uri);
+        assert.equal('text/plain', buf.type);
+        assert.equal('text/plain;charset=UTF-8', buf.typeFull);
+        assert.equal('UTF-8', buf.charset);
+        assert.equal('abc', buf.toString());
+    });
+    it('should not allow charset without a leading ;', function () {
+        var uri = 'data:charset=UTF-8,abc';
+        var buf = dataUriToBuffer(uri);
+        assert.equal('charset=UTF-8', buf.type);
+        assert.equal('charset=UTF-8', buf.typeFull);
+        assert.equal('', buf.charset);
+        assert.equal('abc', buf.toString());
+    });
+    it('should allow custom media type parameters', function () {
+        var uri = 'data:application/javascript;version=1.8;charset=UTF-8,abc';
+        var buf = dataUriToBuffer(uri);
+        assert.equal('application/javascript', buf.type);
+        assert.equal('application/javascript;version=1.8;charset=UTF-8', buf.typeFull);
+        assert.equal('UTF-8', buf.charset);
+        assert.equal('abc', buf.toString());
+    });
+    it('should allow base64 annotation anywhere', function () {
+        var uri = 'data:text/plain;base64;charset=UTF-8,YWJj';
+        var buf = dataUriToBuffer(uri);
+        assert.equal('text/plain', buf.type);
+        assert.equal('text/plain;charset=UTF-8', buf.typeFull);
+        assert.equal('UTF-8', buf.charset);
+        assert.equal('abc', buf.toString());
+    });
+});
+//# sourceMappingURL=test.js.map∞/dist/index.d.ts≈∑/// <reference types="node" />
+export interface MimeBuffer extends Buffer {
+    type: string;
+    typeFull: string;
+    charset: string;
+}
+/**
+ * Returns a `Buffer` instance from the given data URI `uri`.
+ *
+ * @param {String} uri Data URI to turn into a Buffer instance
+ * @returns {Buffer} Buffer instance from Data URI
+ * @api public
+ */
+export declare function dataUriToBuffer(uri: string): MimeBuffer;
+export default dataUriToBuffer;
+¥/dist/src/index.d.ts≈∑/// <reference types="node" />
+export interface MimeBuffer extends Buffer {
+    type: string;
+    typeFull: string;
+    charset: string;
+}
+/**
+ * Returns a `Buffer` instance from the given data URI `uri`.
+ *
+ * @param {String} uri Data URI to turn into a Buffer instance
+ * @returns {Buffer} Buffer instance from Data URI
+ * @api public
+ */
+export declare function dataUriToBuffer(uri: string): MimeBuffer;
+export default dataUriToBuffer;
+Æ/dist/index.js≈//**
+ * Returns a `Buffer` instance from the given data URI `uri`.
+ *
+ * @param {String} uri Data URI to turn into a Buffer instance
+ * @returns {Buffer} Buffer instance from Data URI
+ * @api public
+ */
+export function dataUriToBuffer(uri) {
+    if (!/^data:/i.test(uri)) {
+        throw new TypeError('`uri` does not appear to be a Data URI (must begin with "data:")');
+    }
+    // strip newlines
+    uri = uri.replace(/\r?\n/g, '');
+    // split the URI up into the "metadata" and the "data" portions
+    const firstComma = uri.indexOf(',');
+    if (firstComma === -1 || firstComma <= 4) {
+        throw new TypeError('malformed data: URI');
+    }
+    // remove the "data:" scheme and parse the metadata
+    const meta = uri.substring(5, firstComma).split(';');
+    let charset = '';
+    let base64 = false;
+    const type = meta[0] || 'text/plain';
+    let typeFull = type;
+    for (let i = 1; i < meta.length; i++) {
+        if (meta[i] === 'base64') {
+            base64 = true;
+        }
+        else {
+            typeFull += `;${meta[i]}`;
+            if (meta[i].indexOf('charset=') === 0) {
+                charset = meta[i].substring(8);
+            }
+        }
+    }
+    // defaults to US-ASCII only if type is not provided
+    if (!meta[0] && !charset.length) {
+        typeFull += ';charset=US-ASCII';
+        charset = 'US-ASCII';
+    }
+    // get the encoded data portion and decode URI-encoded chars
+    const encoding = base64 ? 'base64' : 'ascii';
+    const data = unescape(uri.substring(firstComma + 1));
+    const buffer = Buffer.from(data, encoding);
+    // set `.type` and `.typeFull` properties to MIME type
+    buffer.type = type;
+    buffer.typeFull = typeFull;
+    // set the `.charset` property
+    buffer.charset = charset;
+    return buffer;
+}
+export default dataUriToBuffer;
+//# sourceMappingURL=index.js.map≤/dist/src/index.js≈//**
+ * Returns a `Buffer` instance from the given data URI `uri`.
+ *
+ * @param {String} uri Data URI to turn into a Buffer instance
+ * @returns {Buffer} Buffer instance from Data URI
+ * @api public
+ */
+export function dataUriToBuffer(uri) {
+    if (!/^data:/i.test(uri)) {
+        throw new TypeError('`uri` does not appear to be a Data URI (must begin with "data:")');
+    }
+    // strip newlines
+    uri = uri.replace(/\r?\n/g, '');
+    // split the URI up into the "metadata" and the "data" portions
+    const firstComma = uri.indexOf(',');
+    if (firstComma === -1 || firstComma <= 4) {
+        throw new TypeError('malformed data: URI');
+    }
+    // remove the "data:" scheme and parse the metadata
+    const meta = uri.substring(5, firstComma).split(';');
+    let charset = '';
+    let base64 = false;
+    const type = meta[0] || 'text/plain';
+    let typeFull = type;
+    for (let i = 1; i < meta.length; i++) {
+        if (meta[i] === 'base64') {
+            base64 = true;
+        }
+        else {
+            typeFull += `;${meta[i]}`;
+            if (meta[i].indexOf('charset=') === 0) {
+                charset = meta[i].substring(8);
+            }
+        }
+    }
+    // defaults to US-ASCII only if type is not provided
+    if (!meta[0] && !charset.length) {
+        typeFull += ';charset=US-ASCII';
+        charset = 'US-ASCII';
+    }
+    // get the encoded data portion and decode URI-encoded chars
+    const encoding = base64 ? 'base64' : 'ascii';
+    const data = unescape(uri.substring(firstComma + 1));
+    const buffer = Buffer.from(data, encoding);
+    // set `.type` and `.typeFull` properties to MIME type
+    buffer.type = type;
+    buffer.typeFull = typeFull;
+    // set the `.charset` property
+    buffer.charset = charset;
+    return buffer;
+}
+export default dataUriToBuffer;
+//# sourceMappingURL=index.js.map≠/src/index.ts≈Ìexport interface MimeBuffer extends Buffer {
+	type: string;
+	typeFull: string;
+	charset: string;
+}
+
+/**
+ * Returns a `Buffer` instance from the given data URI `uri`.
+ *
+ * @param {String} uri Data URI to turn into a Buffer instance
+ * @returns {Buffer} Buffer instance from Data URI
+ * @api public
+ */
+export function dataUriToBuffer(uri: string): MimeBuffer {
+	if (!/^data:/i.test(uri)) {
+		throw new TypeError(
+			'`uri` does not appear to be a Data URI (must begin with "data:")'
+		);
+	}
+
+	// strip newlines
+	uri = uri.replace(/\r?\n/g, '');
+
+	// split the URI up into the "metadata" and the "data" portions
+	const firstComma = uri.indexOf(',');
+	if (firstComma === -1 || firstComma <= 4) {
+		throw new TypeError('malformed data: URI');
+	}
+
+	// remove the "data:" scheme and parse the metadata
+	const meta = uri.substring(5, firstComma).split(';');
+
+	let charset = '';
+	let base64 = false;
+	const type = meta[0] || 'text/plain';
+	let typeFull = type;
+	for (let i = 1; i < meta.length; i++) {
+		if (meta[i] === 'base64') {
+			base64 = true;
+		} else {
+			typeFull += `;${  meta[i]}`;
+			if (meta[i].indexOf('charset=') === 0) {
+				charset = meta[i].substring(8);
+			}
+		}
+	}
+	// defaults to US-ASCII only if type is not provided
+	if (!meta[0] && !charset.length) {
+		typeFull += ';charset=US-ASCII';
+		charset = 'US-ASCII';
+	}
+
+	// get the encoded data portion and decode URI-encoded chars
+	const encoding = base64 ? 'base64' : 'ascii';
+	const data = unescape(uri.substring(firstComma + 1));
+	const buffer = Buffer.from(data, encoding) as MimeBuffer;
+
+	// set `.type` and `.typeFull` properties to MIME type
+	buffer.type = type;
+	buffer.typeFull = typeFull;
+
+	// set the `.charset` property
+	buffer.charset = charset;
+
+	return buffer;
+}
+
+export default dataUriToBuffer;
+∂/dist/src/index.js.map≈Ö{"version":3,"file":"index.js","sourceRoot":"","sources":["../../src/index.ts"],"names":[],"mappings":"AAMA;;;;;;GAMG;AACH,MAAM,UAAU,eAAe,CAAC,GAAW;IAC1C,IAAI,CAAC,SAAS,CAAC,IAAI,CAAC,GAAG,CAAC,EAAE;QACzB,MAAM,IAAI,SAAS,CAClB,kEAAkE,CAClE,CAAC;KACF;IAED,iBAAiB;IACjB,GAAG,GAAG,GAAG,CAAC,OAAO,CAAC,QAAQ,EAAE,EAAE,CAAC,CAAC;IAEhC,+DAA+D;IAC/D,MAAM,UAAU,GAAG,GAAG,CAAC,OAAO,CAAC,GAAG,CAAC,CAAC;IACpC,IAAI,UAAU,KAAK,CAAC,CAAC,IAAI,UAAU,IAAI,CAAC,EAAE;QACzC,MAAM,IAAI,SAAS,CAAC,qBAAqB,CAAC,CAAC;KAC3C;IAED,mDAAmD;IACnD,MAAM,IAAI,GAAG,GAAG,CAAC,SAAS,CAAC,CAAC,EAAE,UAAU,CAAC,CAAC,KAAK,CAAC,GAAG,CAAC,CAAC;IAErD,IAAI,OAAO,GAAG,EAAE,CAAC;IACjB,IAAI,MAAM,GAAG,KAAK,CAAC;IACnB,MAAM,IAAI,GAAG,IAAI,CAAC,CAAC,CAAC,IAAI,YAAY,CAAC;IACrC,IAAI,QAAQ,GAAG,IAAI,CAAC;IACpB,KAAK,IAAI,CAAC,GAAG,CAAC,EAAE,CAAC,GAAG,IAAI,CAAC,MAAM,EAAE,CAAC,EAAE,EAAE;QACrC,IAAI,IAAI,CAAC,CAAC,CAAC,KAAK,QAAQ,EAAE;YACzB,MAAM,GAAG,IAAI,CAAC;SACd;aAAM;YACN,QAAQ,IAAI,IAAM,IAAI,CAAC,CAAC,CAAC,EAAE,CAAC;YAC5B,IAAI,IAAI,CAAC,CAAC,CAAC,CAAC,OAAO,CAAC,UAAU,CAAC,KAAK,CAAC,EAAE;gBACtC,OAAO,GAAG,IAAI,CAAC,CAAC,CAAC,CAAC,SAAS,CAAC,CAAC,CAAC,CAAC;aAC/B;SACD;KACD;IACD,oDAAoD;IACpD,IAAI,CAAC,IAAI,CAAC,CAAC,CAAC,IAAI,CAAC,OAAO,CAAC,MAAM,EAAE;QAChC,QAAQ,IAAI,mBAAmB,CAAC;QAChC,OAAO,GAAG,UAAU,CAAC;KACrB;IAED,4DAA4D;IAC5D,MAAM,QAAQ,GAAG,MAAM,CAAC,CAAC,CAAC,QAAQ,CAAC,CAAC,CAAC,OAAO,CAAC;IAC7C,MAAM,IAAI,GAAG,QAAQ,CAAC,GAAG,CAAC,SAAS,CAAC,UAAU,GAAG,CAAC,CAAC,CAAC,CAAC;IACrD,MAAM,MAAM,GAAG,MAAM,CAAC,IAAI,CAAC,IAAI,EAAE,QAAQ,CAAe,CAAC;IAEzD,sDAAsD;IACtD,MAAM,CAAC,IAAI,GAAG,IAAI,CAAC;IACnB,MAAM,CAAC,QAAQ,GAAG,QAAQ,CAAC;IAE3B,8BAA8B;IAC9B,MAAM,CAAC,OAAO,GAAG,OAAO,CAAC;IAEzB,OAAO,MAAM,CAAC;AACf,CAAC;AAED,eAAe,eAAe,CAAC"}™/README.md≈qdata-uri-to-buffer
+==================
+### Generate a Buffer instance from a [Data URI][rfc] string
+[![Build Status](https://travis-ci.org/TooTallNate/node-data-uri-to-buffer.svg?branch=master)](https://travis-ci.org/TooTallNate/node-data-uri-to-buffer)
+
+This module accepts a ["data" URI][rfc] String of data, and returns a
+node.js `Buffer` instance with the decoded data.
+
+
+Installation
+------------
+
+Install with `npm`:
+
+``` bash
+$ npm install data-uri-to-buffer
+```
+
+
+Example
+-------
+
+``` js
+var dataUriToBuffer = require('data-uri-to-buffer');
+
+// plain-text data is supported
+var uri = 'data:,Hello%2C%20World!';
+var decoded = dataUriToBuffer(uri);
+console.log(decoded.toString());
+// 'Hello, World!'
+
+// base64-encoded data is supported
+uri = 'data:text/plain;base64,SGVsbG8sIFdvcmxkIQ%3D%3D';
+decoded = dataUriToBuffer(uri);
+console.log(decoded.toString());
+// 'Hello, World!'
+```
+
+
+API
+---
+
+### dataUriToBuffer(String uri) ‚Üí Buffer
+
+The `type` property on the Buffer instance gets set to the main type portion of
+the "mediatype" portion of the "data" URI, or defaults to `"text/plain"` if not
+specified.
+
+The `typeFull` property on the Buffer instance gets set to the entire
+"mediatype" portion of the "data" URI (including all parameters), or defaults
+to `"text/plain;charset=US-ASCII"` if not specified.
+
+The `charset` property on the Buffer instance gets set to the Charset portion of
+the "mediatype" portion of the "data" URI, or defaults to `"US-ASCII"` if the
+entire type is not specified, or defaults to `""` otherwise.
+
+*Note*: If the only the main type is specified but not the charset, e.g.
+`"data:text/plain,abc"`, the charset is set to the empty string. The spec only
+defaults to US-ASCII as charset if the entire type is not specified.
+
+
+License
+-------
+
+(The MIT License)
+
+Copyright (c) 2014 Nathan Rajlich &lt;nathan@tootallnate.net&gt;
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+[rfc]: http://tools.ietf.org/html/rfc2397
+¥/dist/test/test.d.tsƒ+/**
+ * Module dependencies.
+ */
+export {};
+≠/package.json≈F{
+  "name": "data-uri-to-buffer",
+  "version": "4.0.0",
+  "description": "Generate a Buffer instance from a Data URI string",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "prepublishOnly": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/TooTallNate/node-data-uri-to-buffer.git"
+  },
+  "engines": {
+    "node": ">= 12"
+  },
+  "keywords": [
+    "data",
+    "uri",
+    "datauri",
+    "data-uri",
+    "buffer",
+    "convert",
+    "rfc2397",
+    "2397"
+  ],
+  "author": "Nathan Rajlich <nathan@tootallnate.net> (http://n8.io/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/TooTallNate/node-data-uri-to-buffer/issues"
+  },
+  "homepage": "https://github.com/TooTallNate/node-data-uri-to-buffer",
+  "devDependencies": {
+    "@types/es6-promisify": "^5.0.0",
+    "@types/mocha": "^9.0.0",
+    "@types/node": "^10.5.3",
+    "jest": "^27.2.2",
+    "ts-jest": "^27.0.5",
+    "typescript": "^4.4.3"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "globals": {
+      "ts-jest": {
+        "diagnostics": false,
+        "isolatedModules": true
+      }
+    },
+    "verbose": false,
+    "testEnvironment": "node",
+    "testMatch": [
+      "<rootDir>/test/**/*.test.ts"
+    ]
+  }
+}
+≤/dist/index.js.map≈Ç{"version":3,"file":"index.js","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":"AAMA;;;;;;GAMG;AACH,MAAM,UAAU,eAAe,CAAC,GAAW;IAC1C,IAAI,CAAC,SAAS,CAAC,IAAI,CAAC,GAAG,CAAC,EAAE;QACzB,MAAM,IAAI,SAAS,CAClB,kEAAkE,CAClE,CAAC;KACF;IAED,iBAAiB;IACjB,GAAG,GAAG,GAAG,CAAC,OAAO,CAAC,QAAQ,EAAE,EAAE,CAAC,CAAC;IAEhC,+DAA+D;IAC/D,MAAM,UAAU,GAAG,GAAG,CAAC,OAAO,CAAC,GAAG,CAAC,CAAC;IACpC,IAAI,UAAU,KAAK,CAAC,CAAC,IAAI,UAAU,IAAI,CAAC,EAAE;QACzC,MAAM,IAAI,SAAS,CAAC,qBAAqB,CAAC,CAAC;KAC3C;IAED,mDAAmD;IACnD,MAAM,IAAI,GAAG,GAAG,CAAC,SAAS,CAAC,CAAC,EAAE,UAAU,CAAC,CAAC,KAAK,CAAC,GAAG,CAAC,CAAC;IAErD,IAAI,OAAO,GAAG,EAAE,CAAC;IACjB,IAAI,MAAM,GAAG,KAAK,CAAC;IACnB,MAAM,IAAI,GAAG,IAAI,CAAC,CAAC,CAAC,IAAI,YAAY,CAAC;IACrC,IAAI,QAAQ,GAAG,IAAI,CAAC;IACpB,KAAK,IAAI,CAAC,GAAG,CAAC,EAAE,CAAC,GAAG,IAAI,CAAC,MAAM,EAAE,CAAC,EAAE,EAAE;QACrC,IAAI,IAAI,CAAC,CAAC,CAAC,KAAK,QAAQ,EAAE;YACzB,MAAM,GAAG,IAAI,CAAC;SACd;aAAM;YACN,QAAQ,IAAI,IAAM,IAAI,CAAC,CAAC,CAAC,EAAE,CAAC;YAC5B,IAAI,IAAI,CAAC,CAAC,CAAC,CAAC,OAAO,CAAC,UAAU,CAAC,KAAK,CAAC,EAAE;gBACtC,OAAO,GAAG,IAAI,CAAC,CAAC,CAAC,CAAC,SAAS,CAAC,CAAC,CAAC,CAAC;aAC/B;SACD;KACD;IACD,oDAAoD;IACpD,IAAI,CAAC,IAAI,CAAC,CAAC,CAAC,IAAI,CAAC,OAAO,CAAC,MAAM,EAAE;QAChC,QAAQ,IAAI,mBAAmB,CAAC;QAChC,OAAO,GAAG,UAAU,CAAC;KACrB;IAED,4DAA4D;IAC5D,MAAM,QAAQ,GAAG,MAAM,CAAC,CAAC,CAAC,QAAQ,CAAC,CAAC,CAAC,OAAO,CAAC;IAC7C,MAAM,IAAI,GAAG,QAAQ,CAAC,GAAG,CAAC,SAAS,CAAC,UAAU,GAAG,CAAC,CAAC,CAAC,CAAC;IACrD,MAAM,MAAM,GAAG,MAAM,CAAC,IAAI,CAAC,IAAI,EAAE,QAAQ,CAAe,CAAC;IAEzD,sDAAsD;IACtD,MAAM,CAAC,IAAI,GAAG,IAAI,CAAC;IACnB,MAAM,CAAC,QAAQ,GAAG,QAAQ,CAAC;IAE3B,8BAA8B;IAC9B,MAAM,CAAC,OAAO,GAAG,OAAO,CAAC;IAEzB,OAAO,MAAM,CAAC;AACf,CAAC;AAED,eAAe,eAAe,CAAC"}

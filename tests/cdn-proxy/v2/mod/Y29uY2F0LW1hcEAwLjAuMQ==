@@ -1,0 +1,185 @@
+á∞/README.markdown≈çconcat-map
+==========
+
+Concatenative mapdashery.
+
+[![browser support](http://ci.testling.com/substack/node-concat-map.png)](http://ci.testling.com/substack/node-concat-map)
+
+[![build status](https://secure.travis-ci.org/substack/node-concat-map.png)](http://travis-ci.org/substack/node-concat-map)
+
+example
+=======
+
+``` js
+var concatMap = require('concat-map');
+var xs = [ 1, 2, 3, 4, 5, 6 ];
+var ys = concatMap(xs, function (x) {
+    return x % 2 ? [ x - 0.1, x, x + 0.1 ] : [];
+});
+console.dir(ys);
+```
+
+***
+
+```
+[ 0.9, 1, 1.1, 2.9, 3, 3.1, 4.9, 5, 5.1 ]
+```
+
+methods
+=======
+
+``` js
+var concatMap = require('concat-map')
+```
+
+concatMap(xs, fn)
+-----------------
+
+Return an array of concatenated elements by calling `fn(x, i)` for each element
+`x` and each index `i` in the array `xs`.
+
+When `fn(x, i)` returns an array, its result will be concatenated with the
+result array. If `fn(x, i)` returns anything else, that value will be pushed
+onto the end of the result array.
+
+install
+=======
+
+With [npm](http://npmjs.org) do:
+
+```
+npm install concat-map
+```
+
+license
+=======
+
+MIT
+
+notes
+=====
+
+This module was written while sitting high above the ground in a tree.
+≠/package.json≈›{
+    "name" : "concat-map",
+    "description" : "concatenative mapdashery",
+    "version" : "0.0.1",
+    "repository" : {
+        "type" : "git",
+        "url" : "git://github.com/substack/node-concat-map.git"
+    },
+    "main" : "index.js",
+    "keywords" : [
+        "concat",
+        "concatMap",
+        "map",
+        "functional",
+        "higher-order"
+    ],
+    "directories" : {
+        "example" : "example",
+        "test" : "test"
+    },
+    "scripts" : {
+        "test" : "tape test/*.js"
+    },
+    "devDependencies" : {
+        "tape" : "~2.4.0"
+    },
+    "license" : "MIT",
+    "author" : {
+        "name" : "James Halliday",
+        "email" : "mail@substack.net",
+        "url" : "http://substack.net"
+    },
+    "testling" : {
+        "files" : "test/*.js",
+        "browsers" : {
+            "ie" : [ 6, 7, 8, 9 ],
+            "ff" : [ 3.5, 10, 15.0 ],
+            "chrome" : [ 10, 22 ],
+            "safari" : [ 5.1 ],
+            "opera" : [ 12 ]
+        }
+    }
+}
+®/LICENSE≈1This software is released under the MIT license:
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+¨/.travis.ymlƒ+language: node_js
+node_js:
+  - 0.4
+  - 0.6
+Ø/example/map.jsƒ´var concatMap = require('../');
+var xs = [ 1, 2, 3, 4, 5, 6 ];
+var ys = concatMap(xs, function (x) {
+    return x % 2 ? [ x - 0.1, x, x + 0.1 ] : [];
+});
+console.dir(ys);
+©/index.js≈Ymodule.exports = function (xs, fn) {
+    var res = [];
+    for (var i = 0; i < xs.length; i++) {
+        var x = fn(xs[i], i);
+        if (isArray(x)) res.push.apply(res, x);
+        else res.push(x);
+    }
+    return res;
+};
+
+var isArray = Array.isArray || function (xs) {
+    return Object.prototype.toString.call(xs) === '[object Array]';
+};
+¨/test/map.js≈3var concatMap = require('../');
+var test = require('tape');
+
+test('empty or not', function (t) {
+    var xs = [ 1, 2, 3, 4, 5, 6 ];
+    var ixes = [];
+    var ys = concatMap(xs, function (x, ix) {
+        ixes.push(ix);
+        return x % 2 ? [ x - 0.1, x, x + 0.1 ] : [];
+    });
+    t.same(ys, [ 0.9, 1, 1.1, 2.9, 3, 3.1, 4.9, 5, 5.1 ]);
+    t.same(ixes, [ 0, 1, 2, 3, 4, 5 ]);
+    t.end();
+});
+
+test('always something', function (t) {
+    var xs = [ 'a', 'b', 'c', 'd' ];
+    var ys = concatMap(xs, function (x) {
+        return x === 'b' ? [ 'B', 'B', 'B' ] : [ x ];
+    });
+    t.same(ys, [ 'a', 'B', 'B', 'B', 'c', 'd' ]);
+    t.end();
+});
+
+test('scalars', function (t) {
+    var xs = [ 'a', 'b', 'c', 'd' ];
+    var ys = concatMap(xs, function (x) {
+        return x === 'b' ? [ 'B', 'B', 'B' ] : x;
+    });
+    t.same(ys, [ 'a', 'B', 'B', 'B', 'c', 'd' ]);
+    t.end();
+});
+
+test('undefs', function (t) {
+    var xs = [ 'a', 'b', 'c', 'd' ];
+    var ys = concatMap(xs, function () {});
+    t.same(ys, [ undefined, undefined, undefined, undefined ]);
+    t.end();
+});

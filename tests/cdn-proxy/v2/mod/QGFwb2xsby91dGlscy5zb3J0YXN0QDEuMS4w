@@ -1,0 +1,210 @@
+á≤/dist/index.js.map≈‡{"version":3,"file":"index.js","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":";;;;;;AAGA,qCAYiB;AACjB,kEAAmC;AAOnC,SAAgB,OAAO,CAAC,GAAiB;IACvC,OAAO,IAAA,eAAK,EAAC,GAAG,EAAE;QAChB,QAAQ,CAAC,IAAkB;YACzB,OAAO;gBACL,GAAG,IAAI;gBAEP,WAAW,EAAE,IAAA,uBAAM,EAAC,IAAI,CAAC,WAAW,EAAE,MAAM,EAAE,YAAY,CAAC;aAC5D,CAAC;QACJ,CAAC;QACD,mBAAmB,CACjB,IAA6B;YAE7B,OAAO,uBAAuB,CAAC,IAAI,CAAC,CAAC;QACvC,CAAC;QACD,YAAY,CAAC,IAAI;YACf,OAAO;gBACL,GAAG,IAAI;gBAKP,UAAU,EAAE,IAAA,uBAAM,EAAC,IAAI,CAAC,UAAU,EAAE,MAAM,EAAE,YAAY,CAAC;aAC1D,CAAC;QACJ,CAAC;QACD,KAAK,CAAC,IAAI;YACR,OAAO,aAAa,CAAC,IAAI,CAAC,CAAC;QAC7B,CAAC;QACD,cAAc,CAAC,IAAI;YACjB,OAAO,cAAc,CAAC,IAAI,CAAC,CAAC;QAC9B,CAAC;QACD,cAAc,CAAC,IAAI;YACjB,OAAO,cAAc,CAAC,IAAI,CAAC,CAAC;QAC9B,CAAC;QACD,kBAAkB,CAAC,IAAI;YACrB,OAAO,cAAc,CAAC,uBAAuB,CAAC,IAAI,CAAC,CAAC,CAAC;QACvD,CAAC;QACD,SAAS,CAAC,IAAI;YACZ,OAAO,aAAa,CAAC,IAAI,CAAC,CAAC;QAC7B,CAAC;KACF,CAAC,CAAC;AACL,CAAC;AAxCD,0BAwCC;AAED,SAAS,cAAc,CACrB,IAAO;IAEP,OAAO,YAAY,IAAI,IAAI;QACzB,CAAC,CAAC,EAAE,GAAG,IAAI,EAAE,UAAU,EAAE,IAAA,uBAAM,EAAC,IAAI,CAAC,UAAU,EAAE,YAAY,CAAC,EAAE;QAChE,CAAC,CAAC,IAAI,CAAC;AACX,CAAC;AAED,SAAS,aAAa,CACpB,IAAO;IAEP,OAAO,WAAW,IAAI,IAAI;QACxB,CAAC,CAAC,EAAE,GAAG,IAAI,EAAE,SAAS,EAAE,IAAA,uBAAM,EAAC,IAAI,CAAC,SAAS,EAAE,YAAY,CAAC,EAAE;QAC9D,CAAC,CAAC,IAAI,CAAC;AACX,CAAC;AAED,SAAS,uBAAuB,CAE9B,IAAO;IACP,OAAO,qBAAqB,IAAI,IAAI;QAClC,CAAC,CAAC;YACE,GAAG,IAAI;YACP,mBAAmB,EAAE,IAAA,uBAAM,EACzB,IAAI,CAAC,mBAAmB,EACxB,qBAAqB,CACtB;SACF;QACH,CAAC,CAAC,IAAI,CAAC;AACX,CAAC"}∞/dist/index.d.tsƒçimport { DocumentNode } from "graphql";
+export declare function sortAST(ast: DocumentNode): DocumentNode;
+//# sourceMappingURL=index.d.ts.map≠/src/index.ts≈î// We'll only fetch the `ListIteratee` type from the `@types/lodash`, but get
+// `sortBy` from the modularized version of the package to avoid bringing in
+// all of `lodash`.
+import {
+  visit,
+  DocumentNode,
+  OperationDefinitionNode,
+  DirectiveNode,
+  FragmentDefinitionNode,
+  InlineFragmentNode,
+  FragmentSpreadNode,
+  FieldNode,
+  SelectionSetNode,
+  ArgumentNode,
+  VariableDefinitionNode,
+} from "graphql";
+import sortBy from "lodash.sortby";
+
+// sortAST sorts most multi-child nodes alphabetically. Using this as part of
+// your signature calculation function may make it easier to tell the difference
+// between queries that are similar to each other, and if for some reason your
+// GraphQL client generates query strings with elements in nondeterministic
+// order, it can make sure the queries are treated as identical.
+export function sortAST(ast: DocumentNode): DocumentNode {
+  return visit(ast, {
+    Document(node: DocumentNode) {
+      return {
+        ...node,
+        // The sort on "kind" places fragments before operations within the document
+        definitions: sortBy(node.definitions, "kind", "name.value"),
+      };
+    },
+    OperationDefinition(
+      node: OperationDefinitionNode,
+    ): OperationDefinitionNode {
+      return sortVariableDefinitions(node);
+    },
+    SelectionSet(node): SelectionSetNode {
+      return {
+        ...node,
+        // Define an ordering for field names in a SelectionSet.  Field first,
+        // then FragmentSpread, then InlineFragment.  By a lovely coincidence,
+        // the order we want them to appear in is alphabetical by node.kind.
+        // Use sortBy instead of sorted because 'selections' is not optional.
+        selections: sortBy(node.selections, "kind", "name.value"),
+      };
+    },
+    Field(node): FieldNode {
+      return sortArguments(node);
+    },
+    FragmentSpread(node): FragmentSpreadNode {
+      return sortDirectives(node);
+    },
+    InlineFragment(node): InlineFragmentNode {
+      return sortDirectives(node);
+    },
+    FragmentDefinition(node): FragmentDefinitionNode {
+      return sortDirectives(sortVariableDefinitions(node));
+    },
+    Directive(node): DirectiveNode {
+      return sortArguments(node);
+    },
+  });
+}
+
+function sortDirectives<T extends { directives?: readonly DirectiveNode[] }>(
+  node: T,
+): T {
+  return "directives" in node
+    ? { ...node, directives: sortBy(node.directives, "name.value") }
+    : node;
+}
+
+function sortArguments<T extends { arguments?: readonly ArgumentNode[] }>(
+  node: T,
+): T {
+  return "arguments" in node
+    ? { ...node, arguments: sortBy(node.arguments, "name.value") }
+    : node;
+}
+
+function sortVariableDefinitions<
+  T extends { variableDefinitions?: readonly VariableDefinitionNode[] },
+>(node: T): T {
+  return "variableDefinitions" in node
+    ? {
+        ...node,
+        variableDefinitions: sortBy(
+          node.variableDefinitions,
+          "variable.name.value",
+        ),
+      }
+    : node;
+}
+Æ/dist/index.js≈‘"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.sortAST = void 0;
+const graphql_1 = require("graphql");
+const lodash_sortby_1 = __importDefault(require("lodash.sortby"));
+function sortAST(ast) {
+    return (0, graphql_1.visit)(ast, {
+        Document(node) {
+            return {
+                ...node,
+                definitions: (0, lodash_sortby_1.default)(node.definitions, "kind", "name.value"),
+            };
+        },
+        OperationDefinition(node) {
+            return sortVariableDefinitions(node);
+        },
+        SelectionSet(node) {
+            return {
+                ...node,
+                selections: (0, lodash_sortby_1.default)(node.selections, "kind", "name.value"),
+            };
+        },
+        Field(node) {
+            return sortArguments(node);
+        },
+        FragmentSpread(node) {
+            return sortDirectives(node);
+        },
+        InlineFragment(node) {
+            return sortDirectives(node);
+        },
+        FragmentDefinition(node) {
+            return sortDirectives(sortVariableDefinitions(node));
+        },
+        Directive(node) {
+            return sortArguments(node);
+        },
+    });
+}
+exports.sortAST = sortAST;
+function sortDirectives(node) {
+    return "directives" in node
+        ? { ...node, directives: (0, lodash_sortby_1.default)(node.directives, "name.value") }
+        : node;
+}
+function sortArguments(node) {
+    return "arguments" in node
+        ? { ...node, arguments: (0, lodash_sortby_1.default)(node.arguments, "name.value") }
+        : node;
+}
+function sortVariableDefinitions(node) {
+    return "variableDefinitions" in node
+        ? {
+            ...node,
+            variableDefinitions: (0, lodash_sortby_1.default)(node.variableDefinitions, "variable.name.value"),
+        }
+        : node;
+}
+//# sourceMappingURL=index.js.map®/LICENSE≈]MIT License
+
+Copyright (c) 2022 Apollo Graph, Inc. (Formerly Meteor Development Group, Inc.)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+¥/dist/index.d.ts.mapƒ∆{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":"AAGA,OAAO,EAEL,YAAY,EAUb,MAAM,SAAS,CAAC;AAQjB,wBAAgB,OAAO,CAAC,GAAG,EAAE,YAAY,GAAG,YAAY,CAwCvD"}≠/package.json≈¨{
+  "name": "@apollo/utils.sortast",
+  "version": "1.1.0",
+  "description": "Sort AST nodes in a document alphabetically",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apollographql/apollo-utils.git",
+    "directory": "sortAst/"
+  },
+  "keywords": [
+    "apollo",
+    "graphql",
+    "typescript",
+    "node"
+  ],
+  "author": "Apollo <packages@apollographql.com>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=12.13.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "lodash.sortby": "^4.7.0"
+  },
+  "peerDependencies": {
+    "graphql": "14.x || 15.x || 16.x"
+  }
+}

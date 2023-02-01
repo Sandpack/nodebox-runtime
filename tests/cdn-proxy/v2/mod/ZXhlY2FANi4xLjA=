@@ -1,0 +1,2013 @@
+‹¨/licenseÅ]MIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+®/lib/stream.jsÅ	import {isStream} from 'is-stream';
+import getStream from 'get-stream';
+import mergeStream from 'merge-stream';
+
+// `input` option
+export const handleInput = (spawned, input) => {
+	// Checking for stdin is workaround for https://github.com/nodejs/node/issues/26852
+	// @todo remove `|| spawned.stdin === undefined` once we drop support for Node.js <=12.2.0
+	if (input === undefined || spawned.stdin === undefined) {
+		return;
+	}
+
+	if (isStream(input)) {
+		input.pipe(spawned.stdin);
+	} else {
+		spawned.stdin.end(input);
+	}
+};
+
+// `all` interleaves `stdout` and `stderr`
+export const makeAllStream = (spawned, {all}) => {
+	if (!all || (!spawned.stdout && !spawned.stderr)) {
+		return;
+	}
+
+	const mixed = mergeStream();
+
+	if (spawned.stdout) {
+		mixed.add(spawned.stdout);
+	}
+
+	if (spawned.stderr) {
+		mixed.add(spawned.stderr);
+	}
+
+	return mixed;
+};
+
+// On failure, `result.stdout|stderr|all` should contain the currently buffered stream
+const getBufferedData = async (stream, streamPromise) => {
+	if (!stream) {
+		return;
+	}
+
+	stream.destroy();
+
+	try {
+		return await streamPromise;
+	} catch (error) {
+		return error.bufferedData;
+	}
+};
+
+const getStreamPromise = (stream, {encoding, buffer, maxBuffer}) => {
+	if (!stream || !buffer) {
+		return;
+	}
+
+	if (encoding) {
+		return getStream(stream, {encoding, maxBuffer});
+	}
+
+	return getStream.buffer(stream, {maxBuffer});
+};
+
+// Retrieve result of child process: exit code, signal, error, streams (stdout/stderr/all)
+export const getSpawnedResult = async ({stdout, stderr, all}, {encoding, buffer, maxBuffer}, processDone) => {
+	const stdoutPromise = getStreamPromise(stdout, {encoding, buffer, maxBuffer});
+	const stderrPromise = getStreamPromise(stderr, {encoding, buffer, maxBuffer});
+	const allPromise = getStreamPromise(all, {encoding, buffer, maxBuffer: maxBuffer * 2});
+
+	try {
+		return await Promise.all([processDone, stdoutPromise, stderrPromise, allPromise]);
+	} catch (error) {
+		return Promise.all([
+			{error, signal: error.signal, timedOut: error.timedOut},
+			getBufferedData(stdout, stdoutPromise),
+			getBufferedData(stderr, stderrPromise),
+			getBufferedData(all, allPromise),
+		]);
+	}
+};
+
+export const validateInputSync = ({input}) => {
+	if (isStream(input)) {
+		throw new TypeError('The `input` option cannot be a stream in sync mode');
+	}
+};
+¬/lib/kill.jsÅ§import os from 'node:os';
+import onExit from 'signal-exit';
+
+const DEFAULT_FORCE_KILL_TIMEOUT = 1000 * 5;
+
+// Monkey-patches `childProcess.kill()` to add `forceKillAfterTimeout` behavior
+export const spawnedKill = (kill, signal = 'SIGTERM', options = {}) => {
+	const killResult = kill(signal);
+	setKillTimeout(kill, signal, options, killResult);
+	return killResult;
+};
+
+const setKillTimeout = (kill, signal, options, killResult) => {
+	if (!shouldForceKill(signal, options, killResult)) {
+		return;
+	}
+
+	const timeout = getForceKillAfterTimeout(options);
+	const t = setTimeout(() => {
+		kill('SIGKILL');
+	}, timeout);
+
+	// Guarded because there's no `.unref()` when `execa` is used in the renderer
+	// process in Electron. This cannot be tested since we don't run tests in
+	// Electron.
+	// istanbul ignore else
+	if (t.unref) {
+		t.unref();
+	}
+};
+
+const shouldForceKill = (signal, {forceKillAfterTimeout}, killResult) => isSigterm(signal) && forceKillAfterTimeout !== false && killResult;
+
+const isSigterm = signal => signal === os.constants.signals.SIGTERM
+		|| (typeof signal === 'string' && signal.toUpperCase() === 'SIGTERM');
+
+const getForceKillAfterTimeout = ({forceKillAfterTimeout = true}) => {
+	if (forceKillAfterTimeout === true) {
+		return DEFAULT_FORCE_KILL_TIMEOUT;
+	}
+
+	if (!Number.isFinite(forceKillAfterTimeout) || forceKillAfterTimeout < 0) {
+		throw new TypeError(`Expected the \`forceKillAfterTimeout\` option to be a non-negative integer, got \`${forceKillAfterTimeout}\` (${typeof forceKillAfterTimeout})`);
+	}
+
+	return forceKillAfterTimeout;
+};
+
+// `childProcess.cancel()`
+export const spawnedCancel = (spawned, context) => {
+	const killResult = spawned.kill();
+
+	if (killResult) {
+		context.isCanceled = true;
+	}
+};
+
+const timeoutKill = (spawned, signal, reject) => {
+	spawned.kill(signal);
+	reject(Object.assign(new Error('Timed out'), {timedOut: true, signal}));
+};
+
+// `timeout` option handling
+export const setupTimeout = (spawned, {timeout, killSignal = 'SIGTERM'}, spawnedPromise) => {
+	if (timeout === 0 || timeout === undefined) {
+		return spawnedPromise;
+	}
+
+	let timeoutId;
+	const timeoutPromise = new Promise((resolve, reject) => {
+		timeoutId = setTimeout(() => {
+			timeoutKill(spawned, killSignal, reject);
+		}, timeout);
+	});
+
+	const safeSpawnedPromise = spawnedPromise.finally(() => {
+		clearTimeout(timeoutId);
+	});
+
+	return Promise.race([timeoutPromise, safeSpawnedPromise]);
+};
+
+export const validateTimeout = ({timeout}) => {
+	if (timeout !== undefined && (!Number.isFinite(timeout) || timeout < 0)) {
+		throw new TypeError(`Expected the \`timeout\` option to be a non-negative integer, got \`${timeout}\` (${typeof timeout})`);
+	}
+};
+
+// `cleanup` option handling
+export const setExitHandler = async (spawned, {cleanup, detached}, timedPromise) => {
+	if (!cleanup || detached) {
+		return timedPromise;
+	}
+
+	const removeExitHandler = onExit(() => {
+		spawned.kill();
+	});
+
+	return timedPromise.finally(() => {
+		removeExitHandler();
+	});
+};
+¯/lib/promise.jsÅ+const nativePromisePrototype = (async () => {})().constructor.prototype;
+const descriptors = ['then', 'catch', 'finally'].map(property => [
+	property,
+	Reflect.getOwnPropertyDescriptor(nativePromisePrototype, property),
+]);
+
+// The return value is a mixin of `childProcess` and `Promise`
+export const mergePromise = (spawned, promise) => {
+	for (const [property, descriptor] of descriptors) {
+		// Starting the main `promise` is deferred to avoid consuming streams
+		const value = typeof promise === 'function'
+			? (...args) => Reflect.apply(descriptor.value, promise(), args)
+			: descriptor.value.bind(promise);
+
+		Reflect.defineProperty(spawned, property, {...descriptor, value});
+	}
+
+	return spawned;
+};
+
+// Use promises instead of `child_process` events
+export const getSpawnedPromise = spawned => new Promise((resolve, reject) => {
+	spawned.on('exit', (exitCode, signal) => {
+		resolve({exitCode, signal});
+	});
+
+	spawned.on('error', error => {
+		reject(error);
+	});
+
+	if (spawned.stdin) {
+		spawned.stdin.on('error', error => {
+			reject(error);
+		});
+	}
+});
+«/index.d.tsÅG›import {Buffer} from 'node:buffer';
+import {ChildProcess} from 'node:child_process';
+import {Stream, Readable as ReadableStream} from 'node:stream';
+
+export type StdioOption =
+	| 'pipe'
+	| 'ipc'
+	| 'ignore'
+	| 'inherit'
+	| Stream
+	| number
+	| undefined;
+
+export interface CommonOptions<EncodingType> {
+	/**
+	Kill the spawned process when the parent process exits unless either:
+		- the spawned process is [`detached`](https://nodejs.org/api/child_process.html#child_process_options_detached)
+		- the parent process is terminated abruptly, for example, with `SIGKILL` as opposed to `SIGTERM` or a normal exit
+
+	@default true
+	*/
+	readonly cleanup?: boolean;
+
+	/**
+	Prefer locally installed binaries when looking for a binary to execute.
+
+	If you `$ npm install foo`, you can then `execa('foo')`.
+
+	@default false
+	*/
+	readonly preferLocal?: boolean;
+
+	/**
+	Preferred path to find locally installed binaries in (use with `preferLocal`).
+
+	Using a `URL` is only supported in Node.js `14.18.0`, `16.14.0` or above.
+
+	@default process.cwd()
+	*/
+	readonly localDir?: string | URL;
+
+	/**
+	Path to the Node.js executable to use in child processes.
+
+	This can be either an absolute path or a path relative to the `cwd` option.
+
+	Requires `preferLocal` to be `true`.
+
+	For example, this can be used together with [`get-node`](https://github.com/ehmicky/get-node) to run a specific Node.js version in a child process.
+
+	@default process.execPath
+	*/
+	readonly execPath?: string;
+
+	/**
+	Buffer the output from the spawned process. When set to `false`, you must read the output of `stdout` and `stderr` (or `all` if the `all` option is `true`). Otherwise the returned promise will not be resolved/rejected.
+
+	If the spawned process fails, `error.stdout`, `error.stderr`, and `error.all` will contain the buffered data.
+
+	@default true
+	*/
+	readonly buffer?: boolean;
+
+	/**
+	Same options as [`stdio`](https://nodejs.org/dist/latest-v6.x/docs/api/child_process.html#child_process_options_stdio).
+
+	@default 'pipe'
+	*/
+	readonly stdin?: StdioOption;
+
+	/**
+	Same options as [`stdio`](https://nodejs.org/dist/latest-v6.x/docs/api/child_process.html#child_process_options_stdio).
+
+	@default 'pipe'
+	*/
+	readonly stdout?: StdioOption;
+
+	/**
+	Same options as [`stdio`](https://nodejs.org/dist/latest-v6.x/docs/api/child_process.html#child_process_options_stdio).
+
+	@default 'pipe'
+	*/
+	readonly stderr?: StdioOption;
+
+	/**
+	Setting this to `false` resolves the promise with the error instead of rejecting it.
+
+	@default true
+	*/
+	readonly reject?: boolean;
+
+	/**
+	Add an `.all` property on the promise and the resolved value. The property contains the output of the process with `stdout` and `stderr` interleaved.
+
+	@default false
+	*/
+	readonly all?: boolean;
+
+	/**
+	Strip the final [newline character](https://en.wikipedia.org/wiki/Newline) from the output.
+
+	@default true
+	*/
+	readonly stripFinalNewline?: boolean;
+
+	/**
+	Set to `false` if you don't want to extend the environment variables when providing the `env` property.
+
+	@default true
+	*/
+	readonly extendEnv?: boolean;
+
+	/**
+	Current working directory of the child process.
+
+	Using a `URL` is only supported in Node.js `14.18.0`, `16.14.0` or above.
+
+	@default process.cwd()
+	*/
+	readonly cwd?: string | URL;
+
+	/**
+	Environment key-value pairs. Extends automatically from `process.env`. Set `extendEnv` to `false` if you don't want this.
+
+	@default process.env
+	*/
+	readonly env?: NodeJS.ProcessEnv;
+
+	/**
+	Explicitly set the value of `argv[0]` sent to the child process. This will be set to `command` or `file` if not specified.
+	*/
+	readonly argv0?: string;
+
+	/**
+	Child's [stdio](https://nodejs.org/api/child_process.html#child_process_options_stdio) configuration.
+
+	@default 'pipe'
+	*/
+	readonly stdio?: 'pipe' | 'ignore' | 'inherit' | readonly StdioOption[];
+
+	/**
+	Specify the kind of serialization used for sending messages between processes when using the `stdio: 'ipc'` option or `execaNode()`:
+		- `json`: Uses `JSON.stringify()` and `JSON.parse()`.
+		- `advanced`: Uses [`v8.serialize()`](https://nodejs.org/api/v8.html#v8_v8_serialize_value)
+
+	Requires Node.js `13.2.0` or later.
+
+	[More info.](https://nodejs.org/api/child_process.html#child_process_advanced_serialization)
+
+	@default 'json'
+	*/
+	readonly serialization?: 'json' | 'advanced';
+
+	/**
+	Prepare child to run independently of its parent process. Specific behavior [depends on the platform](https://nodejs.org/api/child_process.html#child_process_options_detached).
+
+	@default false
+	*/
+	readonly detached?: boolean;
+
+	/**
+	Sets the user identity of the process.
+	*/
+	readonly uid?: number;
+
+	/**
+	Sets the group identity of the process.
+	*/
+	readonly gid?: number;
+
+	/**
+	If `true`, runs `command` inside of a shell. Uses `/bin/sh` on UNIX and `cmd.exe` on Windows. A different shell can be specified as a string. The shell should understand the `-c` switch on UNIX or `/d /s /c` on Windows.
+
+	We recommend against using this option since it is:
+	- not cross-platform, encouraging shell-specific syntax.
+	- slower, because of the additional shell interpretation.
+	- unsafe, potentially allowing command injection.
+
+	@default false
+	*/
+	readonly shell?: boolean | string;
+
+	/**
+	Specify the character encoding used to decode the `stdout` and `stderr` output. If set to `null`, then `stdout` and `stderr` will be a `Buffer` instead of a string.
+
+	@default 'utf8'
+	*/
+	readonly encoding?: EncodingType;
+
+	/**
+	If `timeout` is greater than `0`, the parent will send the signal identified by the `killSignal` property (the default is `SIGTERM`) if the child runs longer than `timeout` milliseconds.
+
+	@default 0
+	*/
+	readonly timeout?: number;
+
+	/**
+	Largest amount of data in bytes allowed on `stdout` or `stderr`. Default: 100 MB.
+
+	@default 100_000_000
+	*/
+	readonly maxBuffer?: number;
+
+	/**
+	Signal value to be used when the spawned process will be killed.
+
+	@default 'SIGTERM'
+	*/
+	readonly killSignal?: string | number;
+
+	/**
+	You can abort the spawned process using [`AbortController`](https://developer.mozilla.org/en-US/docs/Web/API/AbortController).
+
+	When `AbortController.abort()` is called, [`.isCanceled`](https://github.com/sindresorhus/execa#iscanceled) becomes `false`.
+
+	*Requires Node.js 16 or later.*
+
+	@example
+	```js
+	import {execa} from 'execa';
+
+	const abortController = new AbortController();
+	const subprocess = execa('node', [], {signal: abortController.signal});
+
+	setTimeout(() => {
+		abortController.abort();
+	}, 1000);
+
+	try {
+		await subprocess;
+	} catch (error) {
+		console.log(subprocess.killed); // true
+		console.log(error.isCanceled); // true
+	}
+	```
+	*/
+	readonly signal?: AbortSignal;
+
+	/**
+	If `true`, no quoting or escaping of arguments is done on Windows. Ignored on other platforms. This is set to `true` automatically when the `shell` option is `true`.
+
+	@default false
+	*/
+	readonly windowsVerbatimArguments?: boolean;
+
+	/**
+	On Windows, do not create a new console window. Please note this also prevents `CTRL-C` [from working](https://github.com/nodejs/node/issues/29837) on Windows.
+
+	@default true
+	*/
+	readonly windowsHide?: boolean;
+}
+
+export interface Options<EncodingType = string> extends CommonOptions<EncodingType> {
+	/**
+	Write some input to the `stdin` of your binary.
+	*/
+	readonly input?: string | Buffer | ReadableStream;
+}
+
+export interface SyncOptions<EncodingType = string> extends CommonOptions<EncodingType> {
+	/**
+	Write some input to the `stdin` of your binary.
+	*/
+	readonly input?: string | Buffer;
+}
+
+export interface NodeOptions<EncodingType = string> extends Options<EncodingType> {
+	/**
+	The Node.js executable to use.
+
+	@default process.execPath
+	*/
+	readonly nodePath?: string;
+
+	/**
+	List of [CLI options](https://nodejs.org/api/cli.html#cli_options) passed to the Node.js executable.
+
+	@default process.execArgv
+	*/
+	readonly nodeOptions?: string[];
+}
+
+export interface ExecaReturnBase<StdoutStderrType> {
+	/**
+	The file and arguments that were run, for logging purposes.
+
+	This is not escaped and should not be executed directly as a process, including using `execa()` or `execaCommand()`.
+	*/
+	command: string;
+
+	/**
+	Same as `command` but escaped.
+
+	This is meant to be copy and pasted into a shell, for debugging purposes.
+	Since the escaping is fairly basic, this should not be executed directly as a process, including using `execa()` or `execaCommand()`.
+	*/
+	escapedCommand: string;
+
+	/**
+	The numeric exit code of the process that was run.
+	*/
+	exitCode: number;
+
+	/**
+	The output of the process on stdout.
+	*/
+	stdout: StdoutStderrType;
+
+	/**
+	The output of the process on stderr.
+	*/
+	stderr: StdoutStderrType;
+
+	/**
+	Whether the process failed to run.
+	*/
+	failed: boolean;
+
+	/**
+	Whether the process timed out.
+	*/
+	timedOut: boolean;
+
+	/**
+	Whether the process was killed.
+	*/
+	killed: boolean;
+
+	/**
+	The name of the signal that was used to terminate the process. For example, `SIGFPE`.
+
+	If a signal terminated the process, this property is defined and included in the error message. Otherwise it is `undefined`.
+	*/
+	signal?: string;
+
+	/**
+	A human-friendly description of the signal that was used to terminate the process. For example, `Floating point arithmetic error`.
+
+	If a signal terminated the process, this property is defined and included in the error message. Otherwise it is `undefined`. It is also `undefined` when the signal is very uncommon which should seldomly happen.
+	*/
+	signalDescription?: string;
+}
+
+export interface ExecaSyncReturnValue<StdoutErrorType = string>
+	extends ExecaReturnBase<StdoutErrorType> {
+}
+
+/**
+Result of a child process execution. On success this is a plain object. On failure this is also an `Error` instance.
+
+The child process fails when:
+- its exit code is not `0`
+- it was killed with a signal
+- timing out
+- being canceled
+- there's not enough memory or there are already too many child processes
+*/
+export interface ExecaReturnValue<StdoutErrorType = string>
+	extends ExecaSyncReturnValue<StdoutErrorType> {
+	/**
+	The output of the process with `stdout` and `stderr` interleaved.
+
+	This is `undefined` if either:
+	- the `all` option is `false` (default value)
+	- `execaSync()` was used
+	*/
+	all?: StdoutErrorType;
+
+	/**
+	Whether the process was canceled.
+
+	You can cancel the spawned process using the [`signal`](https://github.com/sindresorhus/execa#signal-1) option.
+	*/
+	isCanceled: boolean;
+}
+
+export interface ExecaSyncError<StdoutErrorType = string>
+	extends Error,
+	ExecaReturnBase<StdoutErrorType> {
+	/**
+	Error message when the child process failed to run. In addition to the underlying error message, it also contains some information related to why the child process errored.
+
+	The child process stderr then stdout are appended to the end, separated with newlines and not interleaved.
+	*/
+	message: string;
+
+	/**
+	This is the same as the `message` property except it does not include the child process stdout/stderr.
+	*/
+	shortMessage: string;
+
+	/**
+	Original error message. This is the same as the `message` property except it includes neither the child process stdout/stderr nor some additional information added by Execa.
+
+	This is `undefined` unless the child process exited due to an `error` event or a timeout.
+	*/
+	originalMessage?: string;
+}
+
+export interface ExecaError<StdoutErrorType = string>
+	extends ExecaSyncError<StdoutErrorType> {
+	/**
+	The output of the process with `stdout` and `stderr` interleaved.
+
+	This is `undefined` if either:
+	- the `all` option is `false` (default value)
+	- `execaSync()` was used
+	*/
+	all?: StdoutErrorType;
+
+	/**
+	Whether the process was canceled.
+	*/
+	isCanceled: boolean;
+}
+
+export interface KillOptions {
+	/**
+	Milliseconds to wait for the child process to terminate before sending `SIGKILL`.
+
+	Can be disabled with `false`.
+
+	@default 5000
+	*/
+	forceKillAfterTimeout?: number | false;
+}
+
+export interface ExecaChildPromise<StdoutErrorType> {
+	/**
+	Stream combining/interleaving [`stdout`](https://nodejs.org/api/child_process.html#child_process_subprocess_stdout) and [`stderr`](https://nodejs.org/api/child_process.html#child_process_subprocess_stderr).
+
+	This is `undefined` if either:
+		- the `all` option is `false` (the default value)
+		- both `stdout` and `stderr` options are set to [`'inherit'`, `'ipc'`, `Stream` or `integer`](https://nodejs.org/dist/latest-v6.x/docs/api/child_process.html#child_process_options_stdio)
+	*/
+	all?: ReadableStream;
+
+	catch<ResultType = never>(
+		onRejected?: (reason: ExecaError<StdoutErrorType>) => ResultType | PromiseLike<ResultType>
+	): Promise<ExecaReturnValue<StdoutErrorType> | ResultType>;
+
+	/**
+	Same as the original [`child_process#kill()`](https://nodejs.org/api/child_process.html#child_process_subprocess_kill_signal), except if `signal` is `SIGTERM` (the default value) and the child process is not terminated after 5 seconds, force it by sending `SIGKILL`.
+	*/
+	kill(signal?: string, options?: KillOptions): void;
+
+	/**
+	Similar to [`childProcess.kill()`](https://nodejs.org/api/child_process.html#child_process_subprocess_kill_signal). This is preferred when cancelling the child process execution as the error is more descriptive and [`childProcessResult.isCanceled`](#iscanceled) is set to `true`.
+	*/
+	cancel(): void;
+}
+
+export type ExecaChildProcess<StdoutErrorType = string> = ChildProcess &
+ExecaChildPromise<StdoutErrorType> &
+Promise<ExecaReturnValue<StdoutErrorType>>;
+
+/**
+Execute a file.
+
+Think of this as a mix of `child_process.execFile` and `child_process.spawn`.
+
+@param file - The program/script to execute.
+@param arguments - Arguments to pass to `file` on execution.
+@returns A [`child_process` instance](https://nodejs.org/api/child_process.html#child_process_class_childprocess), which is enhanced to also be a `Promise` for a result `Object` with `stdout` and `stderr` properties.
+
+@example
+```
+import {execa} from 'execa';
+
+const {stdout} = await execa('echo', ['unicorns']);
+console.log(stdout);
+//=> 'unicorns'
+
+// Cancelling a spawned process
+
+const subprocess = execa('node');
+
+setTimeout(() => {
+	subprocess.cancel()
+}, 1000);
+
+try {
+	await subprocess;
+} catch (error) {
+	console.log(subprocess.killed); // true
+	console.log(error.isCanceled); // true
+}
+
+// Pipe the child process stdout to the current stdout
+execa('echo', ['unicorns']).stdout.pipe(process.stdout);
+```
+*/
+export function execa(
+	file: string,
+	arguments?: readonly string[],
+	options?: Options
+): ExecaChildProcess;
+export function execa(
+	file: string,
+	arguments?: readonly string[],
+	options?: Options<null>
+): ExecaChildProcess<Buffer>;
+export function execa(file: string, options?: Options): ExecaChildProcess;
+export function execa(file: string, options?: Options<null>): ExecaChildProcess<Buffer>;
+
+/**
+Execute a file synchronously.
+
+This method throws an `Error` if the command fails.
+
+@param file - The program/script to execute.
+@param arguments - Arguments to pass to `file` on execution.
+@returns A result `Object` with `stdout` and `stderr` properties.
+*/
+export function execaSync(
+	file: string,
+	arguments?: readonly string[],
+	options?: SyncOptions
+): ExecaSyncReturnValue;
+export function execaSync(
+	file: string,
+	arguments?: readonly string[],
+	options?: SyncOptions<null>
+): ExecaSyncReturnValue<Buffer>;
+export function execaSync(file: string, options?: SyncOptions): ExecaSyncReturnValue;
+export function execaSync(
+	file: string,
+	options?: SyncOptions<null>
+): ExecaSyncReturnValue<Buffer>;
+
+/**
+Same as `execa()` except both file and arguments are specified in a single `command` string. For example, `execa('echo', ['unicorns'])` is the same as `execaCommand('echo unicorns')`.
+
+If the file or an argument contains spaces, they must be escaped with backslashes. This matters especially if `command` is not a constant but a variable, for example with `__dirname` or `process.cwd()`. Except for spaces, no escaping/quoting is needed.
+
+The `shell` option must be used if the `command` uses shell-specific features (for example, `&&` or `||`), as opposed to being a simple `file` followed by its `arguments`.
+
+@param command - The program/script to execute and its arguments.
+@returns A [`child_process` instance](https://nodejs.org/api/child_process.html#child_process_class_childprocess), which is enhanced to also be a `Promise` for a result `Object` with `stdout` and `stderr` properties.
+
+@example
+```
+import {execaCommand} from 'execa';
+
+const {stdout} = await execaCommand('echo unicorns');
+console.log(stdout);
+//=> 'unicorns'
+```
+*/
+export function execaCommand(command: string, options?: Options): ExecaChildProcess;
+export function execaCommand(command: string, options?: Options<null>): ExecaChildProcess<Buffer>;
+
+/**
+Same as `execaCommand()` but synchronous.
+
+@param command - The program/script to execute and its arguments.
+@returns A result `Object` with `stdout` and `stderr` properties.
+*/
+export function execaCommandSync(command: string, options?: SyncOptions): ExecaSyncReturnValue;
+export function execaCommandSync(command: string, options?: SyncOptions<null>): ExecaSyncReturnValue<Buffer>;
+
+/**
+Execute a Node.js script as a child process.
+
+Same as `execa('node', [scriptPath, ...arguments], options)` except (like [`child_process#fork()`](https://nodejs.org/api/child_process.html#child_process_child_process_fork_modulepath_args_options)):
+	- the current Node version and options are used. This can be overridden using the `nodePath` and `nodeArguments` options.
+	- the `shell` option cannot be used
+	- an extra channel [`ipc`](https://nodejs.org/api/child_process.html#child_process_options_stdio) is passed to [`stdio`](#stdio)
+
+@param scriptPath - Node.js script to execute.
+@param arguments - Arguments to pass to `scriptPath` on execution.
+@returns A [`child_process` instance](https://nodejs.org/api/child_process.html#child_process_class_childprocess), which is enhanced to also be a `Promise` for a result `Object` with `stdout` and `stderr` properties.
+*/
+export function execaNode(
+	scriptPath: string,
+	arguments?: readonly string[],
+	options?: NodeOptions
+): ExecaChildProcess;
+export function execaNode(
+	scriptPath: string,
+	arguments?: readonly string[],
+	options?: Options<null>
+): ExecaChildProcess<Buffer>;
+export function execaNode(scriptPath: string, options?: Options): ExecaChildProcess;
+export function execaNode(scriptPath: string, options?: Options<null>): ExecaChildProcess<Buffer>;
+©/index.jsÅÛimport {Buffer} from 'node:buffer';
+import path from 'node:path';
+import childProcess from 'node:child_process';
+import process from 'node:process';
+import crossSpawn from 'cross-spawn';
+import stripFinalNewline from 'strip-final-newline';
+import {npmRunPathEnv} from 'npm-run-path';
+import onetime from 'onetime';
+import {makeError} from './lib/error.js';
+import {normalizeStdio, normalizeStdioNode} from './lib/stdio.js';
+import {spawnedKill, spawnedCancel, setupTimeout, validateTimeout, setExitHandler} from './lib/kill.js';
+import {handleInput, getSpawnedResult, makeAllStream, validateInputSync} from './lib/stream.js';
+import {mergePromise, getSpawnedPromise} from './lib/promise.js';
+import {joinCommand, parseCommand, getEscapedCommand} from './lib/command.js';
+
+const DEFAULT_MAX_BUFFER = 1000 * 1000 * 100;
+
+const getEnv = ({env: envOption, extendEnv, preferLocal, localDir, execPath}) => {
+	const env = extendEnv ? {...process.env, ...envOption} : envOption;
+
+	if (preferLocal) {
+		return npmRunPathEnv({env, cwd: localDir, execPath});
+	}
+
+	return env;
+};
+
+const handleArguments = (file, args, options = {}) => {
+	const parsed = crossSpawn._parse(file, args, options);
+	file = parsed.command;
+	args = parsed.args;
+	options = parsed.options;
+
+	options = {
+		maxBuffer: DEFAULT_MAX_BUFFER,
+		buffer: true,
+		stripFinalNewline: true,
+		extendEnv: true,
+		preferLocal: false,
+		localDir: options.cwd || process.cwd(),
+		execPath: process.execPath,
+		encoding: 'utf8',
+		reject: true,
+		cleanup: true,
+		all: false,
+		windowsHide: true,
+		...options,
+	};
+
+	options.env = getEnv(options);
+
+	options.stdio = normalizeStdio(options);
+
+	if (process.platform === 'win32' && path.basename(file, '.exe') === 'cmd') {
+		// #116
+		args.unshift('/q');
+	}
+
+	return {file, args, options, parsed};
+};
+
+const handleOutput = (options, value, error) => {
+	if (typeof value !== 'string' && !Buffer.isBuffer(value)) {
+		// When `execaSync()` errors, we normalize it to '' to mimic `execa()`
+		return error === undefined ? undefined : '';
+	}
+
+	if (options.stripFinalNewline) {
+		return stripFinalNewline(value);
+	}
+
+	return value;
+};
+
+export function execa(file, args, options) {
+	const parsed = handleArguments(file, args, options);
+	const command = joinCommand(file, args);
+	const escapedCommand = getEscapedCommand(file, args);
+
+	validateTimeout(parsed.options);
+
+	let spawned;
+	try {
+		spawned = childProcess.spawn(parsed.file, parsed.args, parsed.options);
+	} catch (error) {
+		// Ensure the returned error is always both a promise and a child process
+		const dummySpawned = new childProcess.ChildProcess();
+		const errorPromise = Promise.reject(makeError({
+			error,
+			stdout: '',
+			stderr: '',
+			all: '',
+			command,
+			escapedCommand,
+			parsed,
+			timedOut: false,
+			isCanceled: false,
+			killed: false,
+		}));
+		return mergePromise(dummySpawned, errorPromise);
+	}
+
+	const spawnedPromise = getSpawnedPromise(spawned);
+	const timedPromise = setupTimeout(spawned, parsed.options, spawnedPromise);
+	const processDone = setExitHandler(spawned, parsed.options, timedPromise);
+
+	const context = {isCanceled: false};
+
+	spawned.kill = spawnedKill.bind(null, spawned.kill.bind(spawned));
+	spawned.cancel = spawnedCancel.bind(null, spawned, context);
+
+	const handlePromise = async () => {
+		const [{error, exitCode, signal, timedOut}, stdoutResult, stderrResult, allResult] = await getSpawnedResult(spawned, parsed.options, processDone);
+		const stdout = handleOutput(parsed.options, stdoutResult);
+		const stderr = handleOutput(parsed.options, stderrResult);
+		const all = handleOutput(parsed.options, allResult);
+
+		if (error || exitCode !== 0 || signal !== null) {
+			const returnedError = makeError({
+				error,
+				exitCode,
+				signal,
+				stdout,
+				stderr,
+				all,
+				command,
+				escapedCommand,
+				parsed,
+				timedOut,
+				isCanceled: context.isCanceled || (parsed.options.signal ? parsed.options.signal.aborted : false),
+				killed: spawned.killed,
+			});
+
+			if (!parsed.options.reject) {
+				return returnedError;
+			}
+
+			throw returnedError;
+		}
+
+		return {
+			command,
+			escapedCommand,
+			exitCode: 0,
+			stdout,
+			stderr,
+			all,
+			failed: false,
+			timedOut: false,
+			isCanceled: false,
+			killed: false,
+		};
+	};
+
+	const handlePromiseOnce = onetime(handlePromise);
+
+	handleInput(spawned, parsed.options.input);
+
+	spawned.all = makeAllStream(spawned, parsed.options);
+
+	return mergePromise(spawned, handlePromiseOnce);
+}
+
+export function execaSync(file, args, options) {
+	const parsed = handleArguments(file, args, options);
+	const command = joinCommand(file, args);
+	const escapedCommand = getEscapedCommand(file, args);
+
+	validateInputSync(parsed.options);
+
+	let result;
+	try {
+		result = childProcess.spawnSync(parsed.file, parsed.args, parsed.options);
+	} catch (error) {
+		throw makeError({
+			error,
+			stdout: '',
+			stderr: '',
+			all: '',
+			command,
+			escapedCommand,
+			parsed,
+			timedOut: false,
+			isCanceled: false,
+			killed: false,
+		});
+	}
+
+	const stdout = handleOutput(parsed.options, result.stdout, result.error);
+	const stderr = handleOutput(parsed.options, result.stderr, result.error);
+
+	if (result.error || result.status !== 0 || result.signal !== null) {
+		const error = makeError({
+			stdout,
+			stderr,
+			error: result.error,
+			signal: result.signal,
+			exitCode: result.status,
+			command,
+			escapedCommand,
+			parsed,
+			timedOut: result.error && result.error.code === 'ETIMEDOUT',
+			isCanceled: false,
+			killed: result.signal !== null,
+		});
+
+		if (!parsed.options.reject) {
+			return error;
+		}
+
+		throw error;
+	}
+
+	return {
+		command,
+		escapedCommand,
+		exitCode: 0,
+		stdout,
+		stderr,
+		failed: false,
+		timedOut: false,
+		isCanceled: false,
+		killed: false,
+	};
+}
+
+export function execaCommand(command, options) {
+	const [file, ...args] = parseCommand(command);
+	return execa(file, args, options);
+}
+
+export function execaCommandSync(command, options) {
+	const [file, ...args] = parseCommand(command);
+	return execaSync(file, args, options);
+}
+
+export function execaNode(scriptPath, args, options = {}) {
+	if (args && !Array.isArray(args) && typeof args === 'object') {
+		options = args;
+		args = [];
+	}
+
+	const stdio = normalizeStdioNode(options);
+	const defaultExecArgv = process.execArgv.filter(arg => !arg.startsWith('--inspect'));
+
+	const {
+		nodePath = process.execPath,
+		nodeOptions = defaultExecArgv,
+	} = options;
+
+	return execa(
+		nodePath,
+		[
+			...nodeOptions,
+			scriptPath,
+			...(Array.isArray(args) ? args : []),
+		],
+		{
+			...options,
+			stdin: undefined,
+			stdout: undefined,
+			stderr: undefined,
+			stdio,
+			shell: false,
+		},
+	);
+}
+­/lib/error.jsÅQimport {signalsByName} from 'human-signals';
+
+const getErrorPrefix = ({timedOut, timeout, errorCode, signal, signalDescription, exitCode, isCanceled}) => {
+	if (timedOut) {
+		return `timed out after ${timeout} milliseconds`;
+	}
+
+	if (isCanceled) {
+		return 'was canceled';
+	}
+
+	if (errorCode !== undefined) {
+		return `failed with ${errorCode}`;
+	}
+
+	if (signal !== undefined) {
+		return `was killed with ${signal} (${signalDescription})`;
+	}
+
+	if (exitCode !== undefined) {
+		return `failed with exit code ${exitCode}`;
+	}
+
+	return 'failed';
+};
+
+export const makeError = ({
+	stdout,
+	stderr,
+	all,
+	error,
+	signal,
+	exitCode,
+	command,
+	escapedCommand,
+	timedOut,
+	isCanceled,
+	killed,
+	parsed: {options: {timeout}},
+}) => {
+	// `signal` and `exitCode` emitted on `spawned.on('exit')` event can be `null`.
+	// We normalize them to `undefined`
+	exitCode = exitCode === null ? undefined : exitCode;
+	signal = signal === null ? undefined : signal;
+	const signalDescription = signal === undefined ? undefined : signalsByName[signal].description;
+
+	const errorCode = error && error.code;
+
+	const prefix = getErrorPrefix({timedOut, timeout, errorCode, signal, signalDescription, exitCode, isCanceled});
+	const execaMessage = `Command ${prefix}: ${command}`;
+	const isError = Object.prototype.toString.call(error) === '[object Error]';
+	const shortMessage = isError ? `${execaMessage}\n${error.message}` : execaMessage;
+	const message = [shortMessage, stderr, stdout].filter(Boolean).join('\n');
+
+	if (isError) {
+		error.originalMessage = error.message;
+		error.message = message;
+	} else {
+		error = new Error(message);
+	}
+
+	error.shortMessage = shortMessage;
+	error.command = command;
+	error.escapedCommand = escapedCommand;
+	error.exitCode = exitCode;
+	error.signal = signal;
+	error.signalDescription = signalDescription;
+	error.stdout = stdout;
+	error.stderr = stderr;
+
+	if (all !== undefined) {
+		error.all = all;
+	}
+
+	if ('bufferedData' in error) {
+		delete error.bufferedData;
+	}
+
+	error.failed = true;
+	error.timedOut = Boolean(timedOut);
+	error.isCanceled = isCanceled;
+	error.killed = killed && !timedOut;
+
+	return error;
+};
+­/lib/stdio.jsÅ…const aliases = ['stdin', 'stdout', 'stderr'];
+
+const hasAlias = options => aliases.some(alias => options[alias] !== undefined);
+
+export const normalizeStdio = options => {
+	if (!options) {
+		return;
+	}
+
+	const {stdio} = options;
+
+	if (stdio === undefined) {
+		return aliases.map(alias => options[alias]);
+	}
+
+	if (hasAlias(options)) {
+		throw new Error(`It's not possible to provide \`stdio\` in combination with one of ${aliases.map(alias => `\`${alias}\``).join(', ')}`);
+	}
+
+	if (typeof stdio === 'string') {
+		return stdio;
+	}
+
+	if (!Array.isArray(stdio)) {
+		throw new TypeError(`Expected \`stdio\` to be of type \`string\` or \`Array\`, got \`${typeof stdio}\``);
+	}
+
+	const length = Math.max(stdio.length, aliases.length);
+	return Array.from({length}, (value, index) => stdio[index]);
+};
+
+// `ipc` is pushed unless it is already present
+export const normalizeStdioNode = options => {
+	const stdio = normalizeStdio(options);
+
+	if (stdio === 'ipc') {
+		return 'ipc';
+	}
+
+	if (stdio === undefined || typeof stdio === 'string') {
+		return [stdio, stdio, stdio, 'ipc'];
+	}
+
+	if (stdio.includes('ipc')) {
+		return stdio;
+	}
+
+	return [...stdio, 'ipc'];
+};
+ª/readme.mdÅN<img src="media/logo.svg" width="400">
+<br>
+
+[![Coverage Status](https://codecov.io/gh/sindresorhus/execa/branch/main/graph/badge.svg)](https://codecov.io/gh/sindresorhus/execa)
+
+> Process execution for humans
+
+## Why
+
+This package improves [`child_process`](https://nodejs.org/api/child_process.html) methods with:
+
+- Promise interface.
+- [Strips the final newline](#stripfinalnewline) from the output so you don't have to do `stdout.trim()`.
+- Supports [shebang](https://en.wikipedia.org/wiki/Shebang_(Unix)) binaries cross-platform.
+- [Improved Windows support.](https://github.com/IndigoUnited/node-cross-spawn#why)
+- Higher max buffer. 100 MB instead of 200 KB.
+- [Executes locally installed binaries by name.](#preferlocal)
+- [Cleans up spawned processes when the parent process dies.](#cleanup)
+- [Get interleaved output](#all) from `stdout` and `stderr` similar to what is printed on the terminal. [*(Async only)*](#execasyncfile-arguments-options)
+- [Can specify file and arguments as a single string without a shell](#execacommandcommand-options)
+- More descriptive errors.
+
+## Install
+
+```sh
+npm install execa
+```
+
+## Usage
+
+```js
+import {execa} from 'execa';
+
+const {stdout} = await execa('echo', ['unicorns']);
+console.log(stdout);
+//=> 'unicorns'
+```
+
+### Pipe the child process stdout to the parent
+
+```js
+import {execa} from 'execa';
+
+execa('echo', ['unicorns']).stdout.pipe(process.stdout);
+```
+
+### Handling Errors
+
+```js
+import {execa} from 'execa';
+
+// Catching an error
+try {
+	await execa('unknown', ['command']);
+} catch (error) {
+	console.log(error);
+	/*
+	{
+		message: 'Command failed with ENOENT: unknown command spawn unknown ENOENT',
+		errno: -2,
+		code: 'ENOENT',
+		syscall: 'spawn unknown',
+		path: 'unknown',
+		spawnargs: ['command'],
+		originalMessage: 'spawn unknown ENOENT',
+		shortMessage: 'Command failed with ENOENT: unknown command spawn unknown ENOENT',
+		command: 'unknown command',
+		escapedCommand: 'unknown command',
+		stdout: '',
+		stderr: '',
+		all: '',
+		failed: true,
+		timedOut: false,
+		isCanceled: false,
+		killed: false
+	}
+	*/
+}
+```
+
+### Cancelling a spawned process
+
+```js
+import {execa} from 'execa';
+
+const abortController = new AbortController();
+const subprocess = execa('node', [], {signal: abortController.signal});
+
+setTimeout(() => {
+	abortController.abort();
+}, 1000);
+
+try {
+	await subprocess;
+} catch (error) {
+	console.log(subprocess.killed); // true
+	console.log(error.isCanceled); // true
+}
+```
+
+### Catching an error with the sync method
+
+```js
+import {execaSync} from 'execa';
+
+try {
+	execaSync('unknown', ['command']);
+} catch (error) {
+	console.log(error);
+	/*
+	{
+		message: 'Command failed with ENOENT: unknown command spawnSync unknown ENOENT',
+		errno: -2,
+		code: 'ENOENT',
+		syscall: 'spawnSync unknown',
+		path: 'unknown',
+		spawnargs: ['command'],
+		originalMessage: 'spawnSync unknown ENOENT',
+		shortMessage: 'Command failed with ENOENT: unknown command spawnSync unknown ENOENT',
+		command: 'unknown command',
+		escapedCommand: 'unknown command',
+		stdout: '',
+		stderr: '',
+		all: '',
+		failed: true,
+		timedOut: false,
+		isCanceled: false,
+		killed: false
+	}
+	*/
+}
+```
+
+### Kill a process
+
+Using SIGTERM, and after 2 seconds, kill it with SIGKILL.
+
+```js
+const subprocess = execa('node');
+
+setTimeout(() => {
+	subprocess.kill('SIGTERM', {
+		forceKillAfterTimeout: 2000
+	});
+}, 1000);
+```
+
+## API
+
+### execa(file, arguments, options?)
+
+Execute a file. Think of this as a mix of [`child_process.execFile()`](https://nodejs.org/api/child_process.html#child_process_child_process_execfile_file_args_options_callback) and [`child_process.spawn()`](https://nodejs.org/api/child_process.html#child_process_child_process_spawn_command_args_options).
+
+No escaping/quoting is needed.
+
+Unless the [`shell`](#shell) option is used, no shell interpreter (Bash, `cmd.exe`, etc.) is used, so shell features such as variables substitution (`echo $PATH`) are not allowed.
+
+Returns a [`child_process` instance](https://nodejs.org/api/child_process.html#child_process_class_childprocess) which:
+  - is also a `Promise` resolving or rejecting with a [`childProcessResult`](#childProcessResult).
+  - exposes the following additional methods and properties.
+
+#### kill(signal?, options?)
+
+Same as the original [`child_process#kill()`](https://nodejs.org/api/child_process.html#child_process_subprocess_kill_signal) except: if `signal` is `SIGTERM` (the default value) and the child process is not terminated after 5 seconds, force it by sending `SIGKILL`.
+
+##### options.forceKillAfterTimeout
+
+Type: `number | false`\
+Default: `5000`
+
+Milliseconds to wait for the child process to terminate before sending `SIGKILL`.
+
+Can be disabled with `false`.
+
+#### all
+
+Type: `ReadableStream | undefined`
+
+Stream combining/interleaving [`stdout`](https://nodejs.org/api/child_process.html#child_process_subprocess_stdout) and [`stderr`](https://nodejs.org/api/child_process.html#child_process_subprocess_stderr).
+
+This is `undefined` if either:
+  - the [`all` option](#all-2) is `false` (the default value)
+  - both [`stdout`](#stdout-1) and [`stderr`](#stderr-1) options are set to [`'inherit'`, `'ipc'`, `Stream` or `integer`](https://nodejs.org/dist/latest-v6.x/docs/api/child_process.html#child_process_options_stdio)
+
+### execaSync(file, arguments?, options?)
+
+Execute a file synchronously.
+
+Returns or throws a [`childProcessResult`](#childProcessResult).
+
+### execaCommand(command, options?)
+
+Same as [`execa()`](#execafile-arguments-options) except both file and arguments are specified in a single `command` string. For example, `execa('echo', ['unicorns'])` is the same as `execaCommand('echo unicorns')`.
+
+If the file or an argument contains spaces, they must be escaped with backslashes. This matters especially if `command` is not a constant but a variable, for example with `__dirname` or `process.cwd()`. Except for spaces, no escaping/quoting is needed.
+
+The [`shell` option](#shell) must be used if the `command` uses shell-specific features (for example, `&&` or `||`), as opposed to being a simple `file` followed by its `arguments`.
+
+### execaCommandSync(command, options?)
+
+Same as [`execaCommand()`](#execacommand-command-options) but synchronous.
+
+Returns or throws a [`childProcessResult`](#childProcessResult).
+
+### execaNode(scriptPath, arguments?, options?)
+
+Execute a Node.js script as a child process.
+
+Same as `execa('node', [scriptPath, ...arguments], options)` except (like [`child_process#fork()`](https://nodejs.org/api/child_process.html#child_process_child_process_fork_modulepath_args_options)):
+  - the current Node version and options are used. This can be overridden using the [`nodePath`](#nodepath-for-node-only) and [`nodeOptions`](#nodeoptions-for-node-only) options.
+  - the [`shell`](#shell) option cannot be used
+  - an extra channel [`ipc`](https://nodejs.org/api/child_process.html#child_process_options_stdio) is passed to [`stdio`](#stdio)
+
+### childProcessResult
+
+Type: `object`
+
+Result of a child process execution. On success this is a plain object. On failure this is also an `Error` instance.
+
+The child process [fails](#failed) when:
+- its [exit code](#exitcode) is not `0`
+- it was [killed](#killed) with a [signal](#signal)
+- [timing out](#timedout)
+- [being canceled](#iscanceled)
+- there's not enough memory or there are already too many child processes
+
+#### command
+
+Type: `string`
+
+The file and arguments that were run, for logging purposes.
+
+This is not escaped and should not be executed directly as a process, including using [`execa()`](#execafile-arguments-options) or [`execaCommand()`](#execacommandcommand-options).
+
+#### escapedCommand
+
+Type: `string`
+
+Same as [`command`](#command) but escaped.
+
+This is meant to be copy and pasted into a shell, for debugging purposes.
+Since the escaping is fairly basic, this should not be executed directly as a process, including using [`execa()`](#execafile-arguments-options) or [`execaCommand()`](#execacommandcommand-options).
+
+#### exitCode
+
+Type: `number`
+
+The numeric exit code of the process that was run.
+
+#### stdout
+
+Type: `string | Buffer`
+
+The output of the process on stdout.
+
+#### stderr
+
+Type: `string | Buffer`
+
+The output of the process on stderr.
+
+#### all
+
+Type: `string | Buffer | undefined`
+
+The output of the process with `stdout` and `stderr` interleaved.
+
+This is `undefined` if either:
+  - the [`all` option](#all-2) is `false` (the default value)
+  - `execaSync()` was used
+
+#### failed
+
+Type: `boolean`
+
+Whether the process failed to run.
+
+#### timedOut
+
+Type: `boolean`
+
+Whether the process timed out.
+
+#### isCanceled
+
+Type: `boolean`
+
+Whether the process was canceled.
+
+You can cancel the spawned process using the [`signal`](#signal-1) option.
+
+#### killed
+
+Type: `boolean`
+
+Whether the process was killed.
+
+#### signal
+
+Type: `string | undefined`
+
+The name of the signal that was used to terminate the process. For example, `SIGFPE`.
+
+If a signal terminated the process, this property is defined and included in the error message. Otherwise it is `undefined`.
+
+#### signalDescription
+
+Type: `string | undefined`
+
+A human-friendly description of the signal that was used to terminate the process. For example, `Floating point arithmetic error`.
+
+If a signal terminated the process, this property is defined and included in the error message. Otherwise it is `undefined`. It is also `undefined` when the signal is very uncommon which should seldomly happen.
+
+#### message
+
+Type: `string`
+
+Error message when the child process failed to run. In addition to the [underlying error message](#originalMessage), it also contains some information related to why the child process errored.
+
+The child process [stderr](#stderr) then [stdout](#stdout) are appended to the end, separated with newlines and not interleaved.
+
+#### shortMessage
+
+Type: `string`
+
+This is the same as the [`message` property](#message) except it does not include the child process stdout/stderr.
+
+#### originalMessage
+
+Type: `string | undefined`
+
+Original error message. This is the same as the `message` property except it includes neither the child process stdout/stderr nor some additional information added by Execa.
+
+This is `undefined` unless the child process exited due to an `error` event or a timeout.
+
+### options
+
+Type: `object`
+
+#### cleanup
+
+Type: `boolean`\
+Default: `true`
+
+Kill the spawned process when the parent process exits unless either:
+	- the spawned process is [`detached`](https://nodejs.org/api/child_process.html#child_process_options_detached)
+	- the parent process is terminated abruptly, for example, with `SIGKILL` as opposed to `SIGTERM` or a normal exit
+
+#### preferLocal
+
+Type: `boolean`\
+Default: `false`
+
+Prefer locally installed binaries when looking for a binary to execute.\
+If you `$ npm install foo`, you can then `execa('foo')`.
+
+#### localDir
+
+Type: `string | URL`\
+Default: `process.cwd()`
+
+Preferred path to find locally installed binaries in (use with `preferLocal`).
+
+Using a `URL` is only supported in Node.js `14.18.0`, `16.14.0` or above.
+
+#### execPath
+
+Type: `string`\
+Default: `process.execPath` (Current Node.js executable)
+
+Path to the Node.js executable to use in child processes.
+
+This can be either an absolute path or a path relative to the [`cwd` option](#cwd).
+
+Requires [`preferLocal`](#preferlocal) to be `true`.
+
+For example, this can be used together with [`get-node`](https://github.com/ehmicky/get-node) to run a specific Node.js version in a child process.
+
+#### buffer
+
+Type: `boolean`\
+Default: `true`
+
+Buffer the output from the spawned process. When set to `false`, you must read the output of [`stdout`](#stdout-1) and [`stderr`](#stderr-1) (or [`all`](#all) if the [`all`](#all-2) option is `true`). Otherwise the returned promise will not be resolved/rejected.
+
+If the spawned process fails, [`error.stdout`](#stdout), [`error.stderr`](#stderr), and [`error.all`](#all) will contain the buffered data.
+
+#### input
+
+Type: `string | Buffer | stream.Readable`
+
+Write some input to the `stdin` of your binary.\
+Streams are not allowed when using the synchronous methods.
+
+#### stdin
+
+Type: `string | number | Stream | undefined`\
+Default: `pipe`
+
+Same options as [`stdio`](https://nodejs.org/dist/latest-v6.x/docs/api/child_process.html#child_process_options_stdio).
+
+#### stdout
+
+Type: `string | number | Stream | undefined`\
+Default: `pipe`
+
+Same options as [`stdio`](https://nodejs.org/dist/latest-v6.x/docs/api/child_process.html#child_process_options_stdio).
+
+#### stderr
+
+Type: `string | number | Stream | undefined`\
+Default: `pipe`
+
+Same options as [`stdio`](https://nodejs.org/dist/latest-v6.x/docs/api/child_process.html#child_process_options_stdio).
+
+#### all
+
+Type: `boolean`\
+Default: `false`
+
+Add an `.all` property on the [promise](#all) and the [resolved value](#all-1). The property contains the output of the process with `stdout` and `stderr` interleaved.
+
+#### reject
+
+Type: `boolean`\
+Default: `true`
+
+Setting this to `false` resolves the promise with the error instead of rejecting it.
+
+#### stripFinalNewline
+
+Type: `boolean`\
+Default: `true`
+
+Strip the final [newline character](https://en.wikipedia.org/wiki/Newline) from the output.
+
+#### extendEnv
+
+Type: `boolean`\
+Default: `true`
+
+Set to `false` if you don't want to extend the environment variables when providing the `env` property.
+
+---
+
+Execa also accepts the below options which are the same as the options for [`child_process#spawn()`](https://nodejs.org/api/child_process.html#child_process_child_process_spawn_command_args_options)/[`child_process#exec()`](https://nodejs.org/api/child_process.html#child_process_child_process_exec_command_options_callback)
+
+#### cwd
+
+Type: `string | URL`\
+Default: `process.cwd()`
+
+Current working directory of the child process.
+
+Using a `URL` is only supported in Node.js `14.18.0`, `16.14.0` or above.
+
+#### env
+
+Type: `object`\
+Default: `process.env`
+
+Environment key-value pairs. Extends automatically from `process.env`. Set [`extendEnv`](#extendenv) to `false` if you don't want this.
+
+#### argv0
+
+Type: `string`
+
+Explicitly set the value of `argv[0]` sent to the child process. This will be set to `file` if not specified.
+
+#### stdio
+
+Type: `string | string[]`\
+Default: `pipe`
+
+Child's [stdio](https://nodejs.org/api/child_process.html#child_process_options_stdio) configuration.
+
+#### serialization
+
+Type: `string`\
+Default: `'json'`
+
+Specify the kind of serialization used for sending messages between processes when using the [`stdio: 'ipc'`](#stdio) option or [`execaNode()`](#execanodescriptpath-arguments-options):
+	- `json`: Uses `JSON.stringify()` and `JSON.parse()`.
+	- `advanced`: Uses [`v8.serialize()`](https://nodejs.org/api/v8.html#v8_v8_serialize_value)
+
+Requires Node.js `13.2.0` or later.
+
+[More info.](https://nodejs.org/api/child_process.html#child_process_advanced_serialization)
+
+#### detached
+
+Type: `boolean`
+
+Prepare child to run independently of its parent process. Specific behavior [depends on the platform](https://nodejs.org/api/child_process.html#child_process_options_detached).
+
+#### uid
+
+Type: `number`
+
+Sets the user identity of the process.
+
+#### gid
+
+Type: `number`
+
+Sets the group identity of the process.
+
+#### shell
+
+Type: `boolean | string`\
+Default: `false`
+
+If `true`, runs `file` inside of a shell. Uses `/bin/sh` on UNIX and `cmd.exe` on Windows. A different shell can be specified as a string. The shell should understand the `-c` switch on UNIX or `/d /s /c` on Windows.
+
+We recommend against using this option since it is:
+- not cross-platform, encouraging shell-specific syntax.
+- slower, because of the additional shell interpretation.
+- unsafe, potentially allowing command injection.
+
+#### encoding
+
+Type: `string | null`\
+Default: `utf8`
+
+Specify the character encoding used to decode the `stdout` and `stderr` output. If set to `null`, then `stdout` and `stderr` will be a `Buffer` instead of a string.
+
+#### timeout
+
+Type: `number`\
+Default: `0`
+
+If timeout is greater than `0`, the parent will send the signal identified by the `killSignal` property (the default is `SIGTERM`) if the child runs longer than timeout milliseconds.
+
+#### maxBuffer
+
+Type: `number`\
+Default: `100_000_000` (100 MB)
+
+Largest amount of data in bytes allowed on `stdout` or `stderr`.
+
+#### killSignal
+
+Type: `string | number`\
+Default: `SIGTERM`
+
+Signal value to be used when the spawned process will be killed.
+
+#### signal
+
+Type: [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
+
+You can abort the spawned process using [`AbortController`](https://developer.mozilla.org/en-US/docs/Web/API/AbortController).
+
+When `AbortController.abort()` is called, [`.isCanceled`](#iscanceled) becomes `false`.
+
+*Requires Node.js 16 or later.*
+
+#### windowsVerbatimArguments
+
+Type: `boolean`\
+Default: `false`
+
+If `true`, no quoting or escaping of arguments is done on Windows. Ignored on other platforms. This is set to `true` automatically when the `shell` option is `true`.
+
+#### windowsHide
+
+Type: `boolean`\
+Default: `true`
+
+On Windows, do not create a new console window. Please note this also prevents `CTRL-C` [from working](https://github.com/nodejs/node/issues/29837) on Windows.
+
+#### nodePath *(For `.node()` only)*
+
+Type: `string`\
+Default: [`process.execPath`](https://nodejs.org/api/process.html#process_process_execpath)
+
+Node.js executable used to create the child process.
+
+#### nodeOptions *(For `.node()` only)*
+
+Type: `string[]`\
+Default: [`process.execArgv`](https://nodejs.org/api/process.html#process_process_execargv)
+
+List of [CLI options](https://nodejs.org/api/cli.html#cli_options) passed to the Node.js executable.
+
+## Tips
+
+### Retry on error
+
+Gracefully handle failures by using automatic retries and exponential backoff with the [`p-retry`](https://github.com/sindresorhus/p-retry) package:
+
+```js
+import pRetry from 'p-retry';
+
+const run = async () => {
+	const results = await execa('curl', ['-sSL', 'https://sindresorhus.com/unicorn']);
+	return results;
+};
+
+console.log(await pRetry(run, {retries: 5}));
+```
+
+### Save and pipe output from a child process
+
+Let's say you want to show the output of a child process in real-time while also saving it to a variable.
+
+```js
+import {execa} from 'execa';
+
+const subprocess = execa('echo', ['foo']);
+subprocess.stdout.pipe(process.stdout);
+
+const {stdout} = await subprocess;
+console.log('child output:', stdout);
+```
+
+### Redirect output to a file
+
+```js
+import {execa} from 'execa';
+
+const subprocess = execa('echo', ['foo'])
+subprocess.stdout.pipe(fs.createWriteStream('stdout.txt'))
+```
+
+### Redirect input from a file
+
+```js
+import {execa} from 'execa';
+
+const subprocess = execa('cat')
+fs.createReadStream('stdin.txt').pipe(subprocess.stdin)
+```
+
+### Execute the current package's binary
+
+```js
+import {getBinPathSync} from 'get-bin-path';
+
+const binPath = getBinPathSync();
+const subprocess = execa(binPath);
+```
+
+`execa` can be combined with [`get-bin-path`](https://github.com/ehmicky/get-bin-path) to test the current package's binary. As opposed to hard-coding the path to the binary, this validates that the `package.json` `bin` field is correctly set up.
+
+## Related
+
+- [gulp-execa](https://github.com/ehmicky/gulp-execa) - Gulp plugin for `execa`
+- [nvexeca](https://github.com/ehmicky/nvexeca) - Run `execa` using any Node.js version
+- [sudo-prompt](https://github.com/jorangreef/sudo-prompt) - Run commands with elevated privileges.
+
+## Maintainers
+
+- [Sindre Sorhus](https://github.com/sindresorhus)
+- [@ehmicky](https://github.com/ehmicky)
+
+---
+
+<div align="center">
+	<b>
+		<a href="https://tidelift.com/subscription/pkg/npm-execa?utm_source=npm-execa&utm_medium=referral&utm_campaign=readme">Get professional support for this package with a Tidelift subscription</a>
+	</b>
+	<br>
+	<sub>
+		Tidelift helps make open source sustainable for maintainers while giving companies<br>assurances about security, maintenance, and licensing for their dependencies.
+	</sub>
+</div>
+­/package.jsonÅÇ{
+	"name": "execa",
+	"version": "6.1.0",
+	"description": "Process execution for humans",
+	"license": "MIT",
+	"repository": "sindresorhus/execa",
+	"funding": "https://github.com/sindresorhus/execa?sponsor=1",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "https://sindresorhus.com"
+	},
+	"type": "module",
+	"exports": "./index.js",
+	"engines": {
+		"node": "^12.20.0 || ^14.13.1 || >=16.0.0"
+	},
+	"scripts": {
+		"test": "xo && c8 ava && tsd"
+	},
+	"files": [
+		"index.js",
+		"index.d.ts",
+		"lib"
+	],
+	"keywords": [
+		"exec",
+		"child",
+		"process",
+		"execute",
+		"fork",
+		"execfile",
+		"spawn",
+		"file",
+		"shell",
+		"bin",
+		"binary",
+		"binaries",
+		"npm",
+		"path",
+		"local"
+	],
+	"dependencies": {
+		"cross-spawn": "^7.0.3",
+		"get-stream": "^6.0.1",
+		"human-signals": "^3.0.1",
+		"is-stream": "^3.0.0",
+		"merge-stream": "^2.0.0",
+		"npm-run-path": "^5.1.0",
+		"onetime": "^6.0.0",
+		"signal-exit": "^3.0.7",
+		"strip-final-newline": "^3.0.0"
+	},
+	"devDependencies": {
+		"@types/node": "^17.0.17",
+		"ava": "^4.0.1",
+		"c8": "^7.11.0",
+		"get-node": "^12.0.0",
+		"is-running": "^2.1.0",
+		"p-event": "^5.0.1",
+		"semver": "^7.3.5",
+		"tempfile": "^4.0.0",
+		"tsd": "^0.19.1",
+		"xo": "^0.48.0"
+	},
+	"c8": {
+		"reporter": [
+			"text",
+			"lcov"
+		],
+		"exclude": [
+			"**/fixtures/**",
+			"**/test.js",
+			"**/test/**"
+		]
+	},
+	"xo": {
+		"rules": {
+			"unicorn/no-empty-file": "off",
+			"@typescript-eslint/ban-types": "off"
+		}
+	}
+}
+¯/lib/command.jsÅJconst normalizeArgs = (file, args = []) => {
+	if (!Array.isArray(args)) {
+		return [file];
+	}
+
+	return [file, ...args];
+};
+
+const NO_ESCAPE_REGEXP = /^[\w.-]+$/;
+const DOUBLE_QUOTES_REGEXP = /"/g;
+
+const escapeArg = arg => {
+	if (typeof arg !== 'string' || NO_ESCAPE_REGEXP.test(arg)) {
+		return arg;
+	}
+
+	return `"${arg.replace(DOUBLE_QUOTES_REGEXP, '\\"')}"`;
+};
+
+export const joinCommand = (file, args) => normalizeArgs(file, args).join(' ');
+
+export const getEscapedCommand = (file, args) => normalizeArgs(file, args).map(arg => escapeArg(arg)).join(' ');
+
+const SPACES_REGEXP = / +/g;
+
+// Handle `execaCommand()`
+export const parseCommand = command => {
+	const tokens = [];
+	for (const token of command.trim().split(SPACES_REGEXP)) {
+		// Allow spaces to be escaped by a backslash if not meant as a delimiter
+		const previousToken = tokens[tokens.length - 1];
+		if (previousToken && previousToken.endsWith('\\')) {
+			// Merge previous token with current one
+			tokens[tokens.length - 1] = `${previousToken.slice(0, -1)} ${token}`;
+		} else {
+			tokens.push(token);
+		}
+	}
+
+	return tokens;
+};

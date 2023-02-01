@@ -1,0 +1,711 @@
+Ö®/LICENSE≈ê
+The MIT License (MIT)
+
+Copyright (c) 2014 Jonathan Ong me@jongleberry.com
+Copyright (c) 2016 Douglas Christopher Wilson doug@somethingdoug.com
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+©/index.js≈˜/*!
+ * http-errors
+ * Copyright(c) 2014 Jonathan Ong
+ * Copyright(c) 2016 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+'use strict'
+
+/**
+ * Module dependencies.
+ * @private
+ */
+
+var deprecate = require('depd')('http-errors')
+var setPrototypeOf = require('setprototypeof')
+var statuses = require('statuses')
+var inherits = require('inherits')
+var toIdentifier = require('toidentifier')
+
+/**
+ * Module exports.
+ * @public
+ */
+
+module.exports = createError
+module.exports.HttpError = createHttpErrorConstructor()
+module.exports.isHttpError = createIsHttpErrorFunction(module.exports.HttpError)
+
+// Populate exports for all constructors
+populateConstructorExports(module.exports, statuses.codes, module.exports.HttpError)
+
+/**
+ * Get the code class of a status code.
+ * @private
+ */
+
+function codeClass (status) {
+  return Number(String(status).charAt(0) + '00')
+}
+
+/**
+ * Create a new HTTP Error.
+ *
+ * @returns {Error}
+ * @public
+ */
+
+function createError () {
+  // so much arity going on ~_~
+  var err
+  var msg
+  var status = 500
+  var props = {}
+  for (var i = 0; i < arguments.length; i++) {
+    var arg = arguments[i]
+    var type = typeof arg
+    if (type === 'object' && arg instanceof Error) {
+      err = arg
+      status = err.status || err.statusCode || status
+    } else if (type === 'number' && i === 0) {
+      status = arg
+    } else if (type === 'string') {
+      msg = arg
+    } else if (type === 'object') {
+      props = arg
+    } else {
+      throw new TypeError('argument #' + (i + 1) + ' unsupported type ' + type)
+    }
+  }
+
+  if (typeof status === 'number' && (status < 400 || status >= 600)) {
+    deprecate('non-error status code; use only 4xx or 5xx status codes')
+  }
+
+  if (typeof status !== 'number' ||
+    (!statuses.message[status] && (status < 400 || status >= 600))) {
+    status = 500
+  }
+
+  // constructor
+  var HttpError = createError[status] || createError[codeClass(status)]
+
+  if (!err) {
+    // create error
+    err = HttpError
+      ? new HttpError(msg)
+      : new Error(msg || statuses.message[status])
+    Error.captureStackTrace(err, createError)
+  }
+
+  if (!HttpError || !(err instanceof HttpError) || err.status !== status) {
+    // add properties to generic error
+    err.expose = status < 500
+    err.status = err.statusCode = status
+  }
+
+  for (var key in props) {
+    if (key !== 'status' && key !== 'statusCode') {
+      err[key] = props[key]
+    }
+  }
+
+  return err
+}
+
+/**
+ * Create HTTP error abstract base class.
+ * @private
+ */
+
+function createHttpErrorConstructor () {
+  function HttpError () {
+    throw new TypeError('cannot construct abstract class')
+  }
+
+  inherits(HttpError, Error)
+
+  return HttpError
+}
+
+/**
+ * Create a constructor for a client error.
+ * @private
+ */
+
+function createClientErrorConstructor (HttpError, name, code) {
+  var className = toClassName(name)
+
+  function ClientError (message) {
+    // create the error object
+    var msg = message != null ? message : statuses.message[code]
+    var err = new Error(msg)
+
+    // capture a stack trace to the construction point
+    Error.captureStackTrace(err, ClientError)
+
+    // adjust the [[Prototype]]
+    setPrototypeOf(err, ClientError.prototype)
+
+    // redefine the error message
+    Object.defineProperty(err, 'message', {
+      enumerable: true,
+      configurable: true,
+      value: msg,
+      writable: true
+    })
+
+    // redefine the error name
+    Object.defineProperty(err, 'name', {
+      enumerable: false,
+      configurable: true,
+      value: className,
+      writable: true
+    })
+
+    return err
+  }
+
+  inherits(ClientError, HttpError)
+  nameFunc(ClientError, className)
+
+  ClientError.prototype.status = code
+  ClientError.prototype.statusCode = code
+  ClientError.prototype.expose = true
+
+  return ClientError
+}
+
+/**
+ * Create function to test is a value is a HttpError.
+ * @private
+ */
+
+function createIsHttpErrorFunction (HttpError) {
+  return function isHttpError (val) {
+    if (!val || typeof val !== 'object') {
+      return false
+    }
+
+    if (val instanceof HttpError) {
+      return true
+    }
+
+    return val instanceof Error &&
+      typeof val.expose === 'boolean' &&
+      typeof val.statusCode === 'number' && val.status === val.statusCode
+  }
+}
+
+/**
+ * Create a constructor for a server error.
+ * @private
+ */
+
+function createServerErrorConstructor (HttpError, name, code) {
+  var className = toClassName(name)
+
+  function ServerError (message) {
+    // create the error object
+    var msg = message != null ? message : statuses.message[code]
+    var err = new Error(msg)
+
+    // capture a stack trace to the construction point
+    Error.captureStackTrace(err, ServerError)
+
+    // adjust the [[Prototype]]
+    setPrototypeOf(err, ServerError.prototype)
+
+    // redefine the error message
+    Object.defineProperty(err, 'message', {
+      enumerable: true,
+      configurable: true,
+      value: msg,
+      writable: true
+    })
+
+    // redefine the error name
+    Object.defineProperty(err, 'name', {
+      enumerable: false,
+      configurable: true,
+      value: className,
+      writable: true
+    })
+
+    return err
+  }
+
+  inherits(ServerError, HttpError)
+  nameFunc(ServerError, className)
+
+  ServerError.prototype.status = code
+  ServerError.prototype.statusCode = code
+  ServerError.prototype.expose = false
+
+  return ServerError
+}
+
+/**
+ * Set the name of a function, if possible.
+ * @private
+ */
+
+function nameFunc (func, name) {
+  var desc = Object.getOwnPropertyDescriptor(func, 'name')
+
+  if (desc && desc.configurable) {
+    desc.value = name
+    Object.defineProperty(func, 'name', desc)
+  }
+}
+
+/**
+ * Populate the exports object with constructors for every error class.
+ * @private
+ */
+
+function populateConstructorExports (exports, codes, HttpError) {
+  codes.forEach(function forEachCode (code) {
+    var CodeError
+    var name = toIdentifier(statuses.message[code])
+
+    switch (codeClass(code)) {
+      case 400:
+        CodeError = createClientErrorConstructor(HttpError, name, code)
+        break
+      case 500:
+        CodeError = createServerErrorConstructor(HttpError, name, code)
+        break
+    }
+
+    if (CodeError) {
+      // export the constructor
+      exports[code] = CodeError
+      exports[name] = CodeError
+    }
+  })
+}
+
+/**
+ * Get a class name from a name identifier.
+ * @private
+ */
+
+function toClassName (name) {
+  return name.substr(-5) !== 'Error'
+    ? name + 'Error'
+    : name
+}
+´/HISTORY.md≈Ö2.0.0 / 2021-12-17
+==================
+
+  * Drop support for Node.js 0.6
+  * Remove `I'mateapot` export; use `ImATeapot` instead
+  * Remove support for status being non-first argument
+  * Rename `UnorderedCollection` constructor to `TooEarly`
+  * deps: depd@2.0.0
+    - Replace internal `eval` usage with `Function` constructor
+    - Use instance methods on `process` to check for listeners
+  * deps: statuses@2.0.1
+    - Fix messaging casing of `418 I'm a Teapot`
+    - Remove code 306
+    - Rename `425 Unordered Collection` to standard `425 Too Early`
+
+2021-11-14 / 1.8.1
+==================
+
+  * deps: toidentifier@1.0.1
+
+2020-06-29 / 1.8.0
+==================
+
+  * Add `isHttpError` export to determine if value is an HTTP error
+  * deps: setprototypeof@1.2.0
+
+2019-06-24 / 1.7.3
+==================
+
+  * deps: inherits@2.0.4
+
+2019-02-18 / 1.7.2
+==================
+
+  * deps: setprototypeof@1.1.1
+
+2018-09-08 / 1.7.1
+==================
+
+  * Fix error creating objects in some environments
+
+2018-07-30 / 1.7.0
+==================
+
+  * Set constructor name when possible
+  * Use `toidentifier` module to make class names
+  * deps: statuses@'>= 1.5.0 < 2'
+
+2018-03-29 / 1.6.3
+==================
+
+  * deps: depd@~1.1.2
+    - perf: remove argument reassignment
+  * deps: setprototypeof@1.1.0
+  * deps: statuses@'>= 1.4.0 < 2'
+
+2017-08-04 / 1.6.2
+==================
+
+  * deps: depd@1.1.1
+    - Remove unnecessary `Buffer` loading
+
+2017-02-20 / 1.6.1
+==================
+
+  * deps: setprototypeof@1.0.3
+    - Fix shim for old browsers
+
+2017-02-14 / 1.6.0
+==================
+
+  * Accept custom 4xx and 5xx status codes in factory
+  * Add deprecation message to `"I'mateapot"` export
+  * Deprecate passing status code as anything except first argument in factory
+  * Deprecate using non-error status codes
+  * Make `message` property enumerable for `HttpError`s
+
+2016-11-16 / 1.5.1
+==================
+
+  * deps: inherits@2.0.3
+    - Fix issue loading in browser
+  * deps: setprototypeof@1.0.2
+  * deps: statuses@'>= 1.3.1 < 2'
+
+2016-05-18 / 1.5.0
+==================
+
+  * Support new code `421 Misdirected Request`
+  * Use `setprototypeof` module to replace `__proto__` setting
+  * deps: statuses@'>= 1.3.0 < 2'
+    - Add `421 Misdirected Request`
+    - perf: enable strict mode
+  * perf: enable strict mode
+
+2016-01-28 / 1.4.0
+==================
+
+  * Add `HttpError` export, for `err instanceof createError.HttpError`
+  * deps: inherits@2.0.1
+  * deps: statuses@'>= 1.2.1 < 2'
+    - Fix message for status 451
+    - Remove incorrect nginx status code
+
+2015-02-02 / 1.3.1
+==================
+
+  * Fix regression where status can be overwritten in `createError` `props`
+
+2015-02-01 / 1.3.0
+==================
+
+  * Construct errors using defined constructors from `createError`
+  * Fix error names that are not identifiers
+    - `createError["I'mateapot"]` is now `createError.ImATeapot`
+  * Set a meaningful `name` property on constructed errors
+
+2014-12-09 / 1.2.8
+==================
+
+  * Fix stack trace from exported function
+  * Remove `arguments.callee` usage
+
+2014-10-14 / 1.2.7
+==================
+
+  * Remove duplicate line
+
+2014-10-02 / 1.2.6
+==================
+
+  * Fix `expose` to be `true` for `ClientError` constructor
+
+2014-09-28 / 1.2.5
+==================
+
+  * deps: statuses@1
+
+2014-09-21 / 1.2.4
+==================
+
+  * Fix dependency version to work with old `npm`s
+
+2014-09-21 / 1.2.3
+==================
+
+  * deps: statuses@~1.1.0
+
+2014-09-21 / 1.2.2
+==================
+
+  * Fix publish error
+
+2014-09-21 / 1.2.1
+==================
+
+  * Support Node.js 0.6
+  * Use `inherits` instead of `util`
+
+2014-09-09 / 1.2.0
+==================
+
+  * Fix the way inheriting functions
+  * Support `expose` being provided in properties argument
+
+2014-09-08 / 1.1.0
+==================
+
+  * Default status to 500
+  * Support provided `error` to extend
+
+2014-09-08 / 1.0.1
+==================
+
+  * Fix accepting string message
+
+2014-09-08 / 1.0.0
+==================
+
+  * Initial release
+≠/package.json≈"{
+  "name": "http-errors",
+  "description": "Create HTTP error objects",
+  "version": "2.0.0",
+  "author": "Jonathan Ong <me@jongleberry.com> (http://jongleberry.com)",
+  "contributors": [
+    "Alan Plum <me@pluma.io>",
+    "Douglas Christopher Wilson <doug@somethingdoug.com>"
+  ],
+  "license": "MIT",
+  "repository": "jshttp/http-errors",
+  "dependencies": {
+    "depd": "2.0.0",
+    "inherits": "2.0.4",
+    "setprototypeof": "1.2.0",
+    "statuses": "2.0.1",
+    "toidentifier": "1.0.1"
+  },
+  "devDependencies": {
+    "eslint": "7.32.0",
+    "eslint-config-standard": "14.1.1",
+    "eslint-plugin-import": "2.25.3",
+    "eslint-plugin-markdown": "2.2.1",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-promise": "5.2.0",
+    "eslint-plugin-standard": "4.1.0",
+    "mocha": "9.1.3",
+    "nyc": "15.1.0"
+  },
+  "engines": {
+    "node": ">= 0.8"
+  },
+  "scripts": {
+    "lint": "eslint . && node ./scripts/lint-readme-list.js",
+    "test": "mocha --reporter spec --bail",
+    "test-ci": "nyc --reporter=lcov --reporter=text npm test",
+    "test-cov": "nyc --reporter=html --reporter=text npm test",
+    "version": "node scripts/version-history.js && git add HISTORY.md"
+  },
+  "keywords": [
+    "http",
+    "error"
+  ],
+  "files": [
+    "index.js",
+    "HISTORY.md",
+    "LICENSE",
+    "README.md"
+  ]
+}
+™/README.md≈J# http-errors
+
+[![NPM Version][npm-version-image]][npm-url]
+[![NPM Downloads][npm-downloads-image]][node-url]
+[![Node.js Version][node-image]][node-url]
+[![Build Status][ci-image]][ci-url]
+[![Test Coverage][coveralls-image]][coveralls-url]
+
+Create HTTP errors for Express, Koa, Connect, etc. with ease.
+
+## Install
+
+This is a [Node.js](https://nodejs.org/en/) module available through the
+[npm registry](https://www.npmjs.com/). Installation is done using the
+[`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
+
+```console
+$ npm install http-errors
+```
+
+## Example
+
+```js
+var createError = require('http-errors')
+var express = require('express')
+var app = express()
+
+app.use(function (req, res, next) {
+  if (!req.user) return next(createError(401, 'Please login to view this page.'))
+  next()
+})
+```
+
+## API
+
+This is the current API, currently extracted from Koa and subject to change.
+
+### Error Properties
+
+- `expose` - can be used to signal if `message` should be sent to the client,
+  defaulting to `false` when `status` >= 500
+- `headers` - can be an object of header names to values to be sent to the
+  client, defaulting to `undefined`. When defined, the key names should all
+  be lower-cased
+- `message` - the traditional error message, which should be kept short and all
+  single line
+- `status` - the status code of the error, mirroring `statusCode` for general
+  compatibility
+- `statusCode` - the status code of the error, defaulting to `500`
+
+### createError([status], [message], [properties])
+
+Create a new error object with the given message `msg`.
+The error object inherits from `createError.HttpError`.
+
+```js
+var err = createError(404, 'This video does not exist!')
+```
+
+- `status: 500` - the status code as a number
+- `message` - the message of the error, defaulting to node's text for that status code.
+- `properties` - custom properties to attach to the object
+
+### createError([status], [error], [properties])
+
+Extend the given `error` object with `createError.HttpError`
+properties. This will not alter the inheritance of the given
+`error` object, and the modified `error` object is the
+return value.
+
+<!-- eslint-disable no-redeclare -->
+
+```js
+fs.readFile('foo.txt', function (err, buf) {
+  if (err) {
+    if (err.code === 'ENOENT') {
+      var httpError = createError(404, err, { expose: false })
+    } else {
+      var httpError = createError(500, err)
+    }
+  }
+})
+```
+
+- `status` - the status code as a number
+- `error` - the error object to extend
+- `properties` - custom properties to attach to the object
+
+### createError.isHttpError(val)
+
+Determine if the provided `val` is an `HttpError`. This will return `true`
+if the error inherits from the `HttpError` constructor of this module or
+matches the "duck type" for an error this module creates. All outputs from
+the `createError` factory will return `true` for this function, including
+if an non-`HttpError` was passed into the factory.
+
+### new createError\[code || name\](\[msg]\))
+
+Create a new error object with the given message `msg`.
+The error object inherits from `createError.HttpError`.
+
+```js
+var err = new createError.NotFound()
+```
+
+- `code` - the status code as a number
+- `name` - the name of the error as a "bumpy case", i.e. `NotFound` or `InternalServerError`.
+
+#### List of all constructors
+
+|Status Code|Constructor Name             |
+|-----------|-----------------------------|
+|400        |BadRequest                   |
+|401        |Unauthorized                 |
+|402        |PaymentRequired              |
+|403        |Forbidden                    |
+|404        |NotFound                     |
+|405        |MethodNotAllowed             |
+|406        |NotAcceptable                |
+|407        |ProxyAuthenticationRequired  |
+|408        |RequestTimeout               |
+|409        |Conflict                     |
+|410        |Gone                         |
+|411        |LengthRequired               |
+|412        |PreconditionFailed           |
+|413        |PayloadTooLarge              |
+|414        |URITooLong                   |
+|415        |UnsupportedMediaType         |
+|416        |RangeNotSatisfiable          |
+|417        |ExpectationFailed            |
+|418        |ImATeapot                    |
+|421        |MisdirectedRequest           |
+|422        |UnprocessableEntity          |
+|423        |Locked                       |
+|424        |FailedDependency             |
+|425        |TooEarly                     |
+|426        |UpgradeRequired              |
+|428        |PreconditionRequired         |
+|429        |TooManyRequests              |
+|431        |RequestHeaderFieldsTooLarge  |
+|451        |UnavailableForLegalReasons   |
+|500        |InternalServerError          |
+|501        |NotImplemented               |
+|502        |BadGateway                   |
+|503        |ServiceUnavailable           |
+|504        |GatewayTimeout               |
+|505        |HTTPVersionNotSupported      |
+|506        |VariantAlsoNegotiates        |
+|507        |InsufficientStorage          |
+|508        |LoopDetected                 |
+|509        |BandwidthLimitExceeded       |
+|510        |NotExtended                  |
+|511        |NetworkAuthenticationRequired|
+
+## License
+
+[MIT](LICENSE)
+
+[ci-image]: https://badgen.net/github/checks/jshttp/http-errors/master?label=ci
+[ci-url]: https://github.com/jshttp/http-errors/actions?query=workflow%3Aci
+[coveralls-image]: https://badgen.net/coveralls/c/github/jshttp/http-errors/master
+[coveralls-url]: https://coveralls.io/r/jshttp/http-errors?branch=master
+[node-image]: https://badgen.net/npm/node/http-errors
+[node-url]: https://nodejs.org/en/download
+[npm-downloads-image]: https://badgen.net/npm/dm/http-errors
+[npm-url]: https://npmjs.org/package/http-errors
+[npm-version-image]: https://badgen.net/npm/v/http-errors
+[travis-image]: https://badgen.net/travis/jshttp/http-errors/master
+[travis-url]: https://travis-ci.org/jshttp/http-errors

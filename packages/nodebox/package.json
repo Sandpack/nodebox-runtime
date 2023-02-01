@@ -1,0 +1,23 @@
+{
+  "name": "@codesandbox/nodebox",
+  "version": "0.0.38",
+  "description": "Public API of Nodebox",
+  "main": "./build/index.js",
+  "typings": "./build/index.d.ts",
+  "license" : "SEE LICENSE IN ./LICENSE",
+  "files": [
+    "./build"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "scripts": {
+    "dev": "NODE_ENV=development pnpm build",
+    "prebuild": "rimraf ./build",
+    "build": "node -r esbuild-register ./build.ts"
+  },
+  "dependencies": {
+    "outvariant": "^1.3.0",
+    "strict-event-emitter": "^0.4.3"
+  }
+}

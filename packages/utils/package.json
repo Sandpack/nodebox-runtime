@@ -1,0 +1,7 @@
+{
+  "name": "internal-utils",
+  "version": "0.0.0",
+  "scripts": {
+    "test:unit": "jest"
+  }
+}

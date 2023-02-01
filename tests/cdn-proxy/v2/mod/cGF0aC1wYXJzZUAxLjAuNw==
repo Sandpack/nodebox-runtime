@@ -1,0 +1,171 @@
+„©/index.jsÅe'use strict';
+
+var isWindows = process.platform === 'win32';
+
+// Regex to split a windows path into into [dir, root, basename, name, ext]
+var splitWindowsRe =
+    /^(((?:[a-zA-Z]:|[\\\/]{2}[^\\\/]+[\\\/]+[^\\\/]+)?[\\\/]?)(?:[^\\\/]*[\\\/])*)((\.{1,2}|[^\\\/]+?|)(\.[^.\/\\]*|))[\\\/]*$/;
+
+var win32 = {};
+
+function win32SplitPath(filename) {
+  return splitWindowsRe.exec(filename).slice(1);
+}
+
+win32.parse = function(pathString) {
+  if (typeof pathString !== 'string') {
+    throw new TypeError(
+        "Parameter 'pathString' must be a string, not " + typeof pathString
+    );
+  }
+  var allParts = win32SplitPath(pathString);
+  if (!allParts || allParts.length !== 5) {
+    throw new TypeError("Invalid path '" + pathString + "'");
+  }
+  return {
+    root: allParts[1],
+    dir: allParts[0] === allParts[1] ? allParts[0] : allParts[0].slice(0, -1),
+    base: allParts[2],
+    ext: allParts[4],
+    name: allParts[3]
+  };
+};
+
+
+
+// Split a filename into [dir, root, basename, name, ext], unix version
+// 'root' is just a slash, or nothing.
+var splitPathRe =
+    /^((\/?)(?:[^\/]*\/)*)((\.{1,2}|[^\/]+?|)(\.[^.\/]*|))[\/]*$/;
+var posix = {};
+
+
+function posixSplitPath(filename) {
+  return splitPathRe.exec(filename).slice(1);
+}
+
+
+posix.parse = function(pathString) {
+  if (typeof pathString !== 'string') {
+    throw new TypeError(
+        "Parameter 'pathString' must be a string, not " + typeof pathString
+    );
+  }
+  var allParts = posixSplitPath(pathString);
+  if (!allParts || allParts.length !== 5) {
+    throw new TypeError("Invalid path '" + pathString + "'");
+  }
+  
+  return {
+    root: allParts[1],
+    dir: allParts[0].slice(0, -1),
+    base: allParts[2],
+    ext: allParts[4],
+    name: allParts[3],
+  };
+};
+
+
+if (isWindows)
+  module.exports = win32.parse;
+else /* posix */
+  module.exports = posix.parse;
+
+module.exports.posix = posix.parse;
+module.exports.win32 = win32.parse;
+ª/README.mdÅg# path-parse [![Build Status](https://travis-ci.org/jbgutierrez/path-parse.svg?branch=master)](https://travis-ci.org/jbgutierrez/path-parse)
+
+> Node.js [`path.parse(pathString)`](https://nodejs.org/api/path.html#path_path_parse_pathstring) [ponyfill](https://ponyfill.com).
+
+## Install
+
+```
+$ npm install --save path-parse
+```
+
+## Usage
+
+```js
+var pathParse = require('path-parse');
+
+pathParse('/home/user/dir/file.txt');
+//=> {
+//       root : "/",
+//       dir : "/home/user/dir",
+//       base : "file.txt",
+//       ext : ".txt",
+//       name : "file"
+//   }
+```
+
+## API
+
+See [`path.parse(pathString)`](https://nodejs.org/api/path.html#path_path_parse_pathstring) docs.
+
+### pathParse(path)
+
+### pathParse.posix(path)
+
+The Posix specific version.
+
+### pathParse.win32(path)
+
+The Windows specific version.
+
+## License
+
+MIT Â© [Javier Blanco](http://jbgutierrez.info)
+­/package.jsonÅ›{
+  "name": "path-parse",
+  "version": "1.0.7",
+  "description": "Node.js path.parse() ponyfill",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jbgutierrez/path-parse.git"
+  },
+  "keywords": [
+    "path",
+    "paths",
+    "file",
+    "dir",
+    "parse",
+    "built-in",
+    "util",
+    "utils",
+    "core",
+    "ponyfill",
+    "polyfill",
+    "shim"
+  ],
+  "author": "Javier Blanco <http://jbgutierrez.info>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jbgutierrez/path-parse/issues"
+  },
+  "homepage": "https://github.com/jbgutierrez/path-parse#readme"
+}
+¨/LICENSEÅ8The MIT License (MIT)
+
+Copyright (c) 2015 Javier Blanco
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

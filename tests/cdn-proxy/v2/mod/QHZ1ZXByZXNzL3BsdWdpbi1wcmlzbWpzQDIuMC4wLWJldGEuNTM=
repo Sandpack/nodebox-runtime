@@ -1,0 +1,157 @@
+Š¼/lib/node/loadLanguages.d.tsÄCexport declare const loadLanguages: (languages: string[]) => void;
+²/lib/node/index.jsÄÃimport { prismjsPlugin } from './prismjsPlugin.js';
+export * from './loadLanguages.js';
+export * from './prismjsPlugin.js';
+export * from './resolveHighlighter.js';
+export default prismjsPlugin;
+¼/lib/node/prismjsPlugin.d.tsÅÞimport type { Plugin } from '@vuepress/core';
+/**
+ * Options of @vuepress/plugin-prismjs
+ */
+export interface PrismjsPluginOptions {
+    /**
+     * Languages to preload
+     *
+     * Workaround for prismjs language reloading issue
+     *
+     * @default ['markdown', 'jsdoc', 'yaml']
+     * @see https://github.com/PrismJS/prism/issues/2716
+     */
+    preloadLanguages?: string[];
+}
+export declare const prismjsPlugin: ({ preloadLanguages, }?: PrismjsPluginOptions) => Plugin;
+Ù!/lib/node/resolveHighlighter.d.tsÄÐexport declare type Highlighter = (code: string) => string;
+/**
+ * Resolve syntax highlighter for corresponding language
+ */
+export declare const resolveHighlighter: (language: string) => Highlighter | null;
+¨/LICENSEÅCThe MIT License (MIT)
+
+Copyright (c) 2018-present, Yuxi (Evan) You
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+¿/lib/node/resolveHighlighter.jsÅimport Prism from 'prismjs';
+import { loadLanguages } from './loadLanguages.js';
+const languageNameMap = {
+    html: 'markup',
+    vue: 'markup',
+};
+// documentation language of corresponding language
+const docLangMap = {
+    csharp: 'xml-doc',
+    fsharp: 'xml-doc',
+    java: 'javadoc',
+    javascript: 'jsdoc',
+    php: 'phpdoc',
+    typescript: 'jsdoc',
+};
+/**
+ * Resolve syntax highlighter for corresponding language
+ */
+export const resolveHighlighter = (language) => {
+    // get the languages that need to be loaded
+    const lang = languageNameMap[language] || language;
+    const langsToLoad = [lang];
+    // doc language of current language
+    if (docLangMap[lang]) {
+        langsToLoad.push(docLangMap[lang]);
+    }
+    // try to load languages
+    loadLanguages(langsToLoad);
+    // return null if current language could not be loaded
+    // the doc language is not required so we don't check it here
+    if (!Prism.languages[lang]) {
+        return null;
+    }
+    return (code) => Prism.highlight(code, Prism.languages[lang], lang);
+};
+º/lib/node/prismjsPlugin.jsÅ&import { loadLanguages } from './loadLanguages.js';
+import { resolveHighlighter } from './resolveHighlighter.js';
+export const prismjsPlugin = ({ preloadLanguages = ['markdown', 'jsdoc', 'yaml'], } = {}) => ({
+    name: '@vuepress/plugin-prismjs',
+    extendsMarkdown(md) {
+        if (preloadLanguages?.length !== 0) {
+            loadLanguages(preloadLanguages);
+        }
+        md.options.highlight = (code, lang) => {
+            const highlighter = resolveHighlighter(lang);
+            return highlighter?.(code) || '';
+        };
+    },
+});
+­/package.jsonÅì{
+  "name": "@vuepress/plugin-prismjs",
+  "version": "2.0.0-beta.53",
+  "description": "VuePress plugin - prismjs",
+  "keywords": [
+    "vuepress-plugin",
+    "vuepress",
+    "plugin",
+    "prismjs",
+    "highlight"
+  ],
+  "homepage": "https://github.com/vuepress",
+  "bugs": {
+    "url": "https://github.com/vuepress/vuepress-next/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vuepress/vuepress-next.git"
+  },
+  "license": "MIT",
+  "author": "meteorlxy",
+  "type": "module",
+  "exports": {
+    ".": "./lib/node/index.js",
+    "./package.json": "./package.json"
+  },
+  "main": "./lib/node/index.js",
+  "types": "./lib/node/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "dependencies": {
+    "@vuepress/core": "2.0.0-beta.53",
+    "prismjs": "^1.29.0"
+  },
+  "devDependencies": {
+    "@types/prismjs": "^1.26.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -b tsconfig.build.json",
+    "clean": "rimraf lib *.tsbuildinfo"
+  }
+}´/lib/node/index.d.tsÄÃimport { prismjsPlugin } from './prismjsPlugin.js';
+export * from './loadLanguages.js';
+export * from './prismjsPlugin.js';
+export * from './resolveHighlighter.js';
+export default prismjsPlugin;
+º/lib/node/loadLanguages.jsÅ]import Prism from 'prismjs';
+import rawLoadLanguages from 'prismjs/components/index.js';
+// prevent warning messages
+rawLoadLanguages.silent = true;
+export const loadLanguages = (languages) => {
+    const langsToLoad = languages.filter((item) => !Prism.languages[item]);
+    if (langsToLoad.length) {
+        rawLoadLanguages(langsToLoad);
+    }
+};

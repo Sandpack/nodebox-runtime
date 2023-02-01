@@ -1,0 +1,235 @@
+Ö™/README.md≈v# forwarded
+
+[![NPM Version][npm-image]][npm-url]
+[![NPM Downloads][downloads-image]][downloads-url]
+[![Node.js Version][node-version-image]][node-version-url]
+[![Build Status][ci-image]][ci-url]
+[![Test Coverage][coveralls-image]][coveralls-url]
+
+Parse HTTP X-Forwarded-For header
+
+## Installation
+
+This is a [Node.js](https://nodejs.org/en/) module available through the
+[npm registry](https://www.npmjs.com/). Installation is done using the
+[`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
+
+```sh
+$ npm install forwarded
+```
+
+## API
+
+```js
+var forwarded = require('forwarded')
+```
+
+### forwarded(req)
+
+```js
+var addresses = forwarded(req)
+```
+
+Parse the `X-Forwarded-For` header from the request. Returns an array
+of the addresses, including the socket address for the `req`, in reverse
+order (i.e. index `0` is the socket address and the last index is the
+furthest address, typically the end-user).
+
+## Testing
+
+```sh
+$ npm test
+```
+
+## License
+
+[MIT](LICENSE)
+
+[ci-image]: https://badgen.net/github/checks/jshttp/forwarded/master?label=ci
+[ci-url]: https://github.com/jshttp/forwarded/actions?query=workflow%3Aci
+[npm-image]: https://img.shields.io/npm/v/forwarded.svg
+[npm-url]: https://npmjs.org/package/forwarded
+[node-version-image]: https://img.shields.io/node/v/forwarded.svg
+[node-version-url]: https://nodejs.org/en/download/
+[coveralls-image]: https://img.shields.io/coveralls/jshttp/forwarded/master.svg
+[coveralls-url]: https://coveralls.io/r/jshttp/forwarded?branch=master
+[downloads-image]: https://img.shields.io/npm/dm/forwarded.svg
+[downloads-url]: https://npmjs.org/package/forwarded
+©/index.js≈*/*!
+ * forwarded
+ * Copyright(c) 2014-2017 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+'use strict'
+
+/**
+ * Module exports.
+ * @public
+ */
+
+module.exports = forwarded
+
+/**
+ * Get all addresses in the request, using the `X-Forwarded-For` header.
+ *
+ * @param {object} req
+ * @return {array}
+ * @public
+ */
+
+function forwarded (req) {
+  if (!req) {
+    throw new TypeError('argument req is required')
+  }
+
+  // simple header parsing
+  var proxyAddrs = parse(req.headers['x-forwarded-for'] || '')
+  var socketAddr = getSocketAddr(req)
+  var addrs = [socketAddr].concat(proxyAddrs)
+
+  // return all addresses
+  return addrs
+}
+
+/**
+ * Get the socket address for a request.
+ *
+ * @param {object} req
+ * @return {string}
+ * @private
+ */
+
+function getSocketAddr (req) {
+  return req.socket
+    ? req.socket.remoteAddress
+    : req.connection.remoteAddress
+}
+
+/**
+ * Parse the X-Forwarded-For header.
+ *
+ * @param {string} header
+ * @private
+ */
+
+function parse (header) {
+  var end = header.length
+  var list = []
+  var start = header.length
+
+  // gather addresses, backwards
+  for (var i = header.length - 1; i >= 0; i--) {
+    switch (header.charCodeAt(i)) {
+      case 0x20: /*   */
+        if (start === end) {
+          start = end = i
+        }
+        break
+      case 0x2c: /* , */
+        if (start !== end) {
+          list.push(header.substring(start, end))
+        }
+        start = end = i
+        break
+      default:
+        start = i
+        break
+    }
+  }
+
+  // final address
+  if (start !== end) {
+    list.push(header.substring(start, end))
+  }
+
+  return list
+}
+®/LICENSE≈F(The MIT License)
+
+Copyright (c) 2014-2017 Douglas Christopher Wilson
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+≠/package.json≈~{
+  "name": "forwarded",
+  "description": "Parse HTTP X-Forwarded-For header",
+  "version": "0.2.0",
+  "contributors": [
+    "Douglas Christopher Wilson <doug@somethingdoug.com>"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "x-forwarded-for",
+    "http",
+    "req"
+  ],
+  "repository": "jshttp/forwarded",
+  "devDependencies": {
+    "beautify-benchmark": "0.2.4",
+    "benchmark": "2.1.4",
+    "deep-equal": "1.0.1",
+    "eslint": "7.27.0",
+    "eslint-config-standard": "14.1.1",
+    "eslint-plugin-import": "2.23.4",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-promise": "4.3.1",
+    "eslint-plugin-standard": "4.1.0",
+    "mocha": "8.4.0",
+    "nyc": "15.1.0"
+  },
+  "files": [
+    "LICENSE",
+    "HISTORY.md",
+    "README.md",
+    "index.js"
+  ],
+  "engines": {
+    "node": ">= 0.6"
+  },
+  "scripts": {
+    "bench": "node benchmark/index.js",
+    "lint": "eslint .",
+    "test": "mocha --reporter spec --bail --check-leaks test/",
+    "test-ci": "nyc --reporter=lcov --reporter=text npm test",
+    "test-cov": "nyc --reporter=html --reporter=text npm test",
+    "version": "node scripts/version-history.js && git add HISTORY.md"
+  }
+}
+´/HISTORY.md≈ê0.2.0 / 2021-05-31
+==================
+
+  * Use `req.socket` over deprecated `req.connection`
+
+0.1.2 / 2017-09-14
+==================
+
+  * perf: improve header parsing
+  * perf: reduce overhead when no `X-Forwarded-For` header
+
+0.1.1 / 2017-09-10
+==================
+
+  * Fix trimming leading / trailing OWS
+  * perf: hoist regular expression
+
+0.1.0 / 2014-09-21
+==================
+
+  * Initial release

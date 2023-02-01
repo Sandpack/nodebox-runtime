@@ -1,0 +1,1037 @@
+á´/HISTORY.md≈J2.5.1 / 2022-02-28
+==================
+
+  * Fix error on early async hooks implementations
+
+2.5.0 / 2022-02-21
+==================
+
+  * Prevent loss of async hooks context
+  * Prevent hanging when stream is not readable
+  * deps: http-errors@2.0.0
+    - deps: depd@2.0.0
+    - deps: statuses@2.0.1
+
+2.4.3 / 2022-02-14
+==================
+
+  * deps: bytes@3.1.2
+
+2.4.2 / 2021-11-16
+==================
+
+  * deps: bytes@3.1.1
+  * deps: http-errors@1.8.1
+    - deps: setprototypeof@1.2.0
+    - deps: toidentifier@1.0.1
+
+2.4.1 / 2019-06-25
+==================
+
+  * deps: http-errors@1.7.3
+    - deps: inherits@2.0.4
+
+2.4.0 / 2019-04-17
+==================
+
+  * deps: bytes@3.1.0
+    - Add petabyte (`pb`) support
+  * deps: http-errors@1.7.2
+    - Set constructor name when possible
+    - deps: setprototypeof@1.1.1
+    - deps: statuses@'>= 1.5.0 < 2'
+  * deps: iconv-lite@0.4.24
+    - Added encoding MIK
+
+2.3.3 / 2018-05-08
+==================
+
+  * deps: http-errors@1.6.3
+    - deps: depd@~1.1.2
+    - deps: setprototypeof@1.1.0
+    - deps: statuses@'>= 1.3.1 < 2'
+  * deps: iconv-lite@0.4.23
+    - Fix loading encoding with year appended
+    - Fix deprecation warnings on Node.js 10+
+
+2.3.2 / 2017-09-09
+==================
+
+  * deps: iconv-lite@0.4.19
+    - Fix ISO-8859-1 regression
+    - Update Windows-1255
+
+2.3.1 / 2017-09-07
+==================
+
+  * deps: bytes@3.0.0
+  * deps: http-errors@1.6.2
+    - deps: depd@1.1.1
+  * perf: skip buffer decoding on overage chunk
+
+2.3.0 / 2017-08-04
+==================
+
+  * Add TypeScript definitions
+  * Use `http-errors` for standard emitted errors
+  * deps: bytes@2.5.0
+  * deps: iconv-lite@0.4.18
+    - Add support for React Native
+    - Add a warning if not loaded as utf-8
+    - Fix CESU-8 decoding in Node.js 8
+    - Improve speed of ISO-8859-1 encoding
+
+2.2.0 / 2017-01-02
+==================
+
+  * deps: iconv-lite@0.4.15
+    - Added encoding MS-31J
+    - Added encoding MS-932
+    - Added encoding MS-936
+    - Added encoding MS-949
+    - Added encoding MS-950
+    - Fix GBK/GB18030 handling of Euro character
+
+2.1.7 / 2016-06-19
+==================
+
+  * deps: bytes@2.4.0
+  * perf: remove double-cleanup on happy path
+
+2.1.6 / 2016-03-07
+==================
+
+  * deps: bytes@2.3.0
+    - Drop partial bytes on all parsed units
+    - Fix parsing byte string that looks like hex
+
+2.1.5 / 2015-11-30
+==================
+
+  * deps: bytes@2.2.0
+  * deps: iconv-lite@0.4.13
+
+2.1.4 / 2015-09-27
+==================
+
+  * Fix masking critical errors from `iconv-lite`
+  * deps: iconv-lite@0.4.12
+    - Fix CESU-8 decoding in Node.js 4.x
+
+2.1.3 / 2015-09-12
+==================
+
+  * Fix sync callback when attaching data listener causes sync read
+    - Node.js 0.10 compatibility issue
+
+2.1.2 / 2015-07-05
+==================
+
+  * Fix error stack traces to skip `makeError`
+  * deps: iconv-lite@0.4.11
+    - Add encoding CESU-8
+
+2.1.1 / 2015-06-14
+==================
+
+  * Use `unpipe` module for unpiping requests
+
+2.1.0 / 2015-05-28
+==================
+
+  * deps: iconv-lite@0.4.10
+    - Improved UTF-16 endianness detection
+    - Leading BOM is now removed when decoding
+    - The encoding UTF-16 without BOM now defaults to UTF-16LE when detection fails
+
+2.0.2 / 2015-05-21
+==================
+
+  * deps: bytes@2.1.0
+    - Slight optimizations
+
+2.0.1 / 2015-05-10
+==================
+
+  * Fix a false-positive when unpiping in Node.js 0.8
+
+2.0.0 / 2015-05-08
+==================
+
+  * Return a promise without callback instead of thunk
+  * deps: bytes@2.0.1
+    - units no longer case sensitive when parsing
+
+1.3.4 / 2015-04-15
+==================
+
+  * Fix hanging callback if request aborts during read
+  * deps: iconv-lite@0.4.8
+    - Add encoding alias UNICODE-1-1-UTF-7
+
+1.3.3 / 2015-02-08
+==================
+
+  * deps: iconv-lite@0.4.7
+    - Gracefully support enumerables on `Object.prototype`
+
+1.3.2 / 2015-01-20
+==================
+
+  * deps: iconv-lite@0.4.6
+    - Fix rare aliases of single-byte encodings
+
+1.3.1 / 2014-11-21
+==================
+
+  * deps: iconv-lite@0.4.5
+    - Fix Windows-31J and X-SJIS encoding support
+
+1.3.0 / 2014-07-20
+==================
+
+  * Fully unpipe the stream on error
+    - Fixes `Cannot switch to old mode now` error on Node.js 0.10+
+
+1.2.3 / 2014-07-20
+==================
+
+  * deps: iconv-lite@0.4.4
+    - Added encoding UTF-7
+
+1.2.2 / 2014-06-19
+==================
+
+  * Send invalid encoding error to callback
+
+1.2.1 / 2014-06-15
+==================
+
+  * deps: iconv-lite@0.4.3
+    - Added encodings UTF-16BE and UTF-16 with BOM
+
+1.2.0 / 2014-06-13
+==================
+
+  * Passing string as `options` interpreted as encoding
+  * Support all encodings from `iconv-lite`
+
+1.1.7 / 2014-06-12
+==================
+
+  * use `string_decoder` module from npm
+
+1.1.6 / 2014-05-27
+==================
+
+  * check encoding for old streams1
+  * support node.js < 0.10.6
+
+1.1.5 / 2014-05-14
+==================
+
+  * bump bytes
+
+1.1.4 / 2014-04-19
+==================
+
+  * allow true as an option
+  * bump bytes
+
+1.1.3 / 2014-03-02
+==================
+
+  * fix case when length=null
+
+1.1.2 / 2013-12-01
+==================
+
+  * be less strict on state.encoding check
+
+1.1.1 / 2013-11-27
+==================
+
+  * add engines
+
+1.1.0 / 2013-11-27
+==================
+
+  * add err.statusCode and err.type
+  * allow for encoding option to be true
+  * pause the stream instead of dumping on error
+  * throw if the stream's encoding is set
+
+1.0.1 / 2013-11-19
+==================
+
+  * dont support streams1, throw if dev set encoding
+
+1.0.0 / 2013-11-17
+==================
+
+  * rename `expected` option to `length`
+
+0.2.0 / 2013-11-15
+==================
+
+  * republish
+
+0.1.1 / 2013-11-15
+==================
+
+  * use bytes
+
+0.1.0 / 2013-11-11
+==================
+
+  * generator support
+
+0.0.3 / 2013-10-10
+==================
+
+  * update repo
+
+0.0.2 / 2013-09-14
+==================
+
+  * dump stream on bad headers
+  * listen to events after defining received and buffers
+
+0.0.1 / 2013-09-14
+==================
+
+  * Initial release
+≠/package.json≈,{
+  "name": "raw-body",
+  "description": "Get and validate the raw body of a readable stream.",
+  "version": "2.5.1",
+  "author": "Jonathan Ong <me@jongleberry.com> (http://jongleberry.com)",
+  "contributors": [
+    "Douglas Christopher Wilson <doug@somethingdoug.com>",
+    "Raynos <raynos2@gmail.com>"
+  ],
+  "license": "MIT",
+  "repository": "stream-utils/raw-body",
+  "dependencies": {
+    "bytes": "3.1.2",
+    "http-errors": "2.0.0",
+    "iconv-lite": "0.4.24",
+    "unpipe": "1.0.0"
+  },
+  "devDependencies": {
+    "bluebird": "3.7.2",
+    "eslint": "7.32.0",
+    "eslint-config-standard": "14.1.1",
+    "eslint-plugin-import": "2.25.4",
+    "eslint-plugin-markdown": "2.2.1",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-promise": "5.2.0",
+    "eslint-plugin-standard": "4.1.0",
+    "mocha": "9.2.1",
+    "nyc": "15.1.0",
+    "readable-stream": "2.3.7",
+    "safe-buffer": "5.2.1"
+  },
+  "engines": {
+    "node": ">= 0.8"
+  },
+  "files": [
+    "HISTORY.md",
+    "LICENSE",
+    "README.md",
+    "SECURITY.md",
+    "index.d.ts",
+    "index.js"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "test": "mocha --trace-deprecation --reporter spec --bail --check-leaks test/",
+    "test-ci": "nyc --reporter=lcovonly --reporter=text npm test",
+    "test-cov": "nyc --reporter=html --reporter=text npm test"
+  }
+}
+™/README.md≈Ü# raw-body
+
+[![NPM Version][npm-image]][npm-url]
+[![NPM Downloads][downloads-image]][downloads-url]
+[![Node.js Version][node-version-image]][node-version-url]
+[![Build status][github-actions-ci-image]][github-actions-ci-url]
+[![Test coverage][coveralls-image]][coveralls-url]
+
+Gets the entire buffer of a stream either as a `Buffer` or a string.
+Validates the stream's length against an expected length and maximum limit.
+Ideal for parsing request bodies.
+
+## Install
+
+This is a [Node.js](https://nodejs.org/en/) module available through the
+[npm registry](https://www.npmjs.com/). Installation is done using the
+[`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
+
+```sh
+$ npm install raw-body
+```
+
+### TypeScript
+
+This module includes a [TypeScript](https://www.typescriptlang.org/)
+declaration file to enable auto complete in compatible editors and type
+information for TypeScript projects. This module depends on the Node.js
+types, so install `@types/node`:
+
+```sh
+$ npm install @types/node
+```
+
+## API
+
+```js
+var getRawBody = require('raw-body')
+```
+
+### getRawBody(stream, [options], [callback])
+
+**Returns a promise if no callback specified and global `Promise` exists.**
+
+Options:
+
+- `length` - The length of the stream.
+  If the contents of the stream do not add up to this length,
+  an `400` error code is returned.
+- `limit` - The byte limit of the body.
+  This is the number of bytes or any string format supported by
+  [bytes](https://www.npmjs.com/package/bytes),
+  for example `1000`, `'500kb'` or `'3mb'`.
+  If the body ends up being larger than this limit,
+  a `413` error code is returned.
+- `encoding` - The encoding to use to decode the body into a string.
+  By default, a `Buffer` instance will be returned when no encoding is specified.
+  Most likely, you want `utf-8`, so setting `encoding` to `true` will decode as `utf-8`.
+  You can use any type of encoding supported by [iconv-lite](https://www.npmjs.org/package/iconv-lite#readme).
+
+You can also pass a string in place of options to just specify the encoding.
+
+If an error occurs, the stream will be paused, everything unpiped,
+and you are responsible for correctly disposing the stream.
+For HTTP requests, you may need to finish consuming the stream if
+you want to keep the socket open for future requests. For streams
+that use file descriptors, you should `stream.destroy()` or
+`stream.close()` to prevent leaks.
+
+## Errors
+
+This module creates errors depending on the error condition during reading.
+The error may be an error from the underlying Node.js implementation, but is
+otherwise an error created by this module, which has the following attributes:
+
+  * `limit` - the limit in bytes
+  * `length` and `expected` - the expected length of the stream
+  * `received` - the received bytes
+  * `encoding` - the invalid encoding
+  * `status` and `statusCode` - the corresponding status code for the error
+  * `type` - the error type
+
+### Types
+
+The errors from this module have a `type` property which allows for the programmatic
+determination of the type of error returned.
+
+#### encoding.unsupported
+
+This error will occur when the `encoding` option is specified, but the value does
+not map to an encoding supported by the [iconv-lite](https://www.npmjs.org/package/iconv-lite#readme)
+module.
+
+#### entity.too.large
+
+This error will occur when the `limit` option is specified, but the stream has
+an entity that is larger.
+
+#### request.aborted
+
+This error will occur when the request stream is aborted by the client before
+reading the body has finished.
+
+#### request.size.invalid
+
+This error will occur when the `length` option is specified, but the stream has
+emitted more bytes.
+
+#### stream.encoding.set
+
+This error will occur when the given stream has an encoding set on it, making it
+a decoded stream. The stream should not have an encoding set and is expected to
+emit `Buffer` objects.
+
+#### stream.not.readable
+
+This error will occur when the given stream is not readable.
+
+## Examples
+
+### Simple Express example
+
+```js
+var contentType = require('content-type')
+var express = require('express')
+var getRawBody = require('raw-body')
+
+var app = express()
+
+app.use(function (req, res, next) {
+  getRawBody(req, {
+    length: req.headers['content-length'],
+    limit: '1mb',
+    encoding: contentType.parse(req).parameters.charset
+  }, function (err, string) {
+    if (err) return next(err)
+    req.text = string
+    next()
+  })
+})
+
+// now access req.text
+```
+
+### Simple Koa example
+
+```js
+var contentType = require('content-type')
+var getRawBody = require('raw-body')
+var koa = require('koa')
+
+var app = koa()
+
+app.use(function * (next) {
+  this.text = yield getRawBody(this.req, {
+    length: this.req.headers['content-length'],
+    limit: '1mb',
+    encoding: contentType.parse(this.req).parameters.charset
+  })
+  yield next
+})
+
+// now access this.text
+```
+
+### Using as a promise
+
+To use this library as a promise, simply omit the `callback` and a promise is
+returned, provided that a global `Promise` is defined.
+
+```js
+var getRawBody = require('raw-body')
+var http = require('http')
+
+var server = http.createServer(function (req, res) {
+  getRawBody(req)
+    .then(function (buf) {
+      res.statusCode = 200
+      res.end(buf.length + ' bytes submitted')
+    })
+    .catch(function (err) {
+      res.statusCode = 500
+      res.end(err.message)
+    })
+})
+
+server.listen(3000)
+```
+
+### Using with TypeScript
+
+```ts
+import * as getRawBody from 'raw-body';
+import * as http from 'http';
+
+const server = http.createServer((req, res) => {
+  getRawBody(req)
+  .then((buf) => {
+    res.statusCode = 200;
+    res.end(buf.length + ' bytes submitted');
+  })
+  .catch((err) => {
+    res.statusCode = err.statusCode;
+    res.end(err.message);
+  });
+});
+
+server.listen(3000);
+```
+
+## License
+
+[MIT](LICENSE)
+
+[npm-image]: https://img.shields.io/npm/v/raw-body.svg
+[npm-url]: https://npmjs.org/package/raw-body
+[node-version-image]: https://img.shields.io/node/v/raw-body.svg
+[node-version-url]: https://nodejs.org/en/download/
+[coveralls-image]: https://img.shields.io/coveralls/stream-utils/raw-body/master.svg
+[coveralls-url]: https://coveralls.io/r/stream-utils/raw-body?branch=master
+[downloads-image]: https://img.shields.io/npm/dm/raw-body.svg
+[downloads-url]: https://npmjs.org/package/raw-body
+[github-actions-ci-image]: https://img.shields.io/github/workflow/status/stream-utils/raw-body/ci/master?label=ci
+[github-actions-ci-url]: https://github.com/jshttp/stream-utils/raw-body?query=workflow%3Aci
+©/index.js≈ˆ/*!
+ * raw-body
+ * Copyright(c) 2013-2014 Jonathan Ong
+ * Copyright(c) 2014-2022 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+'use strict'
+
+/**
+ * Module dependencies.
+ * @private
+ */
+
+var asyncHooks = tryRequireAsyncHooks()
+var bytes = require('bytes')
+var createError = require('http-errors')
+var iconv = require('iconv-lite')
+var unpipe = require('unpipe')
+
+/**
+ * Module exports.
+ * @public
+ */
+
+module.exports = getRawBody
+
+/**
+ * Module variables.
+ * @private
+ */
+
+var ICONV_ENCODING_MESSAGE_REGEXP = /^Encoding not recognized: /
+
+/**
+ * Get the decoder for a given encoding.
+ *
+ * @param {string} encoding
+ * @private
+ */
+
+function getDecoder (encoding) {
+  if (!encoding) return null
+
+  try {
+    return iconv.getDecoder(encoding)
+  } catch (e) {
+    // error getting decoder
+    if (!ICONV_ENCODING_MESSAGE_REGEXP.test(e.message)) throw e
+
+    // the encoding was not found
+    throw createError(415, 'specified encoding unsupported', {
+      encoding: encoding,
+      type: 'encoding.unsupported'
+    })
+  }
+}
+
+/**
+ * Get the raw body of a stream (typically HTTP).
+ *
+ * @param {object} stream
+ * @param {object|string|function} [options]
+ * @param {function} [callback]
+ * @public
+ */
+
+function getRawBody (stream, options, callback) {
+  var done = callback
+  var opts = options || {}
+
+  if (options === true || typeof options === 'string') {
+    // short cut for encoding
+    opts = {
+      encoding: options
+    }
+  }
+
+  if (typeof options === 'function') {
+    done = options
+    opts = {}
+  }
+
+  // validate callback is a function, if provided
+  if (done !== undefined && typeof done !== 'function') {
+    throw new TypeError('argument callback must be a function')
+  }
+
+  // require the callback without promises
+  if (!done && !global.Promise) {
+    throw new TypeError('argument callback is required')
+  }
+
+  // get encoding
+  var encoding = opts.encoding !== true
+    ? opts.encoding
+    : 'utf-8'
+
+  // convert the limit to an integer
+  var limit = bytes.parse(opts.limit)
+
+  // convert the expected length to an integer
+  var length = opts.length != null && !isNaN(opts.length)
+    ? parseInt(opts.length, 10)
+    : null
+
+  if (done) {
+    // classic callback style
+    return readStream(stream, encoding, length, limit, wrap(done))
+  }
+
+  return new Promise(function executor (resolve, reject) {
+    readStream(stream, encoding, length, limit, function onRead (err, buf) {
+      if (err) return reject(err)
+      resolve(buf)
+    })
+  })
+}
+
+/**
+ * Halt a stream.
+ *
+ * @param {Object} stream
+ * @private
+ */
+
+function halt (stream) {
+  // unpipe everything from the stream
+  unpipe(stream)
+
+  // pause stream
+  if (typeof stream.pause === 'function') {
+    stream.pause()
+  }
+}
+
+/**
+ * Read the data from the stream.
+ *
+ * @param {object} stream
+ * @param {string} encoding
+ * @param {number} length
+ * @param {number} limit
+ * @param {function} callback
+ * @public
+ */
+
+function readStream (stream, encoding, length, limit, callback) {
+  var complete = false
+  var sync = true
+
+  // check the length and limit options.
+  // note: we intentionally leave the stream paused,
+  // so users should handle the stream themselves.
+  if (limit !== null && length !== null && length > limit) {
+    return done(createError(413, 'request entity too large', {
+      expected: length,
+      length: length,
+      limit: limit,
+      type: 'entity.too.large'
+    }))
+  }
+
+  // streams1: assert request encoding is buffer.
+  // streams2+: assert the stream encoding is buffer.
+  //   stream._decoder: streams1
+  //   state.encoding: streams2
+  //   state.decoder: streams2, specifically < 0.10.6
+  var state = stream._readableState
+  if (stream._decoder || (state && (state.encoding || state.decoder))) {
+    // developer error
+    return done(createError(500, 'stream encoding should not be set', {
+      type: 'stream.encoding.set'
+    }))
+  }
+
+  if (typeof stream.readable !== 'undefined' && !stream.readable) {
+    return done(createError(500, 'stream is not readable', {
+      type: 'stream.not.readable'
+    }))
+  }
+
+  var received = 0
+  var decoder
+
+  try {
+    decoder = getDecoder(encoding)
+  } catch (err) {
+    return done(err)
+  }
+
+  var buffer = decoder
+    ? ''
+    : []
+
+  // attach listeners
+  stream.on('aborted', onAborted)
+  stream.on('close', cleanup)
+  stream.on('data', onData)
+  stream.on('end', onEnd)
+  stream.on('error', onEnd)
+
+  // mark sync section complete
+  sync = false
+
+  function done () {
+    var args = new Array(arguments.length)
+
+    // copy arguments
+    for (var i = 0; i < args.length; i++) {
+      args[i] = arguments[i]
+    }
+
+    // mark complete
+    complete = true
+
+    if (sync) {
+      process.nextTick(invokeCallback)
+    } else {
+      invokeCallback()
+    }
+
+    function invokeCallback () {
+      cleanup()
+
+      if (args[0]) {
+        // halt the stream on error
+        halt(stream)
+      }
+
+      callback.apply(null, args)
+    }
+  }
+
+  function onAborted () {
+    if (complete) return
+
+    done(createError(400, 'request aborted', {
+      code: 'ECONNABORTED',
+      expected: length,
+      length: length,
+      received: received,
+      type: 'request.aborted'
+    }))
+  }
+
+  function onData (chunk) {
+    if (complete) return
+
+    received += chunk.length
+
+    if (limit !== null && received > limit) {
+      done(createError(413, 'request entity too large', {
+        limit: limit,
+        received: received,
+        type: 'entity.too.large'
+      }))
+    } else if (decoder) {
+      buffer += decoder.write(chunk)
+    } else {
+      buffer.push(chunk)
+    }
+  }
+
+  function onEnd (err) {
+    if (complete) return
+    if (err) return done(err)
+
+    if (length !== null && received !== length) {
+      done(createError(400, 'request size did not match content length', {
+        expected: length,
+        length: length,
+        received: received,
+        type: 'request.size.invalid'
+      }))
+    } else {
+      var string = decoder
+        ? buffer + (decoder.end() || '')
+        : Buffer.concat(buffer)
+      done(null, string)
+    }
+  }
+
+  function cleanup () {
+    buffer = null
+
+    stream.removeListener('aborted', onAborted)
+    stream.removeListener('data', onData)
+    stream.removeListener('end', onEnd)
+    stream.removeListener('error', onEnd)
+    stream.removeListener('close', cleanup)
+  }
+}
+
+/**
+ * Try to require async_hooks
+ * @private
+ */
+
+function tryRequireAsyncHooks () {
+  try {
+    return require('async_hooks')
+  } catch (e) {
+    return {}
+  }
+}
+
+/**
+ * Wrap function with async resource, if possible.
+ * AsyncResource.bind static method backported.
+ * @private
+ */
+
+function wrap (fn) {
+  var res
+
+  // create anonymous resource
+  if (asyncHooks.AsyncResource) {
+    res = new asyncHooks.AsyncResource(fn.name || 'bound-anonymous-fn')
+  }
+
+  // incompatible node.js
+  if (!res || !res.runInAsyncScope) {
+    return fn
+  }
+
+  // return bound function
+  return res.runInAsyncScope.bind(res, fn, null)
+}
+®/LICENSE≈ùThe MIT License (MIT)
+
+Copyright (c) 2013-2014 Jonathan Ong <me@jongleberry.com>
+Copyright (c) 2014-2022 Douglas Christopher Wilson <doug@somethingdoug.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+¨/SECURITY.md≈§# Security Policies and Procedures
+
+## Reporting a Bug
+
+The `raw-body` team and community take all security bugs seriously. Thank you
+for improving the security of Express. We appreciate your efforts and
+responsible disclosure and will make every effort to acknowledge your
+contributions.
+
+Report security bugs by emailing the current owners of `raw-body`. This information
+can be found in the npm registry using the command `npm owner ls raw-body`.
+If unsure or unable to get the information from the above, open an issue
+in the [project issue tracker](https://github.com/stream-utils/raw-body/issues)
+asking for the current contact information.
+
+To ensure the timely response to your report, please ensure that the entirety
+of the report is contained within the email body and not solely behind a web
+link or an attachment.
+
+At least one owner will acknowledge your email within 48 hours, and will send a
+more detailed response within 48 hours indicating the next steps in handling
+your report. After the initial reply to your report, the owners will
+endeavor to keep you informed of the progress towards a fix and full
+announcement, and may ask for additional information or guidance.
+´/index.d.ts≈Óimport { Readable } from 'stream';
+
+declare namespace getRawBody {
+  export type Encoding = string | true;
+
+  export interface Options {
+    /**
+     * The expected length of the stream.
+     */
+    length?: number | string | null;
+    /**
+     * The byte limit of the body. This is the number of bytes or any string
+     * format supported by `bytes`, for example `1000`, `'500kb'` or `'3mb'`.
+     */
+    limit?: number | string | null;
+    /**
+     * The encoding to use to decode the body into a string. By default, a
+     * `Buffer` instance will be returned when no encoding is specified. Most
+     * likely, you want `utf-8`, so setting encoding to `true` will decode as
+     * `utf-8`. You can use any type of encoding supported by `iconv-lite`.
+     */
+    encoding?: Encoding | null;
+  }
+
+  export interface RawBodyError extends Error {
+    /**
+     * The limit in bytes.
+     */
+    limit?: number;
+    /**
+     * The expected length of the stream.
+     */
+    length?: number;
+    expected?: number;
+    /**
+     * The received bytes.
+     */
+    received?: number;
+    /**
+     * The encoding.
+     */
+    encoding?: string;
+    /**
+     * The corresponding status code for the error.
+     */
+    status: number;
+    statusCode: number;
+    /**
+     * The error type.
+     */
+    type: string;
+  }
+}
+
+/**
+ * Gets the entire buffer of a stream either as a `Buffer` or a string.
+ * Validates the stream's length against an expected length and maximum
+ * limit. Ideal for parsing request bodies.
+ */
+declare function getRawBody(
+  stream: Readable,
+  callback: (err: getRawBody.RawBodyError, body: Buffer) => void
+): void;
+
+declare function getRawBody(
+  stream: Readable,
+  options: (getRawBody.Options & { encoding: getRawBody.Encoding }) | getRawBody.Encoding,
+  callback: (err: getRawBody.RawBodyError, body: string) => void
+): void;
+
+declare function getRawBody(
+  stream: Readable,
+  options: getRawBody.Options,
+  callback: (err: getRawBody.RawBodyError, body: Buffer) => void
+): void;
+
+declare function getRawBody(
+  stream: Readable,
+  options: (getRawBody.Options & { encoding: getRawBody.Encoding }) | getRawBody.Encoding
+): Promise<string>;
+
+declare function getRawBody(
+  stream: Readable,
+  options?: getRawBody.Options
+): Promise<Buffer>;
+
+export = getRawBody;

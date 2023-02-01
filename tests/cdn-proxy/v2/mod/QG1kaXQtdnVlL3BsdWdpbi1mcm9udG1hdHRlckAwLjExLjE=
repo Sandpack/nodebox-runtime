@@ -1,0 +1,235 @@
+Ü®/LICENSE≈IThe MIT License (MIT)
+
+Copyright (c) 2022-present, mdit-vue Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+≠/package.json≈~{
+  "name": "@mdit-vue/plugin-frontmatter",
+  "version": "0.11.1",
+  "description": "A markdown-it plugin to get markdown frontmatter",
+  "keywords": [
+    "markdown-it",
+    "markdown-it-plugin",
+    "vue",
+    "frontmatter",
+    "excerpt"
+  ],
+  "homepage": "https://github.com/mdit-vue",
+  "bugs": {
+    "url": "https://github.com/mdit-vue/mdit-vue/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mdit-vue/mdit-vue.git"
+  },
+  "license": "MIT",
+  "author": "meteorlxy <meteor.lxy@foxmail.com>",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "./dist"
+  ],
+  "scripts": {
+    "build": "unbuild",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@mdit-vue/types": "0.11.0",
+    "@types/markdown-it": "^12.2.3",
+    "gray-matter": "^4.0.3",
+    "markdown-it": "^13.0.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "gitHead": "98828479d07c7bc52d178a00cdb92c166eff09ee"
+}
+™/README.md≈£# @mdit-vue/plugin-frontmatter
+
+[![npm](https://badgen.net/npm/v/@mdit-vue/plugin-frontmatter)](https://www.npmjs.com/package/@mdit-vue/plugin-frontmatter)
+[![license](https://badgen.net/github/license/mdit-vue/mdit-vue)](https://github.com/mdit-vue/mdit-vue/blob/main/LICENSE)
+
+A [markdown-it](https://github.com/markdown-it/markdown-it) plugin to get markdown frontmatter with [gray-matter](https://github.com/jonschlinkert/gray-matter).
+
+- Extracts frontmatter into markdown-it `env.frontmatter`.
+- Allows providing default frontmatter via markdown-it `env.frontmatter`.
+- Extracts markdown content without frontmatter into markdown-it `env.content`.
+- Supports extracting rendered excerpt into markdown-it `env.excerpt`.
+
+## Install
+
+```sh
+npm i @mdit-vue/plugin-frontmatter
+```
+
+## Usage
+
+```ts
+import MarkdownIt from 'markdown-it';
+import { frontmatterPlugin } from '@mdit-vue/plugin-frontmatter';
+import type { MarkdownItEnv } from '@mdit-vue/types';
+
+const md = MarkdownIt({ html: true }).use(frontmatterPlugin, {
+  // options
+  grayMatterOptions: {
+    excerpt: true,
+    excerpt_separator: '<!-- more -->',
+  },
+});
+const env: MarkdownItEnv = {};
+
+const rendered = md.render(
+  `\
+---
+title: foobar
+---
+
+Everything above **more** comment will be extracted as excerpt.
+
+<!-- more -->
+
+Things below **more** comment will not be included in the excerpt.
+`,
+  env,
+);
+
+console.log(env.frontmatter);
+console.log(env.content);
+console.log(env.excerpt);
+```
+
+## Options
+
+### grayMatterOptions
+
+- Type: `GrayMatterOptions`
+
+- Details:
+
+  Options of [gray-matter](https://github.com/jonschlinkert/gray-matter).
+
+### renderExcerpt
+
+- Type: `boolean`
+
+- Default: `true`
+
+  Render the [excerpt](https://github.com/jonschlinkert/gray-matter#optionsexcerpt) with markdown-it or not.
+
+  This option will only take effects when `grayMatterOptions.excerpt` is enabled (disabled by default) or `grayMatterOptions.excerpt_separator` is set (undefined by default).
+Ø/dist/index.mjs≈import grayMatter from 'gray-matter';
+
+const frontmatterPlugin = (md, { grayMatterOptions, renderExcerpt = true } = {}) => {
+  const render = md.render.bind(md);
+  md.render = (src, env = {}) => {
+    const { data, content, excerpt = "" } = grayMatter(src, grayMatterOptions);
+    env.content = content;
+    env.frontmatter = {
+      ...env.frontmatter,
+      ...data
+    };
+    env.excerpt = renderExcerpt && excerpt ? render(excerpt, { ...env }) : excerpt;
+    return render(content, env);
+  };
+};
+
+export { frontmatterPlugin };
+Ø/dist/index.cjs≈>'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+const grayMatter = require('gray-matter');
+
+function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e["default"] : e; }
+
+const grayMatter__default = /*#__PURE__*/_interopDefaultLegacy(grayMatter);
+
+const frontmatterPlugin = (md, { grayMatterOptions, renderExcerpt = true } = {}) => {
+  const render = md.render.bind(md);
+  md.render = (src, env = {}) => {
+    const { data, content, excerpt = "" } = grayMatter__default(src, grayMatterOptions);
+    env.content = content;
+    env.frontmatter = {
+      ...env.frontmatter,
+      ...data
+    };
+    env.excerpt = renderExcerpt && excerpt ? render(excerpt, { ...env }) : excerpt;
+    return render(content, env);
+  };
+};
+
+exports.frontmatterPlugin = frontmatterPlugin;
+∞/dist/index.d.ts≈=import MarkdownIt from 'markdown-it';
+import matter from 'gray-matter';
+
+declare type GrayMatterOptions = matter.GrayMatterOption<string, GrayMatterOptions>;
+/**
+ * Options of @mdit-vue/plugin-frontmatter
+ */
+interface FrontmatterPluginOptions {
+    /**
+     * Options of gray-matter
+     *
+     * @see https://github.com/jonschlinkert/gray-matter#options
+     */
+    grayMatterOptions?: GrayMatterOptions;
+    /**
+     * Render the excerpt or not
+     *
+     * @default true
+     */
+    renderExcerpt?: boolean;
+}
+declare module '@mdit-vue/types' {
+    interface MarkdownItEnv {
+        /**
+         * The raw Markdown content without frontmatter
+         */
+        content?: string;
+        /**
+         * The excerpt that extracted by `@mdit-vue/plugin-frontmatter`
+         *
+         * - Would be the rendered HTML when `renderExcerpt` is enabled
+         * - Would be the raw Markdown when `renderExcerpt` is disabled
+         */
+        excerpt?: string;
+        /**
+         * The frontmatter that extracted by `@mdit-vue/plugin-frontmatter`
+         */
+        frontmatter?: Record<string, unknown>;
+    }
+}
+
+/**
+ * Get markdown frontmatter and excerpt
+ *
+ * Extract them into env
+ */
+declare const frontmatterPlugin: MarkdownIt.PluginWithOptions<FrontmatterPluginOptions>;
+
+export { FrontmatterPluginOptions, frontmatterPlugin };

@@ -1,0 +1,2888 @@
+Ž°/test/indexOf.jsÅ;'use strict'
+
+const tape = require('tape')
+const BufferList = require('../')
+const { Buffer } = require('buffer')
+
+tape('indexOf single byte needle', (t) => {
+  const bl = new BufferList(['abcdefg', 'abcdefg', '12345'])
+
+  t.equal(bl.indexOf('e'), 4)
+  t.equal(bl.indexOf('e', 5), 11)
+  t.equal(bl.indexOf('e', 12), -1)
+  t.equal(bl.indexOf('5'), 18)
+
+  t.end()
+})
+
+tape('indexOf multiple byte needle', (t) => {
+  const bl = new BufferList(['abcdefg', 'abcdefg'])
+
+  t.equal(bl.indexOf('ef'), 4)
+  t.equal(bl.indexOf('ef', 5), 11)
+
+  t.end()
+})
+
+tape('indexOf multiple byte needles across buffer boundaries', (t) => {
+  const bl = new BufferList(['abcdefg', 'abcdefg'])
+
+  t.equal(bl.indexOf('fgabc'), 5)
+
+  t.end()
+})
+
+tape('indexOf takes a Uint8Array search', (t) => {
+  const bl = new BufferList(['abcdefg', 'abcdefg'])
+  const search = new Uint8Array([102, 103, 97, 98, 99]) // fgabc
+
+  t.equal(bl.indexOf(search), 5)
+
+  t.end()
+})
+
+tape('indexOf takes a buffer list search', (t) => {
+  const bl = new BufferList(['abcdefg', 'abcdefg'])
+  const search = new BufferList('fgabc')
+
+  t.equal(bl.indexOf(search), 5)
+
+  t.end()
+})
+
+tape('indexOf a zero byte needle', (t) => {
+  const b = new BufferList('abcdef')
+  const bufEmpty = Buffer.from('')
+
+  t.equal(b.indexOf(''), 0)
+  t.equal(b.indexOf('', 1), 1)
+  t.equal(b.indexOf('', b.length + 1), b.length)
+  t.equal(b.indexOf('', Infinity), b.length)
+  t.equal(b.indexOf(bufEmpty), 0)
+  t.equal(b.indexOf(bufEmpty, 1), 1)
+  t.equal(b.indexOf(bufEmpty, b.length + 1), b.length)
+  t.equal(b.indexOf(bufEmpty, Infinity), b.length)
+
+  t.end()
+})
+
+tape('indexOf buffers smaller and larger than the needle', (t) => {
+  const bl = new BufferList(['abcdefg', 'a', 'bcdefg', 'a', 'bcfgab'])
+
+  t.equal(bl.indexOf('fgabc'), 5)
+  t.equal(bl.indexOf('fgabc', 6), 12)
+  t.equal(bl.indexOf('fgabc', 13), -1)
+
+  t.end()
+})
+
+// only present in node 6+
+;(process.version.substr(1).split('.')[0] >= 6) && tape('indexOf latin1 and binary encoding', (t) => {
+  const b = new BufferList('abcdef')
+
+  // test latin1 encoding
+  t.equal(
+    new BufferList(Buffer.from(b.toString('latin1'), 'latin1'))
+      .indexOf('d', 0, 'latin1'),
+    3
+  )
+  t.equal(
+    new BufferList(Buffer.from(b.toString('latin1'), 'latin1'))
+      .indexOf(Buffer.from('d', 'latin1'), 0, 'latin1'),
+    3
+  )
+  t.equal(
+    new BufferList(Buffer.from('aa\u00e8aa', 'latin1'))
+      .indexOf('\u00e8', 'latin1'),
+    2
+  )
+  t.equal(
+    new BufferList(Buffer.from('\u00e8', 'latin1'))
+      .indexOf('\u00e8', 'latin1'),
+    0
+  )
+  t.equal(
+    new BufferList(Buffer.from('\u00e8', 'latin1'))
+      .indexOf(Buffer.from('\u00e8', 'latin1'), 'latin1'),
+    0
+  )
+
+  // test binary encoding
+  t.equal(
+    new BufferList(Buffer.from(b.toString('binary'), 'binary'))
+      .indexOf('d', 0, 'binary'),
+    3
+  )
+  t.equal(
+    new BufferList(Buffer.from(b.toString('binary'), 'binary'))
+      .indexOf(Buffer.from('d', 'binary'), 0, 'binary'),
+    3
+  )
+  t.equal(
+    new BufferList(Buffer.from('aa\u00e8aa', 'binary'))
+      .indexOf('\u00e8', 'binary'),
+    2
+  )
+  t.equal(
+    new BufferList(Buffer.from('\u00e8', 'binary'))
+      .indexOf('\u00e8', 'binary'),
+    0
+  )
+  t.equal(
+    new BufferList(Buffer.from('\u00e8', 'binary'))
+      .indexOf(Buffer.from('\u00e8', 'binary'), 'binary'),
+    0
+  )
+
+  t.end()
+})
+
+tape('indexOf the entire nodejs10 buffer test suite', (t) => {
+  const b = new BufferList('abcdef')
+  const bufA = Buffer.from('a')
+  const bufBc = Buffer.from('bc')
+  const bufF = Buffer.from('f')
+  const bufZ = Buffer.from('z')
+
+  const stringComparison = 'abcdef'
+
+  t.equal(b.indexOf('a'), 0)
+  t.equal(b.indexOf('a', 1), -1)
+  t.equal(b.indexOf('a', -1), -1)
+  t.equal(b.indexOf('a', -4), -1)
+  t.equal(b.indexOf('a', -b.length), 0)
+  t.equal(b.indexOf('a', NaN), 0)
+  t.equal(b.indexOf('a', -Infinity), 0)
+  t.equal(b.indexOf('a', Infinity), -1)
+  t.equal(b.indexOf('bc'), 1)
+  t.equal(b.indexOf('bc', 2), -1)
+  t.equal(b.indexOf('bc', -1), -1)
+  t.equal(b.indexOf('bc', -3), -1)
+  t.equal(b.indexOf('bc', -5), 1)
+  t.equal(b.indexOf('bc', NaN), 1)
+  t.equal(b.indexOf('bc', -Infinity), 1)
+  t.equal(b.indexOf('bc', Infinity), -1)
+  t.equal(b.indexOf('f'), b.length - 1)
+  t.equal(b.indexOf('z'), -1)
+
+  // empty search tests
+  t.equal(b.indexOf(bufA), 0)
+  t.equal(b.indexOf(bufA, 1), -1)
+  t.equal(b.indexOf(bufA, -1), -1)
+  t.equal(b.indexOf(bufA, -4), -1)
+  t.equal(b.indexOf(bufA, -b.length), 0)
+  t.equal(b.indexOf(bufA, NaN), 0)
+  t.equal(b.indexOf(bufA, -Infinity), 0)
+  t.equal(b.indexOf(bufA, Infinity), -1)
+  t.equal(b.indexOf(bufBc), 1)
+  t.equal(b.indexOf(bufBc, 2), -1)
+  t.equal(b.indexOf(bufBc, -1), -1)
+  t.equal(b.indexOf(bufBc, -3), -1)
+  t.equal(b.indexOf(bufBc, -5), 1)
+  t.equal(b.indexOf(bufBc, NaN), 1)
+  t.equal(b.indexOf(bufBc, -Infinity), 1)
+  t.equal(b.indexOf(bufBc, Infinity), -1)
+  t.equal(b.indexOf(bufF), b.length - 1)
+  t.equal(b.indexOf(bufZ), -1)
+  t.equal(b.indexOf(0x61), 0)
+  t.equal(b.indexOf(0x61, 1), -1)
+  t.equal(b.indexOf(0x61, -1), -1)
+  t.equal(b.indexOf(0x61, -4), -1)
+  t.equal(b.indexOf(0x61, -b.length), 0)
+  t.equal(b.indexOf(0x61, NaN), 0)
+  t.equal(b.indexOf(0x61, -Infinity), 0)
+  t.equal(b.indexOf(0x61, Infinity), -1)
+  t.equal(b.indexOf(0x0), -1)
+
+  // test offsets
+  t.equal(b.indexOf('d', 2), 3)
+  t.equal(b.indexOf('f', 5), 5)
+  t.equal(b.indexOf('f', -1), 5)
+  t.equal(b.indexOf('f', 6), -1)
+
+  t.equal(b.indexOf(Buffer.from('d'), 2), 3)
+  t.equal(b.indexOf(Buffer.from('f'), 5), 5)
+  t.equal(b.indexOf(Buffer.from('f'), -1), 5)
+  t.equal(b.indexOf(Buffer.from('f'), 6), -1)
+
+  t.equal(Buffer.from('ff').indexOf(Buffer.from('f'), 1, 'ucs2'), -1)
+
+  // test invalid and uppercase encoding
+  t.equal(b.indexOf('b', 'utf8'), 1)
+  t.equal(b.indexOf('b', 'UTF8'), 1)
+  t.equal(b.indexOf('62', 'HEX'), 1)
+  t.throws(() => b.indexOf('bad', 'enc'), TypeError)
+
+  // test hex encoding
+  t.equal(
+    Buffer.from(b.toString('hex'), 'hex')
+      .indexOf('64', 0, 'hex'),
+    3
+  )
+  t.equal(
+    Buffer.from(b.toString('hex'), 'hex')
+      .indexOf(Buffer.from('64', 'hex'), 0, 'hex'),
+    3
+  )
+
+  // test base64 encoding
+  t.equal(
+    Buffer.from(b.toString('base64'), 'base64')
+      .indexOf('ZA==', 0, 'base64'),
+    3
+  )
+  t.equal(
+    Buffer.from(b.toString('base64'), 'base64')
+      .indexOf(Buffer.from('ZA==', 'base64'), 0, 'base64'),
+    3
+  )
+
+  // test ascii encoding
+  t.equal(
+    Buffer.from(b.toString('ascii'), 'ascii')
+      .indexOf('d', 0, 'ascii'),
+    3
+  )
+  t.equal(
+    Buffer.from(b.toString('ascii'), 'ascii')
+      .indexOf(Buffer.from('d', 'ascii'), 0, 'ascii'),
+    3
+  )
+
+  // test optional offset with passed encoding
+  t.equal(Buffer.from('aaaa0').indexOf('30', 'hex'), 4)
+  t.equal(Buffer.from('aaaa00a').indexOf('3030', 'hex'), 4)
+
+  {
+    // test usc2 encoding
+    const twoByteString = Buffer.from('\u039a\u0391\u03a3\u03a3\u0395', 'ucs2')
+
+    t.equal(8, twoByteString.indexOf('\u0395', 4, 'ucs2'))
+    t.equal(6, twoByteString.indexOf('\u03a3', -4, 'ucs2'))
+    t.equal(4, twoByteString.indexOf('\u03a3', -6, 'ucs2'))
+    t.equal(4, twoByteString.indexOf(
+      Buffer.from('\u03a3', 'ucs2'), -6, 'ucs2'))
+    t.equal(-1, twoByteString.indexOf('\u03a3', -2, 'ucs2'))
+  }
+
+  const mixedByteStringUcs2 =
+      Buffer.from('\u039a\u0391abc\u03a3\u03a3\u0395', 'ucs2')
+
+  t.equal(6, mixedByteStringUcs2.indexOf('bc', 0, 'ucs2'))
+  t.equal(10, mixedByteStringUcs2.indexOf('\u03a3', 0, 'ucs2'))
+  t.equal(-1, mixedByteStringUcs2.indexOf('\u0396', 0, 'ucs2'))
+
+  t.equal(
+    6, mixedByteStringUcs2.indexOf(Buffer.from('bc', 'ucs2'), 0, 'ucs2'))
+  t.equal(
+    10, mixedByteStringUcs2.indexOf(Buffer.from('\u03a3', 'ucs2'), 0, 'ucs2'))
+  t.equal(
+    -1, mixedByteStringUcs2.indexOf(Buffer.from('\u0396', 'ucs2'), 0, 'ucs2'))
+
+  {
+    const twoByteString = Buffer.from('\u039a\u0391\u03a3\u03a3\u0395', 'ucs2')
+
+    // Test single char pattern
+    t.equal(0, twoByteString.indexOf('\u039a', 0, 'ucs2'))
+    let index = twoByteString.indexOf('\u0391', 0, 'ucs2')
+    t.equal(2, index, `Alpha - at index ${index}`)
+    index = twoByteString.indexOf('\u03a3', 0, 'ucs2')
+    t.equal(4, index, `First Sigma - at index ${index}`)
+    index = twoByteString.indexOf('\u03a3', 6, 'ucs2')
+    t.equal(6, index, `Second Sigma - at index ${index}`)
+    index = twoByteString.indexOf('\u0395', 0, 'ucs2')
+    t.equal(8, index, `Epsilon - at index ${index}`)
+    index = twoByteString.indexOf('\u0392', 0, 'ucs2')
+    t.equal(-1, index, `Not beta - at index ${index}`)
+
+    // Test multi-char pattern
+    index = twoByteString.indexOf('\u039a\u0391', 0, 'ucs2')
+    t.equal(0, index, `Lambda Alpha - at index ${index}`)
+    index = twoByteString.indexOf('\u0391\u03a3', 0, 'ucs2')
+    t.equal(2, index, `Alpha Sigma - at index ${index}`)
+    index = twoByteString.indexOf('\u03a3\u03a3', 0, 'ucs2')
+    t.equal(4, index, `Sigma Sigma - at index ${index}`)
+    index = twoByteString.indexOf('\u03a3\u0395', 0, 'ucs2')
+    t.equal(6, index, `Sigma Epsilon - at index ${index}`)
+  }
+
+  const mixedByteStringUtf8 = Buffer.from('\u039a\u0391abc\u03a3\u03a3\u0395')
+
+  t.equal(5, mixedByteStringUtf8.indexOf('bc'))
+  t.equal(5, mixedByteStringUtf8.indexOf('bc', 5))
+  t.equal(5, mixedByteStringUtf8.indexOf('bc', -8))
+  t.equal(7, mixedByteStringUtf8.indexOf('\u03a3'))
+  t.equal(-1, mixedByteStringUtf8.indexOf('\u0396'))
+
+  // Test complex string indexOf algorithms. Only trigger for long strings.
+  // Long string that isn't a simple repeat of a shorter string.
+  let longString = 'A'
+  for (let i = 66; i < 76; i++) { // from 'B' to 'K'
+    longString = longString + String.fromCharCode(i) + longString
+  }
+
+  const longBufferString = Buffer.from(longString)
+
+  // pattern of 15 chars, repeated every 16 chars in long
+  let pattern = 'ABACABADABACABA'
+  for (let i = 0; i < longBufferString.length - pattern.length; i += 7) {
+    const index = longBufferString.indexOf(pattern, i)
+    t.equal((i + 15) & ~0xf, index,
+      `Long ABACABA...-string at index ${i}`)
+  }
+
+  let index = longBufferString.indexOf('AJABACA')
+  t.equal(510, index, `Long AJABACA, First J - at index ${index}`)
+  index = longBufferString.indexOf('AJABACA', 511)
+  t.equal(1534, index, `Long AJABACA, Second J - at index ${index}`)
+
+  pattern = 'JABACABADABACABA'
+  index = longBufferString.indexOf(pattern)
+  t.equal(511, index, `Long JABACABA..., First J - at index ${index}`)
+  index = longBufferString.indexOf(pattern, 512)
+  t.equal(
+    1535, index, `Long JABACABA..., Second J - at index ${index}`)
+
+  // Search for a non-ASCII string in a pure ASCII string.
+  const asciiString = Buffer.from(
+    'somethingnotatallsinisterwhichalsoworks')
+  t.equal(-1, asciiString.indexOf('\x2061'))
+  t.equal(3, asciiString.indexOf('eth', 0))
+
+  // Search in string containing many non-ASCII chars.
+  const allCodePoints = []
+  for (let i = 0; i < 65536; i++) {
+    allCodePoints[i] = i
+  }
+
+  const allCharsString = String.fromCharCode.apply(String, allCodePoints)
+  const allCharsBufferUtf8 = Buffer.from(allCharsString)
+  const allCharsBufferUcs2 = Buffer.from(allCharsString, 'ucs2')
+
+  // Search for string long enough to trigger complex search with ASCII pattern
+  // and UC16 subject.
+  t.equal(-1, allCharsBufferUtf8.indexOf('notfound'))
+  t.equal(-1, allCharsBufferUcs2.indexOf('notfound'))
+
+  // Needle is longer than haystack, but only because it's encoded as UTF-16
+  t.equal(Buffer.from('aaaa').indexOf('a'.repeat(4), 'ucs2'), -1)
+
+  t.equal(Buffer.from('aaaa').indexOf('a'.repeat(4), 'utf8'), 0)
+  t.equal(Buffer.from('aaaa').indexOf('ä½ å¥½', 'ucs2'), -1)
+
+  // Haystack has odd length, but the needle is UCS2.
+  t.equal(Buffer.from('aaaaa').indexOf('b', 'ucs2'), -1)
+
+  {
+    // Find substrings in Utf8.
+    const lengths = [1, 3, 15] // Single char, simple and complex.
+    const indices = [0x5, 0x60, 0x400, 0x680, 0x7ee, 0xFF02, 0x16610, 0x2f77b]
+    for (let lengthIndex = 0; lengthIndex < lengths.length; lengthIndex++) {
+      for (let i = 0; i < indices.length; i++) {
+        const index = indices[i]
+        let length = lengths[lengthIndex]
+
+        if (index + length > 0x7F) {
+          length = 2 * length
+        }
+
+        if (index + length > 0x7FF) {
+          length = 3 * length
+        }
+
+        if (index + length > 0xFFFF) {
+          length = 4 * length
+        }
+
+        const patternBufferUtf8 = allCharsBufferUtf8.slice(index, index + length)
+        t.equal(index, allCharsBufferUtf8.indexOf(patternBufferUtf8))
+
+        const patternStringUtf8 = patternBufferUtf8.toString()
+        t.equal(index, allCharsBufferUtf8.indexOf(patternStringUtf8))
+      }
+    }
+  }
+
+  {
+    // Find substrings in Usc2.
+    const lengths = [2, 4, 16] // Single char, simple and complex.
+    const indices = [0x5, 0x65, 0x105, 0x205, 0x285, 0x2005, 0x2085, 0xfff0]
+
+    for (let lengthIndex = 0; lengthIndex < lengths.length; lengthIndex++) {
+      for (let i = 0; i < indices.length; i++) {
+        const index = indices[i] * 2
+        const length = lengths[lengthIndex]
+
+        const patternBufferUcs2 =
+            allCharsBufferUcs2.slice(index, index + length)
+        t.equal(
+          index, allCharsBufferUcs2.indexOf(patternBufferUcs2, 0, 'ucs2'))
+
+        const patternStringUcs2 = patternBufferUcs2.toString('ucs2')
+        t.equal(
+          index, allCharsBufferUcs2.indexOf(patternStringUcs2, 0, 'ucs2'))
+      }
+    }
+  }
+
+  [
+    () => {},
+    {},
+    []
+  ].forEach((val) => {
+    t.throws(() => b.indexOf(val), TypeError, `"${JSON.stringify(val)}" should throw`)
+  })
+
+  // Test weird offset arguments.
+  // The following offsets coerce to NaN or 0, searching the whole Buffer
+  t.equal(b.indexOf('b', undefined), 1)
+  t.equal(b.indexOf('b', {}), 1)
+  t.equal(b.indexOf('b', 0), 1)
+  t.equal(b.indexOf('b', null), 1)
+  t.equal(b.indexOf('b', []), 1)
+
+  // The following offset coerces to 2, in other words +[2] === 2
+  t.equal(b.indexOf('b', [2]), -1)
+
+  // Behavior should match String.indexOf()
+  t.equal(
+    b.indexOf('b', undefined),
+    stringComparison.indexOf('b', undefined))
+  t.equal(
+    b.indexOf('b', {}),
+    stringComparison.indexOf('b', {}))
+  t.equal(
+    b.indexOf('b', 0),
+    stringComparison.indexOf('b', 0))
+  t.equal(
+    b.indexOf('b', null),
+    stringComparison.indexOf('b', null))
+  t.equal(
+    b.indexOf('b', []),
+    stringComparison.indexOf('b', []))
+  t.equal(
+    b.indexOf('b', [2]),
+    stringComparison.indexOf('b', [2]))
+
+  // test truncation of Number arguments to uint8
+  {
+    const buf = Buffer.from('this is a test')
+
+    t.equal(buf.indexOf(0x6973), 3)
+    t.equal(buf.indexOf(0x697320), 4)
+    t.equal(buf.indexOf(0x69732069), 2)
+    t.equal(buf.indexOf(0x697374657374), 0)
+    t.equal(buf.indexOf(0x69737374), 0)
+    t.equal(buf.indexOf(0x69737465), 11)
+    t.equal(buf.indexOf(0x69737465), 11)
+    t.equal(buf.indexOf(-140), 0)
+    t.equal(buf.indexOf(-152), 1)
+    t.equal(buf.indexOf(0xff), -1)
+    t.equal(buf.indexOf(0xffff), -1)
+  }
+
+  // Test that Uint8Array arguments are okay.
+  {
+    const needle = new Uint8Array([0x66, 0x6f, 0x6f])
+    const haystack = new BufferList(Buffer.from('a foo b foo'))
+    t.equal(haystack.indexOf(needle), 2)
+  }
+
+  t.end()
+})
+®/BufferList.jsÅ%4'use strict'
+
+const { Buffer } = require('buffer')
+const symbol = Symbol.for('BufferList')
+
+function BufferList (buf) {
+  if (!(this instanceof BufferList)) {
+    return new BufferList(buf)
+  }
+
+  BufferList._init.call(this, buf)
+}
+
+BufferList._init = function _init (buf) {
+  Object.defineProperty(this, symbol, { value: true })
+
+  this._bufs = []
+  this.length = 0
+
+  if (buf) {
+    this.append(buf)
+  }
+}
+
+BufferList.prototype._new = function _new (buf) {
+  return new BufferList(buf)
+}
+
+BufferList.prototype._offset = function _offset (offset) {
+  if (offset === 0) {
+    return [0, 0]
+  }
+
+  let tot = 0
+
+  for (let i = 0; i < this._bufs.length; i++) {
+    const _t = tot + this._bufs[i].length
+    if (offset < _t || i === this._bufs.length - 1) {
+      return [i, offset - tot]
+    }
+    tot = _t
+  }
+}
+
+BufferList.prototype._reverseOffset = function (blOffset) {
+  const bufferId = blOffset[0]
+  let offset = blOffset[1]
+
+  for (let i = 0; i < bufferId; i++) {
+    offset += this._bufs[i].length
+  }
+
+  return offset
+}
+
+BufferList.prototype.get = function get (index) {
+  if (index > this.length || index < 0) {
+    return undefined
+  }
+
+  const offset = this._offset(index)
+
+  return this._bufs[offset[0]][offset[1]]
+}
+
+BufferList.prototype.slice = function slice (start, end) {
+  if (typeof start === 'number' && start < 0) {
+    start += this.length
+  }
+
+  if (typeof end === 'number' && end < 0) {
+    end += this.length
+  }
+
+  return this.copy(null, 0, start, end)
+}
+
+BufferList.prototype.copy = function copy (dst, dstStart, srcStart, srcEnd) {
+  if (typeof srcStart !== 'number' || srcStart < 0) {
+    srcStart = 0
+  }
+
+  if (typeof srcEnd !== 'number' || srcEnd > this.length) {
+    srcEnd = this.length
+  }
+
+  if (srcStart >= this.length) {
+    return dst || Buffer.alloc(0)
+  }
+
+  if (srcEnd <= 0) {
+    return dst || Buffer.alloc(0)
+  }
+
+  const copy = !!dst
+  const off = this._offset(srcStart)
+  const len = srcEnd - srcStart
+  let bytes = len
+  let bufoff = (copy && dstStart) || 0
+  let start = off[1]
+
+  // copy/slice everything
+  if (srcStart === 0 && srcEnd === this.length) {
+    if (!copy) {
+      // slice, but full concat if multiple buffers
+      return this._bufs.length === 1
+        ? this._bufs[0]
+        : Buffer.concat(this._bufs, this.length)
+    }
+
+    // copy, need to copy individual buffers
+    for (let i = 0; i < this._bufs.length; i++) {
+      this._bufs[i].copy(dst, bufoff)
+      bufoff += this._bufs[i].length
+    }
+
+    return dst
+  }
+
+  // easy, cheap case where it's a subset of one of the buffers
+  if (bytes <= this._bufs[off[0]].length - start) {
+    return copy
+      ? this._bufs[off[0]].copy(dst, dstStart, start, start + bytes)
+      : this._bufs[off[0]].slice(start, start + bytes)
+  }
+
+  if (!copy) {
+    // a slice, we need something to copy in to
+    dst = Buffer.allocUnsafe(len)
+  }
+
+  for (let i = off[0]; i < this._bufs.length; i++) {
+    const l = this._bufs[i].length - start
+
+    if (bytes > l) {
+      this._bufs[i].copy(dst, bufoff, start)
+      bufoff += l
+    } else {
+      this._bufs[i].copy(dst, bufoff, start, start + bytes)
+      bufoff += l
+      break
+    }
+
+    bytes -= l
+
+    if (start) {
+      start = 0
+    }
+  }
+
+  // safeguard so that we don't return uninitialized memory
+  if (dst.length > bufoff) return dst.slice(0, bufoff)
+
+  return dst
+}
+
+BufferList.prototype.shallowSlice = function shallowSlice (start, end) {
+  start = start || 0
+  end = typeof end !== 'number' ? this.length : end
+
+  if (start < 0) {
+    start += this.length
+  }
+
+  if (end < 0) {
+    end += this.length
+  }
+
+  if (start === end) {
+    return this._new()
+  }
+
+  const startOffset = this._offset(start)
+  const endOffset = this._offset(end)
+  const buffers = this._bufs.slice(startOffset[0], endOffset[0] + 1)
+
+  if (endOffset[1] === 0) {
+    buffers.pop()
+  } else {
+    buffers[buffers.length - 1] = buffers[buffers.length - 1].slice(0, endOffset[1])
+  }
+
+  if (startOffset[1] !== 0) {
+    buffers[0] = buffers[0].slice(startOffset[1])
+  }
+
+  return this._new(buffers)
+}
+
+BufferList.prototype.toString = function toString (encoding, start, end) {
+  return this.slice(start, end).toString(encoding)
+}
+
+BufferList.prototype.consume = function consume (bytes) {
+  // first, normalize the argument, in accordance with how Buffer does it
+  bytes = Math.trunc(bytes)
+  // do nothing if not a positive number
+  if (Number.isNaN(bytes) || bytes <= 0) return this
+
+  while (this._bufs.length) {
+    if (bytes >= this._bufs[0].length) {
+      bytes -= this._bufs[0].length
+      this.length -= this._bufs[0].length
+      this._bufs.shift()
+    } else {
+      this._bufs[0] = this._bufs[0].slice(bytes)
+      this.length -= bytes
+      break
+    }
+  }
+
+  return this
+}
+
+BufferList.prototype.duplicate = function duplicate () {
+  const copy = this._new()
+
+  for (let i = 0; i < this._bufs.length; i++) {
+    copy.append(this._bufs[i])
+  }
+
+  return copy
+}
+
+BufferList.prototype.append = function append (buf) {
+  if (buf == null) {
+    return this
+  }
+
+  if (buf.buffer) {
+    // append a view of the underlying ArrayBuffer
+    this._appendBuffer(Buffer.from(buf.buffer, buf.byteOffset, buf.byteLength))
+  } else if (Array.isArray(buf)) {
+    for (let i = 0; i < buf.length; i++) {
+      this.append(buf[i])
+    }
+  } else if (this._isBufferList(buf)) {
+    // unwrap argument into individual BufferLists
+    for (let i = 0; i < buf._bufs.length; i++) {
+      this.append(buf._bufs[i])
+    }
+  } else {
+    // coerce number arguments to strings, since Buffer(number) does
+    // uninitialized memory allocation
+    if (typeof buf === 'number') {
+      buf = buf.toString()
+    }
+
+    this._appendBuffer(Buffer.from(buf))
+  }
+
+  return this
+}
+
+BufferList.prototype._appendBuffer = function appendBuffer (buf) {
+  this._bufs.push(buf)
+  this.length += buf.length
+}
+
+BufferList.prototype.indexOf = function (search, offset, encoding) {
+  if (encoding === undefined && typeof offset === 'string') {
+    encoding = offset
+    offset = undefined
+  }
+
+  if (typeof search === 'function' || Array.isArray(search)) {
+    throw new TypeError('The "value" argument must be one of type string, Buffer, BufferList, or Uint8Array.')
+  } else if (typeof search === 'number') {
+    search = Buffer.from([search])
+  } else if (typeof search === 'string') {
+    search = Buffer.from(search, encoding)
+  } else if (this._isBufferList(search)) {
+    search = search.slice()
+  } else if (Array.isArray(search.buffer)) {
+    search = Buffer.from(search.buffer, search.byteOffset, search.byteLength)
+  } else if (!Buffer.isBuffer(search)) {
+    search = Buffer.from(search)
+  }
+
+  offset = Number(offset || 0)
+
+  if (isNaN(offset)) {
+    offset = 0
+  }
+
+  if (offset < 0) {
+    offset = this.length + offset
+  }
+
+  if (offset < 0) {
+    offset = 0
+  }
+
+  if (search.length === 0) {
+    return offset > this.length ? this.length : offset
+  }
+
+  const blOffset = this._offset(offset)
+  let blIndex = blOffset[0] // index of which internal buffer we're working on
+  let buffOffset = blOffset[1] // offset of the internal buffer we're working on
+
+  // scan over each buffer
+  for (; blIndex < this._bufs.length; blIndex++) {
+    const buff = this._bufs[blIndex]
+
+    while (buffOffset < buff.length) {
+      const availableWindow = buff.length - buffOffset
+
+      if (availableWindow >= search.length) {
+        const nativeSearchResult = buff.indexOf(search, buffOffset)
+
+        if (nativeSearchResult !== -1) {
+          return this._reverseOffset([blIndex, nativeSearchResult])
+        }
+
+        buffOffset = buff.length - search.length + 1 // end of native search window
+      } else {
+        const revOffset = this._reverseOffset([blIndex, buffOffset])
+
+        if (this._match(revOffset, search)) {
+          return revOffset
+        }
+
+        buffOffset++
+      }
+    }
+
+    buffOffset = 0
+  }
+
+  return -1
+}
+
+BufferList.prototype._match = function (offset, search) {
+  if (this.length - offset < search.length) {
+    return false
+  }
+
+  for (let searchOffset = 0; searchOffset < search.length; searchOffset++) {
+    if (this.get(offset + searchOffset) !== search[searchOffset]) {
+      return false
+    }
+  }
+  return true
+}
+
+;(function () {
+  const methods = {
+    readDoubleBE: 8,
+    readDoubleLE: 8,
+    readFloatBE: 4,
+    readFloatLE: 4,
+    readInt32BE: 4,
+    readInt32LE: 4,
+    readUInt32BE: 4,
+    readUInt32LE: 4,
+    readInt16BE: 2,
+    readInt16LE: 2,
+    readUInt16BE: 2,
+    readUInt16LE: 2,
+    readInt8: 1,
+    readUInt8: 1,
+    readIntBE: null,
+    readIntLE: null,
+    readUIntBE: null,
+    readUIntLE: null
+  }
+
+  for (const m in methods) {
+    (function (m) {
+      if (methods[m] === null) {
+        BufferList.prototype[m] = function (offset, byteLength) {
+          return this.slice(offset, offset + byteLength)[m](0, byteLength)
+        }
+      } else {
+        BufferList.prototype[m] = function (offset = 0) {
+          return this.slice(offset, offset + methods[m])[m](0)
+        }
+      }
+    }(m))
+  }
+}())
+
+// Used internally by the class and also as an indicator of this object being
+// a `BufferList`. It's not possible to use `instanceof BufferList` in a browser
+// environment because there could be multiple different copies of the
+// BufferList class and some `BufferList`s might be `BufferList`s.
+BufferList.prototype._isBufferList = function _isBufferList (b) {
+  return b instanceof BufferList || BufferList.isBufferList(b)
+}
+
+BufferList.isBufferList = function isBufferList (b) {
+  return b != null && b[symbol]
+}
+
+module.exports = BufferList
+«/LICENSE.mdÅÀThe MIT License (MIT)
+=====================
+
+Copyright (c) 2013-2019 bl contributors
+----------------------------------
+
+*bl contributors listed at <https://github.com/rvagg/bl#contributors>*
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ª/README.mdÅ1q# bl *(BufferList)*
+
+[![Build Status](https://api.travis-ci.com/rvagg/bl.svg?branch=master)](https://travis-ci.com/rvagg/bl/)
+
+**A Node.js Buffer list collector, reader and streamer thingy.**
+
+[![NPM](https://nodei.co/npm/bl.svg)](https://nodei.co/npm/bl/)
+
+**bl** is a storage object for collections of Node Buffers, exposing them with the main Buffer readable API. Also works as a duplex stream so you can collect buffers from a stream that emits them and emit buffers to a stream that consumes them!
+
+The original buffers are kept intact and copies are only done as necessary. Any reads that require the use of a single original buffer will return a slice of that buffer only (which references the same memory as the original buffer). Reads that span buffers perform concatenation as required and return the results transparently.
+
+```js
+const { BufferList } = require('bl')
+
+const bl = new BufferList()
+bl.append(Buffer.from('abcd'))
+bl.append(Buffer.from('efg'))
+bl.append('hi')                     // bl will also accept & convert Strings
+bl.append(Buffer.from('j'))
+bl.append(Buffer.from([ 0x3, 0x4 ]))
+
+console.log(bl.length) // 12
+
+console.log(bl.slice(0, 10).toString('ascii')) // 'abcdefghij'
+console.log(bl.slice(3, 10).toString('ascii')) // 'defghij'
+console.log(bl.slice(3, 6).toString('ascii'))  // 'def'
+console.log(bl.slice(3, 8).toString('ascii'))  // 'defgh'
+console.log(bl.slice(5, 10).toString('ascii')) // 'fghij'
+
+console.log(bl.indexOf('def')) // 3
+console.log(bl.indexOf('asdf')) // -1
+
+// or just use toString!
+console.log(bl.toString())               // 'abcdefghij\u0003\u0004'
+console.log(bl.toString('ascii', 3, 8))  // 'defgh'
+console.log(bl.toString('ascii', 5, 10)) // 'fghij'
+
+// other standard Buffer readables
+console.log(bl.readUInt16BE(10)) // 0x0304
+console.log(bl.readUInt16LE(10)) // 0x0403
+```
+
+Give it a callback in the constructor and use it just like **[concat-stream](https://github.com/maxogden/node-concat-stream)**:
+
+```js
+const { BufferListStream } = require('bl')
+const fs = require('fs')
+
+fs.createReadStream('README.md')
+  .pipe(BufferListStream((err, data) => { // note 'new' isn't strictly required
+    // `data` is a complete Buffer object containing the full data
+    console.log(data.toString())
+  }))
+```
+
+Note that when you use the *callback* method like this, the resulting `data` parameter is a concatenation of all `Buffer` objects in the list. If you want to avoid the overhead of this concatenation (in cases of extreme performance consciousness), then avoid the *callback* method and just listen to `'end'` instead, like a standard Stream.
+
+Or to fetch a URL using [hyperquest](https://github.com/substack/hyperquest) (should work with [request](http://github.com/mikeal/request) and even plain Node http too!):
+
+```js
+const hyperquest = require('hyperquest')
+const { BufferListStream } = require('bl')
+
+const url = 'https://raw.github.com/rvagg/bl/master/README.md'
+
+hyperquest(url).pipe(BufferListStream((err, data) => {
+  console.log(data.toString())
+}))
+```
+
+Or, use it as a readable stream to recompose a list of Buffers to an output source:
+
+```js
+const { BufferListStream } = require('bl')
+const fs = require('fs')
+
+var bl = new BufferListStream()
+bl.append(Buffer.from('abcd'))
+bl.append(Buffer.from('efg'))
+bl.append(Buffer.from('hi'))
+bl.append(Buffer.from('j'))
+
+bl.pipe(fs.createWriteStream('gibberish.txt'))
+```
+
+## API
+
+  * <a href="#ctor"><code><b>new BufferList([ buf ])</b></code></a>
+  * <a href="#isBufferList"><code><b>BufferList.isBufferList(obj)</b></code></a>
+  * <a href="#length"><code>bl.<b>length</b></code></a>
+  * <a href="#append"><code>bl.<b>append(buffer)</b></code></a>
+  * <a href="#get"><code>bl.<b>get(index)</b></code></a>
+  * <a href="#indexOf"><code>bl.<b>indexOf(value[, byteOffset][, encoding])</b></code></a>
+  * <a href="#slice"><code>bl.<b>slice([ start[, end ] ])</b></code></a>
+  * <a href="#shallowSlice"><code>bl.<b>shallowSlice([ start[, end ] ])</b></code></a>
+  * <a href="#copy"><code>bl.<b>copy(dest, [ destStart, [ srcStart [, srcEnd ] ] ])</b></code></a>
+  * <a href="#duplicate"><code>bl.<b>duplicate()</b></code></a>
+  * <a href="#consume"><code>bl.<b>consume(bytes)</b></code></a>
+  * <a href="#toString"><code>bl.<b>toString([encoding, [ start, [ end ]]])</b></code></a>
+  * <a href="#readXX"><code>bl.<b>readDoubleBE()</b></code>, <code>bl.<b>readDoubleLE()</b></code>, <code>bl.<b>readFloatBE()</b></code>, <code>bl.<b>readFloatLE()</b></code>, <code>bl.<b>readInt32BE()</b></code>, <code>bl.<b>readInt32LE()</b></code>, <code>bl.<b>readUInt32BE()</b></code>, <code>bl.<b>readUInt32LE()</b></code>, <code>bl.<b>readInt16BE()</b></code>, <code>bl.<b>readInt16LE()</b></code>, <code>bl.<b>readUInt16BE()</b></code>, <code>bl.<b>readUInt16LE()</b></code>, <code>bl.<b>readInt8()</b></code>, <code>bl.<b>readUInt8()</b></code></a>
+  * <a href="#ctorStream"><code><b>new BufferListStream([ callback ])</b></code></a>
+
+--------------------------------------------------------
+<a name="ctor"></a>
+### new BufferList([ Buffer | Buffer array | BufferList | BufferList array | String ])
+No arguments are _required_ for the constructor, but you can initialise the list by passing in a single `Buffer` object or an array of `Buffer` objects.
+
+`new` is not strictly required, if you don't instantiate a new object, it will be done automatically for you so you can create a new instance simply with:
+
+```js
+const { BufferList } = require('bl')
+const bl = BufferList()
+
+// equivalent to:
+
+const { BufferList } = require('bl')
+const bl = new BufferList()
+```
+
+--------------------------------------------------------
+<a name="isBufferList"></a>
+### BufferList.isBufferList(obj)
+Determines if the passed object is a `BufferList`. It will return `true` if the passed object is an instance of `BufferList` **or** `BufferListStream` and `false` otherwise.
+
+N.B. this won't return `true` for `BufferList` or `BufferListStream` instances created by versions of this library before this static method was added.
+
+--------------------------------------------------------
+<a name="length"></a>
+### bl.length
+Get the length of the list in bytes. This is the sum of the lengths of all of the buffers contained in the list, minus any initial offset for a semi-consumed buffer at the beginning. Should accurately represent the total number of bytes that can be read from the list.
+
+--------------------------------------------------------
+<a name="append"></a>
+### bl.append(Buffer | Buffer array | BufferList | BufferList array | String)
+`append(buffer)` adds an additional buffer or BufferList to the internal list. `this` is returned so it can be chained.
+
+--------------------------------------------------------
+<a name="get"></a>
+### bl.get(index)
+`get()` will return the byte at the specified index.
+
+--------------------------------------------------------
+<a name="indexOf"></a>
+### bl.indexOf(value[, byteOffset][, encoding])
+`get()` will return the byte at the specified index.
+`indexOf()` method returns the first index at which a given element can be found in the BufferList, or -1 if it is not present.
+
+--------------------------------------------------------
+<a name="slice"></a>
+### bl.slice([ start, [ end ] ])
+`slice()` returns a new `Buffer` object containing the bytes within the range specified. Both `start` and `end` are optional and will default to the beginning and end of the list respectively.
+
+If the requested range spans a single internal buffer then a slice of that buffer will be returned which shares the original memory range of that Buffer. If the range spans multiple buffers then copy operations will likely occur to give you a uniform Buffer.
+
+--------------------------------------------------------
+<a name="shallowSlice"></a>
+### bl.shallowSlice([ start, [ end ] ])
+`shallowSlice()` returns a new `BufferList` object containing the bytes within the range specified. Both `start` and `end` are optional and will default to the beginning and end of the list respectively.
+
+No copies will be performed. All buffers in the result share memory with the original list.
+
+--------------------------------------------------------
+<a name="copy"></a>
+### bl.copy(dest, [ destStart, [ srcStart [, srcEnd ] ] ])
+`copy()` copies the content of the list in the `dest` buffer, starting from `destStart` and containing the bytes within the range specified with `srcStart` to `srcEnd`. `destStart`, `start` and `end` are optional and will default to the beginning of the `dest` buffer, and the beginning and end of the list respectively.
+
+--------------------------------------------------------
+<a name="duplicate"></a>
+### bl.duplicate()
+`duplicate()` performs a **shallow-copy** of the list. The internal Buffers remains the same, so if you change the underlying Buffers, the change will be reflected in both the original and the duplicate. This method is needed if you want to call `consume()` or `pipe()` and still keep the original list.Example:
+
+```js
+var bl = new BufferListStream()
+
+bl.append('hello')
+bl.append(' world')
+bl.append('\n')
+
+bl.duplicate().pipe(process.stdout, { end: false })
+
+console.log(bl.toString())
+```
+
+--------------------------------------------------------
+<a name="consume"></a>
+### bl.consume(bytes)
+`consume()` will shift bytes *off the start of the list*. The number of bytes consumed don't need to line up with the sizes of the internal Buffers&mdash;initial offsets will be calculated accordingly in order to give you a consistent view of the data.
+
+--------------------------------------------------------
+<a name="toString"></a>
+### bl.toString([encoding, [ start, [ end ]]])
+`toString()` will return a string representation of the buffer. The optional `start` and `end` arguments are passed on to `slice()`, while the `encoding` is passed on to `toString()` of the resulting Buffer. See the [Buffer#toString()](http://nodejs.org/docs/latest/api/buffer.html#buffer_buf_tostring_encoding_start_end) documentation for more information.
+
+--------------------------------------------------------
+<a name="readXX"></a>
+### bl.readDoubleBE(), bl.readDoubleLE(), bl.readFloatBE(), bl.readFloatLE(), bl.readInt32BE(), bl.readInt32LE(), bl.readUInt32BE(), bl.readUInt32LE(), bl.readInt16BE(), bl.readInt16LE(), bl.readUInt16BE(), bl.readUInt16LE(), bl.readInt8(), bl.readUInt8()
+
+All of the standard byte-reading methods of the `Buffer` interface are implemented and will operate across internal Buffer boundaries transparently.
+
+See the <b><code>[Buffer](http://nodejs.org/docs/latest/api/buffer.html)</code></b> documentation for how these work.
+
+--------------------------------------------------------
+<a name="ctorStream"></a>
+### new BufferListStream([ callback | Buffer | Buffer array | BufferList | BufferList array | String ])
+**BufferListStream** is a Node **[Duplex Stream](http://nodejs.org/docs/latest/api/stream.html#stream_class_stream_duplex)**, so it can be read from and written to like a standard Node stream. You can also `pipe()` to and from a **BufferListStream** instance.
+
+The constructor takes an optional callback, if supplied, the callback will be called with an error argument followed by a reference to the **bl** instance, when `bl.end()` is called (i.e. from a piped stream). This is a convenient method of collecting the entire contents of a stream, particularly when the stream is *chunky*, such as a network stream.
+
+Normally, no arguments are required for the constructor, but you can initialise the list by passing in a single `Buffer` object or an array of `Buffer` object.
+
+`new` is not strictly required, if you don't instantiate a new object, it will be done automatically for you so you can create a new instance simply with:
+
+```js
+const { BufferListStream } = require('bl')
+const bl = BufferListStream()
+
+// equivalent to:
+
+const { BufferListStream } = require('bl')
+const bl = new BufferListStream()
+```
+
+N.B. For backwards compatibility reasons, `BufferListStream` is the **default** export when you `require('bl')`:
+
+```js
+const { BufferListStream } = require('bl')
+// equivalent to:
+const BufferListStream = require('bl')
+```
+
+--------------------------------------------------------
+
+## Contributors
+
+**bl** is brought to you by the following hackers:
+
+ * [Rod Vagg](https://github.com/rvagg)
+ * [Matteo Collina](https://github.com/mcollina)
+ * [Jarett Cruger](https://github.com/jcrugzz)
+
+<a name="license"></a>
+## License &amp; copyright
+
+Copyright (c) 2013-2019 bl contributors (listed above).
+
+bl is licensed under the MIT license. All rights not explicitly granted in the MIT license are reserved. See the included LICENSE.md file for more details.
+«/index.d.tsÅ
+
+import { Duplex } from "readable-stream";
+import {
+  BufferList as BL,
+  BufferListConstructor,
+  BufferListAcceptedTypes,
+} from "./BufferList";
+
+type BufferListStreamInit =
+  | ((err: Error, buffer: Buffer) => void)
+  | BufferListAcceptedTypes;
+
+interface BufferListStreamConstructor {
+  new (initData?: BufferListStreamInit): BufferListStream;
+  (callback?: BufferListStreamInit): BufferListStream;
+
+  /**
+   * Determines if the passed object is a BufferList. It will return true
+   * if the passed object is an instance of BufferList or BufferListStream
+   * and false otherwise.
+   *
+   * N.B. this won't return true for BufferList or BufferListStream instances
+   * created by versions of this library before this static method was added.
+   *
+   * @param other
+   */
+
+  isBufferList(other: unknown): boolean;
+
+  /**
+   * Rexporting BufferList and BufferListStream to fix
+   * issue with require/commonjs import and "export = " below.
+   */
+
+  BufferList: BufferListConstructor;
+  BufferListStream: BufferListStreamConstructor;
+}
+
+interface BufferListStream extends Duplex, BL {
+  prototype: BufferListStream & BL;
+}
+
+/**
+ * BufferListStream is a Node Duplex Stream, so it can be read from
+ * and written to like a standard Node stream. You can also pipe()
+ * to and from a BufferListStream instance.
+ *
+ * The constructor takes an optional callback, if supplied, the
+ * callback will be called with an error argument followed by a
+ * reference to the bl instance, when bl.end() is called
+ * (i.e. from a piped stream).
+ *
+ * This is a convenient method of collecting the entire contents of
+ * a stream, particularly when the stream is chunky, such as a network
+ * stream.
+ *
+ * Normally, no arguments are required for the constructor, but you can
+ * initialise the list by passing in a single Buffer object or an array
+ * of Buffer object.
+ *
+ * `new` is not strictly required, if you don't instantiate a new object,
+ * it will be done automatically for you so you can create a new instance
+ * simply with:
+ *
+ * ```js
+ * const { BufferListStream } = require('bl');
+ * const bl = BufferListStream();
+ *
+ * // equivalent to:
+ *
+ * const { BufferListStream } = require('bl');
+ * const bl = new BufferListStream();
+ * ```
+ *
+ * N.B. For backwards compatibility reasons, BufferListStream is the default
+ * export when you `require('bl')`:
+ *
+ * ```js
+ * const { BufferListStream } = require('bl')
+ *
+ * // equivalent to:
+ *
+ * const BufferListStream = require('bl')
+ * ```
+ */
+
+declare const BufferListStream: BufferListStreamConstructor;
+
+export = BufferListStream;
+°/test/convert.jsÅa'use strict'
+
+const tape = require('tape')
+const { BufferList, BufferListStream } = require('../')
+const { Buffer } = require('buffer')
+
+tape('convert from BufferList to BufferListStream', (t) => {
+  const data = Buffer.from(`TEST-${Date.now()}`)
+  const bl = new BufferList(data)
+  const bls = new BufferListStream(bl)
+  t.ok(bl.slice().equals(bls.slice()))
+  t.end()
+})
+
+tape('convert from BufferListStream to BufferList', (t) => {
+  const data = Buffer.from(`TEST-${Date.now()}`)
+  const bls = new BufferListStream(data)
+  const bl = new BufferList(bls)
+  t.ok(bl.slice().equals(bls.slice()))
+  t.end()
+})
+·/.github/dependabot.ymlÅMversion: 2
+updates:
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'daily'
+    commit-message:
+      prefix: 'chore'
+      include: 'scope'
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'daily'
+    commit-message:
+      prefix: 'chore'
+      include: 'scope'
+­/package.jsonÅø{
+  "name": "bl",
+  "version": "5.1.0",
+  "description": "Buffer List: collect buffers and access with a standard readable Buffer interface, streamable too!",
+  "license": "MIT",
+  "main": "bl.js",
+  "scripts": {
+    "lint": "standard *.js test/*.js",
+    "test": "npm run lint && npm run test:types && node test/test.js | faucet",
+    "test:ci": "npm run lint && node test/test.js && npm run test:types",
+    "test:types": "tsc --allowJs --noEmit test/test.js",
+    "build": "true"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rvagg/bl.git"
+  },
+  "homepage": "https://github.com/rvagg/bl",
+  "authors": [
+    "Rod Vagg <rod@vagg.org> (https://github.com/rvagg)",
+    "Matteo Collina <matteo.collina@gmail.com> (https://github.com/mcollina)",
+    "Jarett Cruger <jcrugzz@gmail.com> (https://github.com/jcrugzz)"
+  ],
+  "keywords": [
+    "buffer",
+    "buffers",
+    "stream",
+    "awesomesauce"
+  ],
+  "dependencies": {
+    "buffer": "^6.0.3",
+    "inherits": "^2.0.4",
+    "readable-stream": "^3.4.0"
+  },
+  "devDependencies": {
+    "@types/readable-stream": "^2.3.13",
+    "faucet": "~0.0.1",
+    "standard": "^17.0.0",
+    "tape": "^5.2.2",
+    "typescript": "~4.7.3"
+  },
+  "release": {
+    "branches": [
+      "master"
+    ],
+    "plugins": [
+      [
+        "@semantic-release/commit-analyzer",
+        {
+          "preset": "conventionalcommits",
+          "releaseRules": [
+            {
+              "breaking": true,
+              "release": "major"
+            },
+            {
+              "revert": true,
+              "release": "patch"
+            },
+            {
+              "type": "feat",
+              "release": "minor"
+            },
+            {
+              "type": "fix",
+              "release": "patch"
+            },
+            {
+              "type": "chore",
+              "release": "patch"
+            },
+            {
+              "type": "docs",
+              "release": "patch"
+            },
+            {
+              "type": "test",
+              "release": "patch"
+            },
+            {
+              "scope": "no-release",
+              "release": false
+            }
+          ]
+        }
+      ],
+      [
+        "@semantic-release/release-notes-generator",
+        {
+          "preset": "conventionalcommits",
+          "presetConfig": {
+            "types": [
+              {
+                "type": "feat",
+                "section": "Features"
+              },
+              {
+                "type": "fix",
+                "section": "Bug Fixes"
+              },
+              {
+                "type": "chore",
+                "section": "Trivial Changes"
+              },
+              {
+                "type": "docs",
+                "section": "Trivial Changes"
+              },
+              {
+                "type": "test",
+                "section": "Tests"
+              }
+            ]
+          }
+        }
+      ],
+      "@semantic-release/changelog",
+      "@semantic-release/npm",
+      "@semantic-release/github",
+      "@semantic-release/git"
+    ]
+  }
+}
+°/BufferList.d.tsÅ,†export type BufferListAcceptedTypes =
+  | Buffer
+  | BufferList
+  | Uint8Array
+  | BufferListAcceptedTypes[]
+  | string
+  | number;
+
+export interface BufferListConstructor {
+  new (initData?: BufferListAcceptedTypes): BufferList;
+  (initData?: BufferListAcceptedTypes): BufferList;
+
+  /**
+   * Determines if the passed object is a BufferList. It will return true
+   * if the passed object is an instance of BufferList or BufferListStream
+   * and false otherwise.
+   *
+   * N.B. this won't return true for BufferList or BufferListStream instances
+   * created by versions of this library before this static method was added.
+   *
+   * @param other
+   */
+
+  isBufferList(other: unknown): boolean;
+}
+
+interface BufferList {
+  prototype: Object
+
+  /**
+   * Get the length of the list in bytes. This is the sum of the lengths
+   * of all of the buffers contained in the list, minus any initial offset
+   * for a semi-consumed buffer at the beginning. Should accurately
+   * represent the total number of bytes that can be read from the list.
+   */
+
+  length: number;
+
+  /**
+   * Adds an additional buffer or BufferList to the internal list.
+   * this is returned so it can be chained.
+   *
+   * @param buffer
+   */
+
+  append(buffer: BufferListAcceptedTypes): this;
+
+  /**
+   * Will return the byte at the specified index.
+   * @param index
+   */
+
+  get(index: number): number;
+
+  /**
+   * Returns a new Buffer object containing the bytes within the
+   * range specified. Both start and end are optional and will
+   * default to the beginning and end of the list respectively.
+   *
+   * If the requested range spans a single internal buffer then a
+   * slice of that buffer will be returned which shares the original
+   * memory range of that Buffer. If the range spans multiple buffers
+   * then copy operations will likely occur to give you a uniform Buffer.
+   *
+   * @param start
+   * @param end
+   */
+
+  slice(start?: number, end?: number): Buffer;
+
+  /**
+   * Returns a new BufferList object containing the bytes within the
+   * range specified. Both start and end are optional and will default
+   * to the beginning and end of the list respectively.
+   *
+   * No copies will be performed. All buffers in the result share
+   * memory with the original list.
+   *
+   * @param start
+   * @param end
+   */
+
+  shallowSlice(start?: number, end?: number): this;
+
+  /**
+   * Copies the content of the list in the `dest` buffer, starting from
+   * `destStart` and containing the bytes within the range specified
+   * with `srcStart` to `srcEnd`.
+   *
+   * `destStart`, `start` and `end` are optional and will default to the
+   * beginning of the dest buffer, and the beginning and end of the
+   * list respectively.
+   *
+   * @param dest
+   * @param destStart
+   * @param srcStart
+   * @param srcEnd
+   */
+
+  copy(
+    dest: Buffer,
+    destStart?: number,
+    srcStart?: number,
+    srcEnd?: number
+  ): Buffer;
+
+  /**
+   * Performs a shallow-copy of the list. The internal Buffers remains the
+   * same, so if you change the underlying Buffers, the change will be
+   * reflected in both the original and the duplicate.
+   *
+   * This method is needed if you want to call consume() or pipe() and
+   * still keep the original list.
+   *
+   * @example
+   *
+   * ```js
+   * var bl = new BufferListStream();
+   * bl.append('hello');
+   * bl.append(' world');
+   * bl.append('\n');
+   * bl.duplicate().pipe(process.stdout, { end: false });
+   *
+   * console.log(bl.toString())
+   * ```
+   */
+
+  duplicate(): this;
+
+  /**
+   * Will shift bytes off the start of the list. The number of bytes
+   * consumed don't need to line up with the sizes of the internal
+   * Buffersâ€”initial offsets will be calculated accordingly in order
+   * to give you a consistent view of the data.
+   *
+   * @param bytes
+   */
+
+  consume(bytes?: number): void;
+
+  /**
+   * Will return a string representation of the buffer. The optional
+   * `start` and `end` arguments are passed on to `slice()`, while
+   * the encoding is passed on to `toString()` of the resulting Buffer.
+   *
+   * See the [`Buffer#toString()`](http://nodejs.org/docs/latest/api/buffer.html#buffer_buf_tostring_encoding_start_end)
+   * documentation for more information.
+   *
+   * @param encoding
+   * @param start
+   * @param end
+   */
+
+  toString(encoding?: string, start?: number, end?: number): string;
+
+  /**
+   * Will return the byte at the specified index. indexOf() method
+   * returns the first index at which a given element can be found
+   * in the BufferList, or -1 if it is not present.
+   *
+   * @param value
+   * @param byteOffset
+   * @param encoding
+   */
+
+  indexOf(
+    value: string | number | Uint8Array | BufferList | Buffer,
+    byteOffset?: number,
+    encoding?: string
+  ): number;
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readDoubleBE: Buffer['readDoubleBE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readDoubleLE: Buffer['readDoubleLE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readFloatBE: Buffer['readFloatBE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readFloatLE: Buffer['readFloatLE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readInt32BE: Buffer['readInt32BE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readInt32LE: Buffer['readInt32LE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readUInt32BE: Buffer['readUInt32BE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readUInt32LE: Buffer['readUInt32LE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readInt16BE: Buffer['readInt16BE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are
+   * implemented and will operate across internal Buffer boundaries transparently.
+   *
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
+   * documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readInt16LE: Buffer['readInt16LE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are
+   * implemented and will operate across internal Buffer boundaries transparently.
+   *
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
+   * documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readUInt16BE: Buffer['readUInt16BE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are
+   * implemented and will operate across internal Buffer boundaries transparently.
+   *
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
+   * documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readUInt16LE: Buffer['readUInt16LE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are
+   * implemented and will operate across internal Buffer boundaries transparently.
+   *
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
+   * documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readInt8: Buffer['readInt8'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are
+   * implemented and will operate across internal Buffer boundaries transparently.
+   *
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
+   * documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readUInt8: Buffer['readUInt8'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are
+   * implemented and will operate across internal Buffer boundaries transparently.
+   *
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
+   * documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readIntBE: Buffer['readIntBE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are
+   * implemented and will operate across internal Buffer boundaries transparently.
+   *
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
+   * documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readIntLE: Buffer['readIntLE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are
+   * implemented and will operate across internal Buffer boundaries transparently.
+   *
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
+   * documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readUIntBE: Buffer['readUIntBE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are
+   * implemented and will operate across internal Buffer boundaries transparently.
+   *
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
+   * documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readUIntLE: Buffer['readUIntLE'];
+}
+
+/**
+ * No arguments are required for the constructor, but you can initialise
+ * the list by passing in a single Buffer object or an array of Buffer
+ * objects.
+ *
+ * `new` is not strictly required, if you don't instantiate a new object,
+ * it will be done automatically for you so you can create a new instance
+ * simply with:
+ *
+ * ```js
+ * const { BufferList } = require('bl')
+ * const bl = BufferList()
+ *
+ * // equivalent to:
+ *
+ * const { BufferList } = require('bl')
+ * const bl = new BufferList()
+ * ```
+ */
+
+declare const BufferList: BufferListConstructor;
+Ù'/.github/workflows/test-and-release.ymlÅname: Test & Maybe Release
+on: [push, pull_request]
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [14.x, 16.x, 18.x, lts/*, current]
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v3.5.1
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Install Dependencies
+        run: |
+          npm install --no-progress
+      - name: Run tests
+        run: |
+          npm config set script-shell bash
+          npm run test:ci
+  release:
+    name: Release
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v3.5.1
+        with:
+          node-version: 14
+      - name: Install dependencies
+        run: |
+          npm install --no-progress --no-package-lock --no-save
+      - name: Build
+        run: |
+          npm run build
+      - name: Install plugins
+        run: |
+          npm install \
+            @semantic-release/commit-analyzer \
+            conventional-changelog-conventionalcommits \
+            @semantic-release/release-notes-generator \
+            @semantic-release/npm \
+            @semantic-release/github \
+            @semantic-release/git \
+            @semantic-release/changelog \
+            --no-progress --no-package-lock --no-save
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx semantic-release
+
+µ/test/isBufferList.jsÅ4'use strict'
+
+const tape = require('tape')
+const { BufferList, BufferListStream } = require('../')
+const { Buffer } = require('buffer')
+
+tape('isBufferList positives', (t) => {
+  t.ok(BufferList.isBufferList(new BufferList()))
+  t.ok(BufferList.isBufferList(new BufferListStream()))
+
+  t.end()
+})
+
+tape('isBufferList negatives', (t) => {
+  const types = [
+    null,
+    undefined,
+    NaN,
+    true,
+    false,
+    {},
+    [],
+    Buffer.alloc(0),
+    [Buffer.alloc(0)]
+  ]
+
+  for (const obj of types) {
+    t.notOk(BufferList.isBufferList(obj))
+  }
+
+  t.end()
+})
+­/test/test.jsÅYõ// @ts-check
+'use strict'
+
+const tape = require('tape')
+const crypto = require('crypto')
+const fs = require('fs')
+const path = require('path')
+const os = require('os')
+const BufferListStream = require('../')
+const { Buffer } = require('buffer')
+
+/**
+ * This typedef allows us to add _bufs to the API without declaring it publicly on types.
+ * @typedef { BufferListStream & { _bufs?: Buffer[] }} BufferListStreamWithPrivate
+ */
+
+/**
+ * Just for typechecking in js
+ * @type { NodeJS.Process & { browser?: boolean }}
+ */
+
+const process = globalThis.process
+
+/** @type {BufferEncoding[]} */
+const encodings = ['ascii', 'utf8', 'utf-8', 'hex', 'binary', 'base64']
+
+if (process.browser) {
+  encodings.push(
+    'ucs2',
+    'ucs-2',
+    'utf16le',
+    /**
+     * This alias is not in typescript typings for BufferEncoding. Still have to fix
+     * @see https://nodejs.org/api/buffer.html#buffers-and-character-encodings
+     */
+    // @ts-ignore
+    'utf-16le'
+  )
+}
+
+require('./indexOf')
+require('./isBufferList')
+require('./convert')
+
+tape('single bytes from single buffer', function (t) {
+  const bl = new BufferListStream()
+
+  bl.append(Buffer.from('abcd'))
+
+  t.equal(bl.length, 4)
+  t.equal(bl.get(-1), undefined)
+  t.equal(bl.get(0), 97)
+  t.equal(bl.get(1), 98)
+  t.equal(bl.get(2), 99)
+  t.equal(bl.get(3), 100)
+  t.equal(bl.get(4), undefined)
+
+  t.end()
+})
+
+tape('single bytes from multiple buffers', function (t) {
+  const bl = new BufferListStream()
+
+  bl.append(Buffer.from('abcd'))
+  bl.append(Buffer.from('efg'))
+  bl.append(Buffer.from('hi'))
+  bl.append(Buffer.from('j'))
+
+  t.equal(bl.length, 10)
+
+  t.equal(bl.get(0), 97)
+  t.equal(bl.get(1), 98)
+  t.equal(bl.get(2), 99)
+  t.equal(bl.get(3), 100)
+  t.equal(bl.get(4), 101)
+  t.equal(bl.get(5), 102)
+  t.equal(bl.get(6), 103)
+  t.equal(bl.get(7), 104)
+  t.equal(bl.get(8), 105)
+  t.equal(bl.get(9), 106)
+
+  t.end()
+})
+
+tape('multi bytes from single buffer', function (t) {
+  const bl = new BufferListStream()
+
+  bl.append(Buffer.from('abcd'))
+
+  t.equal(bl.length, 4)
+
+  t.equal(bl.slice(0, 4).toString('ascii'), 'abcd')
+  t.equal(bl.slice(0, 3).toString('ascii'), 'abc')
+  t.equal(bl.slice(1, 4).toString('ascii'), 'bcd')
+  t.equal(bl.slice(-4, -1).toString('ascii'), 'abc')
+
+  t.end()
+})
+
+tape('multi bytes from single buffer (negative indexes)', function (t) {
+  const bl = new BufferListStream()
+
+  bl.append(Buffer.from('buffer'))
+
+  t.equal(bl.length, 6)
+
+  t.equal(bl.slice(-6, -1).toString('ascii'), 'buffe')
+  t.equal(bl.slice(-6, -2).toString('ascii'), 'buff')
+  t.equal(bl.slice(-5, -2).toString('ascii'), 'uff')
+
+  t.end()
+})
+
+tape('multiple bytes from multiple buffers', function (t) {
+  const bl = new BufferListStream()
+
+  bl.append(Buffer.from('abcd'))
+  bl.append(Buffer.from('efg'))
+  bl.append(Buffer.from('hi'))
+  bl.append(Buffer.from('j'))
+
+  t.equal(bl.length, 10)
+
+  t.equal(bl.slice(0, 10).toString('ascii'), 'abcdefghij')
+  t.equal(bl.slice(3, 10).toString('ascii'), 'defghij')
+  t.equal(bl.slice(3, 6).toString('ascii'), 'def')
+  t.equal(bl.slice(3, 8).toString('ascii'), 'defgh')
+  t.equal(bl.slice(5, 10).toString('ascii'), 'fghij')
+  t.equal(bl.slice(-7, -4).toString('ascii'), 'def')
+
+  t.end()
+})
+
+tape('multiple bytes from multiple buffer lists', function (t) {
+  const bl = new BufferListStream()
+
+  bl.append(new BufferListStream([Buffer.from('abcd'), Buffer.from('efg')]))
+  bl.append(new BufferListStream([Buffer.from('hi'), Buffer.from('j')]))
+
+  t.equal(bl.length, 10)
+
+  t.equal(bl.slice(0, 10).toString('ascii'), 'abcdefghij')
+
+  t.equal(bl.slice(3, 10).toString('ascii'), 'defghij')
+  t.equal(bl.slice(3, 6).toString('ascii'), 'def')
+  t.equal(bl.slice(3, 8).toString('ascii'), 'defgh')
+  t.equal(bl.slice(5, 10).toString('ascii'), 'fghij')
+
+  t.end()
+})
+
+// same data as previous test, just using nested constructors
+tape('multiple bytes from crazy nested buffer lists', function (t) {
+  const bl = new BufferListStream()
+
+  bl.append(
+    new BufferListStream([
+      new BufferListStream([
+        new BufferListStream(Buffer.from('abc')),
+        Buffer.from('d'),
+        new BufferListStream(Buffer.from('efg'))
+      ]),
+      new BufferListStream([Buffer.from('hi')]),
+      new BufferListStream(Buffer.from('j'))
+    ])
+  )
+
+  t.equal(bl.length, 10)
+
+  t.equal(bl.slice(0, 10).toString('ascii'), 'abcdefghij')
+
+  t.equal(bl.slice(3, 10).toString('ascii'), 'defghij')
+  t.equal(bl.slice(3, 6).toString('ascii'), 'def')
+  t.equal(bl.slice(3, 8).toString('ascii'), 'defgh')
+  t.equal(bl.slice(5, 10).toString('ascii'), 'fghij')
+
+  t.end()
+})
+
+tape('append accepts arrays of Buffers', function (t) {
+  const bl = new BufferListStream()
+
+  bl.append(Buffer.from('abc'))
+  bl.append([Buffer.from('def')])
+  bl.append([Buffer.from('ghi'), Buffer.from('jkl')])
+  bl.append([Buffer.from('mnop'), Buffer.from('qrstu'), Buffer.from('vwxyz')])
+  t.equal(bl.length, 26)
+  t.equal(bl.slice().toString('ascii'), 'abcdefghijklmnopqrstuvwxyz')
+
+  t.end()
+})
+
+tape('append accepts arrays of Uint8Arrays', function (t) {
+  const bl = new BufferListStream()
+
+  bl.append(new Uint8Array([97, 98, 99]))
+  bl.append([Uint8Array.from([100, 101, 102])])
+  bl.append([new Uint8Array([103, 104, 105]), new Uint8Array([106, 107, 108])])
+  bl.append([new Uint8Array([109, 110, 111, 112]), new Uint8Array([113, 114, 115, 116, 117]), new Uint8Array([118, 119, 120, 121, 122])])
+  t.equal(bl.length, 26)
+  t.equal(bl.slice().toString('ascii'), 'abcdefghijklmnopqrstuvwxyz')
+
+  t.end()
+})
+
+tape('append accepts arrays of BufferLists', function (t) {
+  const bl = new BufferListStream()
+
+  bl.append(Buffer.from('abc'))
+  bl.append([new BufferListStream('def')])
+  bl.append(
+    new BufferListStream([Buffer.from('ghi'), new BufferListStream('jkl')])
+  )
+  bl.append([
+    Buffer.from('mnop'),
+    new BufferListStream([Buffer.from('qrstu'), Buffer.from('vwxyz')])
+  ])
+  t.equal(bl.length, 26)
+  t.equal(bl.slice().toString('ascii'), 'abcdefghijklmnopqrstuvwxyz')
+
+  t.end()
+})
+
+tape('append chainable', function (t) {
+  const bl = new BufferListStream()
+
+  t.ok(bl.append(Buffer.from('abcd')) === bl)
+  t.ok(bl.append([Buffer.from('abcd')]) === bl)
+  t.ok(bl.append(new BufferListStream(Buffer.from('abcd'))) === bl)
+  t.ok(bl.append([new BufferListStream(Buffer.from('abcd'))]) === bl)
+
+  t.end()
+})
+
+tape('append chainable (test results)', function (t) {
+  const bl = new BufferListStream('abc')
+    .append([new BufferListStream('def')])
+    .append(
+      new BufferListStream([Buffer.from('ghi'), new BufferListStream('jkl')])
+    )
+    .append([
+      Buffer.from('mnop'),
+      new BufferListStream([Buffer.from('qrstu'), Buffer.from('vwxyz')])
+    ])
+
+  t.equal(bl.length, 26)
+  t.equal(bl.slice().toString('ascii'), 'abcdefghijklmnopqrstuvwxyz')
+
+  t.end()
+})
+
+tape('consuming from multiple buffers', function (t) {
+  const bl = new BufferListStream()
+
+  bl.append(Buffer.from('abcd'))
+  bl.append(Buffer.from('efg'))
+  bl.append(Buffer.from('hi'))
+  bl.append(Buffer.from('j'))
+
+  t.equal(bl.length, 10)
+
+  t.equal(bl.slice(0, 10).toString('ascii'), 'abcdefghij')
+
+  bl.consume(3)
+  t.equal(bl.length, 7)
+  t.equal(bl.slice(0, 7).toString('ascii'), 'defghij')
+
+  bl.consume(2)
+  t.equal(bl.length, 5)
+  t.equal(bl.slice(0, 5).toString('ascii'), 'fghij')
+
+  bl.consume(1)
+  t.equal(bl.length, 4)
+  t.equal(bl.slice(0, 4).toString('ascii'), 'ghij')
+
+  bl.consume(1)
+  t.equal(bl.length, 3)
+  t.equal(bl.slice(0, 3).toString('ascii'), 'hij')
+
+  bl.consume(2)
+  t.equal(bl.length, 1)
+  t.equal(bl.slice(0, 1).toString('ascii'), 'j')
+
+  t.end()
+})
+
+tape('complete consumption', function (t) {
+  /** @type {BufferListStreamWithPrivate} */
+  const bl = new BufferListStream()
+
+  bl.append(Buffer.from('a'))
+  bl.append(Buffer.from('b'))
+
+  bl.consume(2)
+
+  t.equal(bl.length, 0)
+  t.equal(bl._bufs.length, 0)
+
+  t.end()
+})
+
+tape('test readUInt8 / readInt8', function (t) {
+  const buf1 = Buffer.alloc(1)
+  const buf2 = Buffer.alloc(3)
+  const buf3 = Buffer.alloc(3)
+  const bl = new BufferListStream()
+
+  buf1[0] = 0x1
+  buf2[1] = 0x3
+  buf2[2] = 0x4
+  buf3[0] = 0x23
+  buf3[1] = 0x42
+
+  bl.append(buf1)
+  bl.append(buf2)
+  bl.append(buf3)
+
+  t.equal(bl.readUInt8(), 0x1)
+  t.equal(bl.readUInt8(2), 0x3)
+  t.equal(bl.readInt8(2), 0x3)
+  t.equal(bl.readUInt8(3), 0x4)
+  t.equal(bl.readInt8(3), 0x4)
+  t.equal(bl.readUInt8(4), 0x23)
+  t.equal(bl.readInt8(4), 0x23)
+  t.equal(bl.readUInt8(5), 0x42)
+  t.equal(bl.readInt8(5), 0x42)
+
+  t.end()
+})
+
+tape('test readUInt16LE / readUInt16BE / readInt16LE / readInt16BE', function (t) {
+  const buf1 = Buffer.alloc(1)
+  const buf2 = Buffer.alloc(3)
+  const buf3 = Buffer.alloc(3)
+  const bl = new BufferListStream()
+
+  buf1[0] = 0x1
+  buf2[1] = 0x3
+  buf2[2] = 0x4
+  buf3[0] = 0x23
+  buf3[1] = 0x42
+
+  bl.append(buf1)
+  bl.append(buf2)
+  bl.append(buf3)
+
+  t.equal(bl.readUInt16BE(), 0x0100)
+  t.equal(bl.readUInt16LE(), 0x0001)
+  t.equal(bl.readUInt16BE(2), 0x0304)
+  t.equal(bl.readUInt16LE(2), 0x0403)
+  t.equal(bl.readInt16BE(2), 0x0304)
+  t.equal(bl.readInt16LE(2), 0x0403)
+  t.equal(bl.readUInt16BE(3), 0x0423)
+  t.equal(bl.readUInt16LE(3), 0x2304)
+  t.equal(bl.readInt16BE(3), 0x0423)
+  t.equal(bl.readInt16LE(3), 0x2304)
+  t.equal(bl.readUInt16BE(4), 0x2342)
+  t.equal(bl.readUInt16LE(4), 0x4223)
+  t.equal(bl.readInt16BE(4), 0x2342)
+  t.equal(bl.readInt16LE(4), 0x4223)
+
+  t.end()
+})
+
+tape('test readUInt32LE / readUInt32BE / readInt32LE / readInt32BE', function (t) {
+  const buf1 = Buffer.alloc(1)
+  const buf2 = Buffer.alloc(3)
+  const buf3 = Buffer.alloc(3)
+  const bl = new BufferListStream()
+
+  buf1[0] = 0x1
+  buf2[1] = 0x3
+  buf2[2] = 0x4
+  buf3[0] = 0x23
+  buf3[1] = 0x42
+
+  bl.append(buf1)
+  bl.append(buf2)
+  bl.append(buf3)
+
+  t.equal(bl.readUInt32BE(), 0x01000304)
+  t.equal(bl.readUInt32LE(), 0x04030001)
+  t.equal(bl.readUInt32BE(2), 0x03042342)
+  t.equal(bl.readUInt32LE(2), 0x42230403)
+  t.equal(bl.readInt32BE(2), 0x03042342)
+  t.equal(bl.readInt32LE(2), 0x42230403)
+
+  t.end()
+})
+
+tape('test readUIntLE / readUIntBE / readIntLE / readIntBE', function (t) {
+  const buf1 = Buffer.alloc(1)
+  const buf2 = Buffer.alloc(3)
+  const buf3 = Buffer.alloc(3)
+  const bl = new BufferListStream()
+
+  buf2[0] = 0x2
+  buf2[1] = 0x3
+  buf2[2] = 0x4
+  buf3[0] = 0x23
+  buf3[1] = 0x42
+  buf3[2] = 0x61
+
+  bl.append(buf1)
+  bl.append(buf2)
+  bl.append(buf3)
+
+  t.equal(bl.readUIntBE(1, 1), 0x02)
+  t.equal(bl.readUIntBE(1, 2), 0x0203)
+  t.equal(bl.readUIntBE(1, 3), 0x020304)
+  t.equal(bl.readUIntBE(1, 4), 0x02030423)
+  t.equal(bl.readUIntBE(1, 5), 0x0203042342)
+  t.equal(bl.readUIntBE(1, 6), 0x020304234261)
+  t.equal(bl.readUIntLE(1, 1), 0x02)
+  t.equal(bl.readUIntLE(1, 2), 0x0302)
+  t.equal(bl.readUIntLE(1, 3), 0x040302)
+  t.equal(bl.readUIntLE(1, 4), 0x23040302)
+  t.equal(bl.readUIntLE(1, 5), 0x4223040302)
+  t.equal(bl.readUIntLE(1, 6), 0x614223040302)
+  t.equal(bl.readIntBE(1, 1), 0x02)
+  t.equal(bl.readIntBE(1, 2), 0x0203)
+  t.equal(bl.readIntBE(1, 3), 0x020304)
+  t.equal(bl.readIntBE(1, 4), 0x02030423)
+  t.equal(bl.readIntBE(1, 5), 0x0203042342)
+  t.equal(bl.readIntBE(1, 6), 0x020304234261)
+  t.equal(bl.readIntLE(1, 1), 0x02)
+  t.equal(bl.readIntLE(1, 2), 0x0302)
+  t.equal(bl.readIntLE(1, 3), 0x040302)
+  t.equal(bl.readIntLE(1, 4), 0x23040302)
+  t.equal(bl.readIntLE(1, 5), 0x4223040302)
+  t.equal(bl.readIntLE(1, 6), 0x614223040302)
+
+  t.end()
+})
+
+tape('test readFloatLE / readFloatBE', function (t) {
+  const buf1 = Buffer.alloc(1)
+  const buf2 = Buffer.alloc(3)
+  const buf3 = Buffer.alloc(3)
+  const bl = new BufferListStream()
+
+  buf1[0] = 0x01
+  buf2[1] = 0x00
+  buf2[2] = 0x00
+  buf3[0] = 0x80
+  buf3[1] = 0x3f
+
+  bl.append(buf1)
+  bl.append(buf2)
+  bl.append(buf3)
+
+  const canonical = Buffer.concat([buf1, buf2, buf3])
+  t.equal(bl.readFloatLE(), canonical.readFloatLE())
+  t.equal(bl.readFloatBE(), canonical.readFloatBE())
+  t.equal(bl.readFloatLE(2), canonical.readFloatLE(2))
+  t.equal(bl.readFloatBE(2), canonical.readFloatBE(2))
+
+  t.end()
+})
+
+tape('test readDoubleLE / readDoubleBE', function (t) {
+  const buf1 = Buffer.alloc(1)
+  const buf2 = Buffer.alloc(3)
+  const buf3 = Buffer.alloc(10)
+  const bl = new BufferListStream()
+
+  buf1[0] = 0x01
+  buf2[1] = 0x55
+  buf2[2] = 0x55
+  buf3[0] = 0x55
+  buf3[1] = 0x55
+  buf3[2] = 0x55
+  buf3[3] = 0x55
+  buf3[4] = 0xd5
+  buf3[5] = 0x3f
+
+  bl.append(buf1)
+  bl.append(buf2)
+  bl.append(buf3)
+
+  const canonical = Buffer.concat([buf1, buf2, buf3])
+  t.equal(bl.readDoubleBE(), canonical.readDoubleBE())
+  t.equal(bl.readDoubleLE(), canonical.readDoubleLE())
+  t.equal(bl.readDoubleBE(2), canonical.readDoubleBE(2))
+  t.equal(bl.readDoubleLE(2), canonical.readDoubleLE(2))
+
+  t.end()
+})
+
+tape('test toString', function (t) {
+  const bl = new BufferListStream()
+
+  bl.append(Buffer.from('abcd'))
+  bl.append(Buffer.from('efg'))
+  bl.append(Buffer.from('hi'))
+  bl.append(Buffer.from('j'))
+
+  t.equal(bl.toString('ascii', 0, 10), 'abcdefghij')
+  t.equal(bl.toString('ascii', 3, 10), 'defghij')
+  t.equal(bl.toString('ascii', 3, 6), 'def')
+  t.equal(bl.toString('ascii', 3, 8), 'defgh')
+  t.equal(bl.toString('ascii', 5, 10), 'fghij')
+
+  t.end()
+})
+
+tape('test toString encoding', function (t) {
+  const bl = new BufferListStream()
+  const b = Buffer.from('abcdefghij\xff\x00')
+
+  bl.append(Buffer.from('abcd'))
+  bl.append(Buffer.from('efg'))
+  bl.append(Buffer.from('hi'))
+  bl.append(Buffer.from('j'))
+  bl.append(Buffer.from('\xff\x00'))
+
+  encodings.forEach(function (enc) {
+    t.equal(bl.toString(enc), b.toString(enc), enc)
+  })
+
+  t.end()
+})
+
+tape('uninitialized memory', function (t) {
+  const secret = crypto.randomBytes(256)
+  for (let i = 0; i < 1e6; i++) {
+    const clone = Buffer.from(secret)
+    const bl = new BufferListStream()
+    bl.append(Buffer.from('a'))
+    bl.consume(-1024)
+    const buf = bl.slice(1)
+    if (buf.indexOf(clone) !== -1) {
+      t.fail(`Match (at ${i})`)
+      break
+    }
+  }
+  t.end()
+})
+
+!process.browser && tape('test stream', function (t) {
+  const random = crypto.randomBytes(65534)
+
+  const bl = new BufferListStream((err, buf) => {
+    t.ok(Buffer.isBuffer(buf))
+    t.ok(err === null)
+    t.ok(random.equals(bl.slice()))
+    t.ok(random.equals(buf.slice()))
+
+    bl.pipe(fs.createWriteStream(path.join(os.tmpdir(), 'bl_test_rnd_out.dat')))
+      .on('close', function () {
+        const rndhash = crypto.createHash('md5').update(random).digest('hex')
+        const md5sum = crypto.createHash('md5')
+        const s = fs.createReadStream(path.join(os.tmpdir(), 'bl_test_rnd_out.dat'))
+
+        s.on('data', md5sum.update.bind(md5sum))
+        s.on('end', function () {
+          t.equal(rndhash, md5sum.digest('hex'), 'woohoo! correct hash!')
+          t.end()
+        })
+      })
+  })
+
+  fs.writeFileSync(path.join(os.tmpdir(), 'bl_test_rnd.dat'), random)
+  fs.createReadStream(path.join(os.tmpdir(), 'bl_test_rnd.dat')).pipe(bl)
+})
+
+tape('instantiation with Buffer', function (t) {
+  const buf = crypto.randomBytes(1024)
+  const buf2 = crypto.randomBytes(1024)
+  let b = BufferListStream(buf)
+
+  t.equal(buf.toString('hex'), b.slice().toString('hex'), 'same buffer')
+  b = BufferListStream([buf, buf2])
+  t.equal(b.slice().toString('hex'), Buffer.concat([buf, buf2]).toString('hex'), 'same buffer')
+
+  t.end()
+})
+
+tape('test String appendage', function (t) {
+  const bl = new BufferListStream()
+  const b = Buffer.from('abcdefghij\xff\x00')
+
+  bl.append('abcd')
+  bl.append('efg')
+  bl.append('hi')
+  bl.append('j')
+  bl.append('\xff\x00')
+
+  encodings.forEach(function (enc) {
+    t.equal(bl.toString(enc), b.toString(enc))
+  })
+
+  t.end()
+})
+
+tape('test Number appendage', function (t) {
+  const bl = new BufferListStream()
+  const b = Buffer.from('1234567890')
+
+  bl.append(1234)
+  bl.append(567)
+  bl.append(89)
+  bl.append(0)
+
+  encodings.forEach(function (enc) {
+    t.equal(bl.toString(enc), b.toString(enc))
+  })
+
+  t.end()
+})
+
+tape('write nothing, should get empty buffer', function (t) {
+  t.plan(3)
+  BufferListStream(function (err, data) {
+    t.notOk(err, 'no error')
+    t.ok(Buffer.isBuffer(data), 'got a buffer')
+    t.equal(0, data.length, 'got a zero-length buffer')
+    t.end()
+  }).end()
+})
+
+tape('unicode string', function (t) {
+  t.plan(2)
+
+  const inp1 = '\u2600'
+  const inp2 = '\u2603'
+  const exp = inp1 + ' and ' + inp2
+  const bl = BufferListStream()
+
+  bl.write(inp1)
+  bl.write(' and ')
+  bl.write(inp2)
+  t.equal(exp, bl.toString())
+  t.equal(Buffer.from(exp).toString('hex'), bl.toString('hex'))
+})
+
+tape('should emit finish', function (t) {
+  const source = BufferListStream()
+  const dest = BufferListStream()
+
+  source.write('hello')
+  source.pipe(dest)
+
+  dest.on('finish', function () {
+    t.equal(dest.toString('utf8'), 'hello')
+    t.end()
+  })
+})
+
+tape('basic copy', function (t) {
+  const buf = crypto.randomBytes(1024)
+  const buf2 = Buffer.alloc(1024)
+  const b = BufferListStream(buf)
+
+  b.copy(buf2)
+  t.equal(b.slice().toString('hex'), buf2.toString('hex'), 'same buffer')
+
+  t.end()
+})
+
+tape('copy after many appends', function (t) {
+  const buf = crypto.randomBytes(512)
+  const buf2 = Buffer.alloc(1024)
+  const b = BufferListStream(buf)
+
+  b.append(buf)
+  b.copy(buf2)
+  t.equal(b.slice().toString('hex'), buf2.toString('hex'), 'same buffer')
+
+  t.end()
+})
+
+tape('copy at a precise position', function (t) {
+  const buf = crypto.randomBytes(1004)
+  const buf2 = Buffer.alloc(1024)
+  const b = BufferListStream(buf)
+
+  b.copy(buf2, 20)
+  t.equal(b.slice().toString('hex'), buf2.slice(20).toString('hex'), 'same buffer')
+
+  t.end()
+})
+
+tape('copy starting from a precise location', function (t) {
+  const buf = crypto.randomBytes(10)
+  const buf2 = Buffer.alloc(5)
+  const b = BufferListStream(buf)
+
+  b.copy(buf2, 0, 5)
+  t.equal(b.slice(5).toString('hex'), buf2.toString('hex'), 'same buffer')
+
+  t.end()
+})
+
+tape('copy in an interval', function (t) {
+  const rnd = crypto.randomBytes(10)
+  const b = BufferListStream(rnd) // put the random bytes there
+  const actual = Buffer.alloc(3)
+  const expected = Buffer.alloc(3)
+
+  rnd.copy(expected, 0, 5, 8)
+  b.copy(actual, 0, 5, 8)
+
+  t.equal(actual.toString('hex'), expected.toString('hex'), 'same buffer')
+
+  t.end()
+})
+
+tape('copy an interval between two buffers', function (t) {
+  const buf = crypto.randomBytes(10)
+  const buf2 = Buffer.alloc(10)
+  const b = BufferListStream(buf)
+
+  b.append(buf)
+  b.copy(buf2, 0, 5, 15)
+
+  t.equal(b.slice(5, 15).toString('hex'), buf2.toString('hex'), 'same buffer')
+
+  t.end()
+})
+
+tape('shallow slice across buffer boundaries', function (t) {
+  const bl = new BufferListStream(['First', 'Second', 'Third'])
+
+  t.equal(bl.shallowSlice(3, 13).toString(), 'stSecondTh')
+
+  t.end()
+})
+
+tape('shallow slice within single buffer', function (t) {
+  t.plan(2)
+
+  const bl = new BufferListStream(['First', 'Second', 'Third'])
+
+  t.equal(bl.shallowSlice(5, 10).toString(), 'Secon')
+  t.equal(bl.shallowSlice(7, 10).toString(), 'con')
+
+  t.end()
+})
+
+tape('shallow slice single buffer', function (t) {
+  t.plan(3)
+
+  const bl = new BufferListStream(['First', 'Second', 'Third'])
+
+  t.equal(bl.shallowSlice(0, 5).toString(), 'First')
+  t.equal(bl.shallowSlice(5, 11).toString(), 'Second')
+  t.equal(bl.shallowSlice(11, 16).toString(), 'Third')
+})
+
+tape('shallow slice with negative or omitted indices', function (t) {
+  t.plan(4)
+
+  const bl = new BufferListStream(['First', 'Second', 'Third'])
+
+  t.equal(bl.shallowSlice().toString(), 'FirstSecondThird')
+  t.equal(bl.shallowSlice(5).toString(), 'SecondThird')
+  t.equal(bl.shallowSlice(5, -3).toString(), 'SecondTh')
+  t.equal(bl.shallowSlice(-8).toString(), 'ondThird')
+})
+
+tape('shallow slice does not make a copy', function (t) {
+  t.plan(1)
+
+  const buffers = [Buffer.from('First'), Buffer.from('Second'), Buffer.from('Third')]
+  const bl = new BufferListStream(buffers).shallowSlice(5, -3)
+
+  buffers[1].fill('h')
+  buffers[2].fill('h')
+
+  t.equal(bl.toString(), 'hhhhhhhh')
+})
+
+tape('shallow slice with 0 length', function (t) {
+  t.plan(1)
+
+  const buffers = [Buffer.from('First'), Buffer.from('Second'), Buffer.from('Third')]
+  const bl = (new BufferListStream(buffers)).shallowSlice(0, 0)
+
+  t.equal(bl.length, 0)
+})
+
+tape('shallow slice with 0 length from middle', function (t) {
+  t.plan(1)
+
+  const buffers = [Buffer.from('First'), Buffer.from('Second'), Buffer.from('Third')]
+  const bl = (new BufferListStream(buffers)).shallowSlice(10, 10)
+
+  t.equal(bl.length, 0)
+})
+
+tape('duplicate', function (t) {
+  t.plan(2)
+
+  const bl = new BufferListStream('abcdefghij\xff\x00')
+  const dup = bl.duplicate()
+
+  t.equal(bl.prototype, dup.prototype)
+  t.equal(bl.toString('hex'), dup.toString('hex'))
+})
+
+tape('destroy no pipe', function (t) {
+  t.plan(2)
+
+  /** @type {BufferListStreamWithPrivate} */
+  const bl = new BufferListStream('alsdkfja;lsdkfja;lsdk')
+
+  bl.destroy()
+
+  t.equal(bl._bufs.length, 0)
+  t.equal(bl.length, 0)
+})
+
+tape('destroy with error', function (t) {
+  t.plan(3)
+
+  /** @type {BufferListStreamWithPrivate} */
+  const bl = new BufferListStream('alsdkfja;lsdkfja;lsdk')
+  const err = new Error('kaboom')
+
+  bl.destroy(err)
+  bl.on('error', function (_err) {
+    t.equal(_err, err)
+  })
+
+  t.equal(bl._bufs.length, 0)
+  t.equal(bl.length, 0)
+})
+
+!process.browser && tape('destroy with pipe before read end', function (t) {
+  t.plan(2)
+
+  /** @type {BufferListStreamWithPrivate} */
+  const bl = new BufferListStream()
+  fs.createReadStream(path.join(__dirname, '/test.js'))
+    .pipe(bl)
+
+  bl.destroy()
+
+  t.equal(bl._bufs.length, 0)
+  t.equal(bl.length, 0)
+})
+
+!process.browser && tape('destroy with pipe before read end with race', function (t) {
+  t.plan(2)
+
+  /** @type {BufferListStreamWithPrivate} */
+  const bl = new BufferListStream()
+
+  fs.createReadStream(path.join(__dirname, '/test.js'))
+    .pipe(bl)
+
+  setTimeout(function () {
+    bl.destroy()
+    setTimeout(function () {
+      t.equal(bl._bufs.length, 0)
+      t.equal(bl.length, 0)
+    }, 500)
+  }, 500)
+})
+
+!process.browser && tape('destroy with pipe after read end', function (t) {
+  t.plan(2)
+
+  /** @type {BufferListStreamWithPrivate} */
+  const bl = new BufferListStream()
+  fs.createReadStream(path.join(__dirname, '/test.js'))
+    .on('end', onEnd)
+    .pipe(bl)
+
+  function onEnd () {
+    bl.destroy()
+
+    t.equal(bl._bufs.length, 0)
+    t.equal(bl.length, 0)
+  }
+})
+
+!process.browser && tape('destroy with pipe while writing to a destination', function (t) {
+  t.plan(4)
+
+  /** @type {BufferListStreamWithPrivate} */
+  const bl = new BufferListStream()
+  const ds = new BufferListStream()
+
+  fs.createReadStream(path.join(__dirname, '/test.js'))
+    .on('end', onEnd)
+    .pipe(bl)
+
+  function onEnd () {
+    bl.pipe(ds)
+
+    setTimeout(function () {
+      bl.destroy()
+
+      t.equals(bl._bufs.length, 0)
+      t.equals(bl.length, 0)
+
+      ds.destroy()
+
+      t.equals(bl._bufs.length, 0)
+      t.equals(bl.length, 0)
+    }, 100)
+  }
+})
+
+!process.browser && tape('handle error', function (t) {
+  t.plan(2)
+
+  fs.createReadStream('/does/not/exist').pipe(BufferListStream(function (err, data) {
+    t.ok(err instanceof Error, 'has error')
+    t.notOk(data, 'no data')
+  }))
+})
+­/CHANGELOG.mdÅø## [5.1.0](https://github.com/rvagg/bl/compare/v5.0.0...v5.1.0) (2022-10-18)
+
+
+### Features
+
+* added integrated TypeScript typings ([#108](https://github.com/rvagg/bl/issues/108)) ([433ff89](https://github.com/rvagg/bl/commit/433ff8942f47fab8a5c9d13b2c00989ccf8d0710))
+
+
+### Bug Fixes
+
+* windows support in tests ([387dfaf](https://github.com/rvagg/bl/commit/387dfaf9b2bca7849f12785436ceb01e42adac2c))
+
+
+### Trivial Changes
+
+* GH Actions, Dependabot, auto-release, remove Travis ([997f058](https://github.com/rvagg/bl/commit/997f058357de8f2a7f66998e80a72b491835573f))
+* **no-release:** bump standard from 16.0.4 to 17.0.0 ([#112](https://github.com/rvagg/bl/issues/112)) ([078bfe3](https://github.com/rvagg/bl/commit/078bfe33390d125297b1c946e5989c4aa9228961))
+¦/bl.jsÅû'use strict'
+
+const DuplexStream = require('readable-stream').Duplex
+const inherits = require('inherits')
+const BufferList = require('./BufferList')
+
+function BufferListStream (callback) {
+  if (!(this instanceof BufferListStream)) {
+    return new BufferListStream(callback)
+  }
+
+  if (typeof callback === 'function') {
+    this._callback = callback
+
+    const piper = function piper (err) {
+      if (this._callback) {
+        this._callback(err)
+        this._callback = null
+      }
+    }.bind(this)
+
+    this.on('pipe', function onPipe (src) {
+      src.on('error', piper)
+    })
+    this.on('unpipe', function onUnpipe (src) {
+      src.removeListener('error', piper)
+    })
+
+    callback = null
+  }
+
+  BufferList._init.call(this, callback)
+  DuplexStream.call(this)
+}
+
+inherits(BufferListStream, DuplexStream)
+Object.assign(BufferListStream.prototype, BufferList.prototype)
+
+BufferListStream.prototype._new = function _new (callback) {
+  return new BufferListStream(callback)
+}
+
+BufferListStream.prototype._write = function _write (buf, encoding, callback) {
+  this._appendBuffer(buf)
+
+  if (typeof callback === 'function') {
+    callback()
+  }
+}
+
+BufferListStream.prototype._read = function _read (size) {
+  if (!this.length) {
+    return this.push(null)
+  }
+
+  size = Math.min(size, this.length)
+  this.push(this.slice(0, size))
+  this.consume(size)
+}
+
+BufferListStream.prototype.end = function end (chunk) {
+  DuplexStream.prototype.end.call(this, chunk)
+
+  if (this._callback) {
+    this._callback(null, this.slice())
+    this._callback = null
+  }
+}
+
+BufferListStream.prototype._destroy = function _destroy (err, cb) {
+  this._bufs.length = 0
+  this.length = 0
+  cb(err)
+}
+
+BufferListStream.prototype._isBufferList = function _isBufferList (b) {
+  return b instanceof BufferListStream || b instanceof BufferList || BufferListStream.isBufferList(b)
+}
+
+BufferListStream.isBufferList = BufferList.isBufferList
+
+module.exports = BufferListStream
+module.exports.BufferListStream = BufferListStream
+module.exports.BufferList = BufferList

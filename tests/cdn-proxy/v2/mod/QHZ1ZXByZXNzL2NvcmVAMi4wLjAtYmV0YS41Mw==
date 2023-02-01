@@ -1,0 +1,1920 @@
+Ñ∞/dist/index.d.ts≈S≥import { MarkdownLink, MarkdownSfcBlocks, MarkdownOptions, Markdown, MarkdownHeader } from '@vuepress/markdown';
+import { PageBase, PageData, PageFrontmatter, SiteData } from '@vuepress/shared';
+export { HeadAttrsConfig, HeadConfig, HeadTag, HeadTagEmpty, HeadTagNonEmpty, LocaleConfig, LocaleData, PageData, PageFrontmatter, PageHeader, SiteData, SiteLocaleConfig } from '@vuepress/shared';
+
+/**
+ * Vuepress bundler
+ *
+ * It provides abilities to:
+ * - dev: run dev server for development
+ * - build: bundle assets for deployment
+ */
+interface Bundler {
+    name: string;
+    dev: (app: App) => Promise<() => Promise<void>>;
+    build: (app: App) => Promise<void>;
+}
+
+/**
+ * Vuepress Page
+ */
+declare type Page<ExtraPageData extends Record<any, any> = Record<never, never>, ExtraPageFrontmatter extends Record<any, any> = Record<string, unknown>, ExtraPageFields extends Record<any, any> = Record<never, never>> = PageBase<ExtraPageFrontmatter> & ExtraPageFields & {
+    /**
+     * Data of the page, which will be available in client code
+     */
+    data: PageData<ExtraPageData, ExtraPageFrontmatter>;
+    /**
+     * Raw Content of the page
+     */
+    content: string;
+    /**
+     * Rendered content of the page
+     */
+    contentRendered: string;
+    /**
+     * Date of the page, in 'yyyy-MM-dd' format
+     *
+     * @example '2020-09-09'
+     */
+    date: string;
+    /**
+     * Dependencies of the page
+     */
+    deps: string[];
+    /**
+     * Links of the page
+     */
+    links: MarkdownLink[];
+    /**
+     * Path of the page that inferred from file path
+     *
+     * If the page does not come from a file, it would be `null`
+     *
+     * @example '/guide/index.html'
+     */
+    pathInferred: string | null;
+    /**
+     * Locale path prefix of the page
+     *
+     * @example '/getting-started.html' -> '/'
+     * @example '/en/getting-started.html' -> '/en/'
+     * @example '/zh/getting-started.html' -> '/zh/'
+     */
+    pathLocale: string;
+    /**
+     * Permalink of the page
+     *
+     * If the page does not have a permalink, it would be `null`
+     */
+    permalink: string | null;
+    /**
+     * Custom data to be attached to the page route record of vue-router
+     *
+     * @see https://router.vuejs.org/api/#meta
+     */
+    routeMeta: Record<string, unknown>;
+    /**
+     * Extracted sfc blocks of the page
+     */
+    sfcBlocks: MarkdownSfcBlocks;
+    /**
+     * Slug of the page
+     */
+    slug: string;
+    /**
+     * Source file path
+     *
+     * If the page does not come from a file, it would be `null`
+     */
+    filePath: string | null;
+    /**
+     * Source file path relative to source directory
+     *
+     * If the page does not come from a file, it would be `null`
+     */
+    filePathRelative: string | null;
+    /**
+     * Component file path
+     */
+    componentFilePath: string;
+    /**
+     * Component file path relative to temp directory
+     */
+    componentFilePathRelative: string;
+    /**
+     * Component file chunk name
+     *
+     * Only take effect in webpack
+     */
+    componentFileChunkName: string;
+    /**
+     * Page data file path
+     */
+    dataFilePath: string;
+    /**
+     * Page data file path relative to temp directory
+     */
+    dataFilePathRelative: string;
+    /**
+     * Page data file chunk name
+     *
+     * Only take effect in webpack
+     */
+    dataFileChunkName: string;
+    /**
+     * Rendered html file path
+     */
+    htmlFilePath: string;
+    /**
+     * Rendered html file path relative to dest directory
+     */
+    htmlFilePathRelative: string;
+};
+/**
+ * Options to create vuepress page
+ */
+interface PageOptions {
+    /**
+     * If `filePath` is not set, this option will be used as the raw
+     * markdown content of the page.
+     *
+     * If `filePath` is set, this option will be ignored, while the
+     * content of the file will be used.
+     */
+    content?: string;
+    /**
+     * Absolute file path of the markdown source file.
+     */
+    filePath?: string;
+    /**
+     * Default frontmatter of the page, which could be overridden by
+     * the frontmatter of the markdown content.
+     */
+    frontmatter?: PageFrontmatter;
+    /**
+     * If this option is set, it will be used as the final route path
+     * of the page, ignoring the relative path and permalink.
+     */
+    path?: string;
+}
+
+declare type PromiseOrNot<T> = Promise<T> | T;
+declare type Closable = {
+    close(): void;
+};
+declare type Hook<Exposed, Normalized = Exposed, Result = Normalized extends (...args: any) => infer U ? U extends Promise<infer V> ? V : U : void> = {
+    exposed: Exposed;
+    normalized: Normalized;
+    result: Result;
+};
+declare type LifeCycleHook<T extends unknown[] = []> = Hook<(app: App, ...args: T) => PromiseOrNot<void>>;
+declare type ExtendsHook<T> = Hook<(extendable: T, app: App) => PromiseOrNot<void>>;
+declare type ClientConfigFileHook = Hook<string | ((app: App) => PromiseOrNot<string>), (app: App) => Promise<string>>;
+declare type AliasDefineHook = Hook<Record<string, any> | ((app: App, isServer: boolean) => PromiseOrNot<Record<string, any>>), (app: App, isServer: boolean) => Promise<Record<string, any>>>;
+/**
+ * List of hooks
+ */
+interface Hooks {
+    onInitialized: LifeCycleHook;
+    onPrepared: LifeCycleHook;
+    onWatched: LifeCycleHook<[watchers: Closable[], restart: () => Promise<void>]>;
+    onGenerated: LifeCycleHook;
+    extendsMarkdownOptions: ExtendsHook<MarkdownOptions>;
+    extendsMarkdown: ExtendsHook<Markdown>;
+    extendsPageOptions: ExtendsHook<PageOptions>;
+    extendsPage: ExtendsHook<Page>;
+    extendsBundlerOptions: ExtendsHook<any>;
+    clientConfigFile: ClientConfigFileHook;
+    alias: AliasDefineHook;
+    define: AliasDefineHook;
+}
+/**
+ * Name of hooks
+ */
+declare type HooksName = keyof Hooks;
+/**
+ * Exposed hooks API that can be accessed by a plugin
+ */
+declare type HooksExposed = {
+    [K in HooksName]: Hooks[K]['exposed'];
+};
+/**
+ * Normalized hooks
+ */
+declare type HooksNormalized = {
+    [K in HooksName]: Hooks[K]['normalized'];
+};
+/**
+ * Result of hooks
+ */
+declare type HooksResult = {
+    [K in HooksName]: Hooks[K]['result'];
+};
+/**
+ * Hook item
+ */
+interface HookItem<T extends HooksName> {
+    pluginName: string;
+    hook: HooksNormalized[T];
+}
+/**
+ * Hook items queue
+ */
+interface HookQueue<T extends HooksName> {
+    name: T;
+    items: HookItem<T>[];
+    add: (item: HookItem<T>) => void;
+    process: (...args: Parameters<HooksNormalized[T]>) => Promise<HooksResult[T][]>;
+}
+
+/**
+ * Vuepress plugin system
+ */
+interface PluginApi {
+    /**
+     * Plugins that have been used
+     */
+    plugins: PluginObject[];
+    /**
+     * All available hooks
+     */
+    hooks: {
+        [K in HooksName]: HookQueue<K>;
+    };
+    /**
+     * Register hooks of plugins
+     *
+     * Should be invoked before applying a hook
+     */
+    registerHooks: () => void;
+}
+
+/**
+ * Vuepress plugin
+ *
+ * A plugin should be rather:
+ * - an object (`PluginObject`)
+ * - a function that returns an object (`PluginFunction`)
+ *
+ * A plugin package should have a `Plugin` as the default export
+ */
+declare type Plugin<T extends PluginObject = PluginObject> = T | PluginFunction<T>;
+/**
+ * Vuepress plugin function
+ *
+ * It accepts plugin options and vuepress app, returns plugin object
+ */
+declare type PluginFunction<T extends PluginObject = PluginObject> = (app: App) => T;
+/**
+ * Vuepress plugin object
+ */
+interface PluginObject extends Partial<HooksExposed> {
+    name: string;
+    multiple?: boolean;
+}
+/**
+ * Config field for plugins
+ */
+declare type PluginConfig = (Plugin | Plugin[])[];
+
+/**
+ * Vuepress theme
+ *
+ * Theme is a special type of plugin, it should be rather:
+ * - an object (`ThemeObject`)
+ * - a function that returns an object (`ThemeFunction`)
+ *
+ * A theme package should have a `Theme` as the default export
+ */
+declare type Theme = Plugin<ThemeObject>;
+/**
+ * Vuepress theme function
+ */
+declare type ThemeFunction = PluginFunction<ThemeObject>;
+/**
+ * Vuepress theme object
+ */
+interface ThemeObject extends Omit<PluginObject, 'multiple'> {
+    /**
+     * Extended parent theme
+     */
+    extends?: Theme;
+    /**
+     * Allow using plugins in theme
+     */
+    plugins?: PluginConfig;
+    /**
+     * Allow overriding default templateBuild
+     */
+    templateBuild?: string;
+    /**
+     * Allow overriding default templateDev
+     */
+    templateDev?: string;
+}
+/**
+ * Resolved theme info
+ */
+interface ThemeInfo {
+    /**
+     * Plugins, including theme itself and plugins used by theme
+     */
+    plugins: PluginConfig;
+    /**
+     * Default build template
+     */
+    templateBuild?: string;
+    /**
+     * Default dev template
+     */
+    templateDev?: string;
+}
+
+/**
+ * Vuepress app common config that shared between dev and build
+ */
+interface AppConfigCommon extends Partial<SiteData> {
+    source: string;
+    dest?: string;
+    temp?: string;
+    cache?: string;
+    public?: string;
+    debug?: boolean;
+    markdown?: MarkdownOptions;
+    pagePatterns?: string[];
+    permalinkPattern?: string | null;
+    bundler: Bundler;
+    theme: Theme;
+    plugins?: PluginConfig;
+}
+/**
+ * Vuepress app config for dev
+ */
+interface AppConfigDev {
+    /**
+     * Specify the host to use for the dev server
+     *
+     * @default '0.0.0.0'
+     */
+    host?: string;
+    /**
+     * Specify the port to use for the dev server
+     *
+     * @default 8080
+     */
+    port?: number;
+    /**
+     * Whether to open the browser after dev-server had been started
+     *
+     * @default false
+     */
+    open?: boolean;
+    /**
+     * Specify the path of the HTML template to be used for dev
+     *
+     * @default '@vuepress/client/templates/dev.html'
+     */
+    templateDev?: string;
+}
+/**
+ * Vuepress app config for build
+ */
+interface AppConfigBuild {
+    /**
+     * Determine what resource files should be preloaded. Use boolean value to
+     * totally enable / disable.
+     *
+     * @default true
+     */
+    shouldPreload?: ((file: string, type: string) => boolean) | boolean;
+    /**
+     * Determine what resource files should be prefetched. Use boolean value to
+     * totally enable / disable.
+     *
+     * @default false
+     */
+    shouldPrefetch?: ((file: string, type: string) => boolean) | boolean;
+    /**
+     * Specify the path of the HTML template to be used for build
+     *
+     * @default '@vuepress/client/templates/build.html'
+     */
+    templateBuild?: string;
+}
+/**
+ * Vuepress app config
+ */
+declare type AppConfig = AppConfigCommon & AppConfigDev & AppConfigBuild;
+/**
+ * Vuepress app options
+ */
+declare type AppOptions = Required<AppConfig>;
+
+/**
+ * Directory util function
+ */
+declare type AppDirFunction = (...args: string[]) => string;
+/**
+ * Directory utils
+ */
+interface AppDir {
+    cache: AppDirFunction;
+    temp: AppDirFunction;
+    source: AppDirFunction;
+    dest: AppDirFunction;
+    public: AppDirFunction;
+    client: AppDirFunction;
+}
+/**
+ * Environment flags
+ */
+interface AppEnv {
+    /**
+     * Is running in build mode or not
+     */
+    isBuild: boolean;
+    /**
+     * Is running in dev mode or not
+     */
+    isDev: boolean;
+    /**
+     * Is debug mode enabled or not
+     */
+    isDebug: boolean;
+}
+/**
+ * Write temp file util
+ */
+declare type AppWriteTemp = (file: string, content: string) => Promise<string>;
+
+/**
+ * Vuepress app
+ */
+interface App {
+    /**
+     * Directory utils
+     */
+    dir: AppDir;
+    /**
+     * Environment flags
+     */
+    env: AppEnv;
+    /**
+     * Options that filled all optional fields with a default value
+     */
+    options: AppOptions;
+    /**
+     * Plugin system
+     */
+    pluginApi: PluginApi;
+    /**
+     * Site data, which will be used in client side
+     */
+    siteData: SiteData;
+    /**
+     * Version of vuepress core
+     */
+    version: string;
+    /**
+     * Write temp file
+     */
+    writeTemp: AppWriteTemp;
+    /**
+     * Use a plugin
+     */
+    use: (plugin: Plugin) => this;
+    /**
+     * Initialize app.
+     *
+     * - Theme and plugin will be loaded.
+     * - Layouts and pages will be resolved.
+     */
+    init: () => Promise<void>;
+    /**
+     * Prepare data for client and write temp files.
+     *
+     * Should be called after `app.init()`.
+     */
+    prepare: () => Promise<void>;
+    /**
+     * Markdown-it instance.
+     *
+     * Only available after initialization
+     */
+    markdown: Markdown;
+    /**
+     * Page objects.
+     *
+     * Only available after initialization
+     */
+    pages: Page[];
+}
+/**
+ * Vuepress dev app
+ */
+interface DevApp extends App {
+    /**
+     * Start dev server
+     *
+     * Should be called after `app.prepare()`.
+     */
+    dev: () => ReturnType<Bundler['dev']>;
+}
+/**
+ * Vuepress build app
+ */
+interface BuildApp extends App {
+    /**
+     * Build static files
+     *
+     * Should be called after `app.prepare()`.
+     */
+    build: () => ReturnType<Bundler['build']>;
+}
+
+/**
+ * Generate client configs temp file
+ */
+declare const prepareClientConfigs: (app: App) => Promise<void>;
+
+/**
+ * Generate page component temp file of a single page
+ */
+declare const preparePageComponent: (app: App, page: Page) => Promise<void>;
+
+/**
+ * Generate page data temp file of a single page
+ */
+declare const preparePageData: (app: App, page: Page) => Promise<void>;
+
+/**
+ * Generate page key to page component map temp file
+ */
+declare const preparePagesComponents: (app: App) => Promise<void>;
+
+/**
+ * Generate page path to page data map temp file
+ */
+declare const preparePagesData: (app: App) => Promise<void>;
+
+/**
+ * Generate routes temp file
+ */
+declare const preparePagesRoutes: (app: App) => Promise<void>;
+
+/**
+ * Generate site data temp file
+ */
+declare const prepareSiteData: (app: App) => Promise<void>;
+
+/**
+ * Initialize a vuepress app
+ *
+ * Plugins should be used before initialization.
+ */
+declare const appInit: (app: App) => Promise<void>;
+
+/**
+ * Prepare files for development or build
+ *
+ * - page components
+ * - routes
+ * - site data
+ * - other files that generated by plugins
+ */
+declare const appPrepare: (app: App) => Promise<void>;
+
+declare const appUse: (app: App, rawPlugin: Plugin) => App;
+
+/**
+ * Create vuepress app
+ */
+declare const createBaseApp: (config: AppConfig, isBuild?: boolean) => App;
+
+/**
+ * Create vuepress build app
+ */
+declare const createBuildApp: (config: AppConfig) => BuildApp;
+
+/**
+ * Create vuepress dev app
+ */
+declare const createDevApp: (config: AppConfig) => DevApp;
+
+/**
+ * Create directory util function
+ */
+declare const createAppDirFunction: (baseDir: string) => AppDirFunction;
+/**
+ * Resolve directory utils for vuepress app
+ */
+declare const resolveAppDir: (options: AppOptions) => AppDir;
+
+/**
+ * Resolve environment flags for vuepress app
+ */
+declare const resolveAppEnv: (options: AppOptions, isBuild: boolean) => AppEnv;
+
+/**
+ * Create app options with default values
+ */
+declare const resolveAppOptions: ({ base, lang, title, description, head, locales, source, dest, temp, cache, public: publicDir, host, port, open, templateDev, shouldPreload, shouldPrefetch, templateBuild, bundler, debug, markdown, pagePatterns, permalinkPattern, plugins, theme, }: AppConfig) => AppOptions;
+
+/**
+ * Resolve pages for vuepress app
+ */
+declare const resolveAppPages: (app: App) => Promise<Page[]>;
+
+/**
+ * Resolve site data for vuepress app
+ *
+ * Site data will also be used in client
+ */
+declare const resolveAppSiteData: (options: AppOptions) => SiteData;
+
+/**
+ * Resolve version of vuepress app
+ */
+declare const resolveAppVersion: () => string;
+
+/**
+ * Resolve write temp file util for vuepress app
+ */
+declare const resolveAppWriteTemp: (dir: AppDir) => AppWriteTemp;
+
+/**
+ * Resolve a plugin object according to name / path / module and config
+ */
+declare const resolvePluginObject: <T extends PluginObject = PluginObject>(app: App, plugin: Plugin<T>) => T;
+
+/**
+ * Resolve theme info and its parent theme info
+ */
+declare const resolveThemeInfo: (app: App, theme: Theme) => ThemeInfo;
+
+declare const createPage: (app: App, options: PageOptions) => Promise<Page>;
+
+/**
+ * Infer page path according to file path
+ */
+declare const inferPagePath: ({ app, filePathRelative, }: {
+    app: App;
+    filePathRelative: string | null;
+}) => {
+    pathInferred: string | null;
+    pathLocale: string;
+};
+
+/**
+ * Render page content and extract related info
+ */
+declare const renderPageContent: ({ app, content, filePath, filePathRelative, options, }: {
+    app: App;
+    content: string;
+    filePath: string | null;
+    filePathRelative: string | null;
+    options: PageOptions;
+}) => Promise<{
+    contentRendered: string;
+    deps: string[];
+    excerpt: string;
+    frontmatter: PageFrontmatter;
+    headers: MarkdownHeader[];
+    links: MarkdownLink[];
+    sfcBlocks: MarkdownSfcBlocks;
+    title: string;
+}>;
+
+/**
+ * Resolve page component and related info
+ */
+declare const resolvePageComponentInfo: ({ app, htmlFilePathRelative, key, }: {
+    app: App;
+    htmlFilePathRelative: string;
+    key: string;
+}) => Promise<{
+    componentFilePath: string;
+    componentFilePathRelative: string;
+    componentFileChunkName: string;
+}>;
+
+/**
+ * Resolve page data file path
+ */
+declare const resolvePageDataInfo: ({ app, htmlFilePathRelative, key, }: {
+    app: App;
+    htmlFilePathRelative: string;
+    key: string;
+}) => {
+    dataFilePath: string;
+    dataFilePathRelative: string;
+    dataFileChunkName: string;
+};
+
+/**
+ * Resolve page date according to frontmatter or file path
+ *
+ * It will be resolved as 'yyyy-MM-dd' format
+ */
+declare const resolvePageDate: ({ frontmatter, filePathRelative, }: {
+    frontmatter: PageFrontmatter;
+    filePathRelative: string | null;
+}) => string;
+
+/**
+ * Resolve page file content according to filePath or options content
+ */
+declare const resolvePageFileContent: ({ filePath, options, }: {
+    filePath: string | null;
+    options: PageOptions;
+}) => Promise<string>;
+
+/**
+ * Resolve absolute and relative path of page file
+ */
+declare const resolvePageFilePath: ({ app, options, }: {
+    app: App;
+    options: PageOptions;
+}) => {
+    filePath: string | null;
+    filePathRelative: string | null;
+};
+
+/**
+ * Resolve page rendered html file path
+ */
+declare const resolvePageHtmlInfo: ({ app, path: pagePath, }: {
+    app: App;
+    path: string;
+}) => {
+    htmlFilePath: string;
+    htmlFilePathRelative: string;
+};
+
+/**
+ * Resolve page key to identify the page
+ */
+declare const resolvePageKey: ({ path }: {
+    path: string;
+}) => string;
+
+/**
+ * Resolve language of page
+ */
+declare const resolvePageLang: ({ app, frontmatter, pathLocale, }: {
+    app: App;
+    frontmatter: PageFrontmatter;
+    pathLocale: string;
+}) => string;
+
+/**
+ * Resolve the final route path of a page
+ */
+declare const resolvePagePath: ({ permalink, pathInferred, options, }: {
+    permalink: string | null;
+    pathInferred: string | null;
+    options: PageOptions;
+}) => string;
+
+/**
+ * Resolve page permalink from frontmatter / options / pattern
+ */
+declare const resolvePagePermalink: ({ app, frontmatter, slug, date, pathInferred, pathLocale, }: {
+    app: App;
+    frontmatter: PageFrontmatter;
+    slug: string;
+    date: string;
+    pathInferred: string | null;
+    pathLocale: string;
+}) => string | null;
+
+/**
+ * Resolve page route meta
+ */
+declare const resolvePageRouteMeta: ({ frontmatter, }: {
+    frontmatter: PageFrontmatter;
+}) => Record<string, unknown>;
+
+/**
+ * Resolve page slug from filename
+ */
+declare const resolvePageSlug: ({ filePathRelative, }: {
+    filePathRelative: string | null;
+}) => string;
+
+/**
+ * Create hook queue for plugin system
+ */
+declare const createHookQueue: <T extends keyof Hooks>(name: T) => HookQueue<T>;
+
+declare const createPluginApi: () => PluginApi;
+
+declare const createPluginApiHooks: () => PluginApi['hooks'];
+
+declare const createPluginApiRegisterHooks: (plugins: PluginApi['plugins'], hooks: PluginApi['hooks']) => PluginApi['registerHooks'];
+
+/**
+ * Normalize alias and define hook
+ */
+declare const normalizeAliasDefineHook: (hook: AliasDefineHook['exposed']) => AliasDefineHook['normalized'];
+
+/**
+ * Normalize hook for client config file
+ */
+declare const normalizeClientConfigFileHook: (hook: ClientConfigFileHook['exposed']) => ClientConfigFileHook['normalized'];
+
+export { AliasDefineHook, App, AppConfig, AppConfigBuild, AppConfigCommon, AppConfigDev, AppDir, AppDirFunction, AppEnv, AppOptions, AppWriteTemp, BuildApp, Bundler, ClientConfigFileHook, DevApp, ExtendsHook, Hook, HookItem, HookQueue, Hooks, HooksExposed, HooksName, HooksNormalized, HooksResult, LifeCycleHook, Page, PageOptions, Plugin, PluginApi, PluginConfig, PluginFunction, PluginObject, Theme, ThemeFunction, ThemeInfo, ThemeObject, appInit, appPrepare, appUse, createAppDirFunction, createBaseApp, createBuildApp, createDevApp, createHookQueue, createPage, createPluginApi, createPluginApiHooks, createPluginApiRegisterHooks, inferPagePath, normalizeAliasDefineHook, normalizeClientConfigFileHook, prepareClientConfigs, preparePageComponent, preparePageData, preparePagesComponents, preparePagesData, preparePagesRoutes, prepareSiteData, renderPageContent, resolveAppDir, resolveAppEnv, resolveAppOptions, resolveAppPages, resolveAppSiteData, resolveAppVersion, resolveAppWriteTemp, resolvePageComponentInfo, resolvePageDataInfo, resolvePageDate, resolvePageFileContent, resolvePageFilePath, resolvePageHtmlInfo, resolvePageKey, resolvePageLang, resolvePagePath, resolvePagePermalink, resolvePageRouteMeta, resolvePageSlug, resolvePluginObject, resolveThemeInfo };
+Æ/dist/index.js≈iˇ// src/app/prepare/prepareClientConfigs.ts
+var prepareClientConfigs = async (app) => {
+  const clientConfigFiles = await app.pluginApi.hooks.clientConfigFile.process(
+    app
+  );
+  const content = `${clientConfigFiles.map((filePath, index) => `import clientConfig${index} from '${filePath}'`).join("\n")}
+
+export const clientConfigs = [
+${clientConfigFiles.map((_, index) => `  clientConfig${index},`).join("\n")}
+]
+`;
+  await app.writeTemp("internal/clientConfigs.js", content);
+};
+
+// src/app/prepare/preparePageComponent.ts
+var preparePageComponent = async (app, page) => {
+  await app.writeTemp(
+    page.componentFilePathRelative,
+    [
+      `${page.sfcBlocks.template?.tagOpen}<div>${page.sfcBlocks.template?.contentStripped}</div>${page.sfcBlocks.template?.tagClose}
+`,
+      page.sfcBlocks.script?.content,
+      page.sfcBlocks.scriptSetup?.content,
+      ...page.sfcBlocks.styles.map((item) => item.content),
+      ...page.sfcBlocks.customBlocks.map((item) => item.content)
+    ].join("\n")
+  );
+};
+
+// src/app/prepare/preparePageData.ts
+var HMR_CODE = `
+if (import.meta.webpackHot) {
+  import.meta.webpackHot.accept()
+  if (__VUE_HMR_RUNTIME__.updatePageData) {
+    __VUE_HMR_RUNTIME__.updatePageData(data)
+  }
+}
+
+if (import.meta.hot) {
+  import.meta.hot.accept(({ data }) => {
+    __VUE_HMR_RUNTIME__.updatePageData(data)
+  })
+}
+`;
+var preparePageData = async (app, page) => {
+  let content = `export const data = JSON.parse(${JSON.stringify(
+    JSON.stringify(page.data)
+  )})
+`;
+  if (app.env.isDev) {
+    content += HMR_CODE;
+  }
+  await app.writeTemp(page.dataFilePathRelative, content);
+};
+
+// src/app/prepare/preparePagesComponents.ts
+var preparePagesComponents = async (app) => {
+  const content = `import { defineAsyncComponent } from 'vue'
+
+export const pagesComponents = {${app.pages.map(
+    ({ key, path: path9, componentFilePath, componentFileChunkName }) => `
+  // path: ${path9}
+  ${JSON.stringify(key)}: defineAsyncComponent(() => import(${componentFileChunkName ? `/* webpackChunkName: "${componentFileChunkName}" */` : ""}${JSON.stringify(componentFilePath)})),`
+  ).join("")}
+}
+`;
+  await app.writeTemp("internal/pagesComponents.js", content);
+};
+
+// src/app/prepare/preparePagesData.ts
+var preparePagesData = async (app) => {
+  const content = `export const pagesData = {${app.pages.map(
+    ({ key, path: path9, dataFilePath, dataFileChunkName }) => `
+  // path: ${path9}
+  ${JSON.stringify(key)}: () => import(${dataFileChunkName ? `/* webpackChunkName: "${dataFileChunkName}" */` : ""}${JSON.stringify(dataFilePath)}).then(({ data }) => data),`
+  ).join("")}
+}
+`;
+  await app.writeTemp("internal/pagesData.js", content);
+};
+
+// src/app/prepare/preparePagesRoutes.ts
+import { ensureLeadingSlash } from "@vuepress/shared";
+var resolvePageRouteItem = ({
+  key,
+  path: path9,
+  pathInferred,
+  filePathRelative,
+  routeMeta
+}) => {
+  const redirectsSet = /* @__PURE__ */ new Set();
+  redirectsSet.add(decodeURI(path9));
+  if (path9.endsWith("/")) {
+    redirectsSet.add(path9 + "index.html");
+  } else {
+    redirectsSet.add(path9.replace(/.html$/, ""));
+  }
+  if (pathInferred !== null) {
+    redirectsSet.add(pathInferred);
+    redirectsSet.add(encodeURI(pathInferred));
+  }
+  if (filePathRelative !== null) {
+    const filenamePath = ensureLeadingSlash(filePathRelative);
+    redirectsSet.add(filenamePath);
+    redirectsSet.add(encodeURI(filenamePath));
+  }
+  redirectsSet.delete(path9);
+  return [key, path9, routeMeta, [...redirectsSet]];
+};
+var preparePagesRoutes = async (app) => {
+  const routeItems = app.pages.map(resolvePageRouteItem);
+  const content = `export const pagesRoutes = [${routeItems.map((routeItem) => `
+  ${JSON.stringify(routeItem)},`).join("")}
+]
+`;
+  await app.writeTemp("internal/pagesRoutes.js", content);
+};
+
+// src/app/prepare/prepareSiteData.ts
+var HMR_CODE2 = `
+if (import.meta.webpackHot) {
+  import.meta.webpackHot.accept()
+  if (__VUE_HMR_RUNTIME__.updateSiteData) {
+    __VUE_HMR_RUNTIME__.updateSiteData(siteData)
+  }
+}
+
+if (import.meta.hot) {
+  import.meta.hot.accept(({ siteData }) => {
+    __VUE_HMR_RUNTIME__.updateSiteData(siteData)
+  })
+}
+`;
+var prepareSiteData = async (app) => {
+  let content = `export const siteData = JSON.parse(${JSON.stringify(
+    JSON.stringify(app.siteData)
+  )})
+`;
+  if (app.env.isDev) {
+    content += HMR_CODE2;
+  }
+  await app.writeTemp("internal/siteData.js", content);
+};
+
+// src/app/appInit.ts
+import { debug as debug3 } from "@vuepress/utils";
+
+// src/app/resolveAppMarkdown.ts
+import { createMarkdown } from "@vuepress/markdown";
+var resolveAppMarkdown = async (app) => {
+  await app.pluginApi.hooks.extendsMarkdownOptions.process(
+    app.options.markdown,
+    app
+  );
+  const markdown = createMarkdown(app.options.markdown);
+  await app.pluginApi.hooks.extendsMarkdown.process(markdown, app);
+  return markdown;
+};
+
+// src/app/resolveAppPages.ts
+import { debug as debug2, globby } from "@vuepress/utils";
+
+// src/page/inferPagePath.ts
+import { ensureLeadingSlash as ensureLeadingSlash2, resolveLocalePath } from "@vuepress/shared";
+var inferPagePath = ({
+  app,
+  filePathRelative
+}) => {
+  if (!filePathRelative) {
+    return {
+      pathInferred: null,
+      pathLocale: "/"
+    };
+  }
+  const pathInferred = ensureLeadingSlash2(filePathRelative).replace(/\.md$/, ".html").replace(/\/(README|index).html$/i, "/");
+  const pathLocale = resolveLocalePath(app.siteData.locales, pathInferred);
+  return {
+    pathInferred,
+    pathLocale
+  };
+};
+
+// src/page/renderPageContent.ts
+var renderPageContent = async ({
+  app,
+  content,
+  filePath,
+  filePathRelative,
+  options
+}) => {
+  const markdownEnv = {
+    base: app.options.base,
+    filePath,
+    filePathRelative,
+    frontmatter: { ...options.frontmatter }
+  };
+  const contentRendered = app.markdown.render(content, markdownEnv);
+  const {
+    excerpt = "",
+    frontmatter = {},
+    headers = [],
+    importedFiles = [],
+    links = [],
+    sfcBlocks = {
+      template: null,
+      script: null,
+      scriptSetup: null,
+      scripts: [],
+      styles: [],
+      customBlocks: []
+    },
+    title = ""
+  } = markdownEnv;
+  return {
+    contentRendered,
+    deps: importedFiles,
+    excerpt,
+    frontmatter,
+    headers,
+    links,
+    sfcBlocks,
+    title: frontmatter.title ?? title
+  };
+};
+
+// src/page/resolvePageComponentInfo.ts
+import { path } from "@vuepress/utils";
+var resolvePageComponentInfo = async ({
+  app,
+  htmlFilePathRelative,
+  key
+}) => {
+  const componentFilePathRelative = path.join(
+    "pages",
+    `${htmlFilePathRelative}.vue`
+  );
+  const componentFilePath = app.dir.temp(componentFilePathRelative);
+  const componentFileChunkName = key;
+  return {
+    componentFilePath,
+    componentFilePathRelative,
+    componentFileChunkName
+  };
+};
+
+// src/page/resolvePageDataInfo.ts
+import { path as path2 } from "@vuepress/utils";
+var resolvePageDataInfo = ({
+  app,
+  htmlFilePathRelative,
+  key
+}) => {
+  const dataFilePathRelative = path2.join("pages", `${htmlFilePathRelative}.js`);
+  const dataFilePath = app.dir.temp(dataFilePathRelative);
+  const dataFileChunkName = key;
+  return {
+    dataFilePath,
+    dataFilePathRelative,
+    dataFileChunkName
+  };
+};
+
+// src/page/resolvePageDate.ts
+import { formatDateString, isString } from "@vuepress/shared";
+import { path as path3 } from "@vuepress/utils";
+var FILENAME_DATE_RE = /^(\d{4})-(\d{1,2})(?:-(\d{1,2}))?-(.*)$/;
+var DIRNAME_DATE_RE = /(\d{4})\/(\d{1,2})(?:\/(\d{1,2}))?(\/|$)/;
+var DEFAULT_DATE = "0000-00-00";
+var resolvePageDate = ({
+  frontmatter,
+  filePathRelative
+}) => {
+  if (frontmatter.date instanceof Date) {
+    return formatDateString(
+      [
+        frontmatter.date.getUTCFullYear(),
+        frontmatter.date.getUTCMonth() + 1,
+        frontmatter.date.getUTCDate()
+      ].join("-"),
+      DEFAULT_DATE
+    );
+  }
+  if (isString(frontmatter.date)) {
+    return formatDateString(frontmatter.date, DEFAULT_DATE);
+  }
+  if (filePathRelative === null) {
+    return DEFAULT_DATE;
+  }
+  const filename = path3.parse(filePathRelative).name;
+  if (filename) {
+    const matches = filename.match(FILENAME_DATE_RE);
+    if (matches) {
+      return formatDateString(
+        `${matches[1]}-${matches[2]}-${matches[3] ?? "01"}`,
+        DEFAULT_DATE
+      );
+    }
+  }
+  const dirname = path3.dirname(filePathRelative);
+  if (dirname !== ".") {
+    const matches = dirname.match(DIRNAME_DATE_RE);
+    if (matches) {
+      return formatDateString(
+        `${matches[1]}-${matches[2]}-${matches[3] ?? "01"}`,
+        DEFAULT_DATE
+      );
+    }
+  }
+  return DEFAULT_DATE;
+};
+
+// src/page/resolvePageFileContent.ts
+import { debug, fs } from "@vuepress/utils";
+var log = debug("vuepress:core/page");
+var resolvePageFileContent = async ({
+  filePath,
+  options
+}) => {
+  if (filePath) {
+    try {
+      const content = await fs.readFile(filePath, "utf-8");
+      return content;
+    } catch (e) {
+      log(e instanceof Error ? e.message : e);
+    }
+  }
+  return options.content ?? "";
+};
+
+// src/page/resolvePageFilePath.ts
+import { logger, path as path4 } from "@vuepress/utils";
+var resolvePageFilePath = ({
+  app,
+  options
+}) => {
+  if (!options.filePath) {
+    return {
+      filePath: null,
+      filePathRelative: null
+    };
+  }
+  if (!path4.isAbsolute(options.filePath)) {
+    throw logger.createError(
+      `filePath is not absolute file path: ${options.filePath}}`
+    );
+  }
+  return {
+    filePath: options.filePath,
+    filePathRelative: path4.relative(app.dir.source(), options.filePath)
+  };
+};
+
+// src/page/resolvePageHtmlInfo.ts
+import { removeLeadingSlash } from "@vuepress/shared";
+var resolvePageHtmlInfo = ({
+  app,
+  path: pagePath
+}) => {
+  const htmlFilePathRelative = removeLeadingSlash(
+    decodeURI(pagePath.replace(/\/$/, "/index.html"))
+  );
+  const htmlFilePath = app.dir.dest(htmlFilePathRelative);
+  return {
+    htmlFilePath,
+    htmlFilePathRelative
+  };
+};
+
+// src/page/resolvePageKey.ts
+import { hash } from "@vuepress/utils";
+var resolvePageKey = ({ path: path9 }) => `v-${hash(path9)}`;
+
+// src/page/resolvePageLang.ts
+import { isString as isString2 } from "@vuepress/shared";
+var resolvePageLang = ({
+  app,
+  frontmatter,
+  pathLocale
+}) => {
+  if (isString2(frontmatter.lang) && frontmatter.lang) {
+    return frontmatter.lang;
+  }
+  return app.siteData.locales[pathLocale]?.lang ?? app.siteData.lang;
+};
+
+// src/page/resolvePagePath.ts
+import { ensureEndingSlash } from "@vuepress/shared";
+import { logger as logger2 } from "@vuepress/utils";
+var resolvePagePath = ({
+  permalink,
+  pathInferred,
+  options
+}) => {
+  let pagePath = options.path || permalink || pathInferred;
+  if (!pagePath) {
+    throw logger2.createError(
+      `page path is empty, page options: ${JSON.stringify(options, null, 2)}`
+    );
+  }
+  if (!pagePath.endsWith(".html")) {
+    pagePath = ensureEndingSlash(pagePath);
+  }
+  return encodeURI(pagePath);
+};
+
+// src/page/resolvePagePermalink.ts
+import { ensureLeadingSlash as ensureLeadingSlash3, isString as isString3 } from "@vuepress/shared";
+import { path as path5 } from "@vuepress/utils";
+var resolvePagePermalink = ({
+  app,
+  frontmatter,
+  slug,
+  date,
+  pathInferred,
+  pathLocale
+}) => {
+  if (isString3(frontmatter.permalink)) {
+    return frontmatter.permalink;
+  }
+  const permalinkPattern = getPermalinkPattern({ app, frontmatter });
+  if (permalinkPattern === null) {
+    return null;
+  }
+  const [year, month, day] = date.split("-");
+  const link = path5.join(
+    pathLocale,
+    permalinkPattern.replace(/:year/, year).replace(/:month/, month).replace(/:day/, day).replace(/:slug/, slug).replace(/:raw/, pathInferred?.replace(/^\//, "") ?? "")
+  );
+  return ensureLeadingSlash3(link);
+};
+var getPermalinkPattern = ({
+  app,
+  frontmatter
+}) => {
+  if (frontmatter.permalinkPattern === null) {
+    return null;
+  }
+  if (isString3(frontmatter.permalinkPattern)) {
+    return frontmatter.permalinkPattern;
+  }
+  return app.options.permalinkPattern;
+};
+
+// src/page/resolvePageRouteMeta.ts
+var resolvePageRouteMeta = ({
+  frontmatter
+}) => frontmatter.routeMeta ?? {};
+
+// src/page/resolvePageSlug.ts
+import { path as path6 } from "@vuepress/utils";
+var DATE_RE = /(\d{4}-\d{1,2}(-\d{1,2})?)-(.*)/;
+var resolvePageSlug = ({
+  filePathRelative
+}) => {
+  if (!filePathRelative) {
+    return "";
+  }
+  const filename = path6.parse(filePathRelative).name;
+  const match = filename.match(DATE_RE);
+  return match ? match[3] : filename;
+};
+
+// src/page/createPage.ts
+var createPage = async (app, options) => {
+  await app.pluginApi.hooks.extendsPageOptions.process(options, app);
+  const { filePath, filePathRelative } = resolvePageFilePath({
+    app,
+    options
+  });
+  const content = await resolvePageFileContent({ filePath, options });
+  const {
+    contentRendered,
+    deps,
+    excerpt,
+    frontmatter,
+    headers,
+    links,
+    sfcBlocks,
+    title
+  } = await renderPageContent({
+    app,
+    content,
+    filePath,
+    filePathRelative,
+    options
+  });
+  const routeMeta = resolvePageRouteMeta({ frontmatter });
+  const slug = resolvePageSlug({ filePathRelative });
+  const date = resolvePageDate({ frontmatter, filePathRelative });
+  const { pathInferred, pathLocale } = inferPagePath({ app, filePathRelative });
+  const lang = resolvePageLang({ app, frontmatter, pathLocale });
+  const permalink = resolvePagePermalink({
+    app,
+    frontmatter,
+    slug,
+    date,
+    pathInferred,
+    pathLocale
+  });
+  const path9 = resolvePagePath({ permalink, pathInferred, options });
+  const key = resolvePageKey({ path: path9 });
+  const { htmlFilePath, htmlFilePathRelative } = resolvePageHtmlInfo({
+    app,
+    path: path9
+  });
+  const {
+    componentFilePath,
+    componentFilePathRelative,
+    componentFileChunkName
+  } = await resolvePageComponentInfo({
+    app,
+    htmlFilePathRelative,
+    key
+  });
+  const { dataFilePath, dataFilePathRelative, dataFileChunkName } = resolvePageDataInfo({ app, htmlFilePathRelative, key });
+  const page = {
+    data: {
+      key,
+      path: path9,
+      title,
+      lang,
+      frontmatter,
+      excerpt,
+      headers
+    },
+    key,
+    path: path9,
+    title,
+    lang,
+    frontmatter,
+    excerpt,
+    headers,
+    content,
+    contentRendered,
+    date,
+    deps,
+    links,
+    pathInferred,
+    pathLocale,
+    permalink,
+    routeMeta,
+    sfcBlocks,
+    slug,
+    filePath,
+    filePathRelative,
+    componentFilePath,
+    componentFilePathRelative,
+    componentFileChunkName,
+    dataFilePath,
+    dataFilePathRelative,
+    dataFileChunkName,
+    htmlFilePath,
+    htmlFilePathRelative
+  };
+  await app.pluginApi.hooks.extendsPage.process(page, app);
+  return page;
+};
+
+// src/app/resolveAppPages.ts
+var log2 = debug2("vuepress:core/app");
+var resolveAppPages = async (app) => {
+  log2("resolveAppPages start");
+  const pageFilePaths = await globby(app.options.pagePatterns, {
+    absolute: true,
+    cwd: app.dir.source()
+  });
+  const pages = await Promise.all(
+    pageFilePaths.map((filePath) => createPage(app, { filePath }))
+  );
+  if (!pages.some((page) => page.path === "/404.html")) {
+    pages.push(
+      await createPage(app, {
+        path: "/404.html",
+        frontmatter: {
+          layout: "NotFound"
+        }
+      })
+    );
+  }
+  log2("resolveAppPages finish");
+  return pages;
+};
+
+// src/app/appInit.ts
+var log3 = debug3("vuepress:core/app");
+var appInit = async (app) => {
+  log3("init start");
+  app.pluginApi.registerHooks();
+  app.markdown = await resolveAppMarkdown(app);
+  app.pages = await resolveAppPages(app);
+  await app.pluginApi.hooks.onInitialized.process(app);
+  log3("init finish");
+};
+
+// src/app/appPrepare.ts
+import { debug as debug4 } from "@vuepress/utils";
+var log4 = debug4("vuepress:core/app");
+var appPrepare = async (app) => {
+  log4("prepare start");
+  for (const page of app.pages) {
+    await preparePageComponent(app, page);
+  }
+  await preparePagesComponents(app);
+  for (const page of app.pages) {
+    await preparePageData(app, page);
+  }
+  await preparePagesData(app);
+  await preparePagesRoutes(app);
+  await prepareSiteData(app);
+  await prepareClientConfigs(app);
+  await app.pluginApi.hooks.onPrepared.process(app);
+  log4("prepare finish");
+};
+
+// src/app/appUse.ts
+import { chalk, debug as debug5, warn } from "@vuepress/utils";
+
+// src/app/resolvePluginObject.ts
+import { isFunction } from "@vuepress/shared";
+var resolvePluginObject = (app, plugin) => isFunction(plugin) ? plugin(app) : plugin;
+
+// src/app/appUse.ts
+var log5 = debug5("vuepress:core/app");
+var appUse = (app, rawPlugin) => {
+  const pluginObject = resolvePluginObject(app, rawPlugin);
+  if (!pluginObject.name) {
+    warn(`an anonymous plugin or theme was detected and ignored`);
+    return app;
+  }
+  log5(`use plugin ${chalk.magenta(pluginObject.name)}`);
+  if (pluginObject.multiple !== true) {
+    const duplicateIndex = app.pluginApi.plugins.findIndex(
+      ({ name }) => name === pluginObject.name
+    );
+    if (duplicateIndex !== -1) {
+      app.pluginApi.plugins.splice(duplicateIndex, 1);
+      warn(
+        `plugin ${chalk.magenta(
+          pluginObject.name
+        )} has been used multiple times, only the last one will take effect`
+      );
+    }
+  }
+  app.pluginApi.plugins.push(pluginObject);
+  return app;
+};
+
+// src/pluginApi/createHookQueue.ts
+import { chalk as chalk2, debug as debug6, logger as logger3 } from "@vuepress/utils";
+var log6 = debug6("vuepress:core/plugin-api");
+var createHookQueue = (name) => {
+  const items = [];
+  const hookQueue = {
+    name,
+    items,
+    add: (item) => {
+      items.push(item);
+    },
+    process: async (...args) => {
+      const results = [];
+      for (const item of items) {
+        log6(
+          `process ${chalk2.magenta(name)} from ${chalk2.magenta(
+            item.pluginName
+          )}`
+        );
+        try {
+          const result = await item.hook(...args);
+          if (result !== void 0) {
+            results.push(result);
+          }
+        } catch (e) {
+          logger3.error(
+            `error in hook ${chalk2.magenta(name)} from ${chalk2.magenta(
+              item.pluginName
+            )}`
+          );
+          throw e;
+        }
+      }
+      return results;
+    }
+  };
+  return hookQueue;
+};
+
+// src/pluginApi/createPluginApiHooks.ts
+var createPluginApiHooks = () => ({
+  onInitialized: createHookQueue("onInitialized"),
+  onPrepared: createHookQueue("onPrepared"),
+  onWatched: createHookQueue("onWatched"),
+  onGenerated: createHookQueue("onGenerated"),
+  extendsMarkdownOptions: createHookQueue("extendsMarkdownOptions"),
+  extendsMarkdown: createHookQueue("extendsMarkdown"),
+  extendsPageOptions: createHookQueue("extendsPageOptions"),
+  extendsPage: createHookQueue("extendsPage"),
+  extendsBundlerOptions: createHookQueue("extendsBundlerOptions"),
+  clientConfigFile: createHookQueue("clientConfigFile"),
+  alias: createHookQueue("alias"),
+  define: createHookQueue("define")
+});
+
+// src/pluginApi/normalizeAliasDefineHook.ts
+import { isFunction as isFunction2 } from "@vuepress/shared";
+var normalizeAliasDefineHook = (hook) => async (app, isServer) => isFunction2(hook) ? hook(app, isServer) : hook;
+
+// src/pluginApi/normalizeClientConfigFileHook.ts
+import { isFunction as isFunction3 } from "@vuepress/shared";
+import { fs as fs2, logger as logger4 } from "@vuepress/utils";
+var normalizeClientConfigFileHook = (hook) => async (app) => {
+  const clientConfigFileResult = isFunction3(hook) ? await hook(app) : hook;
+  const isExisted = await fs2.pathExists(clientConfigFileResult);
+  if (!isExisted) {
+    throw logger4.createError(
+      `client config file does not exist: ${clientConfigFileResult}`
+    );
+  }
+  return clientConfigFileResult;
+};
+
+// src/pluginApi/createPluginApiRegisterHooks.ts
+var createPluginApiRegisterHooks = (plugins, hooks) => () => {
+  plugins.forEach(
+    ({
+      name: pluginName,
+      multiple,
+      alias,
+      define,
+      clientConfigFile,
+      ...commonHooks
+    }) => {
+      if (alias) {
+        hooks.alias.add({
+          pluginName,
+          hook: normalizeAliasDefineHook(alias)
+        });
+      }
+      if (define) {
+        hooks.define.add({
+          pluginName,
+          hook: normalizeAliasDefineHook(define)
+        });
+      }
+      if (clientConfigFile) {
+        hooks.clientConfigFile.add({
+          pluginName,
+          hook: normalizeClientConfigFileHook(clientConfigFile)
+        });
+      }
+      Object.keys(commonHooks).forEach((key) => {
+        if (hooks[key] && commonHooks[key]) {
+          hooks[key].add({
+            pluginName,
+            hook: commonHooks[key]
+          });
+        }
+      });
+    }
+  );
+};
+
+// src/pluginApi/createPluginApi.ts
+var createPluginApi = () => {
+  const plugins = [];
+  const hooks = createPluginApiHooks();
+  const registerHooks = createPluginApiRegisterHooks(plugins, hooks);
+  return {
+    plugins,
+    hooks,
+    registerHooks
+  };
+};
+
+// src/app/resolveAppDir.ts
+import { createRequire } from "module";
+import { path as path7 } from "@vuepress/utils";
+var require2 = createRequire(import.meta.url);
+var createAppDirFunction = (baseDir) => {
+  return (...args) => path7.resolve(baseDir, ...args);
+};
+var resolveAppDir = (options) => {
+  const cache = createAppDirFunction(options.cache);
+  const temp = createAppDirFunction(options.temp);
+  const source = createAppDirFunction(options.source);
+  const dest = createAppDirFunction(options.dest);
+  const publicDir = createAppDirFunction(options.public);
+  const client = createAppDirFunction(
+    path7.resolve(require2.resolve("@vuepress/client/package.json"), "..")
+  );
+  return {
+    cache,
+    temp,
+    source,
+    dest,
+    client,
+    public: publicDir
+  };
+};
+
+// src/app/resolveAppEnv.ts
+var resolveAppEnv = (options, isBuild) => ({
+  isBuild,
+  isDev: !isBuild,
+  isDebug: options.debug
+});
+
+// src/app/resolveAppOptions.ts
+import { createRequire as createRequire2 } from "module";
+import { path as path8 } from "@vuepress/utils";
+var require3 = createRequire2(import.meta.url);
+var resolveAppOptions = ({
+  base = "/",
+  lang = "en-US",
+  title = "",
+  description = "",
+  head = [],
+  locales = {},
+  source,
+  dest = path8.resolve(source, ".vuepress/dist"),
+  temp = path8.resolve(source, ".vuepress/.temp"),
+  cache = path8.resolve(source, ".vuepress/.cache"),
+  public: publicDir = path8.resolve(source, ".vuepress/public"),
+  host = "0.0.0.0",
+  port = 8080,
+  open = false,
+  templateDev = path8.normalize(
+    require3.resolve("@vuepress/client/templates/dev.html")
+  ),
+  shouldPreload = true,
+  shouldPrefetch = true,
+  templateBuild = path8.normalize(
+    require3.resolve("@vuepress/client/templates/build.html")
+  ),
+  bundler,
+  debug: debug7 = false,
+  markdown = {},
+  pagePatterns = ["**/*.md", "!.vuepress", "!node_modules"],
+  permalinkPattern = null,
+  plugins = [],
+  theme
+}) => ({
+  base,
+  lang,
+  title,
+  description,
+  head,
+  locales,
+  source,
+  dest,
+  temp,
+  cache,
+  public: publicDir,
+  host,
+  port,
+  open,
+  templateDev,
+  shouldPreload,
+  shouldPrefetch,
+  templateBuild,
+  bundler,
+  debug: debug7,
+  markdown,
+  pagePatterns,
+  permalinkPattern,
+  plugins,
+  theme
+});
+
+// src/app/resolveAppSiteData.ts
+var resolveAppSiteData = (options) => ({
+  base: options.base,
+  lang: options.lang,
+  title: options.title,
+  description: options.description,
+  head: options.head,
+  locales: options.locales
+});
+
+// src/app/resolveAppVersion.ts
+import { createRequire as createRequire3 } from "module";
+import { fs as fs3 } from "@vuepress/utils";
+var require4 = createRequire3(import.meta.url);
+var resolveAppVersion = () => {
+  const pkgJson = fs3.readJsonSync(
+    require4.resolve("@vuepress/core/package.json")
+  );
+  return pkgJson.version;
+};
+
+// src/app/resolveAppWriteTemp.ts
+import { fs as fs4 } from "@vuepress/utils";
+var resolveAppWriteTemp = (dir) => {
+  const tempCache = /* @__PURE__ */ new Map();
+  const writeTemp = async (file, content) => {
+    const filePath = dir.temp(file);
+    const contentCached = tempCache.get(filePath);
+    if (contentCached !== content) {
+      await fs4.outputFile(filePath, content);
+      tempCache.set(filePath, content);
+    }
+    return filePath;
+  };
+  return writeTemp;
+};
+
+// src/app/resolveThemeInfo.ts
+var resolveThemeInfo = (app, theme) => {
+  const themeObject = resolvePluginObject(app, theme);
+  const themeInfo = {
+    plugins: [...themeObject.plugins ?? [], themeObject],
+    templateBuild: themeObject.templateBuild,
+    templateDev: themeObject.templateDev
+  };
+  if (!themeObject.extends) {
+    return themeInfo;
+  }
+  const parentThemeInfo = resolveThemeInfo(app, themeObject.extends);
+  return {
+    plugins: [...parentThemeInfo.plugins, ...themeInfo.plugins],
+    templateBuild: themeObject.templateBuild ?? parentThemeInfo.templateBuild,
+    templateDev: themeObject.templateDev ?? parentThemeInfo.templateDev
+  };
+};
+
+// src/app/setupAppThemeAndPlugins.ts
+var setupAppThemeAndPlugins = (app, config) => {
+  const themeInfo = resolveThemeInfo(app, app.options.theme);
+  app.options.templateDev = config.templateDev ?? themeInfo.templateDev ?? app.options.templateDev;
+  app.options.templateBuild = config.templateBuild ?? themeInfo.templateBuild ?? app.options.templateBuild;
+  [...themeInfo.plugins, ...app.options.plugins].flat().forEach((plugin) => app.use(plugin));
+};
+
+// src/app/createBaseApp.ts
+var createBaseApp = (config, isBuild = false) => {
+  const options = resolveAppOptions(config);
+  const dir = resolveAppDir(options);
+  const env = resolveAppEnv(options, isBuild);
+  const pluginApi = createPluginApi();
+  const siteData = resolveAppSiteData(options);
+  const version = resolveAppVersion();
+  const writeTemp = resolveAppWriteTemp(dir);
+  const app = {
+    options,
+    siteData,
+    version,
+    dir,
+    env,
+    pluginApi,
+    writeTemp,
+    use: (plugin) => appUse(app, plugin),
+    init: () => appInit(app),
+    prepare: () => appPrepare(app)
+  };
+  setupAppThemeAndPlugins(app, config);
+  return app;
+};
+
+// src/app/createBuildApp.ts
+var createBuildApp = (config) => {
+  const app = createBaseApp(config, true);
+  app.build = () => app.options.bundler.build(app);
+  return app;
+};
+
+// src/app/createDevApp.ts
+var createDevApp = (config) => {
+  const app = createBaseApp(config, false);
+  app.dev = () => app.options.bundler.dev(app);
+  return app;
+};
+export {
+  appInit,
+  appPrepare,
+  appUse,
+  createAppDirFunction,
+  createBaseApp,
+  createBuildApp,
+  createDevApp,
+  createHookQueue,
+  createPage,
+  createPluginApi,
+  createPluginApiHooks,
+  createPluginApiRegisterHooks,
+  inferPagePath,
+  normalizeAliasDefineHook,
+  normalizeClientConfigFileHook,
+  prepareClientConfigs,
+  preparePageComponent,
+  preparePageData,
+  preparePagesComponents,
+  preparePagesData,
+  preparePagesRoutes,
+  prepareSiteData,
+  renderPageContent,
+  resolveAppDir,
+  resolveAppEnv,
+  resolveAppOptions,
+  resolveAppPages,
+  resolveAppSiteData,
+  resolveAppVersion,
+  resolveAppWriteTemp,
+  resolvePageComponentInfo,
+  resolvePageDataInfo,
+  resolvePageDate,
+  resolvePageFileContent,
+  resolvePageFilePath,
+  resolvePageHtmlInfo,
+  resolvePageKey,
+  resolvePageLang,
+  resolvePagePath,
+  resolvePagePermalink,
+  resolvePageRouteMeta,
+  resolvePageSlug,
+  resolvePluginObject,
+  resolveThemeInfo
+};
+®/LICENSE≈CThe MIT License (MIT)
+
+Copyright (c) 2018-present, Yuxi (Evan) You
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+≠/package.json≈∏{
+  "name": "@vuepress/core",
+  "version": "2.0.0-beta.53",
+  "description": "Core package of VuePress",
+  "keywords": [
+    "vuepress",
+    "core"
+  ],
+  "homepage": "https://github.com/vuepress",
+  "bugs": {
+    "url": "https://github.com/vuepress/vuepress-next/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vuepress/vuepress-next.git"
+  },
+  "license": "MIT",
+  "author": "meteorlxy",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@vuepress/client": "2.0.0-beta.53",
+    "@vuepress/markdown": "2.0.0-beta.53",
+    "@vuepress/shared": "2.0.0-beta.53",
+    "@vuepress/utils": "2.0.0-beta.53",
+    "vue": "^3.2.41"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "tsup": {
+    "clean": true,
+    "dts": "./src/index.ts",
+    "entry": [
+      "./src/index.ts"
+    ],
+    "format": [
+      "esm"
+    ],
+    "outDir": "./dist",
+    "sourcemap": false,
+    "target": "es2020",
+    "tsconfig": "../tsconfig.dts.json"
+  },
+  "scripts": {
+    "build": "tsup",
+    "clean": "rimraf dist"
+  }
+}

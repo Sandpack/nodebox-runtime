@@ -1,0 +1,1020 @@
+��/safer.js�>/* eslint-disable node/no-deprecated-api */
+
+'use strict'
+
+var buffer = require('buffer')
+var Buffer = buffer.Buffer
+
+var safer = {}
+
+var key
+
+for (key in buffer) {
+  if (!buffer.hasOwnProperty(key)) continue
+  if (key === 'SlowBuffer' || key === 'Buffer') continue
+  safer[key] = buffer[key]
+}
+
+var Safer = safer.Buffer = {}
+for (key in Buffer) {
+  if (!Buffer.hasOwnProperty(key)) continue
+  if (key === 'allocUnsafe' || key === 'allocUnsafeSlow') continue
+  Safer[key] = Buffer[key]
+}
+
+safer.Buffer.prototype = Buffer.prototype
+
+if (!Safer.from || Safer.from === Uint8Array.from) {
+  Safer.from = function (value, encodingOrOffset, length) {
+    if (typeof value === 'number') {
+      throw new TypeError('The "value" argument must not be of type number. Received type ' + typeof value)
+    }
+    if (value && typeof value.length === 'undefined') {
+      throw new TypeError('The first argument must be one of type string, Buffer, ArrayBuffer, Array, or Array-like Object. Received type ' + typeof value)
+    }
+    return Buffer(value, encodingOrOffset, length)
+  }
+}
+
+if (!Safer.alloc) {
+  Safer.alloc = function (size, fill, encoding) {
+    if (typeof size !== 'number') {
+      throw new TypeError('The "size" argument must be of type number. Received type ' + typeof size)
+    }
+    if (size < 0 || size >= 2 * (1 << 30)) {
+      throw new RangeError('The value "' + size + '" is invalid for option "size"')
+    }
+    var buf = Buffer(size)
+    if (!fill || fill.length === 0) {
+      buf.fill(0)
+    } else if (typeof encoding === 'string') {
+      buf.fill(fill, encoding)
+    } else {
+      buf.fill(fill)
+    }
+    return buf
+  }
+}
+
+if (!safer.kStringMaxLength) {
+  try {
+    safer.kStringMaxLength = process.binding('buffer').kStringMaxLength
+  } catch (e) {
+    // we can't determine kStringMaxLength in environments where process.binding
+    // is unsupported, so let's not set it
+  }
+}
+
+if (!safer.constants) {
+  safer.constants = {
+    MAX_LENGTH: safer.kMaxLength
+  }
+  if (safer.kStringMaxLength) {
+    safer.constants.MAX_STRING_LENGTH = safer.kStringMaxLength
+  }
+}
+
+module.exports = safer
+�/tests.js�=w/* eslint-disable node/no-deprecated-api */
+
+'use strict'
+
+var test = require('tape')
+
+var buffer = require('buffer')
+
+var index = require('./')
+var safer = require('./safer')
+var dangerous = require('./dangerous')
+
+/* Inheritance tests */
+
+test('Default is Safer', function (t) {
+  t.equal(index, safer)
+  t.notEqual(safer, dangerous)
+  t.notEqual(index, dangerous)
+  t.end()
+})
+
+test('Is not a function', function (t) {
+  [index, safer, dangerous].forEach(function (impl) {
+    t.equal(typeof impl, 'object')
+    t.equal(typeof impl.Buffer, 'object')
+  });
+  [buffer].forEach(function (impl) {
+    t.equal(typeof impl, 'object')
+    t.equal(typeof impl.Buffer, 'function')
+  })
+  t.end()
+})
+
+test('Constructor throws', function (t) {
+  [index, safer, dangerous].forEach(function (impl) {
+    t.throws(function () { impl.Buffer() })
+    t.throws(function () { impl.Buffer(0) })
+    t.throws(function () { impl.Buffer('a') })
+    t.throws(function () { impl.Buffer('a', 'utf-8') })
+    t.throws(function () { return new impl.Buffer() })
+    t.throws(function () { return new impl.Buffer(0) })
+    t.throws(function () { return new impl.Buffer('a') })
+    t.throws(function () { return new impl.Buffer('a', 'utf-8') })
+  })
+  t.end()
+})
+
+test('Safe methods exist', function (t) {
+  [index, safer, dangerous].forEach(function (impl) {
+    t.equal(typeof impl.Buffer.alloc, 'function', 'alloc')
+    t.equal(typeof impl.Buffer.from, 'function', 'from')
+  })
+  t.end()
+})
+
+test('Unsafe methods exist only in Dangerous', function (t) {
+  [index, safer].forEach(function (impl) {
+    t.equal(typeof impl.Buffer.allocUnsafe, 'undefined')
+    t.equal(typeof impl.Buffer.allocUnsafeSlow, 'undefined')
+  });
+  [dangerous].forEach(function (impl) {
+    t.equal(typeof impl.Buffer.allocUnsafe, 'function')
+    t.equal(typeof impl.Buffer.allocUnsafeSlow, 'function')
+  })
+  t.end()
+})
+
+test('Generic methods/properties are defined and equal', function (t) {
+  ['poolSize', 'isBuffer', 'concat', 'byteLength'].forEach(function (method) {
+    [index, safer, dangerous].forEach(function (impl) {
+      t.equal(impl.Buffer[method], buffer.Buffer[method], method)
+      t.notEqual(typeof impl.Buffer[method], 'undefined', method)
+    })
+  })
+  t.end()
+})
+
+test('Built-in buffer static methods/properties are inherited', function (t) {
+  Object.keys(buffer).forEach(function (method) {
+    if (method === 'SlowBuffer' || method === 'Buffer') return;
+    [index, safer, dangerous].forEach(function (impl) {
+      t.equal(impl[method], buffer[method], method)
+      t.notEqual(typeof impl[method], 'undefined', method)
+    })
+  })
+  t.end()
+})
+
+test('Built-in Buffer static methods/properties are inherited', function (t) {
+  Object.keys(buffer.Buffer).forEach(function (method) {
+    if (method === 'allocUnsafe' || method === 'allocUnsafeSlow') return;
+    [index, safer, dangerous].forEach(function (impl) {
+      t.equal(impl.Buffer[method], buffer.Buffer[method], method)
+      t.notEqual(typeof impl.Buffer[method], 'undefined', method)
+    })
+  })
+  t.end()
+})
+
+test('.prototype property of Buffer is inherited', function (t) {
+  [index, safer, dangerous].forEach(function (impl) {
+    t.equal(impl.Buffer.prototype, buffer.Buffer.prototype, 'prototype')
+    t.notEqual(typeof impl.Buffer.prototype, 'undefined', 'prototype')
+  })
+  t.end()
+})
+
+test('All Safer methods are present in Dangerous', function (t) {
+  Object.keys(safer).forEach(function (method) {
+    if (method === 'Buffer') return;
+    [index, safer, dangerous].forEach(function (impl) {
+      t.equal(impl[method], safer[method], method)
+      if (method !== 'kStringMaxLength') {
+        t.notEqual(typeof impl[method], 'undefined', method)
+      }
+    })
+  })
+  Object.keys(safer.Buffer).forEach(function (method) {
+    [index, safer, dangerous].forEach(function (impl) {
+      t.equal(impl.Buffer[method], safer.Buffer[method], method)
+      t.notEqual(typeof impl.Buffer[method], 'undefined', method)
+    })
+  })
+  t.end()
+})
+
+test('Safe methods from Dangerous methods are present in Safer', function (t) {
+  Object.keys(dangerous).forEach(function (method) {
+    if (method === 'Buffer') return;
+    [index, safer, dangerous].forEach(function (impl) {
+      t.equal(impl[method], dangerous[method], method)
+      if (method !== 'kStringMaxLength') {
+        t.notEqual(typeof impl[method], 'undefined', method)
+      }
+    })
+  })
+  Object.keys(dangerous.Buffer).forEach(function (method) {
+    if (method === 'allocUnsafe' || method === 'allocUnsafeSlow') return;
+    [index, safer, dangerous].forEach(function (impl) {
+      t.equal(impl.Buffer[method], dangerous.Buffer[method], method)
+      t.notEqual(typeof impl.Buffer[method], 'undefined', method)
+    })
+  })
+  t.end()
+})
+
+/* Behaviour tests */
+
+test('Methods return Buffers', function (t) {
+  [index, safer, dangerous].forEach(function (impl) {
+    t.ok(buffer.Buffer.isBuffer(impl.Buffer.alloc(0)))
+    t.ok(buffer.Buffer.isBuffer(impl.Buffer.alloc(0, 10)))
+    t.ok(buffer.Buffer.isBuffer(impl.Buffer.alloc(0, 'a')))
+    t.ok(buffer.Buffer.isBuffer(impl.Buffer.alloc(10)))
+    t.ok(buffer.Buffer.isBuffer(impl.Buffer.alloc(10, 'x')))
+    t.ok(buffer.Buffer.isBuffer(impl.Buffer.alloc(9, 'ab')))
+    t.ok(buffer.Buffer.isBuffer(impl.Buffer.from('')))
+    t.ok(buffer.Buffer.isBuffer(impl.Buffer.from('string')))
+    t.ok(buffer.Buffer.isBuffer(impl.Buffer.from('string', 'utf-8')))
+    t.ok(buffer.Buffer.isBuffer(impl.Buffer.from('b25ldHdvdGhyZWU=', 'base64')))
+    t.ok(buffer.Buffer.isBuffer(impl.Buffer.from([0, 42, 3])))
+    t.ok(buffer.Buffer.isBuffer(impl.Buffer.from(new Uint8Array([0, 42, 3]))))
+    t.ok(buffer.Buffer.isBuffer(impl.Buffer.from([])))
+  });
+  ['allocUnsafe', 'allocUnsafeSlow'].forEach(function (method) {
+    t.ok(buffer.Buffer.isBuffer(dangerous.Buffer[method](0)))
+    t.ok(buffer.Buffer.isBuffer(dangerous.Buffer[method](10)))
+  })
+  t.end()
+})
+
+test('Constructor is buffer.Buffer', function (t) {
+  [index, safer, dangerous].forEach(function (impl) {
+    t.equal(impl.Buffer.alloc(0).constructor, buffer.Buffer)
+    t.equal(impl.Buffer.alloc(0, 10).constructor, buffer.Buffer)
+    t.equal(impl.Buffer.alloc(0, 'a').constructor, buffer.Buffer)
+    t.equal(impl.Buffer.alloc(10).constructor, buffer.Buffer)
+    t.equal(impl.Buffer.alloc(10, 'x').constructor, buffer.Buffer)
+    t.equal(impl.Buffer.alloc(9, 'ab').constructor, buffer.Buffer)
+    t.equal(impl.Buffer.from('').constructor, buffer.Buffer)
+    t.equal(impl.Buffer.from('string').constructor, buffer.Buffer)
+    t.equal(impl.Buffer.from('string', 'utf-8').constructor, buffer.Buffer)
+    t.equal(impl.Buffer.from('b25ldHdvdGhyZWU=', 'base64').constructor, buffer.Buffer)
+    t.equal(impl.Buffer.from([0, 42, 3]).constructor, buffer.Buffer)
+    t.equal(impl.Buffer.from(new Uint8Array([0, 42, 3])).constructor, buffer.Buffer)
+    t.equal(impl.Buffer.from([]).constructor, buffer.Buffer)
+  });
+  [0, 10, 100].forEach(function (arg) {
+    t.equal(dangerous.Buffer.allocUnsafe(arg).constructor, buffer.Buffer)
+    t.equal(dangerous.Buffer.allocUnsafeSlow(arg).constructor, buffer.SlowBuffer(0).constructor)
+  })
+  t.end()
+})
+
+test('Invalid calls throw', function (t) {
+  [index, safer, dangerous].forEach(function (impl) {
+    t.throws(function () { impl.Buffer.from(0) })
+    t.throws(function () { impl.Buffer.from(10) })
+    t.throws(function () { impl.Buffer.from(10, 'utf-8') })
+    t.throws(function () { impl.Buffer.from('string', 'invalid encoding') })
+    t.throws(function () { impl.Buffer.from(-10) })
+    t.throws(function () { impl.Buffer.from(1e90) })
+    t.throws(function () { impl.Buffer.from(Infinity) })
+    t.throws(function () { impl.Buffer.from(-Infinity) })
+    t.throws(function () { impl.Buffer.from(NaN) })
+    t.throws(function () { impl.Buffer.from(null) })
+    t.throws(function () { impl.Buffer.from(undefined) })
+    t.throws(function () { impl.Buffer.from() })
+    t.throws(function () { impl.Buffer.from({}) })
+    t.throws(function () { impl.Buffer.alloc('') })
+    t.throws(function () { impl.Buffer.alloc('string') })
+    t.throws(function () { impl.Buffer.alloc('string', 'utf-8') })
+    t.throws(function () { impl.Buffer.alloc('b25ldHdvdGhyZWU=', 'base64') })
+    t.throws(function () { impl.Buffer.alloc(-10) })
+    t.throws(function () { impl.Buffer.alloc(1e90) })
+    t.throws(function () { impl.Buffer.alloc(2 * (1 << 30)) })
+    t.throws(function () { impl.Buffer.alloc(Infinity) })
+    t.throws(function () { impl.Buffer.alloc(-Infinity) })
+    t.throws(function () { impl.Buffer.alloc(null) })
+    t.throws(function () { impl.Buffer.alloc(undefined) })
+    t.throws(function () { impl.Buffer.alloc() })
+    t.throws(function () { impl.Buffer.alloc([]) })
+    t.throws(function () { impl.Buffer.alloc([0, 42, 3]) })
+    t.throws(function () { impl.Buffer.alloc({}) })
+  });
+  ['allocUnsafe', 'allocUnsafeSlow'].forEach(function (method) {
+    t.throws(function () { dangerous.Buffer[method]('') })
+    t.throws(function () { dangerous.Buffer[method]('string') })
+    t.throws(function () { dangerous.Buffer[method]('string', 'utf-8') })
+    t.throws(function () { dangerous.Buffer[method](2 * (1 << 30)) })
+    t.throws(function () { dangerous.Buffer[method](Infinity) })
+    if (dangerous.Buffer[method] === buffer.Buffer.allocUnsafe) {
+      t.skip('Skipping, older impl of allocUnsafe coerced negative sizes to 0')
+    } else {
+      t.throws(function () { dangerous.Buffer[method](-10) })
+      t.throws(function () { dangerous.Buffer[method](-1e90) })
+      t.throws(function () { dangerous.Buffer[method](-Infinity) })
+    }
+    t.throws(function () { dangerous.Buffer[method](null) })
+    t.throws(function () { dangerous.Buffer[method](undefined) })
+    t.throws(function () { dangerous.Buffer[method]() })
+    t.throws(function () { dangerous.Buffer[method]([]) })
+    t.throws(function () { dangerous.Buffer[method]([0, 42, 3]) })
+    t.throws(function () { dangerous.Buffer[method]({}) })
+  })
+  t.end()
+})
+
+test('Buffers have appropriate lengths', function (t) {
+  [index, safer, dangerous].forEach(function (impl) {
+    t.equal(impl.Buffer.alloc(0).length, 0)
+    t.equal(impl.Buffer.alloc(10).length, 10)
+    t.equal(impl.Buffer.from('').length, 0)
+    t.equal(impl.Buffer.from('string').length, 6)
+    t.equal(impl.Buffer.from('string', 'utf-8').length, 6)
+    t.equal(impl.Buffer.from('b25ldHdvdGhyZWU=', 'base64').length, 11)
+    t.equal(impl.Buffer.from([0, 42, 3]).length, 3)
+    t.equal(impl.Buffer.from(new Uint8Array([0, 42, 3])).length, 3)
+    t.equal(impl.Buffer.from([]).length, 0)
+  });
+  ['allocUnsafe', 'allocUnsafeSlow'].forEach(function (method) {
+    t.equal(dangerous.Buffer[method](0).length, 0)
+    t.equal(dangerous.Buffer[method](10).length, 10)
+  })
+  t.end()
+})
+
+test('Buffers have appropriate lengths (2)', function (t) {
+  t.equal(index.Buffer.alloc, safer.Buffer.alloc)
+  t.equal(index.Buffer.alloc, dangerous.Buffer.alloc)
+  var ok = true;
+  [ safer.Buffer.alloc,
+    dangerous.Buffer.allocUnsafe,
+    dangerous.Buffer.allocUnsafeSlow
+  ].forEach(function (method) {
+    for (var i = 0; i < 1e2; i++) {
+      var length = Math.round(Math.random() * 1e5)
+      var buf = method(length)
+      if (!buffer.Buffer.isBuffer(buf)) ok = false
+      if (buf.length !== length) ok = false
+    }
+  })
+  t.ok(ok)
+  t.end()
+})
+
+test('.alloc(size) is zero-filled and has correct length', function (t) {
+  t.equal(index.Buffer.alloc, safer.Buffer.alloc)
+  t.equal(index.Buffer.alloc, dangerous.Buffer.alloc)
+  var ok = true
+  for (var i = 0; i < 1e2; i++) {
+    var length = Math.round(Math.random() * 2e6)
+    var buf = index.Buffer.alloc(length)
+    if (!buffer.Buffer.isBuffer(buf)) ok = false
+    if (buf.length !== length) ok = false
+    var j
+    for (j = 0; j < length; j++) {
+      if (buf[j] !== 0) ok = false
+    }
+    buf.fill(1)
+    for (j = 0; j < length; j++) {
+      if (buf[j] !== 1) ok = false
+    }
+  }
+  t.ok(ok)
+  t.end()
+})
+
+test('.allocUnsafe / .allocUnsafeSlow are fillable and have correct lengths', function (t) {
+  ['allocUnsafe', 'allocUnsafeSlow'].forEach(function (method) {
+    var ok = true
+    for (var i = 0; i < 1e2; i++) {
+      var length = Math.round(Math.random() * 2e6)
+      var buf = dangerous.Buffer[method](length)
+      if (!buffer.Buffer.isBuffer(buf)) ok = false
+      if (buf.length !== length) ok = false
+      buf.fill(0, 0, length)
+      var j
+      for (j = 0; j < length; j++) {
+        if (buf[j] !== 0) ok = false
+      }
+      buf.fill(1, 0, length)
+      for (j = 0; j < length; j++) {
+        if (buf[j] !== 1) ok = false
+      }
+    }
+    t.ok(ok, method)
+  })
+  t.end()
+})
+
+test('.alloc(size, fill) is `fill`-filled', function (t) {
+  t.equal(index.Buffer.alloc, safer.Buffer.alloc)
+  t.equal(index.Buffer.alloc, dangerous.Buffer.alloc)
+  var ok = true
+  for (var i = 0; i < 1e2; i++) {
+    var length = Math.round(Math.random() * 2e6)
+    var fill = Math.round(Math.random() * 255)
+    var buf = index.Buffer.alloc(length, fill)
+    if (!buffer.Buffer.isBuffer(buf)) ok = false
+    if (buf.length !== length) ok = false
+    for (var j = 0; j < length; j++) {
+      if (buf[j] !== fill) ok = false
+    }
+  }
+  t.ok(ok)
+  t.end()
+})
+
+test('.alloc(size, fill) is `fill`-filled', function (t) {
+  t.equal(index.Buffer.alloc, safer.Buffer.alloc)
+  t.equal(index.Buffer.alloc, dangerous.Buffer.alloc)
+  var ok = true
+  for (var i = 0; i < 1e2; i++) {
+    var length = Math.round(Math.random() * 2e6)
+    var fill = Math.round(Math.random() * 255)
+    var buf = index.Buffer.alloc(length, fill)
+    if (!buffer.Buffer.isBuffer(buf)) ok = false
+    if (buf.length !== length) ok = false
+    for (var j = 0; j < length; j++) {
+      if (buf[j] !== fill) ok = false
+    }
+  }
+  t.ok(ok)
+  t.deepEqual(index.Buffer.alloc(9, 'a'), index.Buffer.alloc(9, 97))
+  t.notDeepEqual(index.Buffer.alloc(9, 'a'), index.Buffer.alloc(9, 98))
+
+  var tmp = new buffer.Buffer(2)
+  tmp.fill('ok')
+  if (tmp[1] === tmp[0]) {
+    // Outdated Node.js
+    t.deepEqual(index.Buffer.alloc(5, 'ok'), index.Buffer.from('ooooo'))
+  } else {
+    t.deepEqual(index.Buffer.alloc(5, 'ok'), index.Buffer.from('okoko'))
+  }
+  t.notDeepEqual(index.Buffer.alloc(5, 'ok'), index.Buffer.from('kokok'))
+
+  t.end()
+})
+
+test('safer.Buffer.from returns results same as Buffer constructor', function (t) {
+  [index, safer, dangerous].forEach(function (impl) {
+    t.deepEqual(impl.Buffer.from(''), new buffer.Buffer(''))
+    t.deepEqual(impl.Buffer.from('string'), new buffer.Buffer('string'))
+    t.deepEqual(impl.Buffer.from('string', 'utf-8'), new buffer.Buffer('string', 'utf-8'))
+    t.deepEqual(impl.Buffer.from('b25ldHdvdGhyZWU=', 'base64'), new buffer.Buffer('b25ldHdvdGhyZWU=', 'base64'))
+    t.deepEqual(impl.Buffer.from([0, 42, 3]), new buffer.Buffer([0, 42, 3]))
+    t.deepEqual(impl.Buffer.from(new Uint8Array([0, 42, 3])), new buffer.Buffer(new Uint8Array([0, 42, 3])))
+    t.deepEqual(impl.Buffer.from([]), new buffer.Buffer([]))
+  })
+  t.end()
+})
+
+test('safer.Buffer.from returns consistent results', function (t) {
+  [index, safer, dangerous].forEach(function (impl) {
+    t.deepEqual(impl.Buffer.from(''), impl.Buffer.alloc(0))
+    t.deepEqual(impl.Buffer.from([]), impl.Buffer.alloc(0))
+    t.deepEqual(impl.Buffer.from(new Uint8Array([])), impl.Buffer.alloc(0))
+    t.deepEqual(impl.Buffer.from('string', 'utf-8'), impl.Buffer.from('string'))
+    t.deepEqual(impl.Buffer.from('string'), impl.Buffer.from([115, 116, 114, 105, 110, 103]))
+    t.deepEqual(impl.Buffer.from('string'), impl.Buffer.from(impl.Buffer.from('string')))
+    t.deepEqual(impl.Buffer.from('b25ldHdvdGhyZWU=', 'base64'), impl.Buffer.from('onetwothree'))
+    t.notDeepEqual(impl.Buffer.from('b25ldHdvdGhyZWU='), impl.Buffer.from('onetwothree'))
+  })
+  t.end()
+})
+�/dangerous.js��/* eslint-disable node/no-deprecated-api */
+
+'use strict'
+
+var buffer = require('buffer')
+var Buffer = buffer.Buffer
+var safer = require('./safer.js')
+var Safer = safer.Buffer
+
+var dangerous = {}
+
+var key
+
+for (key in safer) {
+  if (!safer.hasOwnProperty(key)) continue
+  dangerous[key] = safer[key]
+}
+
+var Dangereous = dangerous.Buffer = {}
+
+// Copy Safer API
+for (key in Safer) {
+  if (!Safer.hasOwnProperty(key)) continue
+  Dangereous[key] = Safer[key]
+}
+
+// Copy those missing unsafe methods, if they are present
+for (key in Buffer) {
+  if (!Buffer.hasOwnProperty(key)) continue
+  if (Dangereous.hasOwnProperty(key)) continue
+  Dangereous[key] = Buffer[key]
+}
+
+if (!Dangereous.allocUnsafe) {
+  Dangereous.allocUnsafe = function (size) {
+    if (typeof size !== 'number') {
+      throw new TypeError('The "size" argument must be of type number. Received type ' + typeof size)
+    }
+    if (size < 0 || size >= 2 * (1 << 30)) {
+      throw new RangeError('The value "' + size + '" is invalid for option "size"')
+    }
+    return Buffer(size)
+  }
+}
+
+if (!Dangereous.allocUnsafeSlow) {
+  Dangereous.allocUnsafeSlow = function (size) {
+    if (typeof size !== 'number') {
+      throw new TypeError('The "size" argument must be of type number. Received type ' + typeof size)
+    }
+    if (size < 0 || size >= 2 * (1 << 30)) {
+      throw new RangeError('The value "' + size + '" is invalid for option "size"')
+    }
+    return buffer.SlowBuffer(size)
+  }
+}
+
+module.exports = dangerous
+�/package.json�6{
+  "name": "safer-buffer",
+  "version": "2.1.2",
+  "description": "Modern Buffer API polyfill without footguns",
+  "main": "safer.js",
+  "scripts": {
+    "browserify-test": "browserify --external tape tests.js > browserify-tests.js && tape browserify-tests.js",
+    "test": "standard && tape tests.js"
+  },
+  "author": {
+    "name": "Nikita Skovoroda",
+    "email": "chalkerx@gmail.com",
+    "url": "https://github.com/ChALkeR"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChALkeR/safer-buffer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ChALkeR/safer-buffer/issues"
+  },
+  "devDependencies": {
+    "standard": "^11.0.1",
+    "tape": "^4.9.0"
+  },
+  "files": [
+    "Porting-Buffer.md",
+    "Readme.md",
+    "tests.js",
+    "dangerous.js",
+    "safer.js"
+  ]
+}
+�/LICENSE�FMIT License
+
+Copyright (c) 2018 Nikita Skovoroda <chalkerx@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+�/Porting-Buffer.md�1�# Porting to the Buffer.from/Buffer.alloc API
+
+<a id="overview"></a>
+## Overview
+
+- [Variant 1: Drop support for Node.js ≤ 4.4.x and 5.0.0 — 5.9.x.](#variant-1) (*recommended*)
+- [Variant 2: Use a polyfill](#variant-2)
+- [Variant 3: manual detection, with safeguards](#variant-3)
+
+### Finding problematic bits of code using grep
+
+Just run `grep -nrE '[^a-zA-Z](Slow)?Buffer\s*\(' --exclude-dir node_modules`.
+
+It will find all the potentially unsafe places in your own code (with some considerably unlikely
+exceptions).
+
+### Finding problematic bits of code using Node.js 8
+
+If you’re using Node.js ≥ 8.0.0 (which is recommended), Node.js exposes multiple options that help with finding the relevant pieces of code:
+
+- `--trace-warnings` will make Node.js show a stack trace for this warning and other warnings that are printed by Node.js.
+- `--trace-deprecation` does the same thing, but only for deprecation warnings.
+- `--pending-deprecation` will show more types of deprecation warnings. In particular, it will show the `Buffer()` deprecation warning, even on Node.js 8.
+
+You can set these flags using an environment variable:
+
+```console
+$ export NODE_OPTIONS='--trace-warnings --pending-deprecation'
+$ cat example.js
+'use strict';
+const foo = new Buffer('foo');
+$ node example.js
+(node:7147) [DEP0005] DeprecationWarning: The Buffer() and new Buffer() constructors are not recommended for use due to security and usability concerns. Please use the new Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() construction methods instead.
+    at showFlaggedDeprecation (buffer.js:127:13)
+    at new Buffer (buffer.js:148:3)
+    at Object.<anonymous> (/path/to/example.js:2:13)
+    [... more stack trace lines ...]
+```
+
+### Finding problematic bits of code using linters
+
+Eslint rules [no-buffer-constructor](https://eslint.org/docs/rules/no-buffer-constructor)
+or
+[node/no-deprecated-api](https://github.com/mysticatea/eslint-plugin-node/blob/master/docs/rules/no-deprecated-api.md)
+also find calls to deprecated `Buffer()` API. Those rules are included in some pre-sets.
+
+There is a drawback, though, that it doesn't always
+[work correctly](https://github.com/chalker/safer-buffer#why-not-safe-buffer) when `Buffer` is
+overriden e.g. with a polyfill, so recommended is a combination of this and some other method
+described above.
+
+<a id="variant-1"></a>
+## Variant 1: Drop support for Node.js ≤ 4.4.x and 5.0.0 — 5.9.x.
+
+This is the recommended solution nowadays that would imply only minimal overhead.
+
+The Node.js 5.x release line has been unsupported since July 2016, and the Node.js 4.x release line reaches its End of Life in April 2018 (→ [Schedule](https://github.com/nodejs/Release#release-schedule)). This means that these versions of Node.js will *not* receive any updates, even in case of security issues, so using these release lines should be avoided, if at all possible.
+
+What you would do in this case is to convert all `new Buffer()` or `Buffer()` calls to use `Buffer.alloc()` or `Buffer.from()`, in the following way:
+
+- For `new Buffer(number)`, replace it with `Buffer.alloc(number)`.
+- For `new Buffer(string)` (or `new Buffer(string, encoding)`), replace it with `Buffer.from(string)` (or `Buffer.from(string, encoding)`).
+- For all other combinations of arguments (these are much rarer), also replace `new Buffer(...arguments)` with `Buffer.from(...arguments)`.
+
+Note that `Buffer.alloc()` is also _faster_ on the current Node.js versions than
+`new Buffer(size).fill(0)`, which is what you would otherwise need to ensure zero-filling.
+
+Enabling eslint rule [no-buffer-constructor](https://eslint.org/docs/rules/no-buffer-constructor)
+or
+[node/no-deprecated-api](https://github.com/mysticatea/eslint-plugin-node/blob/master/docs/rules/no-deprecated-api.md)
+is recommended to avoid accidential unsafe Buffer API usage.
+
+There is also a [JSCodeshift codemod](https://github.com/joyeecheung/node-dep-codemod#dep005)
+for automatically migrating Buffer constructors to `Buffer.alloc()` or `Buffer.from()`.
+Note that it currently only works with cases where the arguments are literals or where the
+constructor is invoked with two arguments.
+
+_If you currently support those older Node.js versions and dropping them would be a semver-major change
+for you, or if you support older branches of your packages, consider using [Variant 2](#variant-2)
+or [Variant 3](#variant-3) on older branches, so people using those older branches will also receive
+the fix. That way, you will eradicate potential issues caused by unguarded Buffer API usage and
+your users will not observe a runtime deprecation warning when running your code on Node.js 10._
+
+<a id="variant-2"></a>
+## Variant 2: Use a polyfill
+
+Utilize [safer-buffer](https://www.npmjs.com/package/safer-buffer) as a polyfill to support older
+Node.js versions.
+
+You would take exacly the same steps as in [Variant 1](#variant-1), but with a polyfill
+`const Buffer = require('safer-buffer').Buffer` in all files where you use the new `Buffer` api.
+
+Make sure that you do not use old `new Buffer` API — in any files where the line above is added,
+using old `new Buffer()` API will _throw_. It will be easy to notice that in CI, though.
+
+Alternatively, you could use [buffer-from](https://www.npmjs.com/package/buffer-from) and/or
+[buffer-alloc](https://www.npmjs.com/package/buffer-alloc) [ponyfills](https://ponyfill.com/) —
+those are great, the only downsides being 4 deps in the tree and slightly more code changes to
+migrate off them (as you would be using e.g. `Buffer.from` under a different name). If you need only
+`Buffer.from` polyfilled — `buffer-from` alone which comes with no extra dependencies.
+
+_Alternatively, you could use [safe-buffer](https://www.npmjs.com/package/safe-buffer) — it also
+provides a polyfill, but takes a different approach which has
+[it's drawbacks](https://github.com/chalker/safer-buffer#why-not-safe-buffer). It will allow you
+to also use the older `new Buffer()` API in your code, though — but that's arguably a benefit, as
+it is problematic, can cause issues in your code, and will start emitting runtime deprecation
+warnings starting with Node.js 10._
+
+Note that in either case, it is important that you also remove all calls to the old Buffer
+API manually — just throwing in `safe-buffer` doesn't fix the problem by itself, it just provides
+a polyfill for the new API. I have seen people doing that mistake.
+
+Enabling eslint rule [no-buffer-constructor](https://eslint.org/docs/rules/no-buffer-constructor)
+or
+[node/no-deprecated-api](https://github.com/mysticatea/eslint-plugin-node/blob/master/docs/rules/no-deprecated-api.md)
+is recommended.
+
+_Don't forget to drop the polyfill usage once you drop support for Node.js < 4.5.0._
+
+<a id="variant-3"></a>
+## Variant 3 — manual detection, with safeguards
+
+This is useful if you create Buffer instances in only a few places (e.g. one), or you have your own
+wrapper around them.
+
+### Buffer(0)
+
+This special case for creating empty buffers can be safely replaced with `Buffer.concat([])`, which
+returns the same result all the way down to Node.js 0.8.x.
+
+### Buffer(notNumber)
+
+Before:
+
+```js
+var buf = new Buffer(notNumber, encoding);
+```
+
+After:
+
+```js
+var buf;
+if (Buffer.from && Buffer.from !== Uint8Array.from) {
+  buf = Buffer.from(notNumber, encoding);
+} else {
+  if (typeof notNumber === 'number')
+    throw new Error('The "size" argument must be of type number.');
+  buf = new Buffer(notNumber, encoding);
+}
+```
+
+`encoding` is optional.
+
+Note that the `typeof notNumber` before `new Buffer` is required (for cases when `notNumber` argument is not
+hard-coded) and _is not caused by the deprecation of Buffer constructor_ — it's exactly _why_ the
+Buffer constructor is deprecated. Ecosystem packages lacking this type-check caused numereous
+security issues — situations when unsanitized user input could end up in the `Buffer(arg)` create
+problems ranging from DoS to leaking sensitive information to the attacker from the process memory.
+
+When `notNumber` argument is hardcoded (e.g. literal `"abc"` or `[0,1,2]`), the `typeof` check can
+be omitted.
+
+Also note that using TypeScript does not fix this problem for you — when libs written in
+`TypeScript` are used from JS, or when user input ends up there — it behaves exactly as pure JS, as
+all type checks are translation-time only and are not present in the actual JS code which TS
+compiles to.
+
+### Buffer(number)
+
+For Node.js 0.10.x (and below) support:
+
+```js
+var buf;
+if (Buffer.alloc) {
+  buf = Buffer.alloc(number);
+} else {
+  buf = new Buffer(number);
+  buf.fill(0);
+}
+```
+
+Otherwise (Node.js ≥ 0.12.x):
+
+```js
+const buf = Buffer.alloc ? Buffer.alloc(number) : new Buffer(number).fill(0);
+```
+
+## Regarding Buffer.allocUnsafe
+
+Be extra cautious when using `Buffer.allocUnsafe`:
+ * Don't use it if you don't have a good reason to
+   * e.g. you probably won't ever see a performance difference for small buffers, in fact, those
+     might be even faster with `Buffer.alloc()`,
+   * if your code is not in the hot code path — you also probably won't notice a difference,
+   * keep in mind that zero-filling minimizes the potential risks.
+ * If you use it, make sure that you never return the buffer in a partially-filled state,
+   * if you are writing to it sequentially — always truncate it to the actuall written length
+
+Errors in handling buffers allocated with `Buffer.allocUnsafe` could result in various issues,
+ranged from undefined behaviour of your code to sensitive data (user input, passwords, certs)
+leaking to the remote attacker.
+
+_Note that the same applies to `new Buffer` usage without zero-filling, depending on the Node.js
+version (and lacking type checks also adds DoS to the list of potential problems)._
+
+<a id="faq"></a>
+## FAQ
+
+<a id="design-flaws"></a>
+### What is wrong with the `Buffer` constructor?
+
+The `Buffer` constructor could be used to create a buffer in many different ways:
+
+- `new Buffer(42)` creates a `Buffer` of 42 bytes. Before Node.js 8, this buffer contained
+  *arbitrary memory* for performance reasons, which could include anything ranging from
+  program source code to passwords and encryption keys.
+- `new Buffer('abc')` creates a `Buffer` that contains the UTF-8-encoded version of
+  the string `'abc'`. A second argument could specify another encoding: For example,
+  `new Buffer(string, 'base64')` could be used to convert a Base64 string into the original
+  sequence of bytes that it represents.
+- There are several other combinations of arguments.
+
+This meant that, in code like `var buffer = new Buffer(foo);`, *it is not possible to tell
+what exactly the contents of the generated buffer are* without knowing the type of `foo`.
+
+Sometimes, the value of `foo` comes from an external source. For example, this function
+could be exposed as a service on a web server, converting a UTF-8 string into its Base64 form:
+
+```
+function stringToBase64(req, res) {
+  // The request body should have the format of `{ string: 'foobar' }`
+  const rawBytes = new Buffer(req.body.string)
+  const encoded = rawBytes.toString('base64')
+  res.end({ encoded: encoded })
+}
+```
+
+Note that this code does *not* validate the type of `req.body.string`:
+
+- `req.body.string` is expected to be a string. If this is the case, all goes well.
+- `req.body.string` is controlled by the client that sends the request.
+- If `req.body.string` is the *number* `50`, the `rawBytes` would be 50 bytes:
+  - Before Node.js 8, the content would be uninitialized
+  - After Node.js 8, the content would be `50` bytes with the value `0`
+
+Because of the missing type check, an attacker could intentionally send a number
+as part of the request. Using this, they can either:
+
+- Read uninitialized memory. This **will** leak passwords, encryption keys and other
+  kinds of sensitive information. (Information leak)
+- Force the program to allocate a large amount of memory. For example, when specifying
+  `500000000` as the input value, each request will allocate 500MB of memory.
+  This can be used to either exhaust the memory available of a program completely
+  and make it crash, or slow it down significantly. (Denial of Service)
+
+Both of these scenarios are considered serious security issues in a real-world
+web server context.
+
+when using `Buffer.from(req.body.string)` instead, passing a number will always
+throw an exception instead, giving a controlled behaviour that can always be
+handled by the program.
+
+<a id="ecosystem-usage"></a>
+### The `Buffer()` constructor has been deprecated for a while. Is this really an issue?
+
+Surveys of code in the `npm` ecosystem have shown that the `Buffer()` constructor is still
+widely used. This includes new code, and overall usage of such code has actually been
+*increasing*.
+�/Readme.md� E# safer-buffer [![travis][travis-image]][travis-url] [![npm][npm-image]][npm-url] [![javascript style guide][standard-image]][standard-url] [![Security Responsible Disclosure][secuirty-image]][secuirty-url]
+
+[travis-image]: https://travis-ci.org/ChALkeR/safer-buffer.svg?branch=master
+[travis-url]: https://travis-ci.org/ChALkeR/safer-buffer
+[npm-image]: https://img.shields.io/npm/v/safer-buffer.svg
+[npm-url]: https://npmjs.org/package/safer-buffer
+[standard-image]: https://img.shields.io/badge/code_style-standard-brightgreen.svg
+[standard-url]: https://standardjs.com
+[secuirty-image]: https://img.shields.io/badge/Security-Responsible%20Disclosure-green.svg
+[secuirty-url]: https://github.com/nodejs/security-wg/blob/master/processes/responsible_disclosure_template.md
+
+Modern Buffer API polyfill without footguns, working on Node.js from 0.8 to current.
+
+## How to use?
+
+First, port all `Buffer()` and `new Buffer()` calls to `Buffer.alloc()` and `Buffer.from()` API.
+
+Then, to achieve compatibility with outdated Node.js versions (`<4.5.0` and 5.x `<5.9.0`), use
+`const Buffer = require('safer-buffer').Buffer` in all files where you make calls to the new
+Buffer API. _Use `var` instead of `const` if you need that for your Node.js version range support._
+
+Also, see the
+[porting Buffer](https://github.com/ChALkeR/safer-buffer/blob/master/Porting-Buffer.md) guide.
+
+## Do I need it?
+
+Hopefully, not — dropping support for outdated Node.js versions should be fine nowdays, and that
+is the recommended path forward. You _do_ need to port to the `Buffer.alloc()` and `Buffer.from()`
+though.
+
+See the [porting guide](https://github.com/ChALkeR/safer-buffer/blob/master/Porting-Buffer.md)
+for a better description.
+
+## Why not [safe-buffer](https://npmjs.com/safe-buffer)?
+
+_In short: while `safe-buffer` serves as a polyfill for the new API, it allows old API usage and
+itself contains footguns._
+
+`safe-buffer` could be used safely to get the new API while still keeping support for older
+Node.js versions (like this module), but while analyzing ecosystem usage of the old Buffer API
+I found out that `safe-buffer` is itself causing problems in some cases.
+
+For example, consider the following snippet:
+
+```console
+$ cat example.unsafe.js
+console.log(Buffer(20))
+$ ./node-v6.13.0-linux-x64/bin/node example.unsafe.js
+<Buffer 0a 00 00 00 00 00 00 00 28 13 de 02 00 00 00 00 05 00 00 00>
+$ standard example.unsafe.js
+standard: Use JavaScript Standard Style (https://standardjs.com)
+  /home/chalker/repo/safer-buffer/example.unsafe.js:2:13: 'Buffer()' was deprecated since v6. Use 'Buffer.alloc()' or 'Buffer.from()' (use 'https://www.npmjs.com/package/safe-buffer' for '<4.5.0') instead.
+```
+
+This is allocates and writes to console an uninitialized chunk of memory.
+[standard](https://www.npmjs.com/package/standard) linter (among others) catch that and warn people
+to avoid using unsafe API.
+
+Let's now throw in `safe-buffer`!
+
+```console
+$ cat example.safe-buffer.js
+const Buffer = require('safe-buffer').Buffer
+console.log(Buffer(20))
+$ standard example.safe-buffer.js
+$ ./node-v6.13.0-linux-x64/bin/node example.safe-buffer.js
+<Buffer 08 00 00 00 00 00 00 00 28 58 01 82 fe 7f 00 00 00 00 00 00>
+```
+
+See the problem? Adding in `safe-buffer` _magically removes the lint warning_, but the behavior
+remains identiсal to what we had before, and when launched on Node.js 6.x LTS — this dumps out
+chunks of uninitialized memory.
+_And this code will still emit runtime warnings on Node.js 10.x and above._
+
+That was done by design. I first considered changing `safe-buffer`, prohibiting old API usage or
+emitting warnings on it, but that significantly diverges from `safe-buffer` design. After some
+discussion, it was decided to move my approach into a separate package, and _this is that separate
+package_.
+
+This footgun is not imaginary — I observed top-downloaded packages doing that kind of thing,
+«fixing» the lint warning by blindly including `safe-buffer` without any actual changes.
+
+Also in some cases, even if the API _was_ migrated to use of safe Buffer API — a random pull request
+can bring unsafe Buffer API usage back to the codebase by adding new calls — and that could go
+unnoticed even if you have a linter prohibiting that (becase of the reason stated above), and even
+pass CI. _I also observed that being done in popular packages._
+
+Some examples:
+ * [webdriverio](https://github.com/webdriverio/webdriverio/commit/05cbd3167c12e4930f09ef7cf93b127ba4effae4#diff-124380949022817b90b622871837d56cR31)
+   (a module with 548 759 downloads/month),
+ * [websocket-stream](https://github.com/maxogden/websocket-stream/commit/c9312bd24d08271687d76da0fe3c83493871cf61)
+   (218 288 d/m, fix in [maxogden/websocket-stream#142](https://github.com/maxogden/websocket-stream/pull/142)),
+ * [node-serialport](https://github.com/node-serialport/node-serialport/commit/e8d9d2b16c664224920ce1c895199b1ce2def48c)
+   (113 138 d/m, fix in [node-serialport/node-serialport#1510](https://github.com/node-serialport/node-serialport/pull/1510)),
+ * [karma](https://github.com/karma-runner/karma/commit/3d94b8cf18c695104ca195334dc75ff054c74eec)
+   (3 973 193 d/m, fix in [karma-runner/karma#2947](https://github.com/karma-runner/karma/pull/2947)),
+ * [spdy-transport](https://github.com/spdy-http2/spdy-transport/commit/5375ac33f4a62a4f65bcfc2827447d42a5dbe8b1)
+   (5 970 727 d/m, fix in [spdy-http2/spdy-transport#53](https://github.com/spdy-http2/spdy-transport/pull/53)).
+ * And there are a lot more over the ecosystem.
+
+I filed a PR at
+[mysticatea/eslint-plugin-node#110](https://github.com/mysticatea/eslint-plugin-node/pull/110) to
+partially fix that (for cases when that lint rule is used), but it is a semver-major change for
+linter rules and presets, so it would take significant time for that to reach actual setups.
+_It also hasn't been released yet (2018-03-20)._
+
+Also, `safer-buffer` discourages the usage of `.allocUnsafe()`, which is often done by a mistake.
+It still supports it with an explicit concern barier, by placing it under
+`require('safer-buffer/dangereous')`.
+
+## But isn't throwing bad?
+
+Not really. It's an error that could be noticed and fixed early, instead of causing havoc later like
+unguarded `new Buffer()` calls that end up receiving user input can do.
+
+This package affects only the files where `var Buffer = require('safer-buffer').Buffer` was done, so
+it is really simple to keep track of things and make sure that you don't mix old API usage with that.
+Also, CI should hint anything that you might have missed.
+
+New commits, if tested, won't land new usage of unsafe Buffer API this way.
+_Node.js 10.x also deals with that by printing a runtime depecation warning._
+
+### Would it affect third-party modules?
+
+No, unless you explicitly do an awful thing like monkey-patching or overriding the built-in `Buffer`.
+Don't do that.
+
+### But I don't want throwing…
+
+That is also fine!
+
+Also, it could be better in some cases when you don't comprehensive enough test coverage.
+
+In that case — just don't override `Buffer` and use
+`var SaferBuffer = require('safer-buffer').Buffer` instead.
+
+That way, everything using `Buffer` natively would still work, but there would be two drawbacks:
+
+* `Buffer.from`/`Buffer.alloc` won't be polyfilled — use `SaferBuffer.from` and
+  `SaferBuffer.alloc` instead.
+* You are still open to accidentally using the insecure deprecated API — use a linter to catch that.
+
+Note that using a linter to catch accidential `Buffer` constructor usage in this case is strongly
+recommended. `Buffer` is not overriden in this usecase, so linters won't get confused.
+
+## «Without footguns»?
+
+Well, it is still possible to do _some_ things with `Buffer` API, e.g. accessing `.buffer` property
+on older versions and duping things from there. You shouldn't do that in your code, probabably.
+
+The intention is to remove the most significant footguns that affect lots of packages in the
+ecosystem, and to do it in the proper way.
+
+Also, this package doesn't protect against security issues affecting some Node.js versions, so for
+usage in your own production code, it is still recommended to update to a Node.js version
+[supported by upstream](https://github.com/nodejs/release#release-schedule).

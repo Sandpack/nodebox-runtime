@@ -1,0 +1,725 @@
+…¨/licenseÅUMIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+©/index.jsÅ+'use strict';
+
+const wrapAnsi16 = (fn, offset) => (...args) => {
+	const code = fn(...args);
+	return `\u001B[${code + offset}m`;
+};
+
+const wrapAnsi256 = (fn, offset) => (...args) => {
+	const code = fn(...args);
+	return `\u001B[${38 + offset};5;${code}m`;
+};
+
+const wrapAnsi16m = (fn, offset) => (...args) => {
+	const rgb = fn(...args);
+	return `\u001B[${38 + offset};2;${rgb[0]};${rgb[1]};${rgb[2]}m`;
+};
+
+const ansi2ansi = n => n;
+const rgb2rgb = (r, g, b) => [r, g, b];
+
+const setLazyProperty = (object, property, get) => {
+	Object.defineProperty(object, property, {
+		get: () => {
+			const value = get();
+
+			Object.defineProperty(object, property, {
+				value,
+				enumerable: true,
+				configurable: true
+			});
+
+			return value;
+		},
+		enumerable: true,
+		configurable: true
+	});
+};
+
+/** @type {typeof import('color-convert')} */
+let colorConvert;
+const makeDynamicStyles = (wrap, targetSpace, identity, isBackground) => {
+	if (colorConvert === undefined) {
+		colorConvert = require('color-convert');
+	}
+
+	const offset = isBackground ? 10 : 0;
+	const styles = {};
+
+	for (const [sourceSpace, suite] of Object.entries(colorConvert)) {
+		const name = sourceSpace === 'ansi16' ? 'ansi' : sourceSpace;
+		if (sourceSpace === targetSpace) {
+			styles[name] = wrap(identity, offset);
+		} else if (typeof suite === 'object') {
+			styles[name] = wrap(suite[targetSpace], offset);
+		}
+	}
+
+	return styles;
+};
+
+function assembleStyles() {
+	const codes = new Map();
+	const styles = {
+		modifier: {
+			reset: [0, 0],
+			// 21 isn't widely supported and 22 does the same thing
+			bold: [1, 22],
+			dim: [2, 22],
+			italic: [3, 23],
+			underline: [4, 24],
+			inverse: [7, 27],
+			hidden: [8, 28],
+			strikethrough: [9, 29]
+		},
+		color: {
+			black: [30, 39],
+			red: [31, 39],
+			green: [32, 39],
+			yellow: [33, 39],
+			blue: [34, 39],
+			magenta: [35, 39],
+			cyan: [36, 39],
+			white: [37, 39],
+
+			// Bright color
+			blackBright: [90, 39],
+			redBright: [91, 39],
+			greenBright: [92, 39],
+			yellowBright: [93, 39],
+			blueBright: [94, 39],
+			magentaBright: [95, 39],
+			cyanBright: [96, 39],
+			whiteBright: [97, 39]
+		},
+		bgColor: {
+			bgBlack: [40, 49],
+			bgRed: [41, 49],
+			bgGreen: [42, 49],
+			bgYellow: [43, 49],
+			bgBlue: [44, 49],
+			bgMagenta: [45, 49],
+			bgCyan: [46, 49],
+			bgWhite: [47, 49],
+
+			// Bright color
+			bgBlackBright: [100, 49],
+			bgRedBright: [101, 49],
+			bgGreenBright: [102, 49],
+			bgYellowBright: [103, 49],
+			bgBlueBright: [104, 49],
+			bgMagentaBright: [105, 49],
+			bgCyanBright: [106, 49],
+			bgWhiteBright: [107, 49]
+		}
+	};
+
+	// Alias bright black as gray (and grey)
+	styles.color.gray = styles.color.blackBright;
+	styles.bgColor.bgGray = styles.bgColor.bgBlackBright;
+	styles.color.grey = styles.color.blackBright;
+	styles.bgColor.bgGrey = styles.bgColor.bgBlackBright;
+
+	for (const [groupName, group] of Object.entries(styles)) {
+		for (const [styleName, style] of Object.entries(group)) {
+			styles[styleName] = {
+				open: `\u001B[${style[0]}m`,
+				close: `\u001B[${style[1]}m`
+			};
+
+			group[styleName] = styles[styleName];
+
+			codes.set(style[0], style[1]);
+		}
+
+		Object.defineProperty(styles, groupName, {
+			value: group,
+			enumerable: false
+		});
+	}
+
+	Object.defineProperty(styles, 'codes', {
+		value: codes,
+		enumerable: false
+	});
+
+	styles.color.close = '\u001B[39m';
+	styles.bgColor.close = '\u001B[49m';
+
+	setLazyProperty(styles.color, 'ansi', () => makeDynamicStyles(wrapAnsi16, 'ansi16', ansi2ansi, false));
+	setLazyProperty(styles.color, 'ansi256', () => makeDynamicStyles(wrapAnsi256, 'ansi256', ansi2ansi, false));
+	setLazyProperty(styles.color, 'ansi16m', () => makeDynamicStyles(wrapAnsi16m, 'rgb', rgb2rgb, false));
+	setLazyProperty(styles.bgColor, 'ansi', () => makeDynamicStyles(wrapAnsi16, 'ansi16', ansi2ansi, true));
+	setLazyProperty(styles.bgColor, 'ansi256', () => makeDynamicStyles(wrapAnsi256, 'ansi256', ansi2ansi, true));
+	setLazyProperty(styles.bgColor, 'ansi16m', () => makeDynamicStyles(wrapAnsi16m, 'rgb', rgb2rgb, true));
+
+	return styles;
+}
+
+// Make the export immutable
+Object.defineProperty(module, 'exports', {
+	enumerable: true,
+	get: assembleStyles
+});
+­/package.jsonÅ{
+	"name": "ansi-styles",
+	"version": "4.3.0",
+	"description": "ANSI escape codes for styling strings in the terminal",
+	"license": "MIT",
+	"repository": "chalk/ansi-styles",
+	"funding": "https://github.com/chalk/ansi-styles?sponsor=1",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "sindresorhus.com"
+	},
+	"engines": {
+		"node": ">=8"
+	},
+	"scripts": {
+		"test": "xo && ava && tsd",
+		"screenshot": "svg-term --command='node screenshot' --out=screenshot.svg --padding=3 --width=55 --height=3 --at=1000 --no-cursor"
+	},
+	"files": [
+		"index.js",
+		"index.d.ts"
+	],
+	"keywords": [
+		"ansi",
+		"styles",
+		"color",
+		"colour",
+		"colors",
+		"terminal",
+		"console",
+		"cli",
+		"string",
+		"tty",
+		"escape",
+		"formatting",
+		"rgb",
+		"256",
+		"shell",
+		"xterm",
+		"log",
+		"logging",
+		"command-line",
+		"text"
+	],
+	"dependencies": {
+		"color-convert": "^2.0.1"
+	},
+	"devDependencies": {
+		"@types/color-convert": "^1.9.0",
+		"ava": "^2.3.0",
+		"svg-term-cli": "^2.1.1",
+		"tsd": "^0.11.0",
+		"xo": "^0.25.3"
+	}
+}
+«/index.d.tsÅÍdeclare type CSSColor =
+	| 'aliceblue'
+	| 'antiquewhite'
+	| 'aqua'
+	| 'aquamarine'
+	| 'azure'
+	| 'beige'
+	| 'bisque'
+	| 'black'
+	| 'blanchedalmond'
+	| 'blue'
+	| 'blueviolet'
+	| 'brown'
+	| 'burlywood'
+	| 'cadetblue'
+	| 'chartreuse'
+	| 'chocolate'
+	| 'coral'
+	| 'cornflowerblue'
+	| 'cornsilk'
+	| 'crimson'
+	| 'cyan'
+	| 'darkblue'
+	| 'darkcyan'
+	| 'darkgoldenrod'
+	| 'darkgray'
+	| 'darkgreen'
+	| 'darkgrey'
+	| 'darkkhaki'
+	| 'darkmagenta'
+	| 'darkolivegreen'
+	| 'darkorange'
+	| 'darkorchid'
+	| 'darkred'
+	| 'darksalmon'
+	| 'darkseagreen'
+	| 'darkslateblue'
+	| 'darkslategray'
+	| 'darkslategrey'
+	| 'darkturquoise'
+	| 'darkviolet'
+	| 'deeppink'
+	| 'deepskyblue'
+	| 'dimgray'
+	| 'dimgrey'
+	| 'dodgerblue'
+	| 'firebrick'
+	| 'floralwhite'
+	| 'forestgreen'
+	| 'fuchsia'
+	| 'gainsboro'
+	| 'ghostwhite'
+	| 'gold'
+	| 'goldenrod'
+	| 'gray'
+	| 'green'
+	| 'greenyellow'
+	| 'grey'
+	| 'honeydew'
+	| 'hotpink'
+	| 'indianred'
+	| 'indigo'
+	| 'ivory'
+	| 'khaki'
+	| 'lavender'
+	| 'lavenderblush'
+	| 'lawngreen'
+	| 'lemonchiffon'
+	| 'lightblue'
+	| 'lightcoral'
+	| 'lightcyan'
+	| 'lightgoldenrodyellow'
+	| 'lightgray'
+	| 'lightgreen'
+	| 'lightgrey'
+	| 'lightpink'
+	| 'lightsalmon'
+	| 'lightseagreen'
+	| 'lightskyblue'
+	| 'lightslategray'
+	| 'lightslategrey'
+	| 'lightsteelblue'
+	| 'lightyellow'
+	| 'lime'
+	| 'limegreen'
+	| 'linen'
+	| 'magenta'
+	| 'maroon'
+	| 'mediumaquamarine'
+	| 'mediumblue'
+	| 'mediumorchid'
+	| 'mediumpurple'
+	| 'mediumseagreen'
+	| 'mediumslateblue'
+	| 'mediumspringgreen'
+	| 'mediumturquoise'
+	| 'mediumvioletred'
+	| 'midnightblue'
+	| 'mintcream'
+	| 'mistyrose'
+	| 'moccasin'
+	| 'navajowhite'
+	| 'navy'
+	| 'oldlace'
+	| 'olive'
+	| 'olivedrab'
+	| 'orange'
+	| 'orangered'
+	| 'orchid'
+	| 'palegoldenrod'
+	| 'palegreen'
+	| 'paleturquoise'
+	| 'palevioletred'
+	| 'papayawhip'
+	| 'peachpuff'
+	| 'peru'
+	| 'pink'
+	| 'plum'
+	| 'powderblue'
+	| 'purple'
+	| 'rebeccapurple'
+	| 'red'
+	| 'rosybrown'
+	| 'royalblue'
+	| 'saddlebrown'
+	| 'salmon'
+	| 'sandybrown'
+	| 'seagreen'
+	| 'seashell'
+	| 'sienna'
+	| 'silver'
+	| 'skyblue'
+	| 'slateblue'
+	| 'slategray'
+	| 'slategrey'
+	| 'snow'
+	| 'springgreen'
+	| 'steelblue'
+	| 'tan'
+	| 'teal'
+	| 'thistle'
+	| 'tomato'
+	| 'turquoise'
+	| 'violet'
+	| 'wheat'
+	| 'white'
+	| 'whitesmoke'
+	| 'yellow'
+	| 'yellowgreen';
+
+declare namespace ansiStyles {
+	interface ColorConvert {
+		/**
+		The RGB color space.
+
+		@param red - (`0`-`255`)
+		@param green - (`0`-`255`)
+		@param blue - (`0`-`255`)
+		*/
+		rgb(red: number, green: number, blue: number): string;
+
+		/**
+		The RGB HEX color space.
+
+		@param hex - A hexadecimal string containing RGB data.
+		*/
+		hex(hex: string): string;
+
+		/**
+		@param keyword - A CSS color name.
+		*/
+		keyword(keyword: CSSColor): string;
+
+		/**
+		The HSL color space.
+
+		@param hue - (`0`-`360`)
+		@param saturation - (`0`-`100`)
+		@param lightness - (`0`-`100`)
+		*/
+		hsl(hue: number, saturation: number, lightness: number): string;
+
+		/**
+		The HSV color space.
+
+		@param hue - (`0`-`360`)
+		@param saturation - (`0`-`100`)
+		@param value - (`0`-`100`)
+		*/
+		hsv(hue: number, saturation: number, value: number): string;
+
+		/**
+		The HSV color space.
+
+		@param hue - (`0`-`360`)
+		@param whiteness - (`0`-`100`)
+		@param blackness - (`0`-`100`)
+		*/
+		hwb(hue: number, whiteness: number, blackness: number): string;
+
+		/**
+		Use a [4-bit unsigned number](https://en.wikipedia.org/wiki/ANSI_escape_code#3/4-bit) to set text color.
+		*/
+		ansi(ansi: number): string;
+
+		/**
+		Use an [8-bit unsigned number](https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit) to set text color.
+		*/
+		ansi256(ansi: number): string;
+	}
+
+	interface CSPair {
+		/**
+		The ANSI terminal control sequence for starting this style.
+		*/
+		readonly open: string;
+
+		/**
+		The ANSI terminal control sequence for ending this style.
+		*/
+		readonly close: string;
+	}
+
+	interface ColorBase {
+		readonly ansi: ColorConvert;
+		readonly ansi256: ColorConvert;
+		readonly ansi16m: ColorConvert;
+
+		/**
+		The ANSI terminal control sequence for ending this color.
+		*/
+		readonly close: string;
+	}
+
+	interface Modifier {
+		/**
+		Resets the current color chain.
+		*/
+		readonly reset: CSPair;
+
+		/**
+		Make text bold.
+		*/
+		readonly bold: CSPair;
+
+		/**
+		Emitting only a small amount of light.
+		*/
+		readonly dim: CSPair;
+
+		/**
+		Make text italic. (Not widely supported)
+		*/
+		readonly italic: CSPair;
+
+		/**
+		Make text underline. (Not widely supported)
+		*/
+		readonly underline: CSPair;
+
+		/**
+		Inverse background and foreground colors.
+		*/
+		readonly inverse: CSPair;
+
+		/**
+		Prints the text, but makes it invisible.
+		*/
+		readonly hidden: CSPair;
+
+		/**
+		Puts a horizontal line through the center of the text. (Not widely supported)
+		*/
+		readonly strikethrough: CSPair;
+	}
+
+	interface ForegroundColor {
+		readonly black: CSPair;
+		readonly red: CSPair;
+		readonly green: CSPair;
+		readonly yellow: CSPair;
+		readonly blue: CSPair;
+		readonly cyan: CSPair;
+		readonly magenta: CSPair;
+		readonly white: CSPair;
+
+		/**
+		Alias for `blackBright`.
+		*/
+		readonly gray: CSPair;
+
+		/**
+		Alias for `blackBright`.
+		*/
+		readonly grey: CSPair;
+
+		readonly blackBright: CSPair;
+		readonly redBright: CSPair;
+		readonly greenBright: CSPair;
+		readonly yellowBright: CSPair;
+		readonly blueBright: CSPair;
+		readonly cyanBright: CSPair;
+		readonly magentaBright: CSPair;
+		readonly whiteBright: CSPair;
+	}
+
+	interface BackgroundColor {
+		readonly bgBlack: CSPair;
+		readonly bgRed: CSPair;
+		readonly bgGreen: CSPair;
+		readonly bgYellow: CSPair;
+		readonly bgBlue: CSPair;
+		readonly bgCyan: CSPair;
+		readonly bgMagenta: CSPair;
+		readonly bgWhite: CSPair;
+
+		/**
+		Alias for `bgBlackBright`.
+		*/
+		readonly bgGray: CSPair;
+
+		/**
+		Alias for `bgBlackBright`.
+		*/
+		readonly bgGrey: CSPair;
+
+		readonly bgBlackBright: CSPair;
+		readonly bgRedBright: CSPair;
+		readonly bgGreenBright: CSPair;
+		readonly bgYellowBright: CSPair;
+		readonly bgBlueBright: CSPair;
+		readonly bgCyanBright: CSPair;
+		readonly bgMagentaBright: CSPair;
+		readonly bgWhiteBright: CSPair;
+	}
+}
+
+declare const ansiStyles: {
+	readonly modifier: ansiStyles.Modifier;
+	readonly color: ansiStyles.ForegroundColor & ansiStyles.ColorBase;
+	readonly bgColor: ansiStyles.BackgroundColor & ansiStyles.ColorBase;
+	readonly codes: ReadonlyMap<number, number>;
+} & ansiStyles.BackgroundColor & ansiStyles.ForegroundColor & ansiStyles.Modifier;
+
+export = ansiStyles;
+ª/readme.mdÅç# ansi-styles [![Build Status](https://travis-ci.org/chalk/ansi-styles.svg?branch=master)](https://travis-ci.org/chalk/ansi-styles)
+
+> [ANSI escape codes](https://en.wikipedia.org/wiki/ANSI_escape_code#Colors_and_Styles) for styling strings in the terminal
+
+You probably want the higher-level [chalk](https://github.com/chalk/chalk) module for styling your strings.
+
+<img src="screenshot.svg" width="900">
+
+## Install
+
+```
+$ npm install ansi-styles
+```
+
+## Usage
+
+```js
+const style = require('ansi-styles');
+
+console.log(`${style.green.open}Hello world!${style.green.close}`);
+
+
+// Color conversion between 16/256/truecolor
+// NOTE: If conversion goes to 16 colors or 256 colors, the original color
+//       may be degraded to fit that color palette. This means terminals
+//       that do not support 16 million colors will best-match the
+//       original color.
+console.log(style.bgColor.ansi.hsl(120, 80, 72) + 'Hello world!' + style.bgColor.close);
+console.log(style.color.ansi256.rgb(199, 20, 250) + 'Hello world!' + style.color.close);
+console.log(style.color.ansi16m.hex('#abcdef') + 'Hello world!' + style.color.close);
+```
+
+## API
+
+Each style has an `open` and `close` property.
+
+## Styles
+
+### Modifiers
+
+- `reset`
+- `bold`
+- `dim`
+- `italic` *(Not widely supported)*
+- `underline`
+- `inverse`
+- `hidden`
+- `strikethrough` *(Not widely supported)*
+
+### Colors
+
+- `black`
+- `red`
+- `green`
+- `yellow`
+- `blue`
+- `magenta`
+- `cyan`
+- `white`
+- `blackBright` (alias: `gray`, `grey`)
+- `redBright`
+- `greenBright`
+- `yellowBright`
+- `blueBright`
+- `magentaBright`
+- `cyanBright`
+- `whiteBright`
+
+### Background colors
+
+- `bgBlack`
+- `bgRed`
+- `bgGreen`
+- `bgYellow`
+- `bgBlue`
+- `bgMagenta`
+- `bgCyan`
+- `bgWhite`
+- `bgBlackBright` (alias: `bgGray`, `bgGrey`)
+- `bgRedBright`
+- `bgGreenBright`
+- `bgYellowBright`
+- `bgBlueBright`
+- `bgMagentaBright`
+- `bgCyanBright`
+- `bgWhiteBright`
+
+## Advanced usage
+
+By default, you get a map of styles, but the styles are also available as groups. They are non-enumerable so they don't show up unless you access them explicitly. This makes it easier to expose only a subset in a higher-level module.
+
+- `style.modifier`
+- `style.color`
+- `style.bgColor`
+
+###### Example
+
+```js
+console.log(style.color.green.open);
+```
+
+Raw escape codes (i.e. without the CSI escape prefix `\u001B[` and render mode postfix `m`) are available under `style.codes`, which returns a `Map` with the open codes as keys and close codes as values.
+
+###### Example
+
+```js
+console.log(style.codes.get(36));
+//=> 39
+```
+
+## [256 / 16 million (TrueColor) support](https://gist.github.com/XVilka/8346728)
+
+`ansi-styles` uses the [`color-convert`](https://github.com/Qix-/color-convert) package to allow for converting between various colors and ANSI escapes, with support for 256 and 16 million colors.
+
+The following color spaces from `color-convert` are supported:
+
+- `rgb`
+- `hex`
+- `keyword`
+- `hsl`
+- `hsv`
+- `hwb`
+- `ansi`
+- `ansi256`
+
+To use these, call the associated conversion function with the intended output, for example:
+
+```js
+style.color.ansi.rgb(100, 200, 15); // RGB to 16 color ansi foreground code
+style.bgColor.ansi.rgb(100, 200, 15); // RGB to 16 color ansi background code
+
+style.color.ansi256.hsl(120, 100, 60); // HSL to 256 color ansi foreground code
+style.bgColor.ansi256.hsl(120, 100, 60); // HSL to 256 color ansi foreground code
+
+style.color.ansi16m.hex('#C0FFEE'); // Hex (RGB) to 16 million color foreground code
+style.bgColor.ansi16m.hex('#C0FFEE'); // Hex (RGB) to 16 million color background code
+```
+
+## Related
+
+- [ansi-escapes](https://github.com/sindresorhus/ansi-escapes) - ANSI escape codes for manipulating the terminal
+
+## Maintainers
+
+- [Sindre Sorhus](https://github.com/sindresorhus)
+- [Josh Junon](https://github.com/qix-)
+
+## For enterprise
+
+Available as part of the Tidelift Subscription.
+
+The maintainers of `ansi-styles` and thousands of other packages are working with Tidelift to deliver commercial support and maintenance for the open source dependencies you use to build your applications. Save time, reduce risk, and improve code health, while paying the maintainers of the exact dependencies you use. [Learn more.](https://tidelift.com/subscription/pkg/npm-ansi-styles?utm_source=npm-ansi-styles&utm_medium=referral&utm_campaign=enterprise&utm_term=repo)
