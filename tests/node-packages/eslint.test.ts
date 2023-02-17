@@ -70,5 +70,6 @@ test('gets eslint diagnostic', async ({ runTestServer, page, emulatorUrl }) => {
   13:5  error  Unexpected console statement  no-console
 
 ✖ 2 problems (2 errors, 0 warnings)
+
 `);
 });

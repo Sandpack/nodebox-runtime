@@ -19,7 +19,7 @@ process.exit();`,
       'index.js': `const { exec } = require('node:child_process');
     
 exec("./foo", { encoding: "utf8", timeout: 5_000 }, (err, stdout, stderr) => {
-  console.log("Exec output: " + stdout)
+  console.log("Exec output:", stdout)
 });`,
     });
 
@@ -34,7 +34,7 @@ exec("./foo", { encoding: "utf8", timeout: 5_000 }, (err, stdout, stderr) => {
     });
   }, emulatorUrl);
 
-  expect(watchOutput).toEqual('Exec output: Hello world');
+  expect(watchOutput).toEqual('Exec output: Hello world\n');
 });
 
 test('run binary command', async ({ runTestServer, emulatorUrl, page }) => {
@@ -80,5 +80,5 @@ test('run binary command', async ({ runTestServer, emulatorUrl, page }) => {
     });
   }, emulatorUrl);
 
-  expect(watchOutput).toEqual(['stdout: test', 'Exited with code: 0', 'Closed output streams']);
+  expect(watchOutput).toEqual(['stdout: test\n', 'Exited with code: 0\n', 'Closed output streams\n']);
 });

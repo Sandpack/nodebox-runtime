@@ -1,10 +1,10 @@
 {
   "name": "@codesandbox/nodebox",
-  "version": "0.0.38",
+  "version": "0.0.39",
   "description": "Public API of Nodebox",
   "main": "./build/index.js",
   "typings": "./build/index.d.ts",
-  "license" : "SEE LICENSE IN ./LICENSE",
+  "license": "SEE LICENSE IN ./LICENSE",
   "files": [
     "./build"
   ],

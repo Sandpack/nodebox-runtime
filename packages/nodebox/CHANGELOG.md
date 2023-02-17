@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.0.39](https://github.com/codesandbox/nodebox-internal/compare/nodebox-v0.0.38...nodebox-v0.0.39) (2023-02-16)
+
+
+### Bug Fixes
+
+* readme links ([#306](https://github.com/codesandbox/nodebox-internal/issues/306)) ([d83bbbc](https://github.com/codesandbox/nodebox-internal/commit/d83bbbcd0e0d33931a7cafd419252bf68d84b093))
+* **readme:** remove sentence about VMs ([#312](https://github.com/codesandbox/nodebox-internal/issues/312)) ([6c9260f](https://github.com/codesandbox/nodebox-internal/commit/6c9260f1f6cb806351327a69fef316982b0f94af))
+* update configuration steps ([#310](https://github.com/codesandbox/nodebox-internal/issues/310)) ([9d7df79](https://github.com/codesandbox/nodebox-internal/commit/9d7df79ffb90b67632e3e20ba2c2ef5125e0df4d))
+
 ## [0.0.38](https://github.com/codesandbox/nodebox/compare/nodebox-v0.0.37...nodebox-v0.0.38) (2023-02-15)
 
 
