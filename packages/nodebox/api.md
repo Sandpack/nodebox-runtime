@@ -3,6 +3,7 @@
 - [Class: `Nodebox`](#class-nodebox)
   - [`new Nodebox(options)`](#new-nodeboxurl-options)
   - [`nodebox.connect()`](#nodeboxconnect)
+  - [`nodebox.fs`](#nodeboxfs)
 - [File system API](#file-system-api)
   - [`fs.init()`](#fsinitfiles)
   - [`fs.readFile(path[, encoding])`](#fsreadfilepath-encoding)
@@ -55,7 +56,7 @@ nodebox.connect().then(() => {
 });
 ```
 
-### `nodebox.js`
+### `nodebox.fs`
 
 A reference to the [File system API](#file-system-api).
 
