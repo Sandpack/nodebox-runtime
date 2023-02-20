@@ -3,13 +3,15 @@
 - [Class: `Nodebox`](#class-nodebox)
   - [`new Nodebox(options)`](#new-nodeboxurl-options)
   - [`nodebox.connect()`](#nodeboxconnect)
+  - [`nodebox.fs`](#nodeboxfs)
+  - [`nodebox.shell`](#nodeboxshell)
 - [File system API](#file-system-api)
-  - [`fs.init()`](#fsinitfiles)
-  - [`fs.readFile(path[, encoding])`](#fsreadfilepath-encoding)
-  - [`fs.writeFile(path[, content[, encoding]])`](#fswritefilepath-content-encoding)
-  - [`fs.watch(glob, listener)`](#fswatchglob-listener)
+  - [`fs.init()`](#nodeboxfsinitfiles)
+  - [`fs.readFile(path[, encoding])`](#nodeboxfsreadfilepath-encoding)
+  - [`fs.writeFile(path[, content[, encoding]])`](#nodeboxfswritefilepath-content-encoding)
+  - [`fs.watch(glob, listener)`](#nodeboxfswatchglob-listener)
 - [Shell API](#shell-api)
-  - [`shell.create()`](#shellcreate)
+  - [`shell.create()`](#nodeboxshellcreate)
 - [Class: `Shell`](#class-shell)
   - [`shell.runCommand(binary, args[, options])`](#shellruncommandbinary-args-options)
   - [`shell.on(event, listener)`](#shellonevent-listener)
@@ -55,7 +57,7 @@ nodebox.connect().then(() => {
 });
 ```
 
-### `nodebox.js`
+### `nodebox.fs`
 
 A reference to the [File system API](#file-system-api).
 
@@ -65,9 +67,17 @@ await nodebox.fs.init({
 });
 ```
 
+### `nodebox.shell`
+
+A reference to the [Shell API](#shell-api).
+
+```js
+const shell = nodebox.shell.create();
+```
+
 ## File system API
 
-### `fs.init(files)`
+### `nodebox.fs.init(files)`
 
 - `files` `<Object>` A record of files and their content to write.
 - Returns: `<Promise>` Fulfills when all the specified files are successfully written.
@@ -90,7 +100,7 @@ export function greet(message) {
 });
 ```
 
-### `fs.readFile(path[, encoding])`
+### `nodebox.fs.readFile(path[, encoding])`
 
 - `path` `<string>`
 - `encoding` `<string | BufferEncoding>`
@@ -101,7 +111,7 @@ const content = await nodebox.fs.readFile('./index.js', 'utf8');
 // "console.log('Hello world')
 ```
 
-### `fs.writeFile(path[, content[, encoding]])`
+### `nodebox.fs.writeFile(path[, content[, encoding]])`
 
 - `path` `<string>`
 - `content` `<string | Uint8Array>`
@@ -111,7 +121,7 @@ const content = await nodebox.fs.readFile('./index.js', 'utf8');
 await nodebox.fs.writeFile('./util.js', '');
 ```
 
-### `fs.watch(glob, listener)`
+### `nodebox.fs.watch(glob, listener)`
 
 - `glob` `<string>` A glob pattern of the files to watch.
 - `listener` `<Function>` A listener to react to file watch events.
@@ -145,7 +155,7 @@ watcher.dispose();
 
 ## Shell API
 
-### `shell.create()`
+### `nodebox.shell.create()`
 
 - Returns: `<Object>` A [Shell](#class-shell) instance.
 
