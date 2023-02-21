@@ -3,8 +3,16 @@
   "version": "0.0.39",
   "description": "Public API of Nodebox",
   "main": "./build/index.js",
+  "module": "./build/index.mjs",
   "typings": "./build/index.d.ts",
   "license": "SEE LICENSE IN ./LICENSE",
+   "exports": {
+    ".": {
+      "import": "./build/index.mjs",
+      "require": "./build/index.js",
+      "types": "./build/index.d.ts"
+    }
+  },
   "files": [
     "./build"
   ],

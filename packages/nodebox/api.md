@@ -18,6 +18,9 @@
   - [`shell.stdout.on(event, listener)`](#shellstdoutonevent-listener)
   - [`shell.stderr.on(event, listener)`](#shellstderronevent-listener)
   - [`shell.kill()`](#shellkill)
+- [Preview API](#preview-api)
+  - [`preview.getByShellId(shellId[, timeout])`](#previewgetbyshellidshellid-timeout)
+  - [`preview.waitForPort(port[, timeout])`](#previewwaitforportport-timeout)
 
 ## Class: `Nodebox`
 
@@ -231,3 +234,44 @@ shell.stderr.on('data', (data) => {
 ### `shell.kill()`
 
 - Returns: `<Promise>` Fulfills when the shell successfully exits.
+
+## Preview API
+
+### `preview.getByShellId(shellId[, timeout])`
+
+- `shellId` `<string>`
+- `timeout` `<number>` Duration of the timeout window. _Default:_ `10_000` milliseconds.
+- Returns: `<PreviewInfo>`
+
+Get a preview info object for the preview opened by the given shell. If there's no preview found by the given shell within the `timeout` period, the function throws.
+
+```ts
+const previewInfo = await nodebox.preview.getByShellId('cjld2cjxh0000qzrmn831i7rn');
+// {
+//   "url": "https://t3rmni-3000.preview.csb.app/",
+//   "sourceShellId": "cjld2cjxh0000qzrmn831i7rn",
+//   "port": 3000
+// }
+```
+
+### `preview.waitForPort(port[, timeout])`
+
+- `port` `<number>`
+- `timeout` `<number>` Duration of the timeout window. _Default:_ `10_000` milliseconds.
+- Returns: `<Promise>` Fulfills with the preview info object.
+
+Get a preview info object for the preview at the given port. If there's no preview found open at the given port within the `timeout` window, the function throws.
+
+```js
+const shell = await nodebox.shell.create();
+await shell.runCommand('node', ['start:docs']);
+
+// Await a preview at the specific port.
+const previewInfo = await nodebox.preview.waitForPort(3004);
+console.log(previewInfo);
+// {
+//   "url": "https://t3rmni-3004.preview.csb.app/",
+//   "sourceShellId": "cjld2cjxh0000qzrmn831i7rn",
+//   "port": 3004
+// }
+```
