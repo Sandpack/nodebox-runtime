@@ -6,7 +6,7 @@
   "module": "./build/index.mjs",
   "typings": "./build/index.d.ts",
   "exports": {
-    "/": {
+    ".": {
       "import": "./build/index.mjs",
       "require": "./build/index.js",
       "types": "./build/index.d.ts"
