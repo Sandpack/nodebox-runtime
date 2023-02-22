@@ -1,0 +1,293 @@
+‡¨/LICENSEÅ–MIT License
+
+Copyright (c) 2018 Tomas Della Vedova
+Copyright (c) 2017 Justin Ridgewell
+Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+¬/.travis.ymlÄ„language: node_js
+
+node_js:
+  - "11"
+  - "10"
+  - "8"
+  - "6"
+
+notifications:
+  email:
+    on_success: never
+    on_failure: always
+ª/README.mdÅ•# fast-decode-uri-component
+
+[![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](http://standardjs.com/)  [![Build Status](https://travis-ci.org/delvedor/fast-decode-uri-component.svg?branch=master)](https://travis-ci.org/delvedor/fast-decode-uri-component)
+
+Decodes strings encoded by `encodeURI` and `encodeURIComponent`, without throwing errors on invalid escapes, instead, it returns `null`.
+
+
+## Installation
+```
+npm install fast-decode-uri-component
+```
+
+## Usage
+```js
+const fastDecode = require('fast-decode-uri-component')
+
+console.log(fastDecode('test')) // 'test'
+console.log(fastDecode('%25')) // '%'
+console.log(fastDecode('/test/hel%2Flo')) // '/test/hel/lo'
+
+console.log(fastDecode('/test/hel%"Flo')) // null
+console.log(fastDecode('%7B%ab%7C%de%7D')) // null
+console.log(fastDecode('%ab')) // null
+```
+
+## Benchmarks
+You can find the benchmark file [here](https://github.com/delvedor/fast-decode-uri-component/blob/master/bench.js).
+```
+# fast-decode-uri-component
+ok ~539 ms (0 s + 539114308 ns)
+
+# decodeURIComponent
+ok ~6.06 s (6 s + 62305153 ns)
+```
+
+## Acknowledgements
+This project has been forked from [`jridgewell/safe-decode-uri-component`](https://github.com/jridgewell/safe-decode-uri-component) because I wanted to change the behaviour of the library on invalid inputs, plus change some internals.<br>
+All the credits before the commit [`53000fe`](https://github.com/delvedor/fast-decode-uri-component/commit/53000feb8c268eec7a24620fd440fdd540be32b7) goes to the `jridgewell/safe-decode-uri-component` project [contributors](https://github.com/delvedor/fast-decode-uri-component/graphs/contributors).<br>
+Since the commit [`9673ab7`](https://github.com/delvedor/fast-decode-uri-component/commit/9673ab7820ef92081206a9f4fd158ffe9a352861) the project will be maintained by [**@delvedor**](https://github.com/delvedor).
+
+## License
+
+Licensed under [MIT](./LICENSE).
+¨/test.jsÅï'use strict'
+
+const { test } = require('tap')
+const randomstring = require('randomstring')
+const fastDecode = require('./index')
+
+const charset = 'abcdef_ghilmn%opqrstu-vzxywjk%ABCDEF_HGILMN%OPQRSTU-VZXYWJK%0123456789.-_~%'
+
+test('Basic', t => {
+  // base test
+  const uri = [
+    'test', 'a+b+c+d', '=a', '%25', '%%25%%', 'st%C3%A5le', 'st%C3%A5le%', '%st%C3%A5le%', '%%7Bst%C3%A5le%7D%',
+    '%ab%C3%A5le%', '%C3%A5%able%', '%7B%ab%7C%de%7D', '%7B%ab%%7C%de%%7D', '%7 B%ab%%7C%de%%7 D', '%61+%4d%4D',
+    '\uFEFFtest', '\uFEFF', '%EF%BB%BFtest', '%EF%BB%BF', 'â€ ', '%C2%B5', '%C2%B5%', '%%C2%B5%', '%ab', '%ab%ab%ab',
+    '%', '%2', '%E0%A4%A', '/test/hel%"Flo', '/test/hel%2Flo'
+  ]
+
+  // random generated uri
+  for (var i = 0; i < 20000; i++) {
+    uri.push(randomstring.generate({ charset }))
+  }
+
+  for (i = 0; i < uri.length; i++) {
+    try {
+      t.strictEqual(decodeURIComponent(uri[i]), fastDecode(uri[i]))
+    } catch (e) {
+      t.strictEqual(fastDecode(uri[i]), null)
+    }
+  }
+
+  t.end()
+})
+©/index.jsÅ“'use strict'
+
+var UTF8_ACCEPT = 12
+var UTF8_REJECT = 0
+var UTF8_DATA = [
+  // The first part of the table maps bytes to character to a transition.
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+  3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+  3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+  4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+  5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+  6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8, 7, 7,
+  10, 9, 9, 9, 11, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+
+  // The second part of the table maps a state to a new state when adding a
+  // transition.
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  12, 0, 0, 0, 0, 24, 36, 48, 60, 72, 84, 96,
+  0, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 24, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 24, 24, 24, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 24, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 48, 48, 48, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 48, 48, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 48, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+  // The third part maps the current transition to a mask that needs to apply
+  // to the byte.
+  0x7F, 0x3F, 0x3F, 0x3F, 0x00, 0x1F, 0x0F, 0x0F, 0x0F, 0x07, 0x07, 0x07
+]
+
+function decodeURIComponent (uri) {
+  var percentPosition = uri.indexOf('%')
+  if (percentPosition === -1) return uri
+
+  var length = uri.length
+  var decoded = ''
+  var last = 0
+  var codepoint = 0
+  var startOfOctets = percentPosition
+  var state = UTF8_ACCEPT
+
+  while (percentPosition > -1 && percentPosition < length) {
+    var high = hexCodeToInt(uri[percentPosition + 1], 4)
+    var low = hexCodeToInt(uri[percentPosition + 2], 0)
+    var byte = high | low
+    var type = UTF8_DATA[byte]
+    state = UTF8_DATA[256 + state + type]
+    codepoint = (codepoint << 6) | (byte & UTF8_DATA[364 + type])
+
+    if (state === UTF8_ACCEPT) {
+      decoded += uri.slice(last, startOfOctets)
+
+      decoded += (codepoint <= 0xFFFF)
+        ? String.fromCharCode(codepoint)
+        : String.fromCharCode(
+          (0xD7C0 + (codepoint >> 10)),
+          (0xDC00 + (codepoint & 0x3FF))
+        )
+
+      codepoint = 0
+      last = percentPosition + 3
+      percentPosition = startOfOctets = uri.indexOf('%', last)
+    } else if (state === UTF8_REJECT) {
+      return null
+    } else {
+      percentPosition += 3
+      if (percentPosition < length && uri.charCodeAt(percentPosition) === 37) continue
+      return null
+    }
+  }
+
+  return decoded + uri.slice(last)
+}
+
+var HEX = {
+  '0': 0,
+  '1': 1,
+  '2': 2,
+  '3': 3,
+  '4': 4,
+  '5': 5,
+  '6': 6,
+  '7': 7,
+  '8': 8,
+  '9': 9,
+  'a': 10,
+  'A': 10,
+  'b': 11,
+  'B': 11,
+  'c': 12,
+  'C': 12,
+  'd': 13,
+  'D': 13,
+  'e': 14,
+  'E': 14,
+  'f': 15,
+  'F': 15
+}
+
+function hexCodeToInt (c, shift) {
+  var i = HEX[c]
+  return i === undefined ? 255 : i << shift
+}
+
+module.exports = decodeURIComponent
+©/bench.jsÅ­'use strict'
+
+const bench = require('nanobench')
+const fastDecode = require('./index')
+
+const uri = [
+  'test', 'a+b+c+d', '=a', '%25', '%%25%%', 'st%C3%A5le', 'st%C3%A5le%', '%st%C3%A5le%', '%%7Bst%C3%A5le%7D%',
+  '%ab%C3%A5le%', '%C3%A5%able%', '%7B%ab%7C%de%7D', '%7B%ab%%7C%de%%7D', '%7 B%ab%%7C%de%%7 D', '%61+%4d%4D',
+  '\uFEFFtest', '\uFEFF', '%EF%BB%BFtest', '%EF%BB%BF', 'â€ ', '%C2%B5', '%C2%B5%', '%%C2%B5%', '%ab', '%ab%ab%ab',
+  '%', '%E0%A4%A', '/test/hel%"Flo', '/test/hel%2Flo'
+]
+
+const uriLen = uri.length
+
+bench('fast-decode-uri-component', b => {
+  b.start()
+  for (var round = 0; round < 100000; round++) {
+    for (var i = 0; i < uriLen; i++) {
+      fastDecode(uri[i])
+    }
+  }
+  b.end()
+})
+
+bench('decodeURIComponent', b => {
+  b.start()
+  for (var round = 0; round < 100000; round++) {
+    for (var i = 0; i < uriLen; i++) {
+      try {
+        decodeURIComponent(uri[i])
+      } catch (e) {}
+    }
+  }
+  b.end()
+})
+­/package.jsonÅ2{
+  "name": "fast-decode-uri-component",
+  "version": "1.0.1",
+  "description": "Fast and safe decodeURIComponent",
+  "main": "index.js",
+  "scripts": {
+    "test": "standard && tap test.js",
+    "bench": "node bench.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/delvedor/fast-decode-uri-component.git"
+  },
+  "keywords": [
+    "decode",
+    "uri",
+    "component",
+    "fast",
+    "safe"
+  ],
+  "author": "Tomas Della Vedova - @delvedor (http://delved.org)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/delvedor/fast-decode-uri-component/issues"
+  },
+  "homepage": "https://github.com/delvedor/fast-decode-uri-component#readme",
+  "devDependencies": {
+    "nanobench": "^2.1.1",
+    "randomstring": "^1.1.5",
+    "standard": "^11.0.1",
+    "tap": "^11.1.2"
+  }
+}

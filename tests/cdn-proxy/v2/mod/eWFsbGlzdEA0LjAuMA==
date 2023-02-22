@@ -1,0 +1,682 @@
+Ö≠/package.json≈å{
+  "name": "yallist",
+  "version": "4.0.0",
+  "description": "Yet Another Linked List",
+  "main": "yallist.js",
+  "directories": {
+    "test": "test"
+  },
+  "files": [
+    "yallist.js",
+    "iterator.js"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "tap": "^12.1.0"
+  },
+  "scripts": {
+    "test": "tap test/*.js --100",
+    "preversion": "npm test",
+    "postversion": "npm publish",
+    "postpublish": "git push origin --all; git push origin --tags"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/isaacs/yallist.git"
+  },
+  "author": "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me/)",
+  "license": "ISC"
+}
+®/LICENSE≈˝The ISC License
+
+Copyright (c) Isaac Z. Schlueter and Contributors
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+´/yallist.js≈ €'use strict'
+module.exports = Yallist
+
+Yallist.Node = Node
+Yallist.create = Yallist
+
+function Yallist (list) {
+  var self = this
+  if (!(self instanceof Yallist)) {
+    self = new Yallist()
+  }
+
+  self.tail = null
+  self.head = null
+  self.length = 0
+
+  if (list && typeof list.forEach === 'function') {
+    list.forEach(function (item) {
+      self.push(item)
+    })
+  } else if (arguments.length > 0) {
+    for (var i = 0, l = arguments.length; i < l; i++) {
+      self.push(arguments[i])
+    }
+  }
+
+  return self
+}
+
+Yallist.prototype.removeNode = function (node) {
+  if (node.list !== this) {
+    throw new Error('removing node which does not belong to this list')
+  }
+
+  var next = node.next
+  var prev = node.prev
+
+  if (next) {
+    next.prev = prev
+  }
+
+  if (prev) {
+    prev.next = next
+  }
+
+  if (node === this.head) {
+    this.head = next
+  }
+  if (node === this.tail) {
+    this.tail = prev
+  }
+
+  node.list.length--
+  node.next = null
+  node.prev = null
+  node.list = null
+
+  return next
+}
+
+Yallist.prototype.unshiftNode = function (node) {
+  if (node === this.head) {
+    return
+  }
+
+  if (node.list) {
+    node.list.removeNode(node)
+  }
+
+  var head = this.head
+  node.list = this
+  node.next = head
+  if (head) {
+    head.prev = node
+  }
+
+  this.head = node
+  if (!this.tail) {
+    this.tail = node
+  }
+  this.length++
+}
+
+Yallist.prototype.pushNode = function (node) {
+  if (node === this.tail) {
+    return
+  }
+
+  if (node.list) {
+    node.list.removeNode(node)
+  }
+
+  var tail = this.tail
+  node.list = this
+  node.prev = tail
+  if (tail) {
+    tail.next = node
+  }
+
+  this.tail = node
+  if (!this.head) {
+    this.head = node
+  }
+  this.length++
+}
+
+Yallist.prototype.push = function () {
+  for (var i = 0, l = arguments.length; i < l; i++) {
+    push(this, arguments[i])
+  }
+  return this.length
+}
+
+Yallist.prototype.unshift = function () {
+  for (var i = 0, l = arguments.length; i < l; i++) {
+    unshift(this, arguments[i])
+  }
+  return this.length
+}
+
+Yallist.prototype.pop = function () {
+  if (!this.tail) {
+    return undefined
+  }
+
+  var res = this.tail.value
+  this.tail = this.tail.prev
+  if (this.tail) {
+    this.tail.next = null
+  } else {
+    this.head = null
+  }
+  this.length--
+  return res
+}
+
+Yallist.prototype.shift = function () {
+  if (!this.head) {
+    return undefined
+  }
+
+  var res = this.head.value
+  this.head = this.head.next
+  if (this.head) {
+    this.head.prev = null
+  } else {
+    this.tail = null
+  }
+  this.length--
+  return res
+}
+
+Yallist.prototype.forEach = function (fn, thisp) {
+  thisp = thisp || this
+  for (var walker = this.head, i = 0; walker !== null; i++) {
+    fn.call(thisp, walker.value, i, this)
+    walker = walker.next
+  }
+}
+
+Yallist.prototype.forEachReverse = function (fn, thisp) {
+  thisp = thisp || this
+  for (var walker = this.tail, i = this.length - 1; walker !== null; i--) {
+    fn.call(thisp, walker.value, i, this)
+    walker = walker.prev
+  }
+}
+
+Yallist.prototype.get = function (n) {
+  for (var i = 0, walker = this.head; walker !== null && i < n; i++) {
+    // abort out of the list early if we hit a cycle
+    walker = walker.next
+  }
+  if (i === n && walker !== null) {
+    return walker.value
+  }
+}
+
+Yallist.prototype.getReverse = function (n) {
+  for (var i = 0, walker = this.tail; walker !== null && i < n; i++) {
+    // abort out of the list early if we hit a cycle
+    walker = walker.prev
+  }
+  if (i === n && walker !== null) {
+    return walker.value
+  }
+}
+
+Yallist.prototype.map = function (fn, thisp) {
+  thisp = thisp || this
+  var res = new Yallist()
+  for (var walker = this.head; walker !== null;) {
+    res.push(fn.call(thisp, walker.value, this))
+    walker = walker.next
+  }
+  return res
+}
+
+Yallist.prototype.mapReverse = function (fn, thisp) {
+  thisp = thisp || this
+  var res = new Yallist()
+  for (var walker = this.tail; walker !== null;) {
+    res.push(fn.call(thisp, walker.value, this))
+    walker = walker.prev
+  }
+  return res
+}
+
+Yallist.prototype.reduce = function (fn, initial) {
+  var acc
+  var walker = this.head
+  if (arguments.length > 1) {
+    acc = initial
+  } else if (this.head) {
+    walker = this.head.next
+    acc = this.head.value
+  } else {
+    throw new TypeError('Reduce of empty list with no initial value')
+  }
+
+  for (var i = 0; walker !== null; i++) {
+    acc = fn(acc, walker.value, i)
+    walker = walker.next
+  }
+
+  return acc
+}
+
+Yallist.prototype.reduceReverse = function (fn, initial) {
+  var acc
+  var walker = this.tail
+  if (arguments.length > 1) {
+    acc = initial
+  } else if (this.tail) {
+    walker = this.tail.prev
+    acc = this.tail.value
+  } else {
+    throw new TypeError('Reduce of empty list with no initial value')
+  }
+
+  for (var i = this.length - 1; walker !== null; i--) {
+    acc = fn(acc, walker.value, i)
+    walker = walker.prev
+  }
+
+  return acc
+}
+
+Yallist.prototype.toArray = function () {
+  var arr = new Array(this.length)
+  for (var i = 0, walker = this.head; walker !== null; i++) {
+    arr[i] = walker.value
+    walker = walker.next
+  }
+  return arr
+}
+
+Yallist.prototype.toArrayReverse = function () {
+  var arr = new Array(this.length)
+  for (var i = 0, walker = this.tail; walker !== null; i++) {
+    arr[i] = walker.value
+    walker = walker.prev
+  }
+  return arr
+}
+
+Yallist.prototype.slice = function (from, to) {
+  to = to || this.length
+  if (to < 0) {
+    to += this.length
+  }
+  from = from || 0
+  if (from < 0) {
+    from += this.length
+  }
+  var ret = new Yallist()
+  if (to < from || to < 0) {
+    return ret
+  }
+  if (from < 0) {
+    from = 0
+  }
+  if (to > this.length) {
+    to = this.length
+  }
+  for (var i = 0, walker = this.head; walker !== null && i < from; i++) {
+    walker = walker.next
+  }
+  for (; walker !== null && i < to; i++, walker = walker.next) {
+    ret.push(walker.value)
+  }
+  return ret
+}
+
+Yallist.prototype.sliceReverse = function (from, to) {
+  to = to || this.length
+  if (to < 0) {
+    to += this.length
+  }
+  from = from || 0
+  if (from < 0) {
+    from += this.length
+  }
+  var ret = new Yallist()
+  if (to < from || to < 0) {
+    return ret
+  }
+  if (from < 0) {
+    from = 0
+  }
+  if (to > this.length) {
+    to = this.length
+  }
+  for (var i = this.length, walker = this.tail; walker !== null && i > to; i--) {
+    walker = walker.prev
+  }
+  for (; walker !== null && i > from; i--, walker = walker.prev) {
+    ret.push(walker.value)
+  }
+  return ret
+}
+
+Yallist.prototype.splice = function (start, deleteCount, ...nodes) {
+  if (start > this.length) {
+    start = this.length - 1
+  }
+  if (start < 0) {
+    start = this.length + start;
+  }
+
+  for (var i = 0, walker = this.head; walker !== null && i < start; i++) {
+    walker = walker.next
+  }
+
+  var ret = []
+  for (var i = 0; walker && i < deleteCount; i++) {
+    ret.push(walker.value)
+    walker = this.removeNode(walker)
+  }
+  if (walker === null) {
+    walker = this.tail
+  }
+
+  if (walker !== this.head && walker !== this.tail) {
+    walker = walker.prev
+  }
+
+  for (var i = 0; i < nodes.length; i++) {
+    walker = insert(this, walker, nodes[i])
+  }
+  return ret;
+}
+
+Yallist.prototype.reverse = function () {
+  var head = this.head
+  var tail = this.tail
+  for (var walker = head; walker !== null; walker = walker.prev) {
+    var p = walker.prev
+    walker.prev = walker.next
+    walker.next = p
+  }
+  this.head = tail
+  this.tail = head
+  return this
+}
+
+function insert (self, node, value) {
+  var inserted = node === self.head ?
+    new Node(value, null, node, self) :
+    new Node(value, node, node.next, self)
+
+  if (inserted.next === null) {
+    self.tail = inserted
+  }
+  if (inserted.prev === null) {
+    self.head = inserted
+  }
+
+  self.length++
+
+  return inserted
+}
+
+function push (self, item) {
+  self.tail = new Node(item, self.tail, null, self)
+  if (!self.head) {
+    self.head = self.tail
+  }
+  self.length++
+}
+
+function unshift (self, item) {
+  self.head = new Node(item, null, self.head, self)
+  if (!self.tail) {
+    self.tail = self.head
+  }
+  self.length++
+}
+
+function Node (value, prev, next, list) {
+  if (!(this instanceof Node)) {
+    return new Node(value, prev, next, list)
+  }
+
+  this.list = list
+  this.value = value
+
+  if (prev) {
+    prev.next = this
+    this.prev = prev
+  } else {
+    this.prev = null
+  }
+
+  if (next) {
+    next.prev = this
+    this.next = next
+  } else {
+    this.next = null
+  }
+}
+
+try {
+  // add if support for Symbol.iterator is present
+  require('./iterator.js')(Yallist)
+} catch (er) {}
+™/README.md≈m# yallist
+
+Yet Another Linked List
+
+There are many doubly-linked list implementations like it, but this
+one is mine.
+
+For when an array would be too big, and a Map can't be iterated in
+reverse order.
+
+
+[![Build Status](https://travis-ci.org/isaacs/yallist.svg?branch=master)](https://travis-ci.org/isaacs/yallist) [![Coverage Status](https://coveralls.io/repos/isaacs/yallist/badge.svg?service=github)](https://coveralls.io/github/isaacs/yallist)
+
+## basic usage
+
+```javascript
+var yallist = require('yallist')
+var myList = yallist.create([1, 2, 3])
+myList.push('foo')
+myList.unshift('bar')
+// of course pop() and shift() are there, too
+console.log(myList.toArray()) // ['bar', 1, 2, 3, 'foo']
+myList.forEach(function (k) {
+  // walk the list head to tail
+})
+myList.forEachReverse(function (k, index, list) {
+  // walk the list tail to head
+})
+var myDoubledList = myList.map(function (k) {
+  return k + k
+})
+// now myDoubledList contains ['barbar', 2, 4, 6, 'foofoo']
+// mapReverse is also a thing
+var myDoubledListReverse = myList.mapReverse(function (k) {
+  return k + k
+}) // ['foofoo', 6, 4, 2, 'barbar']
+
+var reduced = myList.reduce(function (set, entry) {
+  set += entry
+  return set
+}, 'start')
+console.log(reduced) // 'startfoo123bar'
+```
+
+## api
+
+The whole API is considered "public".
+
+Functions with the same name as an Array method work more or less the
+same way.
+
+There's reverse versions of most things because that's the point.
+
+### Yallist
+
+Default export, the class that holds and manages a list.
+
+Call it with either a forEach-able (like an array) or a set of
+arguments, to initialize the list.
+
+The Array-ish methods all act like you'd expect.  No magic length,
+though, so if you change that it won't automatically prune or add
+empty spots.
+
+### Yallist.create(..)
+
+Alias for Yallist function.  Some people like factories.
+
+#### yallist.head
+
+The first node in the list
+
+#### yallist.tail
+
+The last node in the list
+
+#### yallist.length
+
+The number of nodes in the list.  (Change this at your peril.  It is
+not magic like Array length.)
+
+#### yallist.toArray()
+
+Convert the list to an array.
+
+#### yallist.forEach(fn, [thisp])
+
+Call a function on each item in the list.
+
+#### yallist.forEachReverse(fn, [thisp])
+
+Call a function on each item in the list, in reverse order.
+
+#### yallist.get(n)
+
+Get the data at position `n` in the list.  If you use this a lot,
+probably better off just using an Array.
+
+#### yallist.getReverse(n)
+
+Get the data at position `n`, counting from the tail.
+
+#### yallist.map(fn, thisp)
+
+Create a new Yallist with the result of calling the function on each
+item.
+
+#### yallist.mapReverse(fn, thisp)
+
+Same as `map`, but in reverse.
+
+#### yallist.pop()
+
+Get the data from the list tail, and remove the tail from the list.
+
+#### yallist.push(item, ...)
+
+Insert one or more items to the tail of the list.
+
+#### yallist.reduce(fn, initialValue)
+
+Like Array.reduce.
+
+#### yallist.reduceReverse
+
+Like Array.reduce, but in reverse.
+
+#### yallist.reverse
+
+Reverse the list in place.
+
+#### yallist.shift()
+
+Get the data from the list head, and remove the head from the list.
+
+#### yallist.slice([from], [to])
+
+Just like Array.slice, but returns a new Yallist.
+
+#### yallist.sliceReverse([from], [to])
+
+Just like yallist.slice, but the result is returned in reverse.
+
+#### yallist.toArray()
+
+Create an array representation of the list.
+
+#### yallist.toArrayReverse()
+
+Create a reversed array representation of the list.
+
+#### yallist.unshift(item, ...)
+
+Insert one or more items to the head of the list.
+
+#### yallist.unshiftNode(node)
+
+Move a Node object to the front of the list.  (That is, pull it out of
+wherever it lives, and make it the new head.)
+
+If the node belongs to a different list, then that list will remove it
+first.
+
+#### yallist.pushNode(node)
+
+Move a Node object to the end of the list.  (That is, pull it out of
+wherever it lives, and make it the new tail.)
+
+If the node belongs to a list already, then that list will remove it
+first.
+
+#### yallist.removeNode(node)
+
+Remove a node from the list, preserving referential integrity of head
+and tail and other nodes.
+
+Will throw an error if you try to have a list remove a node that
+doesn't belong to it.
+
+### Yallist.Node
+
+The class that holds the data and is actually the list.
+
+Call with `var n = new Node(value, previousNode, nextNode)`
+
+Note that if you do direct operations on Nodes themselves, it's very
+easy to get into weird states where the list is broken.  Be careful :)
+
+#### node.next
+
+The next node in the list.
+
+#### node.prev
+
+The previous node in the list.
+
+#### node.value
+
+The data the node contains.
+
+#### node.list
+
+The list to which this node belongs.  (Null if it does not belong to
+any list.)
+¨/iterator.jsƒœ'use strict'
+module.exports = function (Yallist) {
+  Yallist.prototype[Symbol.iterator] = function* () {
+    for (let walker = this.head; walker; walker = walker.next) {
+      yield walker.value
+    }
+  }
+}

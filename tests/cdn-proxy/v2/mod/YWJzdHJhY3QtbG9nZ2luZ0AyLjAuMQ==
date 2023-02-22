@@ -1,0 +1,107 @@
+Ñ®/test.js≈a'use strict'
+
+const assert = require('assert')
+
+const one = require('./')
+const two = require('./')
+
+assert.notEqual(one, two)
+assert.ok(one.info)
+assert.equal(Function.prototype.isPrototypeOf(one.info), true)
+two.info = () => 'info'
+
+const result1 = one.info()
+assert.equal(result1, undefined)
+
+const result2 = two.info()
+assert.equal(result2, 'info')
+©/index.jsƒÎ'use strict'
+
+function noop () { }
+
+const proto = {
+  fatal: noop,
+  error: noop,
+  warn: noop,
+  info: noop,
+  debug: noop,
+  trace: noop
+}
+
+Object.defineProperty(module, 'exports', {
+  get () {
+    return Object.create(proto)
+  }
+})
+™/Readme.md≈.# abstract-logging
+
+This module provides an interface for modules to include so that they can
+support logging via an external logger that conforms to the standard Log4j
+interface. One such logger is [Pino](https://npm.im/pino). This module
+is intended for modules that are meant to be used by other modules.
+
+Example:
+
+```js
+'use strict'
+
+function AwesomeLibrary (options) {
+  this.log = (options.logger) ? options.logger : require('abstract-logging')
+}
+
+AwesomeLibrary.prototype.coolMethod = function () {
+  this.log.trace('AwesomeLibrary.coolMethod was invoked')
+  return {}
+}
+
+module.exports = AwesomeLibrary
+```
+
+## Interface
+
+Available methods:
+
++ `fatal`
++ `error`
++ `warn`
++ `info`
++ `debug`
++ `trace`
+
+All methods are no operation functions.
+
+Some loggers, like [Pino](https://getpino.io/), implement a `child()` method. This method can be easily added to an `abstract-logging` instance when stubbing out such loggers:
+
+```js
+const logger = require('abstract-logging')
+logger.child = () => logger
+```
+
+## License
+
+[MIT License](http://jsumners.mit-license.org/)
+≠/package.json≈Ç{
+  "name": "abstract-logging",
+  "version": "2.0.1",
+  "description": "A noop logger that conforms to the Log4j interface for modules to stub out internal logging",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jsumners/abstract-logging.git"
+  },
+  "keywords": [
+    "log",
+    "logging",
+    "logger",
+    "pino"
+  ],
+  "author": "James Sumners <james.sumners@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jsumners/abstract-logging/issues"
+  },
+  "homepage": "https://github.com/jsumners/abstract-logging#readme"
+}

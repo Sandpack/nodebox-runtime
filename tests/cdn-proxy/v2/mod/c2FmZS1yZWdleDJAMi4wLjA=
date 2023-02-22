@@ -1,0 +1,224 @@
+á∞/example/safe.jsƒ_var safe = require('../')
+var regex = process.argv.slice(2).join(' ')
+console.log(safe(regex))
+©/index.js≈>'use strict'
+
+var parse = require('ret')
+var types = parse.types
+
+module.exports = function (re, opts) {
+  if (!opts) opts = {}
+  var replimit = opts.limit === undefined ? 25 : opts.limit
+
+  if (isRegExp(re)) re = re.source
+  else if (typeof re !== 'string') re = String(re)
+
+  try { re = parse(re) } catch (err) { return false }
+
+  var reps = 0
+  return (function walk (node, starHeight) {
+    var i
+    var ok
+    var len
+
+    if (node.type === types.REPETITION) {
+      starHeight++
+      reps++
+      if (starHeight > 1) return false
+      if (reps > replimit) return false
+    }
+
+    if (node.options) {
+      for (i = 0, len = node.options.length; i < len; i++) {
+        ok = walk({ stack: node.options[i] }, starHeight)
+        if (!ok) return false
+      }
+    }
+    var stack = node.stack || (node.value && node.value.stack)
+    if (!stack) return true
+
+    for (i = 0; i < stack.length; i++) {
+      ok = walk(stack[i], starHeight)
+      if (!ok) return false
+    }
+
+    return true
+  })(re, 0)
+}
+
+function isRegExp (x) {
+  return {}.toString.call(x) === '[object RegExp]'
+}
+¨/.travis.ymlƒ5language: node_js
+node_js:
+  - 6
+  - 8
+  - 10
+  - 11
+Æ/test/regex.js≈pvar safe = require('../')
+var test = require('tape')
+
+var good = [
+  /\bOakland\b/,
+  /\b(Oakland|San Francisco)\b/i,
+  /^\d+1337\d+$/i,
+  /^\d+(1337|404)\d+$/i,
+  /^\d+(1337|404)*\d+$/i,
+  RegExp(Array(26).join('a?') + Array(26).join('a'))
+]
+
+test('safe regex', function (t) {
+  t.plan(good.length)
+  good.forEach(function (re) {
+    t.equal(safe(re), true)
+  })
+})
+
+var bad = [
+  /^(a?){25}(a){25}$/,
+  RegExp(Array(27).join('a?') + Array(27).join('a')),
+  /(x+x+)+y/,
+  /foo|(x+x+)+y/,
+  /(a+){10}y/,
+  /(a+){2}y/,
+  /(.*){1,32000}[bc]/
+]
+
+test('unsafe regex', function (t) {
+  t.plan(bad.length)
+  bad.forEach(function (re) {
+    t.equal(safe(re), false)
+  })
+})
+
+var invalid = [
+  '*Oakland*',
+  'hey(yoo))',
+  'abcde(?>hellow)',
+  '[abc'
+]
+
+test('invalid regex', function (t) {
+  t.plan(invalid.length)
+  invalid.forEach(function (re) {
+    t.equal(safe(re), false)
+  })
+})
+∞/readme.markdown≈{# safe-regex2
+
+[![Build Status](https://travis-ci.com/fastify/safe-regex.svg?branch=master)](https://travis-ci.com/fastify/safe-regex)
+
+detect potentially
+[catastrophic](http://regular-expressions.mobi/catastrophic.html)
+[exponential-time](http://perlgeek.de/blog-en/perl-tips/in-search-of-an-exponetial-regexp.html)
+regular expressions by limiting the
+[star height](https://en.wikipedia.org/wiki/Star_height) to 1
+
+This is a fork of https://github.com/substack/safe-regex at 1.1.0.
+
+WARNING: This module has both false positives and false negatives.
+It is not meant as a full checker, but it detect basic cases.
+
+# example
+
+``` js
+var safe = require('safe-regex2');
+var regex = process.argv.slice(2).join(' ');
+console.log(safe(regex));
+```
+
+```
+$ node safe.js '(x+x+)+y'
+false
+$ node safe.js '(beep|boop)*'
+true
+$ node safe.js '(a+){10}'
+false
+$ node safe.js '\blocation\s*:[^:\n]+\b(Oakland|San Francisco)\b'
+true
+```
+
+# methods
+
+``` js
+var safe = require('safe-regex')
+```
+
+## var ok = safe(re, opts={})
+
+Return a boolean `ok` whether or not the regex `re` is safe and not possibly
+catastrophic.
+
+`re` can be a `RegExp` object or just a string.
+
+If the `re` is a string and is an invalid regex, returns `false`.
+
+* `opts.limit` - maximum number of allowed repetitions in the entire regex.
+Default: `25`.
+
+# install
+
+With [npm](https://npmjs.org) do:
+
+```
+npm install safe-regex2
+```
+
+# license
+
+MIT
+≠/package.json≈{
+  "name": "safe-regex2",
+  "version": "2.0.0",
+  "description": "detect possibly catastrophic, exponential-time regular expressions",
+  "main": "index.js",
+  "dependencies": {
+    "ret": "~0.2.0"
+  },
+  "devDependencies": {
+    "standard": "^12.0.1",
+    "tape": "^4.0.0"
+  },
+  "scripts": {
+    "test": "standard && tape test/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/fastify/safe-regex.git"
+  },
+  "homepage": "https://github.com/fastify/safe-regex",
+  "keywords": [
+    "catastrophic",
+    "exponential",
+    "regex",
+    "safe",
+    "sandbox"
+  ],
+  "author": {
+    "name": "James Halliday",
+    "email": "mail@substack.net",
+    "url": "http://substack.net"
+  },
+  "contributors": [
+    "Matteo Collina <hello@matteocollina.com>"
+  ],
+  "license": "MIT"
+}
+®/LICENSE≈1This software is released under the MIT license:
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

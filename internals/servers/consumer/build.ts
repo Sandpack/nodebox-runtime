@@ -40,7 +40,7 @@ const RUNTIME_URL = `https://${os.hostname()}-${RUNTIME_PORT}.${
    * Global vars
    */
   window.emulatorUrl = '${RUNTIME_URL}?layout=debug';
-  window.Nodebox = window.import_nodebox.Nodebox;
+  window.Nodebox = Nodebox;
   const templates = ${JSON.stringify(fileContent)};
 `;
 

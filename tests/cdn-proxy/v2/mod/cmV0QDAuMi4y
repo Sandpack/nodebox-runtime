@@ -1,0 +1,689 @@
+à≠/package.json≈ú{
+  "name": "ret",
+  "description": "Tokenizes a string that represents a regular expression.",
+  "keywords": [
+    "regex",
+    "regexp",
+    "regular expression",
+    "parser",
+    "tokenizer"
+  ],
+  "version": "0.2.2",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/fent/ret.js.git"
+  },
+  "author": "fent (https://github.com/fent)",
+  "main": "./lib/index.js",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "test": "istanbul cover vows -- --spec test/*-test.js"
+  },
+  "directories": {
+    "lib": "./lib"
+  },
+  "devDependencies": {
+    "istanbul": "^0.4.5",
+    "vows": "^0.8.1"
+  },
+  "engines": {
+    "node": ">=4"
+  },
+  "license": "MIT"
+}
+¨/lib/util.js≈	Ñconst types = require('./types');
+const sets  = require('./sets');
+
+
+const CTRL = '@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^ ?';
+const SLSH = { '0': 0, 't': 9, 'n': 10, 'v': 11, 'f': 12, 'r': 13 };
+
+/**
+ * Finds character representations in str and convert all to
+ * their respective characters
+ *
+ * @param {String} str
+ * @return {String}
+ */
+exports.strToChars = function(str) {
+  /* jshint maxlen: false */
+  var chars_regex = /(\[\\b\])|(\\)?\\(?:u([A-F0-9]{4})|x([A-F0-9]{2})|(0?[0-7]{2})|c([@A-Z[\\\]^?])|([0tnvfr]))/g;
+  str = str.replace(chars_regex, function(s, b, lbs, a16, b16, c8, dctrl, eslsh) {
+    if (lbs) {
+      return s;
+    }
+
+    var code = b ? 8 :
+      a16   ? parseInt(a16, 16) :
+      b16   ? parseInt(b16, 16) :
+      c8    ? parseInt(c8,   8) :
+      dctrl ? CTRL.indexOf(dctrl) :
+      SLSH[eslsh];
+
+    var c = String.fromCharCode(code);
+
+    // Escape special regex characters.
+    if (/[[\]{}^$.|?*+()]/.test(c)) {
+      c = '\\' + c;
+    }
+
+    return c;
+  });
+
+  return str;
+};
+
+
+/**
+ * turns class into tokens
+ * reads str until it encounters a ] not preceeded by a \
+ *
+ * @param {String} str
+ * @param {String} regexpStr
+ * @return {Array.<Array.<Object>, Number>}
+ */
+exports.tokenizeClass = (str, regexpStr) => {
+  /* jshint maxlen: false */
+  var tokens = [];
+  var regexp = /\\(?:(w)|(d)|(s)|(W)|(D)|(S))|((?:(?:\\)(.)|([^\]\\]))-(?:\\)?([^\]]))|(\])|(?:\\)?([^])/g;
+  var rs, c;
+
+
+  while ((rs = regexp.exec(str)) != null) {
+    if (rs[1]) {
+      tokens.push(sets.words());
+
+    } else if (rs[2]) {
+      tokens.push(sets.ints());
+
+    } else if (rs[3]) {
+      tokens.push(sets.whitespace());
+
+    } else if (rs[4]) {
+      tokens.push(sets.notWords());
+
+    } else if (rs[5]) {
+      tokens.push(sets.notInts());
+
+    } else if (rs[6]) {
+      tokens.push(sets.notWhitespace());
+
+    } else if (rs[7]) {
+      tokens.push({
+        type: types.RANGE,
+        from: (rs[8] || rs[9]).charCodeAt(0),
+        to: rs[10].charCodeAt(0),
+      });
+
+    } else if ((c = rs[12])) {
+      tokens.push({
+        type: types.CHAR,
+        value: c.charCodeAt(0),
+      });
+
+    } else {
+      return [tokens, regexp.lastIndex];
+    }
+  }
+
+  exports.error(regexpStr, 'Unterminated character class');
+};
+
+
+/**
+ * Shortcut to throw errors.
+ *
+ * @param {String} regexp
+ * @param {String} msg
+ */
+exports.error = (regexp, msg) => {
+  throw new SyntaxError('Invalid regular expression: /' + regexp + '/: ' + msg);
+};
+≠/lib/index.js≈rconst util      = require('./util');
+const types     = require('./types');
+const sets      = require('./sets');
+const positions = require('./positions');
+
+
+module.exports = (regexpStr) => {
+  var i = 0, l, c,
+    start = { type: types.ROOT, stack: []},
+
+    // Keep track of last clause/group and stack.
+    lastGroup = start,
+    last = start.stack,
+    groupStack = [];
+
+
+  var repeatErr = (i) => {
+    util.error(regexpStr, `Nothing to repeat at column ${i - 1}`);
+  };
+
+  // Decode a few escaped characters.
+  var str = util.strToChars(regexpStr);
+  l = str.length;
+
+  // Iterate through each character in string.
+  while (i < l) {
+    c = str[i++];
+
+    switch (c) {
+      // Handle escaped characters, inclues a few sets.
+      case '\\':
+        c = str[i++];
+
+        switch (c) {
+          case 'b':
+            last.push(positions.wordBoundary());
+            break;
+
+          case 'B':
+            last.push(positions.nonWordBoundary());
+            break;
+
+          case 'w':
+            last.push(sets.words());
+            break;
+
+          case 'W':
+            last.push(sets.notWords());
+            break;
+
+          case 'd':
+            last.push(sets.ints());
+            break;
+
+          case 'D':
+            last.push(sets.notInts());
+            break;
+
+          case 's':
+            last.push(sets.whitespace());
+            break;
+
+          case 'S':
+            last.push(sets.notWhitespace());
+            break;
+
+          default:
+            // Check if c is integer.
+            // In which case it's a reference.
+            if (/\d/.test(c)) {
+              last.push({ type: types.REFERENCE, value: parseInt(c, 10) });
+
+            // Escaped character.
+            } else {
+              last.push({ type: types.CHAR, value: c.charCodeAt(0) });
+            }
+        }
+
+        break;
+
+
+      // Positionals.
+      case '^':
+        last.push(positions.begin());
+        break;
+
+      case '$':
+        last.push(positions.end());
+        break;
+
+
+      // Handle custom sets.
+      case '[':
+        // Check if this class is 'anti' i.e. [^abc].
+        var not;
+        if (str[i] === '^') {
+          not = true;
+          i++;
+        } else {
+          not = false;
+        }
+
+        // Get all the characters in class.
+        var classTokens = util.tokenizeClass(str.slice(i), regexpStr);
+
+        // Increase index by length of class.
+        i += classTokens[1];
+        last.push({
+          type: types.SET,
+          set: classTokens[0],
+          not,
+        });
+
+        break;
+
+
+      // Class of any character except \n.
+      case '.':
+        last.push(sets.anyChar());
+        break;
+
+
+      // Push group onto stack.
+      case '(':
+        // Create group.
+        var group = {
+          type: types.GROUP,
+          stack: [],
+          remember: true,
+        };
+
+        c = str[i];
+
+        // If if this is a special kind of group.
+        if (c === '?') {
+          c = str[i + 1];
+          i += 2;
+
+          // Match if followed by.
+          if (c === '=') {
+            group.followedBy = true;
+
+          // Match if not followed by.
+          } else if (c === '!') {
+            group.notFollowedBy = true;
+
+          } else if (c !== ':') {
+            util.error(regexpStr,
+              `Invalid group, character '${c}'` +
+              ` after '?' at column ${i - 1}`);
+          }
+
+          group.remember = false;
+        }
+
+        // Insert subgroup into current group stack.
+        last.push(group);
+
+        // Remember the current group for when the group closes.
+        groupStack.push(lastGroup);
+
+        // Make this new group the current group.
+        lastGroup = group;
+        last = group.stack;
+        break;
+
+
+      // Pop group out of stack.
+      case ')':
+        if (groupStack.length === 0) {
+          util.error(regexpStr, `Unmatched ) at column ${i - 1}`);
+        }
+        lastGroup = groupStack.pop();
+
+        // Check if this group has a PIPE.
+        // To get back the correct last stack.
+        last = lastGroup.options ?
+          lastGroup.options[lastGroup.options.length - 1] : lastGroup.stack;
+        break;
+
+
+      // Use pipe character to give more choices.
+      case '|':
+        // Create array where options are if this is the first PIPE
+        // in this clause.
+        if (!lastGroup.options) {
+          lastGroup.options = [lastGroup.stack];
+          delete lastGroup.stack;
+        }
+
+        // Create a new stack and add to options for rest of clause.
+        var stack = [];
+        lastGroup.options.push(stack);
+        last = stack;
+        break;
+
+
+      // Repetition.
+      // For every repetition, remove last element from last stack
+      // then insert back a RANGE object.
+      // This design is chosen because there could be more than
+      // one repetition symbols in a regex i.e. `a?+{2,3}`.
+      case '{':
+        var rs = /^(\d+)(,(\d+)?)?\}/.exec(str.slice(i)), min, max;
+        if (rs !== null) {
+          if (last.length === 0) {
+            repeatErr(i);
+          }
+          min = parseInt(rs[1], 10);
+          max = rs[2] ? rs[3] ? parseInt(rs[3], 10) : Infinity : min;
+          i += rs[0].length;
+
+          last.push({
+            type: types.REPETITION,
+            min,
+            max,
+            value: last.pop(),
+          });
+        } else {
+          last.push({
+            type: types.CHAR,
+            value: 123,
+          });
+        }
+        break;
+
+      case '?':
+        if (last.length === 0) {
+          repeatErr(i);
+        }
+        last.push({
+          type: types.REPETITION,
+          min: 0,
+          max: 1,
+          value: last.pop(),
+        });
+        break;
+
+      case '+':
+        if (last.length === 0) {
+          repeatErr(i);
+        }
+        last.push({
+          type: types.REPETITION,
+          min: 1,
+          max: Infinity,
+          value: last.pop(),
+        });
+        break;
+
+      case '*':
+        if (last.length === 0) {
+          repeatErr(i);
+        }
+        last.push({
+          type: types.REPETITION,
+          min: 0,
+          max: Infinity,
+          value: last.pop(),
+        });
+        break;
+
+
+      // Default is a character that is not `\[](){}?+*^$`.
+      default:
+        last.push({
+          type: types.CHAR,
+          value: c.charCodeAt(0),
+        });
+    }
+
+  }
+
+  // Check if any groups have not been closed.
+  if (groupStack.length !== 0) {
+    util.error(regexpStr, 'Unterminated group');
+  }
+
+  return start;
+};
+
+module.exports.types = types;
+≠/lib/types.jsƒ¶module.exports = {
+  ROOT       : 0,
+  GROUP      : 1,
+  POSITION   : 2,
+  SET        : 3,
+  RANGE      : 4,
+  REPETITION : 5,
+  REFERENCE  : 6,
+  CHAR       : 7,
+};
+®/LICENSE≈)MIT License
+
+Copyright (C) 2011 by fent
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE. 
+¨/lib/sets.js≈Åconst types = require('./types');
+
+const INTS = () => [{ type: types.RANGE , from: 48, to: 57 }];
+
+const WORDS = () => {
+  return [
+    { type: types.CHAR, value: 95 },
+    { type: types.RANGE, from: 97, to: 122 },
+    { type: types.RANGE, from: 65, to: 90 }
+  ].concat(INTS());
+};
+
+const WHITESPACE = () => {
+  return [
+    { type: types.CHAR, value: 9 },
+    { type: types.CHAR, value: 10 },
+    { type: types.CHAR, value: 11 },
+    { type: types.CHAR, value: 12 },
+    { type: types.CHAR, value: 13 },
+    { type: types.CHAR, value: 32 },
+    { type: types.CHAR, value: 160 },
+    { type: types.CHAR, value: 5760 },
+    { type: types.RANGE, from: 8192, to: 8202 },
+    { type: types.CHAR, value: 8232 },
+    { type: types.CHAR, value: 8233 },
+    { type: types.CHAR, value: 8239 },
+    { type: types.CHAR, value: 8287 },
+    { type: types.CHAR, value: 12288 },
+    { type: types.CHAR, value: 65279 }
+  ];
+};
+
+const NOTANYCHAR = () => {
+  return [
+    { type: types.CHAR, value: 10 },
+    { type: types.CHAR, value: 13 },
+    { type: types.CHAR, value: 8232 },
+    { type: types.CHAR, value: 8233 },
+  ];
+};
+
+// Predefined class objects.
+exports.words = () => ({ type: types.SET, set: WORDS(), not: false });
+exports.notWords = () => ({ type: types.SET, set: WORDS(), not: true });
+exports.ints = () => ({ type: types.SET, set: INTS(), not: false });
+exports.notInts = () => ({ type: types.SET, set: INTS(), not: true });
+exports.whitespace = () => ({ type: types.SET, set: WHITESPACE(), not: false });
+exports.notWhitespace = () => ({ type: types.SET, set: WHITESPACE(), not: true });
+exports.anyChar = () => ({ type: types.SET, set: NOTANYCHAR(), not: true });
+™/README.md≈É# Regular Expression Tokenizer
+
+Tokenizes strings that represent a regular expressions.
+
+[![Build Status](https://secure.travis-ci.org/fent/ret.js.svg)](http://travis-ci.org/fent/ret.js)
+[![Dependency Status](https://david-dm.org/fent/ret.js.svg)](https://david-dm.org/fent/ret.js)
+[![codecov](https://codecov.io/gh/fent/ret.js/branch/master/graph/badge.svg)](https://codecov.io/gh/fent/ret.js)
+
+# Usage
+
+```js
+const ret = require('ret');
+
+var tokens = ret(/foo|bar/.source);
+```
+
+`tokens` will contain the following object
+
+```js
+{
+  "type": ret.types.ROOT
+  "options": [
+    [ { "type": ret.types.CHAR, "value", 102 },
+      { "type": ret.types.CHAR, "value", 111 },
+      { "type": ret.types.CHAR, "value", 111 } ],
+    [ { "type": ret.types.CHAR, "value",  98 },
+      { "type": ret.types.CHAR, "value",  97 },
+      { "type": ret.types.CHAR, "value", 114 } ]
+  ]
+}
+```
+
+# Token Types
+
+`ret.types` is a collection of the various token types exported by ret.
+
+### ROOT
+
+Only used in the root of the regexp. This is needed due to the posibility of the root containing a pipe `|` character. In that case, the token will have an `options` key that will be an array of arrays of tokens. If not, it will contain a `stack` key that is an array of tokens.
+
+```js
+{
+  "type": ret.types.ROOT,
+  "stack": [token1, token2...],
+}
+```
+
+```js
+{
+  "type": ret.types.ROOT,
+  "options" [
+    [token1, token2...],
+    [othertoken1, othertoken2...]
+    ...
+  ],
+}
+```
+
+### GROUP
+
+Groups contain tokens that are inside of a parenthesis. If the group begins with `?` followed by another character, it's a special type of group. A ':' tells the group not to be remembered when `exec` is used. '=' means the previous token matches only if followed by this group, and '!' means the previous token matches only if NOT followed.
+
+Like root, it can contain an `options` key instead of `stack` if there is a pipe.
+
+```js
+{
+  "type": ret.types.GROUP,
+  "remember" true,
+  "followedBy": false,
+  "notFollowedBy": false,
+  "stack": [token1, token2...],
+}
+```
+
+```js
+{
+  "type": ret.types.GROUP,
+  "remember" true,
+  "followedBy": false,
+  "notFollowedBy": false,
+  "options" [
+    [token1, token2...],
+    [othertoken1, othertoken2...]
+    ...
+  ],
+}
+```
+
+### POSITION
+
+`\b`, `\B`, `^`, and `$` specify positions in the regexp.
+
+```js
+{
+  "type": ret.types.POSITION,
+  "value": "^",
+}
+```
+
+### SET
+
+Contains a key `set` specifying what tokens are allowed and a key `not` specifying if the set should be negated. A set can contain other sets, ranges, and characters.
+
+```js
+{
+  "type": ret.types.SET,
+  "set": [token1, token2...],
+  "not": false,
+}
+```
+
+### RANGE
+
+Used in set tokens to specify a character range. `from` and `to` are character codes.
+
+```js
+{
+  "type": ret.types.RANGE,
+  "from": 97,
+  "to": 122,
+}
+```
+
+### REPETITION
+
+```js
+{
+  "type": ret.types.REPETITION,
+  "min": 0,
+  "max": Infinity,
+  "value": token,
+}
+```
+
+### REFERENCE
+
+References a group token. `value` is 1-9.
+
+```js
+{
+  "type": ret.types.REFERENCE,
+  "value": 1,
+}
+```
+
+### CHAR
+
+Represents a single character token. `value` is the character code. This might seem a bit cluttering instead of concatenating characters together. But since repetition tokens only repeat the last token and not the last clause like the pipe, it's simpler to do it this way.
+
+```js
+{
+  "type": ret.types.CHAR,
+  "value": 123,
+}
+```
+
+## Errors
+
+ret.js will throw errors if given a string with an invalid regular expression. All possible errors are
+
+* Invalid group. When a group with an immediate `?` character is followed by an invalid character. It can only be followed by `!`, `=`, or `:`. Example: `/(?_abc)/`
+* Nothing to repeat. Thrown when a repetitional token is used as the first token in the current clause, as in right in the beginning of the regexp or group, or right after a pipe. Example: `/foo|?bar/`, `/{1,3}foo|bar/`, `/foo(+bar)/`
+* Unmatched ). A group was not opened, but was closed. Example: `/hello)2u/`
+* Unterminated group. A group was not closed. Example: `/(1(23)4/`
+* Unterminated character class. A custom character set was not closed. Example: `/[abc/`
+
+
+# Install
+
+    npm install ret
+
+
+# Tests
+
+Tests are written with [vows](http://vowsjs.org/)
+
+```bash
+npm test
+```
+±/lib/positions.js≈)const types = require('./types');
+exports.wordBoundary = () => ({ type: types.POSITION, value: 'b' });
+exports.nonWordBoundary = () => ({ type: types.POSITION, value: 'B' });
+exports.begin = () => ({ type: types.POSITION, value: '^' });
+exports.end = () => ({ type: types.POSITION, value: '$' });

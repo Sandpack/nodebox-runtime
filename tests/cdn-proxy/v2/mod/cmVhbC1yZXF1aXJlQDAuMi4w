@@ -1,0 +1,135 @@
+„­/src/index.jsÅ}/* eslint-disable no-new-func, camelcase */
+/* globals __non_webpack__require__ */
+
+const realImport = new Function('modulePath', 'return import(modulePath)')
+
+function realRequire(modulePath) {
+  if (typeof __non_webpack__require__ === 'function') {
+    return __non_webpack__require__(modulePath)
+  }
+
+  return require(modulePath)
+}
+
+module.exports = { realImport, realRequire }
+ª/README.mdÅÇ# real-require
+
+[![Package Version](https://img.shields.io/npm/v/real-require.svg)](https://npm.im/real-require)
+[![Dependency Status](https://img.shields.io/librariesio/release/npm/real-require)](https://libraries.io/npm/real-require)
+[![Build](https://github.com/pinojs/real-require/workflows/CI/badge.svg)](https://github.com/pinojs/real-require/actions?query=workflow%3ACI)
+
+Keep require and import consistent after bundling or transpiling.
+
+## Installation
+
+Just run:
+
+```bash
+npm install real-require
+```
+
+## Usage
+
+The package provides two drop-ins functions, `realRequire` and `realImport`, which can be used in scenarios where tools like transpilers or bundlers change the native `require` or `await import` calls.
+
+The current `realRequire`Â functions only handles webpack at the moment, wrapping the `__non_webpack__require__` implementation that webpack provides for the final bundle.
+
+### Example
+
+```js
+// After bundling, real-require will be embedded in the bundle
+const { realImport, realRequire } = require('real-require')
+
+/*
+  By using realRequire, at build time the module will not be embedded and at runtime it will try to load path from the local filesytem.
+  This is useful in situations where the build tool does not support skipping modules to embed.
+*/
+const { join } = realRequire('path')
+
+async function main() {
+  // Similarly, this make sure the import call is not modified by the build tools
+  const localFunction = await realImport('./source.js')
+
+  localFunction()
+}
+
+main().catch(console.error)
+```
+
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md)
+
+## License
+
+Copyright Paolo Insogna and real-require contributors 2021. Licensed under the [MIT License](http://www.apache.org/licenses/MIT).
+­/package.jsonÅ={
+  "name": "real-require",
+  "version": "0.2.0",
+  "description": "Keep require and import consistent after bundling or transpiling",
+  "author": "Paolo Insogna <shogun@cowtech.it>",
+  "homepage": "https://github.com/pinojs/real-require",
+  "contributors": [
+    {
+      "name": "Paolo Insogna",
+      "url": "https://github.com/ShogunPanda"
+    }
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pinojs/real-require.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pinojs/real-require/issues"
+  },
+  "main": "src/index.js",
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "format": "prettier -w src test",
+    "lint": "eslint src test",
+    "test": "c8 --reporter=text --reporter=html tap --reporter=spec --no-coverage test/*.test.js",
+    "test:watch": "tap --watch --reporter=spec --no-browser --coverage-report=text --coverage-report=html test/*.test.js",
+    "test:ci": "c8 --reporter=text --reporter=json --check-coverage --branches 90 --functions 90 --lines 90 --statements 90 tap --no-color --no-coverage test/*.test.js",
+    "ci": "npm run lint && npm run test:ci",
+    "prepublishOnly": "npm run ci",
+    "postpublish": "git push origin && git push origin -f --tags"
+  },
+  "devDependencies": {
+    "eslint": "^7.12.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-plugin-import": "^2.25.2",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^5.1.1",
+    "eslint-plugin-standard": "^5.0.0",
+    "c8": "^7.10.0",
+    "prettier": "^2.4.1",
+    "tap": "^16.0.0"
+  },
+  "engines": {
+    "node": ">= 12.13.0"
+  }
+}
+«/LICENSE.mdÅZThe MIT License (MIT)
+
+Copyright (c) 2021 Paolo Insogna and the real-require contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

@@ -1,12 +1,12 @@
 {
   "name": "@codesandbox/nodebox",
-  "version": "0.0.39",
+  "version": "0.0.40",
   "description": "Public API of Nodebox",
   "main": "./build/index.js",
   "module": "./build/index.mjs",
   "typings": "./build/index.d.ts",
   "license": "SEE LICENSE IN ./LICENSE",
-   "exports": {
+  "exports": {
     ".": {
       "import": "./build/index.mjs",
       "require": "./build/index.js",

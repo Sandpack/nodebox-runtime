@@ -1,0 +1,921 @@
+è¥/dist/formats.js.map≈“{"version":3,"file":"formats.js","sourceRoot":"","sources":["../src/formats.ts"],"names":[],"mappings":"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"}∞/dist/formats.js≈*v"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.formatNames = exports.fastFormats = exports.fullFormats = void 0;
+function fmtDef(validate, compare) {
+    return { validate, compare };
+}
+exports.fullFormats = {
+    // date: http://tools.ietf.org/html/rfc3339#section-5.6
+    date: fmtDef(date, compareDate),
+    // date-time: http://tools.ietf.org/html/rfc3339#section-5.6
+    time: fmtDef(time, compareTime),
+    "date-time": fmtDef(date_time, compareDateTime),
+    // duration: https://tools.ietf.org/html/rfc3339#appendix-A
+    duration: /^P(?!$)((\d+Y)?(\d+M)?(\d+D)?(T(?=\d)(\d+H)?(\d+M)?(\d+S)?)?|(\d+W)?)$/,
+    uri,
+    "uri-reference": /^(?:[a-z][a-z0-9+\-.]*:)?(?:\/?\/(?:(?:[a-z0-9\-._~!$&'()*+,;=:]|%[0-9a-f]{2})*@)?(?:\[(?:(?:(?:(?:[0-9a-f]{1,4}:){6}|::(?:[0-9a-f]{1,4}:){5}|(?:[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){4}|(?:(?:[0-9a-f]{1,4}:){0,1}[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){3}|(?:(?:[0-9a-f]{1,4}:){0,2}[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){2}|(?:(?:[0-9a-f]{1,4}:){0,3}[0-9a-f]{1,4})?::[0-9a-f]{1,4}:|(?:(?:[0-9a-f]{1,4}:){0,4}[0-9a-f]{1,4})?::)(?:[0-9a-f]{1,4}:[0-9a-f]{1,4}|(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?))|(?:(?:[0-9a-f]{1,4}:){0,5}[0-9a-f]{1,4})?::[0-9a-f]{1,4}|(?:(?:[0-9a-f]{1,4}:){0,6}[0-9a-f]{1,4})?::)|[Vv][0-9a-f]+\.[a-z0-9\-._~!$&'()*+,;=:]+)\]|(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)|(?:[a-z0-9\-._~!$&'"()*+,;=]|%[0-9a-f]{2})*)(?::\d*)?(?:\/(?:[a-z0-9\-._~!$&'"()*+,;=:@]|%[0-9a-f]{2})*)*|\/(?:(?:[a-z0-9\-._~!$&'"()*+,;=:@]|%[0-9a-f]{2})+(?:\/(?:[a-z0-9\-._~!$&'"()*+,;=:@]|%[0-9a-f]{2})*)*)?|(?:[a-z0-9\-._~!$&'"()*+,;=:@]|%[0-9a-f]{2})+(?:\/(?:[a-z0-9\-._~!$&'"()*+,;=:@]|%[0-9a-f]{2})*)*)?(?:\?(?:[a-z0-9\-._~!$&'"()*+,;=:@/?]|%[0-9a-f]{2})*)?(?:#(?:[a-z0-9\-._~!$&'"()*+,;=:@/?]|%[0-9a-f]{2})*)?$/i,
+    // uri-template: https://tools.ietf.org/html/rfc6570
+    "uri-template": /^(?:(?:[^\x00-\x20"'<>%\\^`{|}]|%[0-9a-f]{2})|\{[+#./;?&=,!@|]?(?:[a-z0-9_]|%[0-9a-f]{2})+(?::[1-9][0-9]{0,3}|\*)?(?:,(?:[a-z0-9_]|%[0-9a-f]{2})+(?::[1-9][0-9]{0,3}|\*)?)*\})*$/i,
+    // For the source: https://gist.github.com/dperini/729294
+    // For test cases: https://mathiasbynens.be/demo/url-regex
+    url: /^(?:https?|ftp):\/\/(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z0-9\u{00a1}-\u{ffff}]+-)*[a-z0-9\u{00a1}-\u{ffff}]+)(?:\.(?:[a-z0-9\u{00a1}-\u{ffff}]+-)*[a-z0-9\u{00a1}-\u{ffff}]+)*(?:\.(?:[a-z\u{00a1}-\u{ffff}]{2,})))(?::\d{2,5})?(?:\/[^\s]*)?$/iu,
+    email: /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i,
+    hostname: /^(?=.{1,253}\.?$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[-0-9a-z]{0,61}[0-9a-z])?)*\.?$/i,
+    // optimized https://www.safaribooksonline.com/library/view/regular-expressions-cookbook/9780596802837/ch07s16.html
+    ipv4: /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)$/,
+    ipv6: /^((([0-9a-f]{1,4}:){7}([0-9a-f]{1,4}|:))|(([0-9a-f]{1,4}:){6}(:[0-9a-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9a-f]{1,4}:){5}(((:[0-9a-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9a-f]{1,4}:){4}(((:[0-9a-f]{1,4}){1,3})|((:[0-9a-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9a-f]{1,4}:){3}(((:[0-9a-f]{1,4}){1,4})|((:[0-9a-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9a-f]{1,4}:){2}(((:[0-9a-f]{1,4}){1,5})|((:[0-9a-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9a-f]{1,4}:){1}(((:[0-9a-f]{1,4}){1,6})|((:[0-9a-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9a-f]{1,4}){1,7})|((:[0-9a-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))$/i,
+    regex,
+    // uuid: http://tools.ietf.org/html/rfc4122
+    uuid: /^(?:urn:uuid:)?[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i,
+    // JSON-pointer: https://tools.ietf.org/html/rfc6901
+    // uri fragment: https://tools.ietf.org/html/rfc3986#appendix-A
+    "json-pointer": /^(?:\/(?:[^~/]|~0|~1)*)*$/,
+    "json-pointer-uri-fragment": /^#(?:\/(?:[a-z0-9_\-.!$&'()*+,;:=@]|%[0-9a-f]{2}|~0|~1)*)*$/i,
+    // relative JSON-pointer: http://tools.ietf.org/html/draft-luff-relative-json-pointer-00
+    "relative-json-pointer": /^(?:0|[1-9][0-9]*)(?:#|(?:\/(?:[^~/]|~0|~1)*)*)$/,
+    // the following formats are used by the openapi specification: https://spec.openapis.org/oas/v3.0.0#data-types
+    // byte: https://github.com/miguelmota/is-base64
+    byte,
+    // signed 32 bit integer
+    int32: { type: "number", validate: validateInt32 },
+    // signed 64 bit integer
+    int64: { type: "number", validate: validateInt64 },
+    // C-type float
+    float: { type: "number", validate: validateNumber },
+    // C-type double
+    double: { type: "number", validate: validateNumber },
+    // hint to the UI to hide input strings
+    password: true,
+    // unchecked string payload
+    binary: true,
+};
+exports.fastFormats = {
+    ...exports.fullFormats,
+    date: fmtDef(/^\d\d\d\d-[0-1]\d-[0-3]\d$/, compareDate),
+    time: fmtDef(/^(?:[0-2]\d:[0-5]\d:[0-5]\d|23:59:60)(?:\.\d+)?(?:z|[+-]\d\d(?::?\d\d)?)?$/i, compareTime),
+    "date-time": fmtDef(/^\d\d\d\d-[0-1]\d-[0-3]\d[t\s](?:[0-2]\d:[0-5]\d:[0-5]\d|23:59:60)(?:\.\d+)?(?:z|[+-]\d\d(?::?\d\d)?)$/i, compareDateTime),
+    // uri: https://github.com/mafintosh/is-my-json-valid/blob/master/formats.js
+    uri: /^(?:[a-z][a-z0-9+\-.]*:)(?:\/?\/)?[^\s]*$/i,
+    "uri-reference": /^(?:(?:[a-z][a-z0-9+\-.]*:)?\/?\/)?(?:[^\\\s#][^\s#]*)?(?:#[^\\\s]*)?$/i,
+    // email (sources from jsen validator):
+    // http://stackoverflow.com/questions/201323/using-a-regular-expression-to-validate-an-email-address#answer-8829363
+    // http://www.w3.org/TR/html5/forms.html#valid-e-mail-address (search for 'wilful violation')
+    email: /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/i,
+};
+exports.formatNames = Object.keys(exports.fullFormats);
+function isLeapYear(year) {
+    // https://tools.ietf.org/html/rfc3339#appendix-C
+    return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+}
+const DATE = /^(\d\d\d\d)-(\d\d)-(\d\d)$/;
+const DAYS = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+function date(str) {
+    // full-date from http://tools.ietf.org/html/rfc3339#section-5.6
+    const matches = DATE.exec(str);
+    if (!matches)
+        return false;
+    const year = +matches[1];
+    const month = +matches[2];
+    const day = +matches[3];
+    return (month >= 1 &&
+        month <= 12 &&
+        day >= 1 &&
+        day <= (month === 2 && isLeapYear(year) ? 29 : DAYS[month]));
+}
+function compareDate(d1, d2) {
+    if (!(d1 && d2))
+        return undefined;
+    if (d1 > d2)
+        return 1;
+    if (d1 < d2)
+        return -1;
+    return 0;
+}
+const TIME = /^(\d\d):(\d\d):(\d\d)(\.\d+)?(z|[+-]\d\d(?::?\d\d)?)?$/i;
+function time(str, withTimeZone) {
+    const matches = TIME.exec(str);
+    if (!matches)
+        return false;
+    const hour = +matches[1];
+    const minute = +matches[2];
+    const second = +matches[3];
+    const timeZone = matches[5];
+    return (((hour <= 23 && minute <= 59 && second <= 59) ||
+        (hour === 23 && minute === 59 && second === 60)) &&
+        (!withTimeZone || timeZone !== ""));
+}
+function compareTime(t1, t2) {
+    if (!(t1 && t2))
+        return undefined;
+    const a1 = TIME.exec(t1);
+    const a2 = TIME.exec(t2);
+    if (!(a1 && a2))
+        return undefined;
+    t1 = a1[1] + a1[2] + a1[3] + (a1[4] || "");
+    t2 = a2[1] + a2[2] + a2[3] + (a2[4] || "");
+    if (t1 > t2)
+        return 1;
+    if (t1 < t2)
+        return -1;
+    return 0;
+}
+const DATE_TIME_SEPARATOR = /t|\s/i;
+function date_time(str) {
+    // http://tools.ietf.org/html/rfc3339#section-5.6
+    const dateTime = str.split(DATE_TIME_SEPARATOR);
+    return dateTime.length === 2 && date(dateTime[0]) && time(dateTime[1], true);
+}
+function compareDateTime(dt1, dt2) {
+    if (!(dt1 && dt2))
+        return undefined;
+    const [d1, t1] = dt1.split(DATE_TIME_SEPARATOR);
+    const [d2, t2] = dt2.split(DATE_TIME_SEPARATOR);
+    const res = compareDate(d1, d2);
+    if (res === undefined)
+        return undefined;
+    return res || compareTime(t1, t2);
+}
+const NOT_URI_FRAGMENT = /\/|:/;
+const URI = /^(?:[a-z][a-z0-9+\-.]*:)(?:\/?\/(?:(?:[a-z0-9\-._~!$&'()*+,;=:]|%[0-9a-f]{2})*@)?(?:\[(?:(?:(?:(?:[0-9a-f]{1,4}:){6}|::(?:[0-9a-f]{1,4}:){5}|(?:[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){4}|(?:(?:[0-9a-f]{1,4}:){0,1}[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){3}|(?:(?:[0-9a-f]{1,4}:){0,2}[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){2}|(?:(?:[0-9a-f]{1,4}:){0,3}[0-9a-f]{1,4})?::[0-9a-f]{1,4}:|(?:(?:[0-9a-f]{1,4}:){0,4}[0-9a-f]{1,4})?::)(?:[0-9a-f]{1,4}:[0-9a-f]{1,4}|(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?))|(?:(?:[0-9a-f]{1,4}:){0,5}[0-9a-f]{1,4})?::[0-9a-f]{1,4}|(?:(?:[0-9a-f]{1,4}:){0,6}[0-9a-f]{1,4})?::)|[Vv][0-9a-f]+\.[a-z0-9\-._~!$&'()*+,;=:]+)\]|(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)|(?:[a-z0-9\-._~!$&'()*+,;=]|%[0-9a-f]{2})*)(?::\d*)?(?:\/(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})*)*|\/(?:(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})+(?:\/(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})*)*)?|(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})+(?:\/(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})*)*)(?:\?(?:[a-z0-9\-._~!$&'()*+,;=:@/?]|%[0-9a-f]{2})*)?(?:#(?:[a-z0-9\-._~!$&'()*+,;=:@/?]|%[0-9a-f]{2})*)?$/i;
+function uri(str) {
+    // http://jmrware.com/articles/2009/uri_regexp/URI_regex.html + optional protocol + required "."
+    return NOT_URI_FRAGMENT.test(str) && URI.test(str);
+}
+const BYTE = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/gm;
+function byte(str) {
+    BYTE.lastIndex = 0;
+    return BYTE.test(str);
+}
+const MIN_INT32 = -(2 ** 31);
+const MAX_INT32 = 2 ** 31 - 1;
+function validateInt32(value) {
+    return Number.isInteger(value) && value <= MAX_INT32 && value >= MIN_INT32;
+}
+function validateInt64(value) {
+    // JSON and javascript max Int is 2**53, so any int that passes isInteger is valid for Int64
+    return Number.isInteger(value);
+}
+function validateNumber() {
+    return true;
+}
+const Z_ANCHOR = /[^\\]\\Z/;
+function regex(str) {
+    if (Z_ANCHOR.test(str))
+        return false;
+    try {
+        new RegExp(str);
+        return true;
+    }
+    catch (e) {
+        return false;
+    }
+}
+//# sourceMappingURL=formats.js.mapÆ/dist/index.js≈⁄"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const formats_1 = require("./formats");
+const limit_1 = require("./limit");
+const codegen_1 = require("ajv/dist/compile/codegen");
+const fullName = new codegen_1.Name("fullFormats");
+const fastName = new codegen_1.Name("fastFormats");
+const formatsPlugin = (ajv, opts = { keywords: true }) => {
+    if (Array.isArray(opts)) {
+        addFormats(ajv, opts, formats_1.fullFormats, fullName);
+        return ajv;
+    }
+    const [formats, exportName] = opts.mode === "fast" ? [formats_1.fastFormats, fastName] : [formats_1.fullFormats, fullName];
+    const list = opts.formats || formats_1.formatNames;
+    addFormats(ajv, list, formats, exportName);
+    if (opts.keywords)
+        limit_1.default(ajv);
+    return ajv;
+};
+formatsPlugin.get = (name, mode = "full") => {
+    const formats = mode === "fast" ? formats_1.fastFormats : formats_1.fullFormats;
+    const f = formats[name];
+    if (!f)
+        throw new Error(`Unknown format "${name}"`);
+    return f;
+};
+function addFormats(ajv, list, fs, exportName) {
+    var _a;
+    var _b;
+    (_a = (_b = ajv.opts.code).formats) !== null && _a !== void 0 ? _a : (_b.formats = codegen_1._ `require("ajv-formats/dist/formats").${exportName}`);
+    for (const f of list)
+        ajv.addFormat(f, fs[f]);
+}
+module.exports = exports = formatsPlugin;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = formatsPlugin;
+//# sourceMappingURL=index.js.map≤/dist/formats.d.ts≈Éimport type { Format } from "ajv";
+export declare type FormatMode = "fast" | "full";
+export declare type FormatName = "date" | "time" | "date-time" | "duration" | "uri" | "uri-reference" | "uri-template" | "url" | "email" | "hostname" | "ipv4" | "ipv6" | "regex" | "uuid" | "json-pointer" | "json-pointer-uri-fragment" | "relative-json-pointer" | "byte" | "int32" | "int64" | "float" | "double" | "password" | "binary";
+export declare type DefinedFormats = {
+    [key in FormatName]: Format;
+};
+export declare const fullFormats: DefinedFormats;
+export declare const fastFormats: DefinedFormats;
+export declare const formatNames: FormatName[];
+≠/src/limit.ts≈import type Ajv from "ajv"
+import type {
+  Plugin,
+  CodeKeywordDefinition,
+  KeywordErrorDefinition,
+  Code,
+  Name,
+  ErrorObject,
+} from "ajv"
+import type {AddedFormat} from "ajv/dist/types"
+import type {Rule} from "ajv/dist/compile/rules"
+import {KeywordCxt} from "ajv"
+import {_, str, or, getProperty, operators} from "ajv/dist/compile/codegen"
+
+type Kwd = "formatMaximum" | "formatMinimum" | "formatExclusiveMaximum" | "formatExclusiveMinimum"
+
+type Comparison = "<=" | ">=" | "<" | ">"
+
+const ops = operators
+
+const KWDs: {[K in Kwd]: {okStr: Comparison; ok: Code; fail: Code}} = {
+  formatMaximum: {okStr: "<=", ok: ops.LTE, fail: ops.GT},
+  formatMinimum: {okStr: ">=", ok: ops.GTE, fail: ops.LT},
+  formatExclusiveMaximum: {okStr: "<", ok: ops.LT, fail: ops.GTE},
+  formatExclusiveMinimum: {okStr: ">", ok: ops.GT, fail: ops.LTE},
+}
+
+export type LimitFormatError = ErrorObject<Kwd, {limit: string; comparison: Comparison}>
+
+const error: KeywordErrorDefinition = {
+  message: ({keyword, schemaCode}) => str`should be ${KWDs[keyword as Kwd].okStr} ${schemaCode}`,
+  params: ({keyword, schemaCode}) =>
+    _`{comparison: ${KWDs[keyword as Kwd].okStr}, limit: ${schemaCode}}`,
+}
+
+export const formatLimitDefinition: CodeKeywordDefinition = {
+  keyword: Object.keys(KWDs),
+  type: "string",
+  schemaType: "string",
+  $data: true,
+  error,
+  code(cxt) {
+    const {gen, data, schemaCode, keyword, it} = cxt
+    const {opts, self} = it
+    if (!opts.validateFormats) return
+
+    const fCxt = new KeywordCxt(it, (self.RULES.all.format as Rule).definition, "format")
+    if (fCxt.$data) validate$DataFormat()
+    else validateFormat()
+
+    function validate$DataFormat(): void {
+      const fmts = gen.scopeValue("formats", {
+        ref: self.formats,
+        code: opts.code.formats,
+      })
+      const fmt = gen.const("fmt", _`${fmts}[${fCxt.schemaCode}]`)
+      cxt.fail$data(
+        or(
+          _`typeof ${fmt} != "object"`,
+          _`${fmt} instanceof RegExp`,
+          _`typeof ${fmt}.compare != "function"`,
+          compareCode(fmt)
+        )
+      )
+    }
+
+    function validateFormat(): void {
+      const format = fCxt.schema as string
+      const fmtDef: AddedFormat | undefined = self.formats[format]
+      if (!fmtDef || fmtDef === true) return
+      if (
+        typeof fmtDef != "object" ||
+        fmtDef instanceof RegExp ||
+        typeof fmtDef.compare != "function"
+      ) {
+        throw new Error(`"${keyword}": format "${format}" does not define "compare" function`)
+      }
+      const fmt = gen.scopeValue("formats", {
+        key: format,
+        ref: fmtDef,
+        code: opts.code.formats ? _`${opts.code.formats}${getProperty(format)}` : undefined,
+      })
+
+      cxt.fail$data(compareCode(fmt))
+    }
+
+    function compareCode(fmt: Name): Code {
+      return _`${fmt}.compare(${data}, ${schemaCode}) ${KWDs[keyword as Kwd].fail} 0`
+    }
+  },
+  dependencies: ["format"],
+}
+
+const formatLimitPlugin: Plugin<undefined> = (ajv: Ajv): Ajv => {
+  ajv.addKeyword(formatLimitDefinition)
+  return ajv
+}
+
+export default formatLimitPlugin
+®/LICENSE≈2MIT License
+
+Copyright (c) 2020 Evgeny Poberezkin
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+≤/dist/index.js.map≈Ù{"version":3,"file":"index.js","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":";;AAAA,uCAOkB;AAClB,mCAAiC;AAGjC,sDAAgD;AAgBhD,MAAM,QAAQ,GAAG,IAAI,cAAI,CAAC,aAAa,CAAC,CAAA;AACxC,MAAM,QAAQ,GAAG,IAAI,cAAI,CAAC,aAAa,CAAC,CAAA;AAExC,MAAM,aAAa,GAAkB,CACnC,GAAQ,EACR,OAA6B,EAAC,QAAQ,EAAE,IAAI,EAAC,EACxC,EAAE;IACP,IAAI,KAAK,CAAC,OAAO,CAAC,IAAI,CAAC,EAAE;QACvB,UAAU,CAAC,GAAG,EAAE,IAAI,EAAE,qBAAW,EAAE,QAAQ,CAAC,CAAA;QAC5C,OAAO,GAAG,CAAA;KACX;IACD,MAAM,CAAC,OAAO,EAAE,UAAU,CAAC,GACzB,IAAI,CAAC,IAAI,KAAK,MAAM,CAAC,CAAC,CAAC,CAAC,qBAAW,EAAE,QAAQ,CAAC,CAAC,CAAC,CAAC,CAAC,qBAAW,EAAE,QAAQ,CAAC,CAAA;IAC1E,MAAM,IAAI,GAAG,IAAI,CAAC,OAAO,IAAI,qBAAW,CAAA;IACxC,UAAU,CAAC,GAAG,EAAE,IAAI,EAAE,OAAO,EAAE,UAAU,CAAC,CAAA;IAC1C,IAAI,IAAI,CAAC,QAAQ;QAAE,eAAW,CAAC,GAAG,CAAC,CAAA;IACnC,OAAO,GAAG,CAAA;AACZ,CAAC,CAAA;AAED,aAAa,CAAC,GAAG,GAAG,CAAC,IAAgB,EAAE,OAAmB,MAAM,EAAU,EAAE;IAC1E,MAAM,OAAO,GAAG,IAAI,KAAK,MAAM,CAAC,CAAC,CAAC,qBAAW,CAAC,CAAC,CAAC,qBAAW,CAAA;IAC3D,MAAM,CAAC,GAAG,OAAO,CAAC,IAAI,CAAC,CAAA;IACvB,IAAI,CAAC,CAAC;QAAE,MAAM,IAAI,KAAK,CAAC,mBAAmB,IAAI,GAAG,CAAC,CAAA;IACnD,OAAO,CAAC,CAAA;AACV,CAAC,CAAA;AAED,SAAS,UAAU,CAAC,GAAQ,EAAE,IAAkB,EAAE,EAAkB,EAAE,UAAgB;;;IACpF,YAAA,GAAG,CAAC,IAAI,CAAC,IAAI,EAAC,OAAO,uCAAP,OAAO,GAAK,WAAC,CAAA,uCAAuC,UAAU,EAAE,EAAA;IAC9E,KAAK,MAAM,CAAC,IAAI,IAAI;QAAE,GAAG,CAAC,SAAS,CAAC,CAAC,EAAE,EAAE,CAAC,CAAC,CAAC,CAAC,CAAA;AAC/C,CAAC;AAED,MAAM,CAAC,OAAO,GAAG,OAAO,GAAG,aAAa,CAAA;AACxC,MAAM,CAAC,cAAc,CAAC,OAAO,EAAE,YAAY,EAAE,EAAC,KAAK,EAAE,IAAI,EAAC,CAAC,CAAA;AAE3D,kBAAe,aAAa,CAAA"}≠/src/index.ts≈import {
+  DefinedFormats,
+  FormatMode,
+  FormatName,
+  formatNames,
+  fastFormats,
+  fullFormats,
+} from "./formats"
+import formatLimit from "./limit"
+import type Ajv from "ajv"
+import type {Plugin, Format} from "ajv"
+import {_, Name} from "ajv/dist/compile/codegen"
+
+export {FormatMode, FormatName} from "./formats"
+export {LimitFormatError} from "./limit"
+export interface FormatOptions {
+  mode?: FormatMode
+  formats?: FormatName[]
+  keywords?: boolean
+}
+
+export type FormatsPluginOptions = FormatName[] | FormatOptions
+
+export interface FormatsPlugin extends Plugin<FormatsPluginOptions> {
+  get: (format: FormatName, mode?: FormatMode) => Format
+}
+
+const fullName = new Name("fullFormats")
+const fastName = new Name("fastFormats")
+
+const formatsPlugin: FormatsPlugin = (
+  ajv: Ajv,
+  opts: FormatsPluginOptions = {keywords: true}
+): Ajv => {
+  if (Array.isArray(opts)) {
+    addFormats(ajv, opts, fullFormats, fullName)
+    return ajv
+  }
+  const [formats, exportName] =
+    opts.mode === "fast" ? [fastFormats, fastName] : [fullFormats, fullName]
+  const list = opts.formats || formatNames
+  addFormats(ajv, list, formats, exportName)
+  if (opts.keywords) formatLimit(ajv)
+  return ajv
+}
+
+formatsPlugin.get = (name: FormatName, mode: FormatMode = "full"): Format => {
+  const formats = mode === "fast" ? fastFormats : fullFormats
+  const f = formats[name]
+  if (!f) throw new Error(`Unknown format "${name}"`)
+  return f
+}
+
+function addFormats(ajv: Ajv, list: FormatName[], fs: DefinedFormats, exportName: Name): void {
+  ajv.opts.code.formats ??= _`require("ajv-formats/dist/formats").${exportName}`
+  for (const f of list) ajv.addFormat(f, fs[f])
+}
+
+module.exports = exports = formatsPlugin
+Object.defineProperty(exports, "__esModule", {value: true})
+
+export default formatsPlugin
+≤/dist/limit.js.map≈{"version":3,"file":"limit.js","sourceRoot":"","sources":["../src/limit.ts"],"names":[],"mappings":"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"}Æ/dist/limit.js≈""use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.formatLimitDefinition = void 0;
+const ajv_1 = require("ajv");
+const codegen_1 = require("ajv/dist/compile/codegen");
+const ops = codegen_1.operators;
+const KWDs = {
+    formatMaximum: { okStr: "<=", ok: ops.LTE, fail: ops.GT },
+    formatMinimum: { okStr: ">=", ok: ops.GTE, fail: ops.LT },
+    formatExclusiveMaximum: { okStr: "<", ok: ops.LT, fail: ops.GTE },
+    formatExclusiveMinimum: { okStr: ">", ok: ops.GT, fail: ops.LTE },
+};
+const error = {
+    message: ({ keyword, schemaCode }) => codegen_1.str `should be ${KWDs[keyword].okStr} ${schemaCode}`,
+    params: ({ keyword, schemaCode }) => codegen_1._ `{comparison: ${KWDs[keyword].okStr}, limit: ${schemaCode}}`,
+};
+exports.formatLimitDefinition = {
+    keyword: Object.keys(KWDs),
+    type: "string",
+    schemaType: "string",
+    $data: true,
+    error,
+    code(cxt) {
+        const { gen, data, schemaCode, keyword, it } = cxt;
+        const { opts, self } = it;
+        if (!opts.validateFormats)
+            return;
+        const fCxt = new ajv_1.KeywordCxt(it, self.RULES.all.format.definition, "format");
+        if (fCxt.$data)
+            validate$DataFormat();
+        else
+            validateFormat();
+        function validate$DataFormat() {
+            const fmts = gen.scopeValue("formats", {
+                ref: self.formats,
+                code: opts.code.formats,
+            });
+            const fmt = gen.const("fmt", codegen_1._ `${fmts}[${fCxt.schemaCode}]`);
+            cxt.fail$data(codegen_1.or(codegen_1._ `typeof ${fmt} != "object"`, codegen_1._ `${fmt} instanceof RegExp`, codegen_1._ `typeof ${fmt}.compare != "function"`, compareCode(fmt)));
+        }
+        function validateFormat() {
+            const format = fCxt.schema;
+            const fmtDef = self.formats[format];
+            if (!fmtDef || fmtDef === true)
+                return;
+            if (typeof fmtDef != "object" ||
+                fmtDef instanceof RegExp ||
+                typeof fmtDef.compare != "function") {
+                throw new Error(`"${keyword}": format "${format}" does not define "compare" function`);
+            }
+            const fmt = gen.scopeValue("formats", {
+                key: format,
+                ref: fmtDef,
+                code: opts.code.formats ? codegen_1._ `${opts.code.formats}${codegen_1.getProperty(format)}` : undefined,
+            });
+            cxt.fail$data(compareCode(fmt));
+        }
+        function compareCode(fmt) {
+            return codegen_1._ `${fmt}.compare(${data}, ${schemaCode}) ${KWDs[keyword].fail} 0`;
+        }
+    },
+    dependencies: ["format"],
+};
+const formatLimitPlugin = (ajv) => {
+    ajv.addKeyword(exports.formatLimitDefinition);
+    return ajv;
+};
+exports.default = formatLimitPlugin;
+//# sourceMappingURL=limit.js.map∞/dist/index.d.ts≈Dimport { FormatMode, FormatName } from "./formats";
+import type { Plugin, Format } from "ajv";
+export { FormatMode, FormatName } from "./formats";
+export { LimitFormatError } from "./limit";
+export interface FormatOptions {
+    mode?: FormatMode;
+    formats?: FormatName[];
+    keywords?: boolean;
+}
+export declare type FormatsPluginOptions = FormatName[] | FormatOptions;
+export interface FormatsPlugin extends Plugin<FormatsPluginOptions> {
+    get: (format: FormatName, mode?: FormatMode) => Format;
+}
+declare const formatsPlugin: FormatsPlugin;
+export default formatsPlugin;
+≠/package.json≈i{
+  "name": "ajv-formats",
+  "version": "2.1.1",
+  "description": "Format validation for Ajv v7+",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "src/",
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prettier:write": "prettier --write \"./**/*.{md,json,yaml,js,ts}\"",
+    "prettier:check": "prettier --list-different \"./**/*.{md,json,yaml,js,ts}\"",
+    "eslint": "eslint --ext .ts ./src/**/*",
+    "test-spec": "jest",
+    "test-cov": "jest --coverage",
+    "test": "npm run prettier:check && npm run build && npm run eslint && npm run test-cov",
+    "ci-test": "npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ajv-validator/ajv-formats.git"
+  },
+  "keywords": [
+    "Ajv",
+    "JSON-Schema",
+    "format",
+    "validation"
+  ],
+  "author": "Evgeny Poberezkin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ajv-validator/ajv-formats/issues"
+  },
+  "homepage": "https://github.com/ajv-validator/ajv-formats#readme",
+  "dependencies": {
+    "ajv": "^8.0.0"
+  },
+  "peerDependencies": {
+    "ajv": "^8.0.0"
+  },
+  "peerDependenciesMeta": {
+    "ajv": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@ajv-validator/config": "^0.3.0",
+    "@types/jest": "^26.0.5",
+    "@types/node": "^14.10.1",
+    "@typescript-eslint/eslint-plugin": "^3.7.0",
+    "@typescript-eslint/parser": "^3.7.0",
+    "ajv": "^8.0.0",
+    "eslint": "^7.5.0",
+    "eslint-config-prettier": "^6.11.0",
+    "husky": "^4.2.5",
+    "jest": "^26.1.0",
+    "json-schema-test": "^2.0.0",
+    "lint-staged": "^10.2.11",
+    "prettier": "^2.3.2",
+    "ts-jest": "^26.1.3",
+    "typescript": "^4.0.0"
+  },
+  "prettier": "@ajv-validator/config/prettierrc.json",
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged && npm test"
+    }
+  },
+  "lint-staged": {
+    "*.{md,json,yaml,js,ts}": "prettier --write"
+  }
+}
+∞/dist/limit.d.ts≈Ïimport type { Plugin, CodeKeywordDefinition, ErrorObject } from "ajv";
+declare type Kwd = "formatMaximum" | "formatMinimum" | "formatExclusiveMaximum" | "formatExclusiveMinimum";
+declare type Comparison = "<=" | ">=" | "<" | ">";
+export declare type LimitFormatError = ErrorObject<Kwd, {
+    limit: string;
+    comparison: Comparison;
+}>;
+export declare const formatLimitDefinition: CodeKeywordDefinition;
+declare const formatLimitPlugin: Plugin<undefined>;
+export default formatLimitPlugin;
+Ø/src/formats.ts≈,‘import type {Format, FormatDefinition} from "ajv"
+import type {FormatValidator, FormatCompare} from "ajv/dist/types"
+
+export type FormatMode = "fast" | "full"
+
+export type FormatName =
+  | "date"
+  | "time"
+  | "date-time"
+  | "duration"
+  | "uri"
+  | "uri-reference"
+  | "uri-template"
+  | "url"
+  | "email"
+  | "hostname"
+  | "ipv4"
+  | "ipv6"
+  | "regex"
+  | "uuid"
+  | "json-pointer"
+  | "json-pointer-uri-fragment"
+  | "relative-json-pointer"
+  | "byte"
+  | "int32"
+  | "int64"
+  | "float"
+  | "double"
+  | "password"
+  | "binary"
+
+export type DefinedFormats = {
+  [key in FormatName]: Format
+}
+
+function fmtDef(
+  validate: RegExp | FormatValidator<string>,
+  compare: FormatCompare<string>
+): FormatDefinition<string> {
+  return {validate, compare}
+}
+
+export const fullFormats: DefinedFormats = {
+  // date: http://tools.ietf.org/html/rfc3339#section-5.6
+  date: fmtDef(date, compareDate),
+  // date-time: http://tools.ietf.org/html/rfc3339#section-5.6
+  time: fmtDef(time, compareTime),
+  "date-time": fmtDef(date_time, compareDateTime),
+  // duration: https://tools.ietf.org/html/rfc3339#appendix-A
+  duration: /^P(?!$)((\d+Y)?(\d+M)?(\d+D)?(T(?=\d)(\d+H)?(\d+M)?(\d+S)?)?|(\d+W)?)$/,
+  uri,
+  "uri-reference":
+    /^(?:[a-z][a-z0-9+\-.]*:)?(?:\/?\/(?:(?:[a-z0-9\-._~!$&'()*+,;=:]|%[0-9a-f]{2})*@)?(?:\[(?:(?:(?:(?:[0-9a-f]{1,4}:){6}|::(?:[0-9a-f]{1,4}:){5}|(?:[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){4}|(?:(?:[0-9a-f]{1,4}:){0,1}[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){3}|(?:(?:[0-9a-f]{1,4}:){0,2}[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){2}|(?:(?:[0-9a-f]{1,4}:){0,3}[0-9a-f]{1,4})?::[0-9a-f]{1,4}:|(?:(?:[0-9a-f]{1,4}:){0,4}[0-9a-f]{1,4})?::)(?:[0-9a-f]{1,4}:[0-9a-f]{1,4}|(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?))|(?:(?:[0-9a-f]{1,4}:){0,5}[0-9a-f]{1,4})?::[0-9a-f]{1,4}|(?:(?:[0-9a-f]{1,4}:){0,6}[0-9a-f]{1,4})?::)|[Vv][0-9a-f]+\.[a-z0-9\-._~!$&'()*+,;=:]+)\]|(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)|(?:[a-z0-9\-._~!$&'"()*+,;=]|%[0-9a-f]{2})*)(?::\d*)?(?:\/(?:[a-z0-9\-._~!$&'"()*+,;=:@]|%[0-9a-f]{2})*)*|\/(?:(?:[a-z0-9\-._~!$&'"()*+,;=:@]|%[0-9a-f]{2})+(?:\/(?:[a-z0-9\-._~!$&'"()*+,;=:@]|%[0-9a-f]{2})*)*)?|(?:[a-z0-9\-._~!$&'"()*+,;=:@]|%[0-9a-f]{2})+(?:\/(?:[a-z0-9\-._~!$&'"()*+,;=:@]|%[0-9a-f]{2})*)*)?(?:\?(?:[a-z0-9\-._~!$&'"()*+,;=:@/?]|%[0-9a-f]{2})*)?(?:#(?:[a-z0-9\-._~!$&'"()*+,;=:@/?]|%[0-9a-f]{2})*)?$/i,
+  // uri-template: https://tools.ietf.org/html/rfc6570
+  "uri-template":
+    /^(?:(?:[^\x00-\x20"'<>%\\^`{|}]|%[0-9a-f]{2})|\{[+#./;?&=,!@|]?(?:[a-z0-9_]|%[0-9a-f]{2})+(?::[1-9][0-9]{0,3}|\*)?(?:,(?:[a-z0-9_]|%[0-9a-f]{2})+(?::[1-9][0-9]{0,3}|\*)?)*\})*$/i,
+  // For the source: https://gist.github.com/dperini/729294
+  // For test cases: https://mathiasbynens.be/demo/url-regex
+  url: /^(?:https?|ftp):\/\/(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z0-9\u{00a1}-\u{ffff}]+-)*[a-z0-9\u{00a1}-\u{ffff}]+)(?:\.(?:[a-z0-9\u{00a1}-\u{ffff}]+-)*[a-z0-9\u{00a1}-\u{ffff}]+)*(?:\.(?:[a-z\u{00a1}-\u{ffff}]{2,})))(?::\d{2,5})?(?:\/[^\s]*)?$/iu,
+  email:
+    /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i,
+  hostname:
+    /^(?=.{1,253}\.?$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[-0-9a-z]{0,61}[0-9a-z])?)*\.?$/i,
+  // optimized https://www.safaribooksonline.com/library/view/regular-expressions-cookbook/9780596802837/ch07s16.html
+  ipv4: /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)$/,
+  ipv6: /^((([0-9a-f]{1,4}:){7}([0-9a-f]{1,4}|:))|(([0-9a-f]{1,4}:){6}(:[0-9a-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9a-f]{1,4}:){5}(((:[0-9a-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9a-f]{1,4}:){4}(((:[0-9a-f]{1,4}){1,3})|((:[0-9a-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9a-f]{1,4}:){3}(((:[0-9a-f]{1,4}){1,4})|((:[0-9a-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9a-f]{1,4}:){2}(((:[0-9a-f]{1,4}){1,5})|((:[0-9a-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9a-f]{1,4}:){1}(((:[0-9a-f]{1,4}){1,6})|((:[0-9a-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9a-f]{1,4}){1,7})|((:[0-9a-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))$/i,
+  regex,
+  // uuid: http://tools.ietf.org/html/rfc4122
+  uuid: /^(?:urn:uuid:)?[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i,
+  // JSON-pointer: https://tools.ietf.org/html/rfc6901
+  // uri fragment: https://tools.ietf.org/html/rfc3986#appendix-A
+  "json-pointer": /^(?:\/(?:[^~/]|~0|~1)*)*$/,
+  "json-pointer-uri-fragment": /^#(?:\/(?:[a-z0-9_\-.!$&'()*+,;:=@]|%[0-9a-f]{2}|~0|~1)*)*$/i,
+  // relative JSON-pointer: http://tools.ietf.org/html/draft-luff-relative-json-pointer-00
+  "relative-json-pointer": /^(?:0|[1-9][0-9]*)(?:#|(?:\/(?:[^~/]|~0|~1)*)*)$/,
+  // the following formats are used by the openapi specification: https://spec.openapis.org/oas/v3.0.0#data-types
+  // byte: https://github.com/miguelmota/is-base64
+  byte,
+  // signed 32 bit integer
+  int32: {type: "number", validate: validateInt32},
+  // signed 64 bit integer
+  int64: {type: "number", validate: validateInt64},
+  // C-type float
+  float: {type: "number", validate: validateNumber},
+  // C-type double
+  double: {type: "number", validate: validateNumber},
+  // hint to the UI to hide input strings
+  password: true,
+  // unchecked string payload
+  binary: true,
+}
+
+export const fastFormats: DefinedFormats = {
+  ...fullFormats,
+  date: fmtDef(/^\d\d\d\d-[0-1]\d-[0-3]\d$/, compareDate),
+  time: fmtDef(
+    /^(?:[0-2]\d:[0-5]\d:[0-5]\d|23:59:60)(?:\.\d+)?(?:z|[+-]\d\d(?::?\d\d)?)?$/i,
+    compareTime
+  ),
+  "date-time": fmtDef(
+    /^\d\d\d\d-[0-1]\d-[0-3]\d[t\s](?:[0-2]\d:[0-5]\d:[0-5]\d|23:59:60)(?:\.\d+)?(?:z|[+-]\d\d(?::?\d\d)?)$/i,
+    compareDateTime
+  ),
+  // uri: https://github.com/mafintosh/is-my-json-valid/blob/master/formats.js
+  uri: /^(?:[a-z][a-z0-9+\-.]*:)(?:\/?\/)?[^\s]*$/i,
+  "uri-reference": /^(?:(?:[a-z][a-z0-9+\-.]*:)?\/?\/)?(?:[^\\\s#][^\s#]*)?(?:#[^\\\s]*)?$/i,
+  // email (sources from jsen validator):
+  // http://stackoverflow.com/questions/201323/using-a-regular-expression-to-validate-an-email-address#answer-8829363
+  // http://www.w3.org/TR/html5/forms.html#valid-e-mail-address (search for 'wilful violation')
+  email:
+    /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/i,
+}
+
+export const formatNames = Object.keys(fullFormats) as FormatName[]
+
+function isLeapYear(year: number): boolean {
+  // https://tools.ietf.org/html/rfc3339#appendix-C
+  return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)
+}
+
+const DATE = /^(\d\d\d\d)-(\d\d)-(\d\d)$/
+const DAYS = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+function date(str: string): boolean {
+  // full-date from http://tools.ietf.org/html/rfc3339#section-5.6
+  const matches: string[] | null = DATE.exec(str)
+  if (!matches) return false
+  const year: number = +matches[1]
+  const month: number = +matches[2]
+  const day: number = +matches[3]
+  return (
+    month >= 1 &&
+    month <= 12 &&
+    day >= 1 &&
+    day <= (month === 2 && isLeapYear(year) ? 29 : DAYS[month])
+  )
+}
+
+function compareDate(d1: string, d2: string): number | undefined {
+  if (!(d1 && d2)) return undefined
+  if (d1 > d2) return 1
+  if (d1 < d2) return -1
+  return 0
+}
+
+const TIME = /^(\d\d):(\d\d):(\d\d)(\.\d+)?(z|[+-]\d\d(?::?\d\d)?)?$/i
+
+function time(str: string, withTimeZone?: boolean): boolean {
+  const matches: string[] | null = TIME.exec(str)
+  if (!matches) return false
+
+  const hour: number = +matches[1]
+  const minute: number = +matches[2]
+  const second: number = +matches[3]
+  const timeZone: string = matches[5]
+  return (
+    ((hour <= 23 && minute <= 59 && second <= 59) ||
+      (hour === 23 && minute === 59 && second === 60)) &&
+    (!withTimeZone || timeZone !== "")
+  )
+}
+
+function compareTime(t1: string, t2: string): number | undefined {
+  if (!(t1 && t2)) return undefined
+  const a1 = TIME.exec(t1)
+  const a2 = TIME.exec(t2)
+  if (!(a1 && a2)) return undefined
+  t1 = a1[1] + a1[2] + a1[3] + (a1[4] || "")
+  t2 = a2[1] + a2[2] + a2[3] + (a2[4] || "")
+  if (t1 > t2) return 1
+  if (t1 < t2) return -1
+  return 0
+}
+
+const DATE_TIME_SEPARATOR = /t|\s/i
+function date_time(str: string): boolean {
+  // http://tools.ietf.org/html/rfc3339#section-5.6
+  const dateTime: string[] = str.split(DATE_TIME_SEPARATOR)
+  return dateTime.length === 2 && date(dateTime[0]) && time(dateTime[1], true)
+}
+
+function compareDateTime(dt1: string, dt2: string): number | undefined {
+  if (!(dt1 && dt2)) return undefined
+  const [d1, t1] = dt1.split(DATE_TIME_SEPARATOR)
+  const [d2, t2] = dt2.split(DATE_TIME_SEPARATOR)
+  const res = compareDate(d1, d2)
+  if (res === undefined) return undefined
+  return res || compareTime(t1, t2)
+}
+
+const NOT_URI_FRAGMENT = /\/|:/
+const URI =
+  /^(?:[a-z][a-z0-9+\-.]*:)(?:\/?\/(?:(?:[a-z0-9\-._~!$&'()*+,;=:]|%[0-9a-f]{2})*@)?(?:\[(?:(?:(?:(?:[0-9a-f]{1,4}:){6}|::(?:[0-9a-f]{1,4}:){5}|(?:[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){4}|(?:(?:[0-9a-f]{1,4}:){0,1}[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){3}|(?:(?:[0-9a-f]{1,4}:){0,2}[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){2}|(?:(?:[0-9a-f]{1,4}:){0,3}[0-9a-f]{1,4})?::[0-9a-f]{1,4}:|(?:(?:[0-9a-f]{1,4}:){0,4}[0-9a-f]{1,4})?::)(?:[0-9a-f]{1,4}:[0-9a-f]{1,4}|(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?))|(?:(?:[0-9a-f]{1,4}:){0,5}[0-9a-f]{1,4})?::[0-9a-f]{1,4}|(?:(?:[0-9a-f]{1,4}:){0,6}[0-9a-f]{1,4})?::)|[Vv][0-9a-f]+\.[a-z0-9\-._~!$&'()*+,;=:]+)\]|(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)|(?:[a-z0-9\-._~!$&'()*+,;=]|%[0-9a-f]{2})*)(?::\d*)?(?:\/(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})*)*|\/(?:(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})+(?:\/(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})*)*)?|(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})+(?:\/(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})*)*)(?:\?(?:[a-z0-9\-._~!$&'()*+,;=:@/?]|%[0-9a-f]{2})*)?(?:#(?:[a-z0-9\-._~!$&'()*+,;=:@/?]|%[0-9a-f]{2})*)?$/i
+
+function uri(str: string): boolean {
+  // http://jmrware.com/articles/2009/uri_regexp/URI_regex.html + optional protocol + required "."
+  return NOT_URI_FRAGMENT.test(str) && URI.test(str)
+}
+
+const BYTE = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/gm
+
+function byte(str: string): boolean {
+  BYTE.lastIndex = 0
+  return BYTE.test(str)
+}
+
+const MIN_INT32 = -(2 ** 31)
+const MAX_INT32 = 2 ** 31 - 1
+
+function validateInt32(value: number): boolean {
+  return Number.isInteger(value) && value <= MAX_INT32 && value >= MIN_INT32
+}
+
+function validateInt64(value: number): boolean {
+  // JSON and javascript max Int is 2**53, so any int that passes isInteger is valid for Int64
+  return Number.isInteger(value)
+}
+
+function validateNumber(): boolean {
+  return true
+}
+
+const Z_ANCHOR = /[^\\]\\Z/
+function regex(str: string): boolean {
+  if (Z_ANCHOR.test(str)) return false
+  try {
+    new RegExp(str)
+    return true
+  } catch (e) {
+    return false
+  }
+}
+™/README.md≈§# ajv-formats
+
+JSON Schema formats for Ajv
+
+[![Build Status](https://travis-ci.org/ajv-validator/ajv-formats.svg?branch=master)](https://travis-ci.org/ajv-validator/ajv-formats)
+[![npm](https://img.shields.io/npm/v/ajv-formats.svg)](https://www.npmjs.com/package/ajv-formats)
+[![Gitter](https://img.shields.io/gitter/room/ajv-validator/ajv.svg)](https://gitter.im/ajv-validator/ajv)
+[![GitHub Sponsors](https://img.shields.io/badge/$-sponsors-brightgreen)](https://github.com/sponsors/epoberezkin)
+
+## Usage
+
+```javascript
+// ESM/TypeScript import
+import Ajv from "ajv"
+import addFormats from "ajv-formats"
+// Node.js require:
+const Ajv = require("ajv")
+const addFormats = require("ajv-formats")
+
+const ajv = new Ajv()
+addFormats(ajv)
+```
+
+## Formats
+
+The package defines these formats:
+
+- _date_: full-date according to [RFC3339](http://tools.ietf.org/html/rfc3339#section-5.6).
+- _time_: time with optional time-zone.
+- _date-time_: date-time from the same source (time-zone is mandatory).
+- _duration_: duration from [RFC3339](https://tools.ietf.org/html/rfc3339#appendix-A)
+- _uri_: full URI.
+- _uri-reference_: URI reference, including full and relative URIs.
+- _uri-template_: URI template according to [RFC6570](https://tools.ietf.org/html/rfc6570)
+- _url_ (deprecated): [URL record](https://url.spec.whatwg.org/#concept-url).
+- _email_: email address.
+- _hostname_: host name according to [RFC1034](http://tools.ietf.org/html/rfc1034#section-3.5).
+- _ipv4_: IP address v4.
+- _ipv6_: IP address v6.
+- _regex_: tests whether a string is a valid regular expression by passing it to RegExp constructor.
+- _uuid_: Universally Unique IDentifier according to [RFC4122](http://tools.ietf.org/html/rfc4122).
+- _json-pointer_: JSON-pointer according to [RFC6901](https://tools.ietf.org/html/rfc6901).
+- _relative-json-pointer_: relative JSON-pointer according to [this draft](http://tools.ietf.org/html/draft-luff-relative-json-pointer-00).
+- _byte_: base64 encoded data according to the [openApi 3.0.0 specification](https://spec.openapis.org/oas/v3.0.0#data-types)
+- _int32_: signed 32 bits integer according to the [openApi 3.0.0 specification](https://spec.openapis.org/oas/v3.0.0#data-types)
+- _int64_: signed 64 bits according to the [openApi 3.0.0 specification](https://spec.openapis.org/oas/v3.0.0#data-types)
+- _float_: float according to the [openApi 3.0.0 specification](https://spec.openapis.org/oas/v3.0.0#data-types)
+- _double_: double according to the [openApi 3.0.0 specification](https://spec.openapis.org/oas/v3.0.0#data-types)
+- _password_: password string according to the [openApi 3.0.0 specification](https://spec.openapis.org/oas/v3.0.0#data-types)
+- _binary_: binary string according to the [openApi 3.0.0 specification](https://spec.openapis.org/oas/v3.0.0#data-types)
+
+See regular expressions used for format validation and the sources that were used in [formats.ts](https://github.com/ajv-validator/ajv-formats/blob/master/src/formats.ts).
+
+**Please note**: JSON Schema draft-07 also defines formats `iri`, `iri-reference`, `idn-hostname` and `idn-email` for URLs, hostnames and emails with international characters. These formats are available in [ajv-formats-draft2019](https://github.com/luzlab/ajv-formats-draft2019) plugin.
+
+## Keywords to compare values: `formatMaximum` / `formatMinimum` and `formatExclusiveMaximum` / `formatExclusiveMinimum`
+
+These keywords allow to define minimum/maximum constraints when the format keyword defines ordering (`compare` function in format definition).
+
+These keywords are added to ajv instance when ajv-formats is used without options or with option `keywords: true`.
+
+These keywords apply only to strings. If the data is not a string, the validation succeeds.
+
+The value of keywords `formatMaximum`/`formatMinimum` and `formatExclusiveMaximum`/`formatExclusiveMinimum` should be a string or [\$data reference](https://github.com/ajv-validator/ajv/blob/master/docs/validation.md#data-reference). This value is the maximum (minimum) allowed value for the data to be valid as determined by `format` keyword. If `format` keyword is not present schema compilation will throw exception.
+
+When these keyword are added, they also add comparison functions to formats `"date"`, `"time"` and `"date-time"`. User-defined formats also can have comparison functions. See [addFormat](https://github.com/ajv-validator/ajv/blob/master/docs/api.md#api-addformat) method.
+
+```javascript
+require("ajv-formats")(ajv)
+
+const schema = {
+  type: "string",
+  format: "date",
+  formatMinimum: "2016-02-06",
+  formatExclusiveMaximum: "2016-12-27",
+}
+
+const validDataList = ["2016-02-06", "2016-12-26"]
+
+const invalidDataList = ["2016-02-05", "2016-12-27", "abc"]
+```
+
+## Options
+
+Options can be passed via the second parameter. Options value can be
+
+1. The list of format names that will be added to ajv instance:
+
+```javascript
+addFormats(ajv, ["date", "time"])
+```
+
+**Please note**: when ajv encounters an undefined format it throws exception (unless ajv instance was configured with `strict: false` option). To allow specific undefined formats they have to be passed to ajv instance via `formats` option with `true` value:
+
+```javascript
+const ajv = new Ajv((formats: {date: true, time: true})) // to ignore "date" and "time" formats in schemas.
+```
+
+2. Format validation mode (default is `"full"`) with optional list of format names and `keywords` option to add additional format comparison keywords:
+
+```javascript
+addFormats(ajv, {mode: "fast"})
+```
+
+or
+
+```javascript
+addFormats(ajv, {mode: "fast", formats: ["date", "time"], keywords: true})
+```
+
+In `"fast"` mode the following formats are simplified: `"date"`, `"time"`, `"date-time"`, `"uri"`, `"uri-reference"`, `"email"`. For example `"date"`, `"time"` and `"date-time"` do not validate ranges in `"fast"` mode, only string structure, and other formats have simplified regular expressions.
+
+## Tests
+
+```bash
+npm install
+git submodule update --init
+npm test
+```
+
+## License
+
+[MIT](https://github.com/ajv-validator/ajv-formats/blob/master/LICENSE)

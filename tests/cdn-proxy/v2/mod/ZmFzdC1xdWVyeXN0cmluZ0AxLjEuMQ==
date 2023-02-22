@@ -1,0 +1,493 @@
+��/LICENSE�!Copyright (c) 2022 Yagiz Nizipli
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+�/lib/internals/querystring.js�
+X// This file is taken from Node.js project.
+// Full implementation can be found from https://github.com/nodejs/node/blob/main/lib/internal/querystring.js
+
+const hexTable = Array.from(
+  { length: 256 },
+  (_, i) => "%" + ((i < 16 ? "0" : "") + i.toString(16)).toUpperCase(),
+);
+
+// These characters do not need escaping when generating query strings:
+// ! - . _ ~
+// ' ( ) *
+// digits
+// alpha (uppercase)
+// alpha (lowercase)
+// rome-ignore format: the array should not be formatted
+const noEscape = new Int8Array([
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0 - 15
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 16 - 31
+  0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, // 32 - 47
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, // 48 - 63
+  0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 64 - 79
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, // 80 - 95
+  0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 96 - 111
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, // 112 - 127
+]);
+
+/**
+ * @param {string} str
+ * @returns {string}
+ */
+function encodeString(str) {
+  const len = str.length;
+  if (len === 0) return "";
+
+  let out = "";
+  let lastPos = 0;
+  let i = 0;
+
+  outer: for (; i < len; i++) {
+    let c = str.charCodeAt(i);
+
+    // ASCII
+    while (c < 0x80) {
+      if (noEscape[c] !== 1) {
+        if (lastPos < i) out += str.slice(lastPos, i);
+        lastPos = i + 1;
+        out += hexTable[c];
+      }
+
+      if (++i === len) break outer;
+
+      c = str.charCodeAt(i);
+    }
+
+    if (lastPos < i) out += str.slice(lastPos, i);
+
+    // Multi-byte characters ...
+    if (c < 0x800) {
+      lastPos = i + 1;
+      out += hexTable[0xc0 | (c >> 6)] + hexTable[0x80 | (c & 0x3f)];
+      continue;
+    }
+    if (c < 0xd800 || c >= 0xe000) {
+      lastPos = i + 1;
+      out +=
+        hexTable[0xe0 | (c >> 12)] +
+        hexTable[0x80 | ((c >> 6) & 0x3f)] +
+        hexTable[0x80 | (c & 0x3f)];
+      continue;
+    }
+    // Surrogate pair
+    ++i;
+
+    // This branch should never happen because all URLSearchParams entries
+    // should already be converted to USVString. But, included for
+    // completion's sake anyway.
+    if (i >= len) {
+      throw new Error("URI malformed");
+    }
+
+    const c2 = str.charCodeAt(i) & 0x3ff;
+
+    lastPos = i + 1;
+    c = 0x10000 + (((c & 0x3ff) << 10) | c2);
+    out +=
+      hexTable[0xf0 | (c >> 18)] +
+      hexTable[0x80 | ((c >> 12) & 0x3f)] +
+      hexTable[0x80 | ((c >> 6) & 0x3f)] +
+      hexTable[0x80 | (c & 0x3f)];
+  }
+  if (lastPos === 0) return str;
+  if (lastPos < len) return out + str.slice(lastPos);
+  return out;
+}
+
+module.exports = { encodeString };
+�/lib/index.js��"use strict";
+
+const parse = require("./parse");
+const stringify = require("./stringify");
+
+const fastQuerystring = {
+  parse,
+  stringify,
+};
+
+/**
+ * Enable TS and JS support
+ *
+ * - `const qs = require('fast-querystring')`
+ * - `import qs from 'fast-querystring'`
+ */
+module.exports = fastQuerystring;
+module.exports.default = fastQuerystring;
+module.exports.parse = parse;
+module.exports.stringify = stringify;
+�/package.json��{
+  "name": "fast-querystring",
+  "version": "1.1.1",
+  "description": "A fast alternative to legacy querystring module",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "scripts": {
+    "format": "rome format . --write",
+    "format:ci": "rome ci .",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest --coverage",
+    "coverage": "vitest run --coverage",
+    "benchmark": "node benchmark/bench.js",
+    "benchmark:cmp-branch": "node benchmark/bench-cmp-branch.js",
+    "benchmark:parse": "node benchmark/parse.mjs",
+    "benchmark:stringify": "node benchmark/stringify.mjs",
+    "benchmark:import": "node benchmark/import.mjs"
+  },
+  "keywords": [
+    "querystring",
+    "qs",
+    "parser"
+  ],
+  "author": "Yagiz Nizipli <yagiz@nizipli.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@aws-sdk/querystring-builder": "^3.201.0",
+    "@aws-sdk/querystring-parser": "^3.201.0",
+    "@types/node": "^18.11.9",
+    "@vitest/coverage-c8": "^0.28.1",
+    "benchmark": "^2.1.4",
+    "cli-select": "^1.1.2",
+    "cronometro": "^1.1.4",
+    "http-querystring-stringify": "^2.1.0",
+    "qs": "^6.11.0",
+    "query-string": "^8.1.0",
+    "querystringify": "^2.2.0",
+    "querystringparser": "^0.1.1",
+    "rome": "11.0.0",
+    "simple-git": "^3.14.1",
+    "vitest": "^0.28.1"
+  },
+  "repository": {
+    "url": "git+https://github.com/anonrig/fast-querystring.git",
+    "type": "git"
+  },
+  "dependencies": {
+    "fast-decode-uri-component": "^1.0.1"
+  }
+}
+�/README.md��# fast-querystring
+
+![Test](https://github.com/anonrig/fast-querystring/workflows/test/badge.svg)
+[![codecov](https://codecov.io/gh/anonrig/fast-querystring/branch/main/graph/badge.svg?token=4ZDJA2BMOH)](https://codecov.io/gh/anonrig/fast-querystring)
+[![NPM version](https://img.shields.io/npm/v/fast-querystring.svg?style=flat)](https://www.npmjs.com/package/fast-querystring)
+
+Fast query-string parser and stringifier to replace the legacy `node:querystring` module.
+
+### Installation
+
+```
+npm i fast-querystring
+```
+
+### Features
+
+- Supports both `parse` and `stringify` methods from `node:querystring` module
+- Parsed object does not have prototype methods
+- Uses `&` separator as default
+- Supports only input of type `string`
+- Supports repeating keys in query string
+  - `foo=bar&foo=baz` parses into `{foo: ['bar', 'baz']}`
+- Supports pairs with missing values
+  - `foo=bar&hola` parses into `{foo: 'bar', hola: ''}`
+- Stringify does not support nested values (just like `node:querystring`)
+
+### Usage
+
+```javascript
+const qs = require('fast-querystring')
+
+// Parsing a querystring
+console.log(qs.parse('hello=world&foo=bar&values=v1&values=v2'))
+// {
+//   hello: 'world',
+//   foo: 'bar',
+//   values: ['v1', 'v2']
+// }
+
+// Stringifying an object
+console.log(qs.stringify({ foo: ['bar', 'baz'] }))
+// 'foo=bar&foo=baz'
+```
+
+### Benchmark
+
+- Parsing a query-string
+
+```
+> node benchmark/parse.mjs
+
+╔═════════════════════════════════════════╤═════════╤═══════════════════╤═══════════╗
+║ Slower tests                            │ Samples │            Result │ Tolerance ║
+╟─────────────────────────────────────────┼─────────┼───────────────────┼───────────╢
+║ qs                                      │   10000 │  350884.75 op/sec │  ± 1.36 % ║
+║ query-string                            │   10000 │  383165.31 op/sec │  ± 1.22 % ║
+║ querystringify                          │    1500 │  530280.43 op/sec │  ± 0.90 % ║
+║ @aws-sdk/querystring-parser             │    2000 │  556657.27 op/sec │  ± 0.79 % ║
+║ URLSearchParams-with-Object.fromEntries │   10000 │  845766.67 op/sec │  ± 2.85 % ║
+║ URLSearchParams-with-construct          │   10000 │ 1158368.83 op/sec │  ± 4.28 % ║
+║ node:querystring                        │    2000 │ 1460476.58 op/sec │  ± 0.96 % ║
+║ querystringparser                       │   10000 │ 1976384.97 op/sec │  ± 4.11 % ║
+╟─────────────────────────────────────────┼─────────┼───────────────────┼───────────╢
+║ Fastest test                            │ Samples │            Result │ Tolerance ║
+╟─────────────────────────────────────────┼─────────┼───────────────────┼───────────╢
+║ fast-querystring                        │   10000 │ 2123713.08 op/sec │  ± 2.87 % ║
+╚═════════════════════════════════════════╧═════════╧═══════════════════╧═══════════╝
+```
+
+- Stringify a query-string
+
+```
+> node benchmark/stringify.mjs
+
+╔══════════════════════════════╤═════════╤═══════════════════╤═══════════╗
+║ Slower tests                 │ Samples │            Result │ Tolerance ║
+╟──────────────────────────────┼─────────┼───────────────────┼───────────╢
+║ query-string                 │   10000 │  310383.60 op/sec │  ± 1.14 % ║
+║ qs                           │   10000 │  354332.59 op/sec │  ± 1.23 % ║
+║ @aws-sdk/querystring-builder │   10000 │  411500.38 op/sec │  ± 1.30 % ║
+║ http-querystring-stringify   │    1500 │  535883.47 op/sec │  ± 1.00 % ║
+║ URLSearchParams              │   10000 │  594068.52 op/sec │  ± 1.61 % ║
+║ querystringparser            │   10000 │  766081.64 op/sec │  ± 2.18 % ║
+║ querystringify               │   10000 │  914083.38 op/sec │  ± 1.67 % ║
+║ node:querystring             │    4000 │ 1822536.85 op/sec │  ± 0.91 % ║
+╟──────────────────────────────┼─────────┼───────────────────┼───────────╢
+║ Fastest test                 │ Samples │            Result │ Tolerance ║
+╟──────────────────────────────┼─────────┼───────────────────┼───────────╢
+║ fast-querystring             │   10000 │ 2186435.62 op/sec │  ± 3.48 % ║
+╚══════════════════════════════╧═════════╧═══════════════════╧═══════════╝
+```
+�/lib/parse.js�"use strict";
+
+const fastDecode = require("fast-decode-uri-component");
+
+const plusRegex = /\+/g;
+const Empty = function () {};
+Empty.prototype = Object.create(null);
+
+/**
+ * @callback parse
+ * @param {string} input
+ */
+function parse(input) {
+  // Optimization: Use new Empty() instead of Object.create(null) for performance
+  // v8 has a better optimization for initializing functions compared to Object
+  const result = new Empty();
+
+  if (typeof input !== "string") {
+    return result;
+  }
+
+  let inputLength = input.length;
+  let key = "";
+  let value = "";
+  let startingIndex = -1;
+  let equalityIndex = -1;
+  let shouldDecodeKey = false;
+  let shouldDecodeValue = false;
+  let keyHasPlus = false;
+  let valueHasPlus = false;
+  let hasBothKeyValuePair = false;
+  let c = 0;
+
+  // Have a boundary of input.length + 1 to access last pair inside the loop.
+  for (let i = 0; i < inputLength + 1; i++) {
+    c = i !== inputLength ? input.charCodeAt(i) : 38;
+
+    // Handle '&' and end of line to pass the current values to result
+    if (c === 38) {
+      hasBothKeyValuePair = equalityIndex > startingIndex;
+
+      // Optimization: Reuse equality index to store the end of key
+      if (!hasBothKeyValuePair) {
+        equalityIndex = i;
+      }
+
+      key = input.slice(startingIndex + 1, equalityIndex);
+
+      // Add key/value pair only if the range size is greater than 1; a.k.a. contains at least "="
+      if (hasBothKeyValuePair || key.length > 0) {
+        // Optimization: Replace '+' with space
+        if (keyHasPlus) {
+          key = key.replace(plusRegex, " ");
+        }
+
+        // Optimization: Do not decode if it's not necessary.
+        if (shouldDecodeKey) {
+          key = fastDecode(key) || key;
+        }
+
+        if (hasBothKeyValuePair) {
+          value = input.slice(equalityIndex + 1, i);
+
+          if (valueHasPlus) {
+            value = value.replace(plusRegex, " ");
+          }
+
+          if (shouldDecodeValue) {
+            value = fastDecode(value) || value;
+          }
+        }
+        const currentValue = result[key];
+
+        if (currentValue === undefined) {
+          result[key] = value;
+        } else {
+          // Optimization: value.pop is faster than Array.isArray(value)
+          if (currentValue.pop) {
+            currentValue.push(value);
+          } else {
+            result[key] = [currentValue, value];
+          }
+        }
+      }
+
+      // Reset reading key value pairs
+      value = "";
+      startingIndex = i;
+      equalityIndex = i;
+      shouldDecodeKey = false;
+      shouldDecodeValue = false;
+      keyHasPlus = false;
+      valueHasPlus = false;
+    }
+    // Check '='
+    else if (c === 61) {
+      if (equalityIndex <= startingIndex) {
+        equalityIndex = i;
+      }
+      // If '=' character occurs again, we should decode the input.
+      else {
+        shouldDecodeValue = true;
+      }
+    }
+    // Check '+', and remember to replace it with empty space.
+    else if (c === 43) {
+      if (equalityIndex > startingIndex) {
+        valueHasPlus = true;
+      } else {
+        keyHasPlus = true;
+      }
+    }
+    // Check '%' character for encoding
+    else if (c === 37) {
+      if (equalityIndex > startingIndex) {
+        shouldDecodeValue = true;
+      } else {
+        shouldDecodeKey = true;
+      }
+    }
+  }
+
+  return result;
+}
+
+module.exports = parse;
+�/lib/index.d.ts�vtype FastQueryString = {
+  stringify(value: Record<string, any>): string;
+  parse(value: string): Record<string, any>;
+};
+
+declare namespace fastQueryString {
+  export function stringify(value: Record<string, any>): string;
+  export function parse(value: string): Record<string, any>;
+
+  const fqs: FastQueryString;
+  export { fqs as default };
+}
+
+export = fastQueryString;
+�/lib/stringify.js��"use strict";
+
+const { encodeString } = require("./internals/querystring");
+
+function getAsPrimitive(value) {
+  const type = typeof value;
+
+  if (type === "string") {
+    // Length check is handled inside encodeString function
+    return encodeString(value);
+  } else if (type === "bigint") {
+    return value.toString();
+  } else if (type === "boolean") {
+    return value ? "true" : "false";
+  } else if (type === "number" && Number.isFinite(value)) {
+    return value < 1e21 ? "" + value : encodeString("" + value);
+  }
+
+  return "";
+}
+
+/**
+ * @param {Record<string, string | number | boolean
+ * | ReadonlyArray<string | number | boolean> | null>} input
+ * @returns {string}
+ */
+function stringify(input) {
+  let result = "";
+
+  if (input === null || typeof input !== "object") {
+    return result;
+  }
+
+  const separator = "&";
+  const keys = Object.keys(input);
+  const keyLength = keys.length;
+  let valueLength = 0;
+
+  for (let i = 0; i < keyLength; i++) {
+    const key = keys[i];
+    const value = input[key];
+    const encodedKey = encodeString(key) + "=";
+
+    if (i) {
+      result += separator;
+    }
+
+    if (Array.isArray(value)) {
+      valueLength = value.length;
+      for (let j = 0; j < valueLength; j++) {
+        if (j) {
+          result += separator;
+        }
+
+        // Optimization: Dividing into multiple lines improves the performance.
+        // Since v8 does not need to care about the '+' character if it was one-liner.
+        result += encodedKey;
+        result += getAsPrimitive(value[j]);
+      }
+    } else {
+      result += encodedKey;
+      result += getAsPrimitive(value);
+    }
+  }
+
+  return result;
+}
+
+module.exports = stringify;

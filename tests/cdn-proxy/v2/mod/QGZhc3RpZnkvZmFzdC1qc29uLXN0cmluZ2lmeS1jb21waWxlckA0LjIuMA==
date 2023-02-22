@@ -1,0 +1,785 @@
+ç∂/types/index.test-d.ts≈*import { expectAssignable, expectError, expectType } from "tsd";
+import SerializerSelector, {
+  RouteDefinition,
+  Serializer,
+  SerializerCompiler,
+  SerializerFactory,
+  SerializerSelector as SerializerSelectorNamed,
+  StandaloneSerializer,
+} from "..";
+
+/**
+ * SerializerSelector
+ */
+
+{
+  const compiler = SerializerSelector();
+  expectType<SerializerFactory>(compiler);
+}
+
+{
+  const compiler = SerializerSelectorNamed();
+  expectType<SerializerFactory>(compiler);
+}
+
+{
+  {
+    const sampleSchema = {
+      $id: 'example1',
+      type: 'object',
+      properties: {
+        name: { type: 'string' }
+      }
+    }
+
+    const externalSchemas1 = {}
+
+    const factory = SerializerSelector()
+    expectType<SerializerFactory>(factory);
+    const compiler = factory(externalSchemas1, {})
+    expectType<SerializerCompiler>(compiler);
+    const serializeFunc = compiler({ schema: sampleSchema })
+    expectType<Serializer>(serializeFunc);
+
+    expectType<string>(serializeFunc({ name: 'hello' }))
+  }
+}
+
+/**
+ * StandaloneSerializer
+ */
+
+const reader = StandaloneSerializer({
+  readMode: true,
+  restoreFunction: (route: RouteDefinition) => {
+    expectAssignable<RouteDefinition>(route)
+    return {} as Serializer
+  },
+});
+expectType<SerializerFactory>(reader);
+
+const writer = StandaloneSerializer({
+  readMode: false,
+  storeFunction: (route: RouteDefinition, code: string) => {
+    expectAssignable<RouteDefinition>(route)
+    expectAssignable<string>(code)
+  },
+});
+expectType<SerializerFactory>(writer);
+
+{
+  const base = {
+    $id: 'urn:schema:base',
+    definitions: {
+      hello: { type: 'string' }
+    },
+    type: 'object',
+    properties: {
+      hello: { $ref: '#/definitions/hello' }
+    }
+  }
+
+  const refSchema = {
+    $id: 'urn:schema:ref',
+    type: 'object',
+    properties: {
+      hello: { $ref: 'urn:schema:base#/definitions/hello' }
+    }
+  }
+
+  const endpointSchema = {
+    schema: {
+      $id: 'urn:schema:endpoint',
+      $ref: 'urn:schema:ref'
+    }
+  }
+
+  const schemaMap = {
+    [base.$id]: base,
+    [refSchema.$id]: refSchema
+  }
+
+  expectError(StandaloneSerializer({
+    readMode: true,
+    storeFunction () { }
+  }))
+  expectError(StandaloneSerializer({
+    readMode: false,
+    restoreFunction () {}
+  }))
+  expectError(StandaloneSerializer({
+    restoreFunction () {}
+  }))
+
+  expectType<SerializerFactory>(StandaloneSerializer({
+    storeFunction (routeOpts, schemaSerializerCode) {
+      expectType<RouteDefinition>(routeOpts)
+      expectType<string>(schemaSerializerCode)
+    }
+  }))
+
+  expectType<SerializerFactory>(StandaloneSerializer({
+    readMode: true,
+    restoreFunction (routeOpts) {
+      expectType<RouteDefinition>(routeOpts)
+      return {} as Serializer
+    }
+  }))
+
+  const factory = StandaloneSerializer({
+    readMode: false,
+    storeFunction (routeOpts, schemaSerializerCode) {
+      expectType<RouteDefinition>(routeOpts)
+      expectType<string>(schemaSerializerCode)
+    }
+  })
+  expectType<SerializerFactory>(factory)
+
+  const compiler = factory(schemaMap)
+  expectType<SerializerCompiler>(compiler)
+  expectType<Serializer>(compiler(endpointSchema))
+}
+±/types/index.d.ts≈*import { Options } from 'fast-json-stringify'
+
+type FastJsonStringifyFactory = () => SerializerSelector.SerializerFactory
+
+declare namespace SerializerSelector {
+  export type SerializerFactory = (
+    externalSchemas?: unknown,
+    options?: Options
+  ) => SerializerCompiler;
+
+  export type SerializerCompiler = (
+    externalSchemas?: unknown,
+    options?: Options
+  ) => Serializer;
+
+  export type Serializer = (doc: any) => string
+
+  export type RouteDefinition = {
+    method: string;
+    url: string;
+    httpStatus: string;
+    schema?: unknown;
+  }
+
+  export type StandaloneOptions = StandaloneOptionsReadModeOn | StandaloneOptionsReadModeOff
+
+  export type StandaloneOptionsReadModeOn = {
+    readMode: true;
+    restoreFunction?(opts: RouteDefinition): Serializer;
+  }
+
+  export type StandaloneOptionsReadModeOff = {
+    readMode?: false | undefined;
+    storeFunction?(opts: RouteDefinition, schemaSerializationCode: string): void;
+  }
+
+  export type { Options }
+  export const SerializerSelector: FastJsonStringifyFactory;
+  export function StandaloneSerializer(options: StandaloneOptions): SerializerFactory;
+
+  export { SerializerSelector as default }
+}
+
+declare function SerializerSelector(...params: Parameters<FastJsonStringifyFactory>): ReturnType<FastJsonStringifyFactory>
+export = SerializerSelector
+™/.eslintrcƒ{"extends": "standard"}
+≠/package.json≈o{
+  "name": "@fastify/fast-json-stringify-compiler",
+  "description": "Build and manage the fast-json-stringify instances for the fastify framework",
+  "version": "4.2.0",
+  "main": "index.js",
+  "types": "types/index.d.ts",
+  "scripts": {
+    "lint": "standard",
+    "lint:fix": "standard --fix",
+    "unit": "tap test/**/*.test.js",
+    "test": "npm run unit && npm run test:typescript",
+    "posttest": "rimraf test/fjs-generated*.js",
+    "test:typescript": "tsd"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fastify/fast-json-stringify-compiler.git"
+  },
+  "keywords": [],
+  "author": "Manuel Spigolon <manuel.spigolon@nearform.com> (https://github.com/Eomm)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fastify/fast-json-stringify-compiler/issues"
+  },
+  "homepage": "https://github.com/fastify/fast-json-stringify-compiler#readme",
+  "devDependencies": {
+    "fastify": "^4.0.0",
+    "rimraf": "^3.0.2",
+    "sanitize-filename": "^1.6.3",
+    "standard": "^17.0.0",
+    "tap": "^16.0.0",
+    "tsd": "^0.25.0"
+  },
+  "dependencies": {
+    "fast-json-stringify": "^5.0.0"
+  }
+}
+©/index.js≈)'use strict'
+
+const fastJsonStringify = require('fast-json-stringify')
+
+function SerializerSelector () {
+  return function buildSerializerFactory (externalSchemas, serializerOpts) {
+    const fjsOpts = Object.assign({}, serializerOpts, { schema: externalSchemas })
+    return responseSchemaCompiler.bind(null, fjsOpts)
+  }
+}
+
+function responseSchemaCompiler (fjsOpts, { schema /* method, url, httpStatus */ }) {
+  if (fjsOpts.schema && schema.$id && fjsOpts.schema[schema.$id]) {
+    fjsOpts.schema = { ...fjsOpts.schema }
+    delete fjsOpts.schema[schema.$id]
+  }
+  return fastJsonStringify(schema, fjsOpts)
+}
+
+module.exports = SerializerSelector
+module.exports.default = SerializerSelector
+module.exports.SerializerSelector = SerializerSelector
+module.exports.StandaloneSerializer = require('./standalone')
+¥/test/plugin.test.js≈ı'use strict'
+
+const t = require('tap')
+const fastify = require('fastify')
+const FjsCompiler = require('../index')
+
+const echo = async (req, reply) => { return req.body }
+
+const sampleSchema = Object.freeze({
+  $id: 'example1',
+  type: 'object',
+  properties: {
+    name: { type: 'string' }
+  }
+})
+
+const externalSchemas1 = Object.freeze({})
+const externalSchemas2 = Object.freeze({
+  foo: {
+    $id: 'foo',
+    type: 'object',
+    properties: {
+      name: { type: 'string' }
+    }
+  }
+})
+
+const fastifyFjsOptionsDefault = Object.freeze({})
+
+t.test('basic usage', t => {
+  t.plan(1)
+  const factory = FjsCompiler()
+  const compiler = factory(externalSchemas1, fastifyFjsOptionsDefault)
+  const serializeFunc = compiler({ schema: sampleSchema })
+  const result = serializeFunc({ name: 'hello' })
+  t.equal(result, '{"name":"hello"}')
+})
+
+t.test('fastify integration', async t => {
+  const factory = FjsCompiler()
+
+  const app = fastify({
+    serializerOpts: {
+      rounding: 'ceil'
+    },
+    schemaController: {
+      compilersFactory: {
+        buildSerializer: factory
+      }
+    }
+  })
+
+  app.addSchema(externalSchemas2.foo)
+
+  app.post('/', {
+    handler: echo,
+    schema: {
+      response: {
+        200: {
+          $ref: 'foo#'
+        }
+      }
+    }
+  })
+
+  const res = await app.inject({
+    url: '/',
+    method: 'POST',
+    payload: {
+      version: '1',
+      foo: 'this is not a number',
+      name: 'serialize me'
+    }
+  })
+
+  t.equal(res.statusCode, 200)
+  t.same(res.json(), { name: 'serialize me' })
+})
+®/LICENSE≈(MIT License
+
+Copyright (c) 2022 Fastify
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+™/README.md≈d# @fastify/fast-json-stringify-compiler
+Build and manage the [`fast-json-stringify`](https://www.npmjs.com/package/fast-json-stringify) instances for the fastify framework.
+This package is responsible for compiling the application's `response` JSON schemas into optimized functions to speed up the response time.
+
+[![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](http://standardjs.com/)
+[![Continuous Integration](https://github.com/fastify/fast-json-stringify-compiler/workflows/Continuous%20Integration/badge.svg)](https://github.com/fastify/fast-json-stringify-compiler/actions/workflows/ci.yml)
+
+
+## Versions
+
+| `@fastify/fast-json-stringify-compiler` | `fast-json-stringify` | Supported `fastify` |
+|----------------------------------------:|----------------------:|--------------------:|
+|                                    v1.x |                  v3.x |                ^3.x |
+|                                    v2.x |                  v3.x |                ^4.x |
+|                                    v3.x |                  v4.x |                ^4.x |
+|                                    v4.x |                  v5.x |                ^4.x |
+
+### fast-json-stringify Configuration
+
+The `fast-json-stringify` configuration is the default one. You can check it the default settings in the [`fast-json-stringify` option](https://github.com/fastify/fast-json-stringify/#options) documentation.
+
+You can also override the default configuration by passing the [`serializerOpts`](https://www.fastify.io/docs/latest/Reference/Server/#serializeropts) configuration to the Fastify instance.
+
+## Usage
+
+This module is already used as default by Fastify.
+If you need to provide to your server instance a different version, refer to [the official doc](https://www.fastify.io/docs/latest/Reference/Server/#schemacontroller).
+
+### fast-json-stringify Standalone
+
+`fast-json-stringify@v4.1.0` introduces the [standalone feature](https://github.com/fastify/fast-json-stringify#standalone) that let you to pre-compile your schemas and use them in your application for a faster startup.
+
+To use this feature, you must be aware of the following:
+
+1. You must generate and save the application's compiled schemas.
+2. Read the compiled schemas from the file and provide them back to your Fastify application.
+
+
+#### Generate and save the compiled schemas
+
+Fastify helps you to generate the serialization schemas functions and it is your choice to save them where you want.
+To accomplish this, you must use a new compiler: `@fastify/fast-json-stringify-compiler/standalone`.
+
+You must provide 2 parameters to this compiler:
+
+- `readMode: false`: a boolean to indicate that you want generate the schemas functions string.
+- `storeFunction`" a sync function that must store the source code of the schemas functions. You may provide an async function too, but you must manage errors.
+
+When `readMode: false`, **the compiler is meant to be used in development ONLY**.
+
+
+```js
+const { StandaloneSerializer } = require('@fastify/fast-json-stringify-compiler')
+
+const factory = StandaloneSerializer({
+  readMode: false,
+  storeFunction (routeOpts, schemaSerializationCode) {
+    // routeOpts is like: { schema, method, url, httpStatus }
+    // schemaSerializationCode is a string source code that is the compiled schema function
+    const fileName = generateFileName(routeOpts)
+    fs.writeFileSync(path.join(__dirname, fileName), schemaSerializationCode)
+  }
+})
+
+const app = fastify({
+  jsonShorthand: false,
+  schemaController: {
+    compilersFactory: {
+      buildSerializer: factory
+    }
+  }
+})
+
+// ... add all your routes with schemas ...
+
+app.ready().then(() => {
+  // at this stage all your schemas are compiled and stored in the file system
+  // now it is important to turn off the readMode
+})
+```
+
+#### Read the compiled schemas functions
+
+At this stage, you should have a file for every route's schema.
+To use them, you must use the `@fastify/fast-json-stringify-compiler/standalone` with the parameters:
+
+- `readMode: true`: a boolean to indicate that you want read and use the schemas functions string.
+- `restoreFunction`" a sync function that must return a function to serialize the route's payload.
+
+Important keep away before you continue reading the documentation:
+
+- when you use the `readMode: true`, the application schemas are not compiled (they are ignored). So, if you change your schemas, you must recompile them!
+- as you can see, you must relate the route's schema to the file name using the `routeOpts` object. You may use the `routeOpts.schema.$id` field to do so, it is up to you to define a unique schema identifier.
+
+```js
+const { StandaloneSerializer } = require('@fastify/fast-json-stringify-compiler')
+
+const factory = StandaloneSerializer({
+  readMode: true,
+  restoreFunction (routeOpts) {
+    // routeOpts is like: { schema, method, url, httpStatus }
+    const fileName = generateFileName(routeOpts)
+    return require(path.join(__dirname, fileName))
+  }
+})
+
+const app = fastify({
+  jsonShorthand: false,
+  schemaController: {
+    compilersFactory: {
+      buildSerializer: factory
+    }
+  }
+})
+
+// ... add all your routes with schemas as before...
+
+app.listen({ port: 3000 })
+```
+
+### How it works
+
+This module provide a factory function to produce [Serializer Compilers](https://www.fastify.io/docs/latest/Reference/Server/#serializercompiler) functions.
+
+## License
+
+Licensed under [MIT](./LICENSE).
+∑/.github/dependabot.yml≈version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+∏/test/standalone.test.js≈x'use strict'
+
+const fs = require('fs')
+const path = require('path')
+const t = require('tap')
+const fastify = require('fastify')
+const sanitize = require('sanitize-filename')
+
+const { StandaloneSerializer: FjsStandaloneCompiler } = require('../')
+
+function generateFileName (routeOpts) {
+  return `/fjs-generated-${sanitize(routeOpts.schema.$id)}-${routeOpts.method}-${routeOpts.httpPart}-${sanitize(routeOpts.url)}.js`
+}
+
+t.test('errors', t => {
+  t.plan(2)
+  t.throws(() => {
+    FjsStandaloneCompiler()
+  }, 'missing restoreFunction')
+  t.throws(() => {
+    FjsStandaloneCompiler({ readMode: false })
+  }, 'missing storeFunction')
+})
+
+t.test('generate standalone code', t => {
+  t.plan(5)
+
+  const base = {
+    $id: 'urn:schema:base',
+    definitions: {
+      hello: { type: 'string' }
+    },
+    type: 'object',
+    properties: {
+      hello: { $ref: '#/definitions/hello' }
+    }
+  }
+
+  const refSchema = {
+    $id: 'urn:schema:ref',
+    type: 'object',
+    properties: {
+      hello: { $ref: 'urn:schema:base#/definitions/hello' }
+    }
+  }
+
+  const endpointSchema = {
+    schema: {
+      $id: 'urn:schema:endpoint',
+      $ref: 'urn:schema:ref'
+    }
+  }
+
+  const schemaMap = {
+    [base.$id]: base,
+    [refSchema.$id]: refSchema
+  }
+
+  const factory = FjsStandaloneCompiler({
+    readMode: false,
+    storeFunction (routeOpts, schemaSerializerCode) {
+      t.same(routeOpts, endpointSchema)
+      t.type(schemaSerializerCode, 'string')
+      fs.writeFileSync(path.join(__dirname, '/fjs-generated.js'), schemaSerializerCode)
+      t.pass('stored the serializer function')
+    }
+  })
+
+  const compiler = factory(schemaMap)
+  compiler(endpointSchema)
+  t.pass('compiled the endpoint schema')
+
+  t.test('usage standalone code', t => {
+    t.plan(3)
+    const standaloneSerializer = require('./fjs-generated')
+    t.ok(standaloneSerializer)
+
+    const valid = standaloneSerializer({ hello: 'world' })
+    t.same(valid, JSON.stringify({ hello: 'world' }))
+
+    const invalid = standaloneSerializer({ hello: [] })
+    t.same(invalid, '{"hello":""}')
+  })
+})
+
+t.test('fastify integration - writeMode', async t => {
+  t.plan(4)
+
+  const factory = FjsStandaloneCompiler({
+    readMode: false,
+    storeFunction (routeOpts, schemaSerializationCode) {
+      const fileName = generateFileName(routeOpts)
+      t.ok(routeOpts)
+      fs.writeFileSync(path.join(__dirname, fileName), schemaSerializationCode)
+      t.pass(`stored the serializer function ${fileName}`)
+    },
+    restoreFunction () {
+      t.fail('write mode ON')
+    }
+  })
+
+  const app = buildApp(factory)
+  await app.ready()
+})
+
+t.test('fastify integration - writeMode forces standalone', async t => {
+  t.plan(4)
+
+  const factory = FjsStandaloneCompiler({
+    readMode: false,
+    storeFunction (routeOpts, schemaSerializationCode) {
+      const fileName = generateFileName(routeOpts)
+      t.ok(routeOpts)
+      fs.writeFileSync(path.join(__dirname, fileName), schemaSerializationCode)
+      t.pass(`stored the serializer function ${fileName}`)
+    },
+    restoreFunction () {
+      t.fail('write mode ON')
+    }
+  })
+
+  const app = buildApp(factory, {
+    mode: 'not-standalone',
+    rounding: 'ceil'
+  })
+
+  await app.ready()
+})
+
+t.test('fastify integration - readMode', async t => {
+  t.plan(6)
+
+  const factory = FjsStandaloneCompiler({
+    readMode: true,
+    storeFunction () {
+      t.fail('read mode ON')
+    },
+    restoreFunction (routeOpts) {
+      const fileName = generateFileName(routeOpts)
+      t.pass(`restore the serializer function ${fileName}}`)
+      return require(path.join(__dirname, fileName))
+    }
+  })
+
+  const app = buildApp(factory)
+  await app.ready()
+
+  let res = await app.inject({
+    url: '/foo',
+    method: 'POST'
+  })
+  t.equal(res.statusCode, 200)
+  t.equal(res.payload, JSON.stringify({ hello: 'world' }))
+
+  res = await app.inject({
+    url: '/bar?lang=it',
+    method: 'GET'
+  })
+  t.equal(res.statusCode, 200)
+  t.equal(res.payload, JSON.stringify({ lang: 'en' }))
+})
+
+function buildApp (factory, serializerOpts) {
+  const app = fastify({
+    exposeHeadRoutes: false,
+    jsonShorthand: false,
+    schemaController: {
+      compilersFactory: {
+        buildSerializer: factory
+      }
+    },
+    serializerOpts
+  })
+
+  app.addSchema({
+    $id: 'urn:schema:foo',
+    type: 'object',
+    properties: {
+      name: { type: 'string' },
+      id: { type: 'integer' }
+    }
+  })
+
+  app.post('/foo', {
+    schema: {
+      response: {
+        200: {
+          $id: 'urn:schema:response',
+          type: 'object',
+          properties: {
+            hello: { $ref: 'urn:schema:foo#/properties/name' }
+          }
+        }
+      }
+    }
+  }, () => { return { hello: 'world' } })
+
+  app.get('/bar', {
+    schema: {
+      response: {
+        200: {
+          $id: 'urn:schema:response:bar',
+          type: 'object',
+          properties: {
+            lang: { type: 'string', enum: ['it', 'en'] }
+          }
+        }
+      }
+    }
+  }, () => { return { lang: 'en' } })
+
+  return app
+}
+æ/test/duplicate-schema.test.js≈'use strict'
+
+const t = require('tap')
+const FjsCompiler = require('../index')
+
+t.test('Use input schema duplicate in the externalSchemas', async t => {
+  t.plan(1)
+  const externalSchemas = {
+    schema1: {
+      $id: 'schema1',
+      type: 'number'
+    },
+    schema2: {
+      $id: 'schema2',
+      type: 'string'
+    }
+  }
+
+  const factory = FjsCompiler()
+  const compiler = factory(externalSchemas)
+
+  compiler({ schema: externalSchemas.schema1 })
+  compiler({ schema: externalSchemas.schema2 })
+
+  t.pass()
+})
+π/.github/workflows/ci.yml≈name: CI
+
+on:
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+
+jobs:
+  test:
+    uses: fastify/workflows/.github/workflows/plugins-ci.yml@v3
+    with:
+      license-check: true
+      lint: true
+Æ/standalone.js≈ﬂ'use strict'
+
+const SerializerSelector = require('./index')
+
+function StandaloneSerializer (options = { readMode: true }) {
+  if (options.readMode === true && typeof options.restoreFunction !== 'function') {
+    throw new Error('You must provide a function for the restoreFunction-option when readMode ON')
+  }
+
+  if (options.readMode !== true && typeof options.storeFunction !== 'function') {
+    throw new Error('You must provide a function for the storeFunction-option when readMode OFF')
+  }
+
+  if (options.readMode === true) {
+    // READ MODE: it behalf only in the restore function provided by the user
+    return function wrapper () {
+      return function (opts) {
+        return options.restoreFunction(opts)
+      }
+    }
+  }
+
+  // WRITE MODE: it behalf on the default SerializerSelector, wrapping the API to run the Ajv Standalone code generation
+  const factory = SerializerSelector()
+  return function wrapper (externalSchemas, serializerOpts = {}) {
+    // to generate the serialization source code, this option is mandatory
+    serializerOpts.mode = 'standalone'
+
+    const compiler = factory(externalSchemas, serializerOpts)
+    return function (opts) { // { schema/*, method, url, httpPart */ }
+      const serializeFuncCode = compiler(opts)
+
+      options.storeFunction(opts, serializeFuncCode)
+
+      // eslint-disable-next-line no-new-func
+      return new Function(serializeFuncCode)
+    }
+  }
+}
+
+module.exports = StandaloneSerializer
+module.exports.default = StandaloneSerializer

@@ -1,0 +1,747 @@
+‰¨/LICENSEÅMCopyright 2019 "David Mark Clements <david.mark.clements@gmail.com>"
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation 
+the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
+to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions 
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED 
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
+IN THE SOFTWARE.
+®/test/index.jsÅ,Œ'use strict'
+
+const { test } = require('tap')
+const rfdc = require('..')
+const cloneDefault = require('../default')
+const clone = rfdc()
+const cloneProto = rfdc({ proto: true })
+const cloneCircles = rfdc({ circles: true })
+const cloneCirclesProto = rfdc({ circles: true, proto: true })
+
+const rnd = (max) => Math.round(Math.random() * max)
+
+types(clone, 'default')
+types(cloneProto, 'proto option')
+types(cloneCircles, 'circles option')
+types(cloneCirclesProto, 'circles and proto option')
+
+test('default â€“ does not copy proto properties', async ({ is }) => {
+  is(clone(Object.create({ a: 1 })).a, undefined, 'value not copied')
+})
+test('default â€“ shorthand import', async ({ same }) => {
+  same(
+    clone(Object.create({ a: 1 })),
+    cloneDefault(Object.create({ a: 1 })),
+    'import equals clone with default options'
+  )
+})
+test('proto option â€“ copies enumerable proto properties', async ({ is }) => {
+  is(cloneProto(Object.create({ a: 1 })).a, 1, 'value copied')
+})
+test('circles option - circular object', async ({ same, is, isNot }) => {
+  const o = { nest: { a: 1, b: 2 } }
+  o.circular = o
+  same(cloneCircles(o), o, 'same values')
+  isNot(cloneCircles(o), o, 'different objects')
+  isNot(cloneCircles(o).nest, o.nest, 'different nested objects')
+  const c = cloneCircles(o)
+  is(c.circular, c, 'circular references point to copied parent')
+  isNot(c.circular, o, 'circular references do not point to original parent')
+})
+test('circles option â€“ deep circular object', async ({ same, is, isNot }) => {
+  const o = { nest: { a: 1, b: 2 } }
+  o.nest.circular = o
+  same(cloneCircles(o), o, 'same values')
+  isNot(cloneCircles(o), o, 'different objects')
+  isNot(cloneCircles(o).nest, o.nest, 'different nested objects')
+  const c = cloneCircles(o)
+  is(c.nest.circular, c, 'circular references point to copied parent')
+  isNot(
+    c.nest.circular,
+    o,
+    'circular references do not point to original parent'
+  )
+})
+test('circles option alone â€“ does not copy proto properties', async ({
+  is
+}) => {
+  is(cloneCircles(Object.create({ a: 1 })).a, undefined, 'value not copied')
+})
+test('circles and proto option â€“ copies enumerable proto properties', async ({
+  is
+}) => {
+  is(cloneCirclesProto(Object.create({ a: 1 })).a, 1, 'value copied')
+})
+test('circles and proto option - circular object', async ({
+  same,
+  is,
+  isNot
+}) => {
+  const o = { nest: { a: 1, b: 2 } }
+  o.circular = o
+  same(cloneCirclesProto(o), o, 'same values')
+  isNot(cloneCirclesProto(o), o, 'different objects')
+  isNot(cloneCirclesProto(o).nest, o.nest, 'different nested objects')
+  const c = cloneCirclesProto(o)
+  is(c.circular, c, 'circular references point to copied parent')
+  isNot(c.circular, o, 'circular references do not point to original parent')
+})
+test('circles and proto option â€“ deep circular object', async ({
+  same,
+  is,
+  isNot
+}) => {
+  const o = { nest: { a: 1, b: 2 } }
+  o.nest.circular = o
+  same(cloneCirclesProto(o), o, 'same values')
+  isNot(cloneCirclesProto(o), o, 'different objects')
+  isNot(cloneCirclesProto(o).nest, o.nest, 'different nested objects')
+  const c = cloneCirclesProto(o)
+  is(c.nest.circular, c, 'circular references point to copied parent')
+  isNot(
+    c.nest.circular,
+    o,
+    'circular references do not point to original parent'
+  )
+})
+test('circles and proto option â€“ deep circular array', async ({
+  same,
+  is,
+  isNot
+}) => {
+  const o = { nest: [1, 2] }
+  o.nest.push(o)
+  same(cloneCirclesProto(o), o, 'same values')
+  isNot(cloneCirclesProto(o), o, 'different objects')
+  isNot(cloneCirclesProto(o).nest, o.nest, 'different nested objects')
+  const c = cloneCirclesProto(o)
+  is(c.nest[2], c, 'circular references point to copied parent')
+  isNot(c.nest[2], o, 'circular references do not point to original parent')
+})
+
+function types (clone, label) {
+  test(label + ' â€“ number', async ({ is }) => {
+    is(clone(42), 42, 'same value')
+  })
+  test(label + ' â€“ string', async ({ is }) => {
+    is(clone('str'), 'str', 'same value')
+  })
+  test(label + ' â€“ boolean', async ({ is }) => {
+    is(clone(true), true, 'same value')
+  })
+  test(label + ' â€“ function', async ({ is }) => {
+    const fn = () => {}
+    is(clone(fn), fn, 'same function')
+  })
+  test(label + ' â€“ async function', async ({ is }) => {
+    const fn = async () => {}
+    is(clone(fn), fn, 'same function')
+  })
+  test(label + ' â€“ generator function', async ({ is }) => {
+    const fn = function * () {}
+    is(clone(fn), fn, 'same function')
+  })
+  test(label + ' â€“ date', async ({ is, isNot }) => {
+    const date = new Date()
+    is(+clone(date), +date, 'same value')
+    isNot(clone(date), date, 'different object')
+  })
+  test(label + ' â€“ null', async ({ is }) => {
+    is(clone(null), null, 'same value')
+  })
+  test(label + ' â€“ shallow object', async ({ same, isNot }) => {
+    const o = { a: 1, b: 2 }
+    same(clone(o), o, 'same values')
+    isNot(clone(o), o, 'different object')
+  })
+  test(label + ' â€“ shallow array', async ({ same, isNot }) => {
+    const o = [1, 2]
+    same(clone(o), o, 'same values')
+    isNot(clone(o), o, 'different arrays')
+  })
+  test(label + ' â€“ deep object', async ({ same, isNot }) => {
+    const o = { nest: { a: 1, b: 2 } }
+    same(clone(o), o, 'same values')
+    isNot(clone(o), o, 'different objects')
+    isNot(clone(o).nest, o.nest, 'different nested objects')
+  })
+  test(label + ' â€“ deep array', async ({ same, isNot }) => {
+    const o = [{ a: 1, b: 2 }, [3]]
+    same(clone(o), o, 'same values')
+    isNot(clone(o), o, 'different arrays')
+    isNot(clone(o)[0], o[0], 'different array elements')
+    isNot(clone(o)[1], o[1], 'different array elements')
+  })
+  test(label + ' â€“ nested number', async ({ is }) => {
+    is(clone({ a: 1 }).a, 1, 'same value')
+  })
+  test(label + ' â€“ nested string', async ({ is }) => {
+    is(clone({ s: 'str' }).s, 'str', 'same value')
+  })
+  test(label + ' â€“ nested boolean', async ({ is }) => {
+    is(clone({ b: true }).b, true, 'same value')
+  })
+  test(label + ' â€“ nested function', async ({ is }) => {
+    const fn = () => {}
+    is(clone({ fn }).fn, fn, 'same function')
+  })
+  test(label + ' â€“ nested async function', async ({ is }) => {
+    const fn = async () => {}
+    is(clone({ fn }).fn, fn, 'same function')
+  })
+  test(label + ' â€“ nested generator function', async ({ is }) => {
+    const fn = function * () {}
+    is(clone({ fn }).fn, fn, 'same function')
+  })
+  test(label + ' â€“ nested date', async ({ is, isNot }) => {
+    const date = new Date()
+    is(+clone({ d: date }).d, +date, 'same value')
+    isNot(clone({ d: date }).d, date, 'different object')
+  })
+  test(label + ' â€“ nested date in array', async ({ is, isNot }) => {
+    const date = new Date()
+    is(+clone({ d: [date] }).d[0], +date, 'same value')
+    isNot(clone({ d: [date] }).d[0], date, 'different object')
+    is(+cloneCircles({ d: [date] }).d[0], +date, 'same value')
+    isNot(cloneCircles({ d: [date] }).d, date, 'different object')
+  })
+  test(label + ' â€“ nested null', async ({ is }) => {
+    is(clone({ n: null }).n, null, 'same value')
+  })
+  test(label + ' â€“ arguments', async ({ isNot, same }) => {
+    function fn (...args) {
+      same(clone(arguments), args, 'same values')
+      isNot(clone(arguments), arguments, 'different object')
+    }
+    fn(1, 2, 3)
+  })
+  test(`${label} copies buffers from object correctly`, async ({ ok, is, isNot }) => {
+    const input = Date.now().toString(36)
+    const inputBuffer = Buffer.from(input)
+    const clonedBuffer = clone({ a: inputBuffer }).a
+    ok(Buffer.isBuffer(clonedBuffer), 'cloned value is buffer')
+    isNot(clonedBuffer, inputBuffer, 'cloned buffer is not same as input buffer')
+    is(clonedBuffer.toString(), input, 'cloned buffer content is correct')
+  })
+  test(`${label} copies buffers from arrays correctly`, async ({ ok, is, isNot }) => {
+    const input = Date.now().toString(36)
+    const inputBuffer = Buffer.from(input)
+    const [clonedBuffer] = clone([inputBuffer])
+    ok(Buffer.isBuffer(clonedBuffer), 'cloned value is buffer')
+    isNot(clonedBuffer, inputBuffer, 'cloned buffer is not same as input buffer')
+    is(clonedBuffer.toString(), input, 'cloned buffer content is correct')
+  })
+  test(`${label} copies TypedArrays from object correctly`, async ({ ok, is, isNot }) => {
+    const [input1, input2] = [rnd(10), rnd(10)]
+    var buffer = new ArrayBuffer(8)
+    const int32View = new Int32Array(buffer)
+    int32View[0] = input1
+    int32View[1] = input2
+    const cloned = clone({ a: int32View }).a
+    ok(cloned instanceof Int32Array, 'cloned value is instance of class')
+    isNot(cloned, int32View, 'cloned value is not same as input value')
+    is(cloned[0], input1, 'cloned value content is correct')
+    is(cloned[1], input2, 'cloned value content is correct')
+  })
+  test(`${label} copies TypedArrays from array correctly`, async ({ ok, is, isNot }) => {
+    const [input1, input2] = [rnd(10), rnd(10)]
+    var buffer = new ArrayBuffer(16)
+    const int32View = new Int32Array(buffer)
+    int32View[0] = input1
+    int32View[1] = input2
+    const [cloned] = clone([int32View])
+    ok(cloned instanceof Int32Array, 'cloned value is instance of class')
+    isNot(cloned, int32View, 'cloned value is not same as input value')
+    is(cloned[0], input1, 'cloned value content is correct')
+    is(cloned[1], input2, 'cloned value content is correct')
+  })
+  test(`${label} copies complex TypedArrays`, async ({ ok, deepEqual, is, isNot }) => {
+    const [input1, input2, input3] = [rnd(10), rnd(10), rnd(10)]
+    var buffer = new ArrayBuffer(4)
+    const view1 = new Int8Array(buffer, 0, 2)
+    const view2 = new Int8Array(buffer, 2, 2)
+    const view3 = new Int8Array(buffer)
+    view1[0] = input1
+    view2[0] = input2
+    view3[3] = input3
+    const cloned = clone({ view1, view2, view3 })
+    ok(cloned.view1 instanceof Int8Array, 'cloned value is instance of class')
+    ok(cloned.view2 instanceof Int8Array, 'cloned value is instance of class')
+    ok(cloned.view3 instanceof Int8Array, 'cloned value is instance of class')
+    isNot(cloned.view1, view1, 'cloned value is not same as input value')
+    isNot(cloned.view2, view2, 'cloned value is not same as input value')
+    isNot(cloned.view3, view3, 'cloned value is not same as input value')
+    deepEqual(Array.from(cloned.view1), [input1, 0], 'cloned value content is correct')
+    deepEqual(Array.from(cloned.view2), [input2, input3], 'cloned value content is correct')
+    deepEqual(Array.from(cloned.view3), [input1, 0, input2, input3], 'cloned value content is correct')
+  })
+  test(`${label} - maps`, async ({ same, isNot }) => {
+    const map = new Map([['a', 1]])
+    same(Array.from(clone(map)), [['a', 1]], 'same value')
+    isNot(clone(map), map, 'different object')
+  })
+  test(`${label} - sets`, async ({ same, isNot }) => {
+    const set = new Set([1])
+    same(Array.from(clone(set)), [1])
+    isNot(clone(set), set, 'different object')
+  })
+  test(`${label} - nested maps`, async ({ same, isNot }) => {
+    const data = { m: new Map([['a', 1]]) }
+    same(Array.from(clone(data).m), [['a', 1]], 'same value')
+    isNot(clone(data).m, data.m, 'different object')
+  })
+  test(`${label} - nested sets`, async ({ same, isNot }) => {
+    const data = { s: new Set([1]) }
+    same(Array.from(clone(data).s), [1], 'same value')
+    isNot(clone(data).s, data.s, 'different object')
+  })
+}
+«/default.jsÄ7'use strict'
+
+module.exports = require('./index.js')()
+­/package.jsonÅ{
+  "name": "rfdc",
+  "version": "1.3.0",
+  "description": "Really Fast Deep Clone",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./default": "./default.js"
+  },
+  "scripts": {
+    "test": "tap -R min test && npm run lint && tsd",
+    "bench": "node benchmark",
+    "lint": "standard --fix",
+    "cov": "tap --100 test",
+    "cov-ui": "tap --coverage-report=html test",
+    "ci": "standard && tap --100 --coverage-report=text-lcov test | codecov --pipe"
+  },
+  "keywords": [
+    "object",
+    "obj",
+    "properties",
+    "clone",
+    "copy",
+    "deep",
+    "recursive",
+    "key",
+    "keys",
+    "values",
+    "prop",
+    "deep-clone",
+    "deepclone",
+    "deep-copy",
+    "deepcopy",
+    "fast",
+    "performance",
+    "performant",
+    "fastclone",
+    "fastcopy",
+    "fast-clone",
+    "fast-deep-clone",
+    "fast-copy",
+    "fast-deep-copy"
+  ],
+  "author": "David Mark Clements <david.clements@nearform.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "clone-deep": "^4.0.1",
+    "codecov": "^3.4.0",
+    "deep-copy": "^1.4.2",
+    "fast-copy": "^1.2.1",
+    "fastbench": "^1.0.1",
+    "lodash.clonedeep": "^4.5.0",
+    "standard": "^11.0.1",
+    "tap": "^12.0.1",
+    "tsd": "^0.7.4"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/davidmarkclements/rfdc.git"
+  },
+  "bugs": {
+    "url": "https://github.com/davidmarkclements/rfdc/issues"
+  },
+  "homepage": "https://github.com/davidmarkclements/rfdc#readme"
+}
+ª/readme.mdÅÅ# rfdc
+
+Really Fast Deep Clone
+
+
+[![build status](https://img.shields.io/travis/davidmarkclements/rfdc.svg)](https://travis-ci.org/davidmarkclements/rfdc)
+[![coverage](https://img.shields.io/codecov/c/github/davidmarkclements/rfdc.svg)](https://codecov.io/gh/davidmarkclements/rfdc)
+[![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](http://standardjs.com/)
+
+
+## Usage
+
+```js
+const clone = require('rfdc')()
+clone({a: 1, b: {c: 2}}) // => {a: 1, b: {c: 2}}
+```
+
+## API
+
+### `require('rfdc')(opts = { proto: false, circles: false }) => clone(obj) => obj2`
+
+#### `proto` option
+
+Copy prototype properties as well as own properties into the new object.
+
+It's marginally faster to allow enumerable properties on the prototype
+to be copied into the cloned object (not onto it's prototype, directly onto the object).
+
+To explain by way of code:
+
+```js
+require('rfdc')({ proto: false })(Object.create({a: 1})) // => {}
+require('rfdc')({ proto: true })(Object.create({a: 1})) // => {a: 1}
+```
+
+Setting `proto` to `true` will provide an additional 2% performance boost.
+
+#### `circles` option
+
+Keeping track of circular references will slow down performance with an
+additional 25% overhead. Even if an object doesn't have any circular references,
+the tracking overhead is the cost. By default if an object with a circular
+reference is passed to `rfdc`, it will throw (similar to how `JSON.stringify` \
+would throw).
+
+Use the `circles` option to detect and preserve circular references in the
+object. If performance is important, try removing the circular reference from
+the object (set to `undefined`) and then add it back manually after cloning
+instead of using this option.
+
+### `default` import
+It is also possible to directly import the clone function with all options set
+to their default:
+
+```js
+const clone = require("rfdc/default")
+clone({a: 1, b: {c: 2}}) // => {a: 1, b: {c: 2}}
+```
+
+### Types
+
+`rfdc` clones all JSON types:
+
+* `Object`
+* `Array`
+* `Number`
+* `String`
+* `null`
+
+With additional support for:
+
+* `Date` (copied)
+* `undefined` (copied)
+* `Buffer` (copied)
+* `TypedArray` (copied)
+* `Map` (copied)
+* `Set` (copied)
+* `Function` (referenced)
+* `AsyncFunction` (referenced)
+* `GeneratorFunction` (referenced)
+* `arguments` (copied to a normal object)
+
+All other types have output values that match the output
+of `JSON.parse(JSON.stringify(o))`.
+
+For instance:
+
+```js
+const rfdc = require('rfdc')()
+const err = Error()
+err.code = 1
+JSON.parse(JSON.stringify(e)) // {code: 1}
+rfdc(e) // {code: 1}
+
+JSON.parse(JSON.stringify({rx: /foo/})) // {rx: {}}
+rfdc({rx: /foo/}) // {rx: {}}
+```
+
+## Benchmarks
+
+```sh
+npm run bench
+```
+
+```
+benchDeepCopy*100: 457.568ms
+benchLodashCloneDeep*100: 1230.773ms
+benchCloneDeep*100: 655.208ms
+benchFastCopy*100: 747.017ms
+benchRfdc*100: 281.018ms
+benchRfdcProto*100: 277.265ms
+benchRfdcCircles*100: 328.148ms
+benchRfdcCirclesProto*100: 323.004ms
+```
+
+## Tests
+
+```sh
+npm test
+```
+
+```
+169 passing (342.514ms)
+```
+
+### Coverage
+
+```sh
+npm run cov
+```
+
+```
+----------|----------|----------|----------|----------|-------------------|
+File      |  % Stmts | % Branch |  % Funcs |  % Lines | Uncovered Line #s |
+----------|----------|----------|----------|----------|-------------------|
+All files |      100 |      100 |      100 |      100 |                   |
+ index.js |      100 |      100 |      100 |      100 |                   |
+----------|----------|----------|----------|----------|-------------------|
+```
+
+## License
+
+MIT
+©/index.jsÅð'use strict'
+module.exports = rfdc
+
+function copyBuffer (cur) {
+  if (cur instanceof Buffer) {
+    return Buffer.from(cur)
+  }
+
+  return new cur.constructor(cur.buffer.slice(), cur.byteOffset, cur.length)
+}
+
+function rfdc (opts) {
+  opts = opts || {}
+
+  if (opts.circles) return rfdcCircles(opts)
+  return opts.proto ? cloneProto : clone
+
+  function cloneArray (a, fn) {
+    var keys = Object.keys(a)
+    var a2 = new Array(keys.length)
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i]
+      var cur = a[k]
+      if (typeof cur !== 'object' || cur === null) {
+        a2[k] = cur
+      } else if (cur instanceof Date) {
+        a2[k] = new Date(cur)
+      } else if (ArrayBuffer.isView(cur)) {
+        a2[k] = copyBuffer(cur)
+      } else {
+        a2[k] = fn(cur)
+      }
+    }
+    return a2
+  }
+
+  function clone (o) {
+    if (typeof o !== 'object' || o === null) return o
+    if (o instanceof Date) return new Date(o)
+    if (Array.isArray(o)) return cloneArray(o, clone)
+    if (o instanceof Map) return new Map(cloneArray(Array.from(o), clone))
+    if (o instanceof Set) return new Set(cloneArray(Array.from(o), clone))
+    var o2 = {}
+    for (var k in o) {
+      if (Object.hasOwnProperty.call(o, k) === false) continue
+      var cur = o[k]
+      if (typeof cur !== 'object' || cur === null) {
+        o2[k] = cur
+      } else if (cur instanceof Date) {
+        o2[k] = new Date(cur)
+      } else if (cur instanceof Map) {
+        o2[k] = new Map(cloneArray(Array.from(cur), clone))
+      } else if (cur instanceof Set) {
+        o2[k] = new Set(cloneArray(Array.from(cur), clone))
+      } else if (ArrayBuffer.isView(cur)) {
+        o2[k] = copyBuffer(cur)
+      } else {
+        o2[k] = clone(cur)
+      }
+    }
+    return o2
+  }
+
+  function cloneProto (o) {
+    if (typeof o !== 'object' || o === null) return o
+    if (o instanceof Date) return new Date(o)
+    if (Array.isArray(o)) return cloneArray(o, cloneProto)
+    if (o instanceof Map) return new Map(cloneArray(Array.from(o), cloneProto))
+    if (o instanceof Set) return new Set(cloneArray(Array.from(o), cloneProto))
+    var o2 = {}
+    for (var k in o) {
+      var cur = o[k]
+      if (typeof cur !== 'object' || cur === null) {
+        o2[k] = cur
+      } else if (cur instanceof Date) {
+        o2[k] = new Date(cur)
+      } else if (cur instanceof Map) {
+        o2[k] = new Map(cloneArray(Array.from(cur), cloneProto))
+      } else if (cur instanceof Set) {
+        o2[k] = new Set(cloneArray(Array.from(cur), cloneProto))
+      } else if (ArrayBuffer.isView(cur)) {
+        o2[k] = copyBuffer(cur)
+      } else {
+        o2[k] = cloneProto(cur)
+      }
+    }
+    return o2
+  }
+}
+
+function rfdcCircles (opts) {
+  var refs = []
+  var refsNew = []
+
+  return opts.proto ? cloneProto : clone
+
+  function cloneArray (a, fn) {
+    var keys = Object.keys(a)
+    var a2 = new Array(keys.length)
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i]
+      var cur = a[k]
+      if (typeof cur !== 'object' || cur === null) {
+        a2[k] = cur
+      } else if (cur instanceof Date) {
+        a2[k] = new Date(cur)
+      } else if (ArrayBuffer.isView(cur)) {
+        a2[k] = copyBuffer(cur)
+      } else {
+        var index = refs.indexOf(cur)
+        if (index !== -1) {
+          a2[k] = refsNew[index]
+        } else {
+          a2[k] = fn(cur)
+        }
+      }
+    }
+    return a2
+  }
+
+  function clone (o) {
+    if (typeof o !== 'object' || o === null) return o
+    if (o instanceof Date) return new Date(o)
+    if (Array.isArray(o)) return cloneArray(o, clone)
+    if (o instanceof Map) return new Map(cloneArray(Array.from(o), clone))
+    if (o instanceof Set) return new Set(cloneArray(Array.from(o), clone))
+    var o2 = {}
+    refs.push(o)
+    refsNew.push(o2)
+    for (var k in o) {
+      if (Object.hasOwnProperty.call(o, k) === false) continue
+      var cur = o[k]
+      if (typeof cur !== 'object' || cur === null) {
+        o2[k] = cur
+      } else if (cur instanceof Date) {
+        o2[k] = new Date(cur)
+      } else if (cur instanceof Map) {
+        o2[k] = new Map(cloneArray(Array.from(cur), clone))
+      } else if (cur instanceof Set) {
+        o2[k] = new Set(cloneArray(Array.from(cur), clone))
+      } else if (ArrayBuffer.isView(cur)) {
+        o2[k] = copyBuffer(cur)
+      } else {
+        var i = refs.indexOf(cur)
+        if (i !== -1) {
+          o2[k] = refsNew[i]
+        } else {
+          o2[k] = clone(cur)
+        }
+      }
+    }
+    refs.pop()
+    refsNew.pop()
+    return o2
+  }
+
+  function cloneProto (o) {
+    if (typeof o !== 'object' || o === null) return o
+    if (o instanceof Date) return new Date(o)
+    if (Array.isArray(o)) return cloneArray(o, cloneProto)
+    if (o instanceof Map) return new Map(cloneArray(Array.from(o), cloneProto))
+    if (o instanceof Set) return new Set(cloneArray(Array.from(o), cloneProto))
+    var o2 = {}
+    refs.push(o)
+    refsNew.push(o2)
+    for (var k in o) {
+      var cur = o[k]
+      if (typeof cur !== 'object' || cur === null) {
+        o2[k] = cur
+      } else if (cur instanceof Date) {
+        o2[k] = new Date(cur)
+      } else if (cur instanceof Map) {
+        o2[k] = new Map(cloneArray(Array.from(cur), cloneProto))
+      } else if (cur instanceof Set) {
+        o2[k] = new Set(cloneArray(Array.from(cur), cloneProto))
+      } else if (ArrayBuffer.isView(cur)) {
+        o2[k] = copyBuffer(cur)
+      } else {
+        var i = refs.indexOf(cur)
+        if (i !== -1) {
+          o2[k] = refsNew[i]
+        } else {
+          o2[k] = cloneProto(cur)
+        }
+      }
+    }
+    refs.pop()
+    refsNew.pop()
+    return o2
+  }
+}
+°/index.test-d.tsÄ®import { expectType } from 'tsd';
+import rfdc = require('.');
+
+const clone = rfdc();
+
+expectType<number>(clone(5));
+expectType<{ lorem: string }>(clone({ lorem: "ipsum" }));
+«/index.d.tsÄµdeclare namespace rfdc {
+  interface Options {
+    proto?: boolean;
+    circles?: boolean;
+  }
+}
+
+declare function rfdc(options?: rfdc.Options): <T>(input: T) => T;
+
+export = rfdc;
+¹/.github/workflows/ci.ymlÅÀname: CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [8.x, 10.x, 12.x, 14.x]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: npm install
+    - run: npm run ci

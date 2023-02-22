@@ -1,0 +1,139 @@
+„¨/licenseÅhThe MIT License (MIT)
+
+Copyright (c) Vsevolod Strukchinsky <floatdrop@gmail.com> (github.com/floatdrop)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+©/index.jsÅb'use strict';
+
+var Module = require('module');
+var path = require('path');
+
+module.exports = function requireFromString(code, filename, opts) {
+	if (typeof filename === 'object') {
+		opts = filename;
+		filename = undefined;
+	}
+
+	opts = opts || {};
+	filename = filename || '';
+
+	opts.appendPaths = opts.appendPaths || [];
+	opts.prependPaths = opts.prependPaths || [];
+
+	if (typeof code !== 'string') {
+		throw new Error('code must be a string, not ' + typeof code);
+	}
+
+	var paths = Module._nodeModulePaths(path.dirname(filename));
+
+	var parent = module.parent;
+	var m = new Module(filename, parent);
+	m.filename = filename;
+	m.paths = [].concat(opts.prependPaths).concat(paths).concat(opts.appendPaths);
+	m._compile(code, filename);
+
+	var exports = m.exports;
+	parent && parent.children && parent.children.splice(parent.children.indexOf(m), 1);
+
+	return exports;
+};
+­/package.jsonÅÿ{
+  "name": "require-from-string",
+  "version": "2.0.2",
+  "description": "Require module from string",
+  "license": "MIT",
+  "repository": "floatdrop/require-from-string",
+  "author": {
+    "name": "Vsevolod Strukchinsky",
+    "email": "floatdrop@gmail.com",
+    "url": "github.com/floatdrop"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "files": [
+    "index.js"
+  ],
+  "keywords": [
+    ""
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "mocha": "*"
+  }
+}
+ª/readme.mdÅ•# require-from-string [![Build Status](https://travis-ci.org/floatdrop/require-from-string.svg?branch=master)](https://travis-ci.org/floatdrop/require-from-string)
+
+Load module from string in Node.
+
+## Install
+
+```
+$ npm install --save require-from-string
+```
+
+
+## Usage
+
+```js
+var requireFromString = require('require-from-string');
+
+requireFromString('module.exports = 1');
+//=> 1
+```
+
+
+## API
+
+### requireFromString(code, [filename], [options])
+
+#### code
+
+*Required*  
+Type: `string`
+
+Module code.
+
+#### filename
+Type: `string`  
+Default: `''`
+
+Optional filename.
+
+
+#### options
+Type: `object`
+
+##### appendPaths
+Type: `Array`
+
+List of `paths`, that will be appended to module `paths`. Useful, when you want
+to be able require modules from these paths.
+
+##### prependPaths
+Type: `Array`
+
+Same as `appendPaths`, but paths will be prepended.
+
+## License
+
+MIT Â© [Vsevolod Strukchinsky](http://github.com/floatdrop)

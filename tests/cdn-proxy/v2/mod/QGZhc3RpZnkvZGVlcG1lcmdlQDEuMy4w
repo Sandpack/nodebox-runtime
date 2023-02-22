@@ -1,0 +1,465 @@
+…¨/LICENSEÅ“MIT License
+
+Copyright (c) The Fastify Team
+
+The Fastify team members are listed at https://github.com/fastify/fastify#team
+and in the README file.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.ª/README.mdÅñ# @fastify/deepmerge
+
+![CI](https://github.com/fastify/deepmerge/workflows/CI/badge.svg)
+[![NPM version](https://img.shields.io/npm/v/@fastify/deepmerge.svg?style=flat)](https://www.npmjs.com/package/@fastify/deepmerge)
+[![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](https://standardjs.com/)
+
+Merges the enumerable properties of two or more objects deeply. Fastest implementation of deepmerge, see section 'Benchmarks'.
+
+### Install
+```
+npm i @fastify/deepmerge
+```
+
+### Usage
+
+The module exports a function, which provides a function to deepmerge Objects. 
+
+```
+deepmerge(options)
+```
+
+`options` is optional and can contain following values
+
+- `symbols` (`boolean`, optional) - should also merge object-keys which are symbols, default is false
+- `all` (`boolean`, optional) - merges all parameters, default is false
+- `mergeArray` (`function`, optional) - provide a function, which returns a function to add custom array merging function
+- `cloneProtoObject` (`function`, optional) - provide a function, which must return a clone of the object with the prototype of the object
+
+```js
+const deepmerge = require('@fastify/deepmerge')()
+const result = deepmerge({a: 'value'}, { b: 404 })
+console.log(result) // {a: 'value',  b: 404 }
+```
+
+```js
+const deepmerge = require('@fastify/deepmerge')({ all: true })
+const result = deepmerge({a: 'value'}, { b: 404 }, { a: 404 })
+console.log(result) // {a: 404,  b: 404 }
+```
+
+#### mergeArray
+
+The default mode to merge Arrays is to concat the source-Array to the target-Array.
+
+```js
+const target = [1, 2, 3]
+const source = [4, 5, 6]
+const deepmerge = require('@fastify/deepmerge')()
+const result = deepmerge(target, source)
+console.log(result) // [1, 2, 3, 4, 5, 6]
+```
+
+To overwrite the default behaviour regarding merging Arrays, you can provide a function to the
+`mergeArray` option of the deepmerge-function. The function provided to `mergeArray`
+gets an options-parameter passed, which is an Object containing the following keys and values.
+
+```typescript
+clone: (value: any) => any;
+isMergeableObject: (value: any) => any;
+deepmerge: DeepMergeFn;
+getKeys: (value: object) => string[];
+```
+
+The `mergeAray`-Function needs to return the actual Array merging function, which accepts two parameters of type 
+Array, and returns a value.
+
+Example 1: Replace the target-Array with a clone of the source-Array.
+
+```js
+function replaceByClonedSource(options) {
+  const clone = options.clone
+  return function (target, source) {
+    return clone(source)
+  }
+}
+
+const deepmerge = require('@fastify/deepmerge')({ mergeArray: replaceByClonedSource })
+const result = deepmerge([1, 2, 3], [4, 5, 6])
+console.log(result) // [4, 5, 6]
+```
+
+Example 2: Merge each element of the source-Array with the element at the same index-position of the target-Array.
+
+```js
+function deepmergeArray(options) {
+  const deepmerge = options.deepmerge
+  const clone = options.clone
+  return function (target, source) {
+    let i = 0
+    const tl = target.length
+    const sl = source.length
+    const il = Math.max(target.length, source.length)
+    const result = new Array(il)
+    for (i = 0; i < il; ++i) {
+      if (i < sl) {
+        result[i] = deepmerge(target[i], source[i])
+      } else {
+        result[i] = clone(target[i])
+      }
+    }
+    return result
+  }
+}
+
+// default behaviour
+const deepmergeConcatArray = require('@fastify/deepmerge')()
+const resultConcatArray = deepmergeConcatArray([{ a: [1, 2, 3 ]}], [{b: [4, 5, 6]}])
+console.log(resultConcatArray) // [ { a: [ 1, 2, 3 ]}, { b: [ 4, 5, 6 ] } ]
+
+// modified behaviour
+const deepmergeDeepmergeArray = require('@fastify/deepmerge')({ mergeArray: deepmergeArray })
+const resultDeepmergedArray = deepmergeDeepmergeArray([{ a: [1, 2, 3 ]}], [{b: [4, 5, 6]}])
+console.log(resultDeepmergedArray) // [ { a: [ 1, 2, 3 ], b: [ 4, 5, 6 ] } ]
+```
+
+#### cloneProtoObject
+
+Merging objects with prototypes, such as Streams or Buffers, are not supported by default.
+You can provide a custom function to let this module deal with the object that has a `prototype` _(JSON object excluded)_.
+
+```js
+function cloneByReference (source) {
+  return source
+}
+
+const deepmergeByReference = require('@fastify/deepmerge')({
+  cloneProtoObject: cloneByReference
+})
+
+const result = deepmergeByReference({}, { stream: process.stdout })
+console.log(result) // { stream: <ref *1> WriteStream }
+```
+
+## Benchmarks
+
+The benchmarks are available in the benchmark-folder. 
+
+`npm run bench` - benchmark various use cases of deepmerge:
+```
+@@fastify/deepmerge: merge regex with date x 1,256,523,040 ops/sec Â±0.16% (92 runs sampled)
+@fastify/deepmerge: merge object with a primitive x 1,256,082,915 ops/sec Â±0.25% (97 runs sampled)
+@fastify/deepmerge: merge two arrays containing strings x 25,392,605 ops/sec Â±0.22% (97 runs sampled)
+@fastify/deepmerge: two merge arrays containing objects x 1,655,426 ops/sec Â±0.65% (96 runs sampled)
+@fastify/deepmerge: merge two flat objects x 15,571,029 ops/sec Â±0.45% (96 runs sampled)
+@fastify/deepmerge: merge nested objects x 7,601,328 ops/sec Â±0.31% (96 runs sampled)
+```
+
+`npm run bench:compare` - comparison of @fastify/deepmerge with other popular deepmerge implementation:
+```
+@fastify/deepmerge x 605,343 ops/sec Â±0.87% (96 runs sampled)
+deepmerge x 20,312 ops/sec Â±1.06% (92 runs sampled)
+merge-deep x 83,167 ops/sec Â±1.30% (94 runs sampled)
+ts-deepmerge x 175,977 ops/sec Â±0.57% (96 runs sampled)
+deepmerge-ts x 174,973 ops/sec Â±0.44% (93 runs sampled)
+lodash.merge x 89,213 ops/sec Â±0.70% (98 runs sampled)
+```
+
+## License
+
+Licensed under [MIT](./LICENSE).­/package.jsonÅ­{
+  "name": "@fastify/deepmerge",
+  "version": "1.3.0",
+  "description": "Merges the enumerable properties of two or more objects deeply.",
+  "main": "index.js",
+  "types": "types/index.d.ts",
+  "scripts": {
+    "lint": "standard",
+    "lint:fix": "standard --fix",
+    "test": "npm run test:unit && npm run test:typescript",
+    "test:unit": "tap",
+    "test:typescript": "tsd"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fastify/deepmerge.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fastify/deepmerge/issues"
+  },
+  "homepage": "https://github.com/fastify/deepmerge#readme",
+  "devDependencies": {
+    "standard": "^17.0.0",
+    "tap": "^16.3.0",
+    "tape": "^5.6.1",
+    "tsd": "^0.24.1"
+  },
+  "files": [
+    "LICENSE",
+    "README.md",
+    "index.js",
+    "types/index.d.ts"
+  ],
+  "keywords": [
+    "merge",
+    "deep",
+    "recursive",
+    "object"
+  ]
+}
+±/types/index.d.tsÅŠtype DeepMergeFn = <T1, T2>(target: T1, source: T2) => DeepMerge<T1, T2>;
+type DeepMergeAllFn = <T extends Array<any>>(...targets: T) => DeepMergeAll<{}, T>;
+
+type Primitive =
+  | null
+  | undefined
+  | string
+  | number
+  | boolean
+  | symbol
+  | bigint;
+
+type BuiltIns = Primitive | Date | RegExp;
+
+type MergeTypes<T, U> = T extends Array<infer A1>
+  ? U extends Array<infer A2>
+  ? Array<A1 | A2>
+  : T
+  : U
+
+type DifferenceKeys<
+  T,
+  U,
+  T0 = Omit<T, keyof U> & Omit<U, keyof T>,
+  T1 = { [K in keyof T0]: T0[K] }
+  > = T1
+
+type IntersectionKeys<T, U> = Omit<T | U, keyof DifferenceKeys<T, U>>
+
+type DeepMergeHelper<
+  T,
+  U,
+  T0 = DifferenceKeys<T, U>
+  & { [K in keyof IntersectionKeys<T, U>]: DeepMerge<T[K], U[K]> },
+  T1 = { [K in keyof T0]: T0[K] }
+  > = T1
+
+type DeepMerge<T, U> =
+  U extends BuiltIns
+  ? U
+  : [T, U] extends [any[], any[]]
+  ? MergeTypes<T, U>
+  : [T, U] extends [{ [key: string]: unknown }, { [key: string]: unknown }]
+  ? DeepMergeHelper<T, U>
+  : U
+
+type First<T> = T extends [infer _I, ...infer _Rest] ? _I : never;
+type Rest<T> = T extends [infer _I, ...infer _Rest] ? _Rest : never
+
+type DeepMergeAll<R, T> = First<T> extends never
+  ? R
+  : DeepMergeAll<DeepMerge<R, First<T>>, Rest<T>>;
+
+type MergeArrayFnOptions = {
+  clone: (value: any) => any;
+  isMergeableObject: (value: any) => boolean;
+  deepmerge: DeepMergeFn;
+  getKeys: (value: object) => string[];
+}
+
+type MergeArrayFn = (options: MergeArrayFnOptions) => (target: any[], source: any[]) => any[]
+
+interface Options {
+  mergeArray?: MergeArrayFn;
+  symbols?: boolean;
+  all?: boolean;
+}
+
+type DeepmergeConstructor = typeof deepmerge
+
+declare namespace deepmerge {
+  export { Options }
+  export const deepmerge: DeepmergeConstructor
+  export { deepmerge as default }
+}
+
+declare function deepmerge(options: Options & { all: true }): DeepMergeAllFn;
+declare function deepmerge(options?: Options): DeepMergeFn;
+
+export = deepmerge
+©/index.jsÅý'use strict'
+
+// based on https://github.com/TehShrike/deepmerge
+// MIT License
+// Copyright (c) 2012 - 2022 James Halliday, Josh Duff, and other contributors of deepmerge
+
+const JSON_PROTO = Object.getPrototypeOf({})
+
+function deepmergeConstructor (options) {
+  function isNotPrototypeKey (value) {
+    return (
+      value !== 'constructor' &&
+      value !== 'prototype' &&
+      value !== '__proto__'
+    )
+  }
+
+  function cloneArray (value) {
+    let i = 0
+    const il = value.length
+    const result = new Array(il)
+    for (i = 0; i < il; ++i) {
+      result[i] = clone(value[i])
+    }
+    return result
+  }
+
+  function cloneObject (target) {
+    const result = {}
+
+    if (cloneProtoObject && Object.getPrototypeOf(target) !== JSON_PROTO) {
+      return cloneProtoObject(target)
+    }
+
+    const targetKeys = getKeys(target)
+    let i, il, key
+    for (i = 0, il = targetKeys.length; i < il; ++i) {
+      isNotPrototypeKey(key = targetKeys[i]) &&
+        (result[key] = clone(target[key]))
+    }
+    return result
+  }
+
+  function concatArrays (target, source) {
+    const tl = target.length
+    const sl = source.length
+    let i = 0
+    const result = new Array(tl + sl)
+    for (i = 0; i < tl; ++i) {
+      result[i] = clone(target[i])
+    }
+    for (i = 0; i < sl; ++i) {
+      result[i + tl] = clone(source[i])
+    }
+    return result
+  }
+
+  const propertyIsEnumerable = Object.prototype.propertyIsEnumerable
+  function getSymbolsAndKeys (value) {
+    const result = Object.keys(value)
+    const keys = Object.getOwnPropertySymbols(value)
+    for (let i = 0, il = keys.length; i < il; ++i) {
+      propertyIsEnumerable.call(value, keys[i]) && result.push(keys[i])
+    }
+    return result
+  }
+
+  const getKeys = options && options.symbols
+    ? getSymbolsAndKeys
+    : Object.keys
+
+  const cloneProtoObject = typeof options?.cloneProtoObject === 'function'
+    ? options.cloneProtoObject
+    : undefined
+
+  function isMergeableObject (value) {
+    return typeof value === 'object' && value !== null && !(value instanceof RegExp) && !(value instanceof Date)
+  }
+
+  function isPrimitive (value) {
+    return typeof value !== 'object' || value === null
+  }
+
+  const isPrimitiveOrBuiltIn = typeof Buffer !== 'undefined'
+    ? (value) => typeof value !== 'object' || value === null || value instanceof RegExp || value instanceof Date || value instanceof Buffer
+    : (value) => typeof value !== 'object' || value === null || value instanceof RegExp || value instanceof Date
+
+  const mergeArray = options && typeof options.mergeArray === 'function'
+    ? options.mergeArray({ clone, deepmerge: _deepmerge, getKeys, isMergeableObject })
+    : concatArrays
+
+  function clone (entry) {
+    return isMergeableObject(entry)
+      ? Array.isArray(entry)
+        ? cloneArray(entry)
+        : cloneObject(entry)
+      : entry
+  }
+
+  function mergeObject (target, source) {
+    const result = {}
+    const targetKeys = getKeys(target)
+    const sourceKeys = getKeys(source)
+    let i, il, key
+    for (i = 0, il = targetKeys.length; i < il; ++i) {
+      isNotPrototypeKey(key = targetKeys[i]) &&
+      (sourceKeys.indexOf(key) === -1) &&
+      (result[key] = clone(target[key]))
+    }
+
+    for (i = 0, il = sourceKeys.length; i < il; ++i) {
+      isNotPrototypeKey(key = sourceKeys[i]) &&
+      (
+        key in target && (targetKeys.indexOf(key) !== -1 && (result[key] = _deepmerge(target[key], source[key])), true) || // eslint-disable-line no-mixed-operators
+        (result[key] = clone(source[key]))
+      )
+    }
+    return result
+  }
+
+  function _deepmerge (target, source) {
+    const sourceIsArray = Array.isArray(source)
+    const targetIsArray = Array.isArray(target)
+
+    if (isPrimitive(source)) {
+      return source
+    } else if (isPrimitiveOrBuiltIn(target)) {
+      return clone(source)
+    } else if (sourceIsArray && targetIsArray) {
+      return mergeArray(target, source)
+    } else if (sourceIsArray !== targetIsArray) {
+      return clone(source)
+    } else {
+      return mergeObject(target, source)
+    }
+  }
+
+  function _deepmergeAll () {
+    switch (arguments.length) {
+      case 0:
+        return {}
+      case 1:
+        return clone(arguments[0])
+      case 2:
+        return _deepmerge(arguments[0], arguments[1])
+    }
+    let result
+    for (let i = 0, il = arguments.length; i < il; ++i) {
+      result = _deepmerge(result, arguments[i])
+    }
+    return result
+  }
+
+  return options && options.all
+    ? _deepmergeAll
+    : _deepmerge
+}
+
+module.exports = deepmergeConstructor
+module.exports.default = deepmergeConstructor
+module.exports.deepmerge = deepmergeConstructor

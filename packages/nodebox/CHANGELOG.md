@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.40](https://github.com/codesandbox/nodebox-internal/compare/nodebox-v0.0.39...nodebox-v0.0.40) (2023-02-21)
+
+
+### Bug Fixes
+
+* package export for nodebox ([#321](https://github.com/codesandbox/nodebox-internal/issues/321)) ([a486b44](https://github.com/codesandbox/nodebox-internal/commit/a486b44d0dfc86e10fb54c346cb294f5f3e8c215))
+
 ## [0.0.39](https://github.com/codesandbox/nodebox-internal/compare/nodebox-v0.0.38...nodebox-v0.0.39) (2023-02-16)
 
 

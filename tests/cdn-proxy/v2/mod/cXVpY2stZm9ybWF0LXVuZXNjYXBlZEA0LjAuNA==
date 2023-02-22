@@ -1,0 +1,407 @@
+áπ/.github/workflows/ci.yml≈rname: CI Tests
+
+on:
+  - pull_request
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [10.x, 12.x, 13.x]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: npm i && npm test
+≠/benchmark.js≈rvar bench = require('fastbench')
+var utilFormat = require('util').format
+var quickFormat = require('./')
+
+var run = bench([
+  function util(cb) {
+    utilFormat('%s %j %d', 'a', {a: {x: 1}}, 1)
+    setImmediate(cb)
+  },
+  function quick(cb) {
+    quickFormat('%s %j %d', 'a', [{a: {x: 1}}, 1], null)
+    setImmediate(cb)
+  },
+  function utilWithTailObj(cb) {
+    utilFormat('hello %s %j %d', 'world', {obj: true}, 4, {another: 'obj'})
+    setImmediate(cb)
+  },
+  function quickWithTailObj(cb) {
+    quickFormat('hello %s %j %d', 'world', [{obj: true}, 4, {another: 'obj'}], null)
+    setImmediate(cb)
+  }
+], 100000)
+
+run(run)
+®/LICENSE≈CThe MIT License (MIT)
+
+Copyright (c) 2016-2019 David Mark Clements
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+©/index.js≈
+e'use strict'
+function tryStringify (o) {
+  try { return JSON.stringify(o) } catch(e) { return '"[Circular]"' }
+}
+
+module.exports = format
+
+function format(f, args, opts) {
+  var ss = (opts && opts.stringify) || tryStringify
+  var offset = 1
+  if (typeof f === 'object' && f !== null) {
+    var len = args.length + offset
+    if (len === 1) return f
+    var objects = new Array(len)
+    objects[0] = ss(f)
+    for (var index = 1; index < len; index++) {
+      objects[index] = ss(args[index])
+    }
+    return objects.join(' ')
+  }
+  if (typeof f !== 'string') {
+    return f
+  }
+  var argLen = args.length
+  if (argLen === 0) return f
+  var str = ''
+  var a = 1 - offset
+  var lastPos = -1
+  var flen = (f && f.length) || 0
+  for (var i = 0; i < flen;) {
+    if (f.charCodeAt(i) === 37 && i + 1 < flen) {
+      lastPos = lastPos > -1 ? lastPos : 0
+      switch (f.charCodeAt(i + 1)) {
+        case 100: // 'd'
+        case 102: // 'f'
+          if (a >= argLen)
+            break
+          if (args[a] == null)  break
+          if (lastPos < i)
+            str += f.slice(lastPos, i)
+          str += Number(args[a])
+          lastPos = i + 2
+          i++
+          break
+        case 105: // 'i'
+          if (a >= argLen)
+            break
+          if (args[a] == null)  break
+          if (lastPos < i)
+            str += f.slice(lastPos, i)
+          str += Math.floor(Number(args[a]))
+          lastPos = i + 2
+          i++
+          break
+        case 79: // 'O'
+        case 111: // 'o'
+        case 106: // 'j'
+          if (a >= argLen)
+            break
+          if (args[a] === undefined) break
+          if (lastPos < i)
+            str += f.slice(lastPos, i)
+          var type = typeof args[a]
+          if (type === 'string') {
+            str += '\'' + args[a] + '\''
+            lastPos = i + 2
+            i++
+            break
+          }
+          if (type === 'function') {
+            str += args[a].name || '<anonymous>'
+            lastPos = i + 2
+            i++
+            break
+          }
+          str += ss(args[a])
+          lastPos = i + 2
+          i++
+          break
+        case 115: // 's'
+          if (a >= argLen)
+            break
+          if (lastPos < i)
+            str += f.slice(lastPos, i)
+          str += String(args[a])
+          lastPos = i + 2
+          i++
+          break
+        case 37: // '%'
+          if (lastPos < i)
+            str += f.slice(lastPos, i)
+          str += '%'
+          lastPos = i + 2
+          i++
+          a--
+          break
+      }
+      ++a
+    }
+    ++i
+  }
+  if (lastPos === -1)
+    return f
+  else if (lastPos < flen) {
+    str += f.slice(lastPos)
+  }
+
+  return str
+}
+Æ/test/index.js≈'use strict';
+const assert = require('assert');
+const format = require('../');
+
+// assert.equal(format([]), '');
+// assert.equal(format(['']), '');
+// assert.equal(format([[]]), '[]');
+// assert.equal(format([{}]), '{}');
+// assert.equal(format([null]), 'null');
+// assert.equal(format([true]), 'true');
+// assert.equal(format([false]), 'false');
+// assert.equal(format(['test']), 'test');
+
+// // // CHECKME this is for console.log() compatibility - but is it *right*?
+// assert.equal(format(['foo', 'bar', 'baz']), 'foo bar baz');
+
+const emptyObj = {}
+assert.equal(format(emptyObj, []), emptyObj)
+assert.equal(format(emptyObj, ['a', 'b', 'c']), '{} "b" "c" ')
+assert.equal(format('', ['a']), '')
+
+// ES6 Symbol handling
+const symbol = Symbol('foo')
+assert.equal(format(null, [symbol]), null);
+assert.equal(format('foo', [symbol]), 'foo');
+assert.equal(format('%s', [symbol]), 'Symbol(foo)');
+assert.equal(format('%j', [symbol]), 'undefined');
+assert.throws(function() {
+  format('%d', [symbol]);
+}, TypeError);
+
+assert.equal(format('%d', [42.0]), '42');
+assert.equal(format('%d', [42]), '42');
+assert.equal(format('%f', [42.99]), '42.99');
+assert.equal(format('%i', [42.99]), '42');
+assert.equal(format('%s', [42]), '42');
+assert.equal(format('%j', [42]), '42');
+
+assert.equal(format('%d', [undefined]), '%d');
+assert.equal(format('%s', [undefined]), 'undefined');
+assert.equal(format('%j', [undefined]), '%j');
+
+
+assert.equal(format('%d', [null]), '%d');
+assert.equal(format('%i', [null]), '%i');
+assert.equal(format('%s', [null]), 'null');
+assert.equal(format('%j', [null]), 'null');
+
+
+assert.equal(format('%d', ['42.0']), '42');
+assert.equal(format('%d', ['42']), '42');
+assert.equal(format('%i', ['42']), '42');
+assert.equal(format('%i', ['42.99']), '42');
+assert.equal(format('%s %i', ['foo', 42.99]), 'foo 42');
+assert.equal(format('%d %d', ['42']), '42 %d');
+assert.equal(format('%i %i', ['42']), '42 %i');
+assert.equal(format('%i %i', ['42.99']), '42 %i');
+assert.equal(format('foo %d', ['42']), 'foo 42');
+assert.equal(format('%s', ['42']), '42');
+// assert.equal(format('%j', ['42']), '"42"');
+
+// assert.equal(format('%%s%s', ['foo']), '%sfoo');
+
+assert.equal(format('%s', []), '%s');
+assert.equal(format('%s', [undefined]), 'undefined');
+assert.equal(format('%s', ['foo']), 'foo');
+assert.equal(format('%s', ['\"quoted\"']), '\"quoted\"');
+assert.equal(format('%j', [{ s: '\"quoted\"' }]), '{\"s\":\"\\"quoted\\"\"}');
+assert.equal(format('%s:%s', []), '%s:%s');
+assert.equal(format('%s:%s', [undefined]), 'undefined:%s');
+assert.equal(format('%s:%s', ['foo']), 'foo:%s');
+assert.equal(format('%s:%s', ['foo', 'bar']), 'foo:bar');
+assert.equal(format('%s:%s', ['foo', 'bar', 'baz']), 'foo:bar');
+assert.equal(format('%s%s', []), '%s%s');
+assert.equal(format('%s%s', [undefined]), 'undefined%s');
+assert.equal(format('%s%s', ['foo']), 'foo%s');
+assert.equal(format('%s%s', ['foo', 'bar']), 'foobar');
+assert.equal(format('%s%s', ['foo', 'bar', 'baz']), 'foobar');
+
+assert.equal(format('foo %s', ['foo']), 'foo foo')
+
+assert.equal(format('foo %o', [{foo: 'foo'}]), 'foo {"foo":"foo"}')
+assert.equal(format('foo %O', [{foo: 'foo'}]), 'foo {"foo":"foo"}')
+assert.equal(format('foo %j', [{foo: 'foo'}]), 'foo {"foo":"foo"}')
+assert.equal(format('foo %j %j', [{foo: 'foo'}]), 'foo {"foo":"foo"} %j')
+assert.equal(format('foo %j', ['foo']), 'foo \'foo\'') // TODO: isn't this wrong?
+assert.equal(format('foo %j', [function foo () {}]), 'foo foo')
+assert.equal(format('foo %j', [function () {}]), 'foo <anonymous>')
+assert.equal(format('foo %j', [{foo: 'foo'}, 'not-printed']), 'foo {"foo":"foo"}')
+assert.equal(
+  format('foo %j', [{ foo: 'foo' }], { stringify () { return 'REPLACED' } }),
+  'foo REPLACED'
+)
+const circularObject = {}
+circularObject.foo = circularObject
+assert.equal(format('foo %j', [circularObject]), 'foo "[Circular]"')
+
+// // assert.equal(format(['%%%s%%', 'hi']), '%hi%');
+// // assert.equal(format(['%%%s%%%%', 'hi']), '%hi%%');
+
+// (function() {
+//   var o = {};
+//   o.o = o;
+//   assert.equal(format(['%j', o]), '[Circular]');
+// })();
+
+assert.equal(format('%%', ['foo']), '%')
+assert.equal(format('foo %%', ['foo']), 'foo %')
+assert.equal(format('foo %% %s', ['bar']), 'foo % bar')
+
+assert.equal(format('%s - %d', ['foo', undefined]), 'foo - %d')
+assert.equal(format('%s - %f', ['foo', undefined]), 'foo - %f')
+assert.equal(format('%s - %i', ['foo', undefined]), 'foo - %i')
+assert.equal(format('%s - %O', ['foo', undefined]), 'foo - %O')
+assert.equal(format('%s - %o', ['foo', undefined]), 'foo - %o')
+assert.equal(format('%s - %j', ['foo', undefined]), 'foo - %j')
+assert.equal(format('%s - %s', ['foo', undefined]), 'foo - undefined')
+assert.equal(format('%s - %%', ['foo', undefined]), 'foo - %')
+
+assert.equal(format('%s - %d', ['foo', null]), 'foo - %d')
+assert.equal(format('%s - %f', ['foo', null]), 'foo - %f')
+assert.equal(format('%s - %i', ['foo', null]), 'foo - %i')
+assert.equal(format('%s - %O', ['foo', null]), 'foo - null')
+assert.equal(format('%s - %o', ['foo', null]), 'foo - null')
+assert.equal(format('%s - %j', ['foo', null]), 'foo - null')
+assert.equal(format('%s - %s', ['foo', null]), 'foo - null')
+assert.equal(format('%s - %%', ['foo', null]), 'foo - %')
+
+assert.equal(format('%d%d', [11, 22]), '1122')
+assert.equal(format('%d%s', [11, 22]), '1122')
+assert.equal(format('%d%o', [11, { aa: 22 }]), '11{"aa":22}')
+assert.equal(format('%d%d%d', [11, 22, 33]), '112233')
+assert.equal(format('%d%d%s', [11, 22, 33]), '112233')
+assert.equal(format('%d%o%d%s', [11, { aa: 22 }, 33, 'sss']), '11{"aa":22}33sss')
+assert.equal(format('%d%%%d', [11, 22]), '11%22')
+assert.equal(format('%d%%%s', [11, 22]), '11%22')
+™/readme.md≈ô# quick-format-unescaped
+
+## unescaped ?
+
+Sometimes you want to embed the results of quick-format into another string, 
+and then escape the whole string. 
+
+## usage
+
+```js
+var format = require('quick-format-unescaped')
+format('hello %s %j %d', ['world', [{obj: true}, 4, {another: 'obj'}]])
+```
+
+## format(fmt, parameters, [options])
+
+### fmt
+
+A `printf`-like format string. Example: `'hello %s %j %d'`
+
+### parameters
+
+Array of values to be inserted into the `format` string. Example: `['world', {obj:true}]`
+
+### options.stringify
+
+Passing an options object as the third parameter with a `stringify` will mean 
+any objects will be passed to the supplied function instead of an the 
+internal `tryStringify` function. This can be useful when using augmented
+capability serializers such as [`fast-safe-stringify`](http://github.com/davidmarkclements/fast-safe-stringify) or [`fast-redact`](http://github.com/davidmarkclements/fast-redact).  
+
+## caveats
+
+By default `quick-format-unescaped` uses  `JSON.stringify` instead of `util.inspect`, this means functions *will not be serialized*.
+
+## Benchmarks
+
+### Node 8.11.2
+
+```
+util*100000: 350.325ms
+quick*100000: 268.141ms
+utilWithTailObj*100000: 586.387ms
+quickWithTailObj*100000: 280.200ms
+util*100000: 325.735ms
+quick*100000: 270.251ms
+utilWithTailObj*100000: 492.270ms
+quickWithTailObj*100000: 261.797ms
+```
+
+### Node 10.4.0
+
+```
+util*100000: 301.035ms
+quick*100000: 217.005ms
+utilWithTailObj*100000: 404.778ms
+quickWithTailObj*100000: 236.176ms
+util*100000: 286.349ms
+quick*100000: 214.646ms
+utilWithTailObj*100000: 388.574ms
+quickWithTailObj*100000: 226.036ms
+```
+
+## Acknowledgements
+
+Sponsored by [nearForm](http://www.nearform.com)
+≠/package.json≈Ÿ{
+  "name": "quick-format-unescaped",
+  "version": "4.0.4",
+  "description": "Solves a problem with util.format",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "nyc -- node test",
+    "test:html": "nyc --reporter=html -- node test"
+  },
+  "author": "David Mark Clements",
+  "devDependencies": {
+    "fastbench": "^1.0.1",
+    "nyc": "^15.0.0"
+  },
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/davidmarkclements/quick-format.git"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/davidmarkclements/quick-format/issues"
+  },
+  "homepage": "https://github.com/davidmarkclements/quick-format#readme"
+}
