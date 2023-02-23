@@ -8,7 +8,10 @@
 - [File system API](#file-system-api)
   - [`fs.init()`](#nodeboxfsinitfiles)
   - [`fs.readFile(path[, encoding])`](#nodeboxfsreadfilepath-encoding)
-  - [`fs.writeFile(path[, content[, encoding]])`](#nodeboxfswritefilepath-content-encoding)
+  - [`fs.writeFile(path[, content[, options]])`](#nodeboxfswritefilepath-content-options)
+  - [`fs.mkdir(path[, options])`](#nodeboxfsmkdirpath-options)
+  - [`fs.readdir(path)`](#nodeboxfsreaddirpath)
+  - [`fs.stat(path)`](#nodeboxfsstatpath)
   - [`fs.watch(glob, listener)`](#nodeboxfswatchglob-listener)
 - [Shell API](#shell-api)
   - [`shell.create()`](#nodeboxshellcreate)
@@ -114,14 +117,43 @@ const content = await nodebox.fs.readFile('./index.js', 'utf8');
 // "console.log('Hello world')
 ```
 
-### `nodebox.fs.writeFile(path[, content[, encoding]])`
+### `nodebox.fs.writeFile(path[, content[, options]])`
 
 - `path` `<string>`
 - `content` `<string | Uint8Array>`
+- `options` `<string | { encoding?: string, recursive?: boolean }>
 - Returns: `<Promise>` Fulfills when the file content is successfully written.
 
 ```js
 await nodebox.fs.writeFile('./util.js', '');
+```
+
+### `nodebox.fs.mkdir(path[, options])`
+
+- `path` `<string>`
+- `options` `<{ recursive?: boolean }>`
+- Returns: `<Promise>` Fulfills when the directory is successfully created.
+
+```js
+await nodebox.fs.mkdir('./a/b/c', { recursive: true });
+```
+
+### `nodebox.fs.readdir(path)`
+
+- `path` `<string>`
+- Returns: `<Promise<string[]>>` Fulfills with a list of files in the directory.
+
+```js
+await nodebox.fs.readdir('./a/b/c');
+```
+
+### `nodebox.fs.stat(path)`
+
+- `path` `<string>`
+- Returns: `<Promise<FileStats>>` Fulfills with the stats of the provided file.
+
+```js
+await nodebox.fs.stat('./index.js');
 ```
 
 ### `nodebox.fs.watch(glob, listener)`

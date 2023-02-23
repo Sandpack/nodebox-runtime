@@ -37,6 +37,16 @@ console.log(fs.readdirSync("out/src/sub-dir"));
 `,
   });
 
+  await emulator.fs.mkdir('/a/b/c').catch(console.error);
+  await emulator.fs.mkdir('/a/b/c', { recursive: true });
+  await emulator.fs.writeFile('/a/b/c/index.js', 'hello world!');
+  await emulator.fs.writeFile('/a/b/c/d/e/index.js', 'Lorem ipsum...').catch(console.error);
+  await emulator.fs.writeFile('/a/b/c/d/e/index.js', 'Lorem ipsum...', { recursive: true });
+
+  console.log('READ DIR', await emulator.fs.readdir('/a/b/c'));
+  console.log('STAT FILE', await emulator.fs.stat('/a/b/c/d/e/index.js'));
+  console.log('STAT DIR', await emulator.fs.stat('/a/b/c/'));
+
   const shellProcess = emulator.shell.create();
   return await shellProcess.runCommand('node', ['index.js']);
 };

@@ -1,6 +1,6 @@
 {
   "name": "@codesandbox/nodebox",
-  "version": "0.0.40",
+  "version": "0.1.1",
   "description": "Public API of Nodebox",
   "main": "./build/index.js",
   "module": "./build/index.mjs",
@@ -16,9 +16,6 @@
   "files": [
     "./build"
   ],
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  },
   "scripts": {
     "dev": "NODE_ENV=development pnpm build",
     "prebuild": "rimraf ./build",

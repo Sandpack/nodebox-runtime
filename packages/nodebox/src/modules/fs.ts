@@ -16,20 +16,51 @@ export interface FileWatchOptions {
 
 export type FileWatchEvent = Omit<FSWatchEvent, 'watcherId'>;
 
+export interface IFileStats {
+  type: 'dir' | 'file' | 'link';
+  size: number;
+  ino: number;
+  atimeMs: number;
+  mtimeMs: number;
+  ctimeMs: number;
+  blocks: number;
+  mode: number;
+}
+
 export interface FileSystemEvents {
   'fs/init': {
     files: FilesMap;
   };
 
   'fs/readFile':
-    | [{ path: string; encoding?: undefined }, { data?: Uint8Array }]
-    | [{ path: string; encoding?: 'buffer' }, { data?: Uint8Array }]
-    | [{ path: string; encoding?: FSEncoding }, { data?: string | FileContent }];
+    | [{ path: string; encoding?: undefined }, { data: Uint8Array }]
+    | [{ path: string; encoding?: 'buffer' }, { data: Uint8Array }]
+    | [{ path: string; encoding?: FSEncoding }, { data: string | FileContent }];
 
   'fs/writeFile': {
     path: string;
     content: FileContent;
     encoding?: BufferEncoding;
+    recursive?: boolean;
+  };
+
+  'fs/readdir': [
+    {
+      path: string;
+    },
+    { data: string[] }
+  ];
+
+  'fs/stat': [
+    {
+      path: string;
+    },
+    { data: IFileStats }
+  ];
+
+  'fs/mkdir': {
+    path: string;
+    recursive?: boolean;
   };
 
   'fs/watch': {
@@ -42,6 +73,8 @@ export interface FileSystemEvents {
     watcherId: string;
   };
 }
+
+type WriteFileOptions = BufferEncoding | { encoding?: BufferEncoding; recursive?: boolean };
 
 export class FileSystemApi {
   constructor(private readonly channel: MessageSender) {}
@@ -62,12 +95,14 @@ export class FileSystemApi {
   public async readFile(path: string, encoding: 'buffer'): Promise<Uint8Array>;
   public async readFile(path: string, encoding: BufferEncoding): Promise<string>;
 
-  public async readFile(path: string, encoding?: FSEncoding): Promise<FileContent | string | undefined> {
+  public async readFile(path: string, encoding?: FSEncoding): Promise<FileContent | string> {
     const response = await this.channel.send('fs/readFile', { path, encoding }).catch((error) => {
       throw new Error(format('Failed to read file at path "%s"', path), { cause: error });
     });
-
-    return response ? response.data : undefined;
+    if (!response) {
+      throw new Error('File not found');
+    }
+    return response.data;
   }
 
   /**
@@ -75,12 +110,49 @@ export class FileSystemApi {
    * Replaces the file content if the file already exists.
    */
   public async writeFile(path: string, content: Uint8Array): Promise<void>;
-  public async writeFile(path: string, content: string, encoding: BufferEncoding): Promise<void>;
+  public async writeFile(path: string, content: string, options: WriteFileOptions): Promise<void>;
 
-  public async writeFile(path: string, content: FileContent | string, encoding?: BufferEncoding): Promise<void> {
-    await this.channel.send('fs/writeFile', { path, content, encoding }).catch((error) => {
+  public async writeFile(path: string, content: FileContent | string, options?: WriteFileOptions): Promise<void> {
+    let encoding = undefined;
+    let recursive = false;
+
+    if (typeof options === 'object') {
+      encoding = options.encoding;
+      recursive = !!options.recursive;
+    } else if (typeof options === 'string') {
+      encoding = options;
+    }
+
+    await this.channel.send('fs/writeFile', { path, content, encoding, recursive }).catch((error) => {
       throw new Error(format('Failed to write file at path "%s"', path), { cause: error });
     });
+  }
+
+  public async readdir(path: string): Promise<string[]> {
+    const response = await this.channel.send('fs/readdir', { path }).catch((error) => {
+      throw new Error(format('Failed to read directory at path "%s"', path), { cause: error });
+    });
+    if (!response) {
+      throw new Error('Directory not found');
+    }
+    return response.data;
+  }
+
+  public async mkdir(path: string, options?: { recursive?: boolean }): Promise<void> {
+    const recursive = !!options?.recursive;
+    await this.channel.send('fs/mkdir', { path, recursive }).catch((error) => {
+      throw new Error(format('Failed to make directory at path "%s"', path), { cause: error });
+    });
+  }
+
+  public async stat(path: string): Promise<IFileStats> {
+    const response = await this.channel.send('fs/stat', { path }).catch((error) => {
+      throw new Error(format('Failed to stat file at path "%s"', path), { cause: error });
+    });
+    if (!response) {
+      throw new Error('File not found');
+    }
+    return response.data;
   }
 
   /**
