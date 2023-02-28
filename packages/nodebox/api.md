@@ -20,6 +20,7 @@
   - [`shell.on(event, listener)`](#shellonevent-listener)
   - [`shell.stdout.on(event, listener)`](#shellstdoutonevent-listener)
   - [`shell.stderr.on(event, listener)`](#shellstderronevent-listener)
+  - [`shell.stdin.write(data)`](#shellstdinwritedata)
   - [`shell.kill()`](#shellkill)
 - [Preview API](#preview-api)
   - [`preview.getByShellId(shellId[, timeout])`](#previewgetbyshellidshellid-timeout)
@@ -261,6 +262,14 @@ shell.stdout.on('data', (data) => {
 shell.stderr.on('data', (data) => {
   console.log('Error:', data);
 });
+```
+
+### `shell.stdin.write(data)`
+
+- `data` `<string | Uint8Array>`
+
+```js
+shellProcess.stdin.write(data);
 ```
 
 ### `shell.kill()`

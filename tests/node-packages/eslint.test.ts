@@ -64,12 +64,12 @@ test('gets eslint diagnostic', async ({ runTestServer, page, emulatorUrl }) => {
     });
   }, emulatorUrl);
 
-  expect(diagnosticOutput).toEqual(`
-/nodebox/index.js
-  10:3  error  Unexpected console statement  no-console
-  13:5  error  Unexpected console statement  no-console
-
-✖ 2 problems (2 errors, 0 warnings)
-
+  expect(diagnosticOutput).toEqual(`[0m[0m
+[0m[4m/nodebox/index.js[24m[0m
+[0m  [2m10:3[22m  [31merror[39m  Unexpected console statement  [2mno-console[22m[0m
+[0m  [2m13:5[22m  [31merror[39m  Unexpected console statement  [2mno-console[22m[0m
+[0m[0m
+[0m[31m[1m✖ 2 problems (2 errors, 0 warnings)[22m[39m[0m
+[0m[31m[1m[22m[39m[0m
 `);
 });

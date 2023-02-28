@@ -41,9 +41,9 @@ Nodebox is currently the only cross-browser Node.js runtime supporting all the l
 
 - Chrome;
 - Firefox;
-- Safari *
+- Safari \*
 
-> * Support for iOS Safari is in beta
+> - Support for iOS Safari is in beta
 
 Nodebox does not emulate Node.js but is, instead, a Node.js-compatible runtime. This means that it implements as much of the Node.js API as possible while keeping a minimal performance imprint, using browser API where applicable and, in some cases, leaving out certain parts of Node.js due to browser [limitations](#Limitations) or complexity.
 
@@ -72,70 +72,139 @@ As we implement every module manually one by one, it is possible that some will 
 
 ## Getting started
 
+Nodebox is meant for usage in your client-side applications, granting them the capability of running actual Node.js code directly in the browser. Here are a couple of examples of when Nodebox can be used:
+
+- Building interactive examples for server-side code in your documentation;
+- Showcasing a UI component library in the actual framework it's built for;
+- Generally any evaluation of Node.js code and previewing it in the browser.
+
+In the context of this tutorial, we will be working on a documentation website that illustrates different examples of using a Next.js application. Bear in mind that our documentation itself can be written in any framework of our choosing.
+
 ### Install
+
+Nodebox can be installed from NPM just like any other dependency:
 
 ```sh
 npm install @codesandbox/nodebox
 ```
 
-### Configure and connect
+### Setup
 
-To set up Nodebox, we have to provide a reference to an `<iframe>` element where the application's preview will be rendered.
+Nodebox consists of two main parts:
+
+- A runtime environment evaluating the code;
+- A preview environment serving the result of the evaluation.
+
+Corresponding to these two parts, let's create two iframes in our application:
+
+```html
+<!--
+  The "nodebox" iframe will mount the Nodebox runtime,
+  allowing it to communicate with the rest of the application.
+-->
+<iframe id="nodebox-iframe"></iframe>
+
+<!--
+  The "preview" iframe will contain the result of running
+  the Next.js example we will configure in a moment.
+-->
+<iframe id="preview-iframe"></iframe>
+```
+
+Although the runtime environment can be self-hosted, we will use the default one pointing to the deployed Nodebox instance on CodeSandbox servers. We do need, however, to specify an `iframe` reference in our application where Nodebox should render its preview.
 
 ```js
 import { Nodebox } from '@codesandbox/nodebox';
 
-const emulator = new Nodebox({
-  iframe: document.getElementById('preview'),
+const runtime = new Nodebox({
+  // Provide a reference to the <iframe> element in the DOM
+  // where Nodebox should render the preview.
+  iframe: document.getElementById('nodebox-iframe'),
 });
 
-await emulator.connect();
+// Establish a connection with the runtime environment.
+await runtime.connect();
 ```
+
+> Learn more about the [Nodebox API](./api.md).
+
+You want to establish **a single Nodebox instance** across your entire application. Bear that in mind during the setup phase and consult your framework's documentation and best practices regarding the most efficient way of achieving this.
+
+Previews correspond to _commands_ executed in Nodebox, meaning that at this stage there will be no previews mounted at the given iframe because we haven't run any commands yet. Let's change that.
 
 ### Initialize file system
 
-Next, populate the emulator's file system with your project files.
+Much like your own project, the project you create in Nodebox needs files to work with. It can be a single JavaScript file or the entire project, like Astro or Next.js.
 
-In this example, we will be running a simple HTTP server written in the `index.js` module.
+Let's describe a Next.js project that we need.
 
 ```js
-await emulator.fs.init({
+// Populate the in-memory file system of Nodebox
+// with a Next.js project files.
+await runtime.fs.init({
   'package.json': JSON.stringify({
-    name: 'my-app',
+    name: 'nextjs-preview',
+    dependencies: {
+      '@next/swc-wasm-nodejs': '12.1.6',
+      next: '12.1.6',
+      react: '18.2.0',
+      'react-dom': '18.2.0',
+    },
   }),
-  'index.js': `
-import http from 'http'
+  // On the index page, let's illustrate how server-side props
+  // propagate to your page component in Next.js.
+  'pages/index.jsx': `
+export default function Homepage({ name }) {
+  return (
+    <div>
+      <h1>Hello, {name}</h1>
+      <p>The name "{name}" has been received from server-side props.</p>
+    </div>
+  )
+}
 
-const server = http.createServer((req, res) => {
-  res.writeHead(200, {
-    'Content-Type': 'text/plain'
-  })
-  res.write('Hello world')
-  res.end()
-})
-
-server.listen(3000, () => {
-  console.log('Server is ready!')
-})
-  `,
+export function getServerSideProps() {
+  return {
+    props: {
+      name: 'John'
+    }
+  }
+}
+    `,
 });
 ```
 
-> You can reference built-in Node.js modules, as well as external dependencies while writing your project files.
+> You can reference standard Node.js modules, as well as external dependencies while writing your project files. Note that you **don't have to install** those dependencies as Nodebox will manage dependency installation, caching, and resolution automatically.
+
+What we did above was outline a file system state of an actual Next.js project for Nodebox to run. The last step remaining is to run Next.js.
 
 ### Run project
 
-To run our project, we need to execute the `index.js` module. Let's create a new shell and execute it there:
+To run the project, we will run the `npm dev` command using the Shell API provided by Nodebox.
 
 ```js
-const shell = emulator.shell.create();
-await shell.runCommand('node', ['index.js']);
+// First, create a new shell instance.
+// You can use the same instance to spawn commands,
+// observe stdio, restart and kill the process.
+const shell = runtime.shell.create();
+
+// Then, let's run the "dev" script that we've defined
+// in "package.json" during the previous step.
+const nextProcess = await shell.runCommand('npm', ['dev']);
+
+// Find the preview by the process and mount it
+// on the preview iframe on the page.
+const previewInfo = await runtime.preview.getByShellId(nextProcess.id);
+const previewIframe = document.getElementById('preview-iframe');
+previewIframe.setAttribute('src', previewInfo.url);
 ```
 
-> You can use the same `shell` to control the process it's running (e.g., observe its `stdout`/`stderr`, terminate or restart it).
+> Note that you can treat `shell.runCommand` similar to `spawn` in Node.js. Learn more about the Shell API in the [documentation](./api.md).
 
-Nodebox will evaluate the `index.js` module, and since it spawns a server process at port `3000`, it will automatically open a new preview at that port. The preview will appear in the iframe provided during the Nodebox setup and it will be directly available at `https://{projectId}-3000.nodebox-runtime.codesandbox.io`.
+Once this command runs, it will return a shell reference we can use to retrieve the preview URL. By mounting that preview URL on our preview iframe from the setup, we can see the Next.js project running:
 
-![](./preview.png)
+![](./nextjs-preview.png)
 
-**Not a single server was spawned while running this application**. Everything was managed by Nodebox directly in the browser 🎉
+That's it! 🎉 **Not a single server was spawned while running this Next.js application**. Everything was managed by Nodebox directly in your browser.
+
+👉 Check out the [Sandbox for this tutorial](https://codesandbox.io/p/sandbox/nodebox-next-js-example-ji27x8).

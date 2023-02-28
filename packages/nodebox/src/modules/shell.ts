@@ -12,6 +12,7 @@ export interface ShellEvents {
     ShellInfo
   ];
   'shell/exit': ShellInfo;
+  'shell/stdin': { data: string | Uint8Array; workerId: string };
 }
 
 export interface ShellCommandOptions {
@@ -41,11 +42,23 @@ export class ShellProcess {
   public stderr: Emitter<{
     data: [string];
   }>;
+  public stdin: {
+    write: (data: string | Uint8Array) => Promise<void>;
+  };
 
   constructor(private readonly channel: MessageSender) {
     this.state = 'running';
     this.stdout = new Emitter();
     this.stderr = new Emitter();
+    this.stdin = {
+      write: (data: string | Uint8Array): Promise<void> => {
+        if (!this.id) {
+          throw new Error('Failed to write to stdin, no process is currently running');
+        }
+
+        return this.channel.send('shell/stdin', { data: data, workerId: this.id });
+      },
+    };
 
     this.forwardStdEvents();
   }

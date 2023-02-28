@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.1.2](https://github.com/codesandbox/nodebox-internal/compare/nodebox-v0.1.1...nodebox-v0.1.2) (2023-02-23)
+
+
+### Features
+
+* accept custom "cdnUrl" ([#273](https://github.com/codesandbox/nodebox-internal/issues/273)) ([21cca7a](https://github.com/codesandbox/nodebox-internal/commit/21cca7a298c64d355bc125ff12339e3c82d8e00f))
+* **nodebox:** Add more fs methods to the public API ([#332](https://github.com/codesandbox/nodebox-internal/issues/332)) ([38c1abc](https://github.com/codesandbox/nodebox-internal/commit/38c1abc29b25d85665f67414042489131fb8637d))
+* **nodebox:** make runtime URL optional and imply the default value ([#299](https://github.com/codesandbox/nodebox-internal/issues/299)) ([bb65224](https://github.com/codesandbox/nodebox-internal/commit/bb6522498fe8529ac74c79ab1bb238727127bdb0))
+* remove picomatch for simple glob util ([#236](https://github.com/codesandbox/nodebox-internal/issues/236)) ([0d10685](https://github.com/codesandbox/nodebox-internal/commit/0d10685a5b733155a50fc928872a90eb966e975a))
+* **shell:** implement stdout/stderr emitters ([#227](https://github.com/codesandbox/nodebox-internal/issues/227)) ([cd7cd9a](https://github.com/codesandbox/nodebox-internal/commit/cd7cd9a63a1c515a04e4d713c9a324773a2fb72a))
+* **shell:** replace ".exit()" with ".kill()" ([#226](https://github.com/codesandbox/nodebox-internal/issues/226)) ([43b6e78](https://github.com/codesandbox/nodebox-internal/commit/43b6e78b67ace366ade9fab96e37e79ee66fa6db))
+
+
+### Bug Fixes
+
+* improve error handling, support operation rejections ([#251](https://github.com/codesandbox/nodebox-internal/issues/251)) ([78ce271](https://github.com/codesandbox/nodebox-internal/commit/78ce2714e5c29839e93a655e250042aac57ff36d))
+* incorrect cdnUrl typings on runtime iframe protocol ([b68abb2](https://github.com/codesandbox/nodebox-internal/commit/b68abb272265b96086ac904f232583e933238b92))
+* **nodebox:** check url argument, improve error messages ([#218](https://github.com/codesandbox/nodebox-internal/issues/218)) ([f9ec17c](https://github.com/codesandbox/nodebox-internal/commit/f9ec17c33d674ccb73f1b15dbb4f442ae2b39c15))
+* **nodebox:** publish version ([#334](https://github.com/codesandbox/nodebox-internal/issues/334)) ([18ad452](https://github.com/codesandbox/nodebox-internal/commit/18ad452635f0b82d036f3693ec4fd6a202ea6557))
+* package export for nodebox ([#321](https://github.com/codesandbox/nodebox-internal/issues/321)) ([a486b44](https://github.com/codesandbox/nodebox-internal/commit/a486b44d0dfc86e10fb54c346cb294f5f3e8c215))
+* **progress message:** drop `progress` key in favor of `totalPending` ([#292](https://github.com/codesandbox/nodebox-internal/issues/292)) ([9856a15](https://github.com/codesandbox/nodebox-internal/commit/9856a155e536ae24072c818e8b68986bd27702bc))
+* readme links ([#306](https://github.com/codesandbox/nodebox-internal/issues/306)) ([d83bbbc](https://github.com/codesandbox/nodebox-internal/commit/d83bbbcd0e0d33931a7cafd419252bf68d84b093))
+* **readme:** remove sentence about VMs ([#312](https://github.com/codesandbox/nodebox-internal/issues/312)) ([6c9260f](https://github.com/codesandbox/nodebox-internal/commit/6c9260f1f6cb806351327a69fef316982b0f94af))
+* rename publish script and folder name ([#239](https://github.com/codesandbox/nodebox-internal/issues/239)) ([2dac1db](https://github.com/codesandbox/nodebox-internal/commit/2dac1dba061a1ff42adb29d6265ff88ebc4993ff))
+* **shell:** emit "exit" when shell exits ([#287](https://github.com/codesandbox/nodebox-internal/issues/287)) ([3b25008](https://github.com/codesandbox/nodebox-internal/commit/3b25008cb386ef45b58b0672b16a86a86ced2593))
+* **shell:** replace "shell.listen()" with "shell.on()" ([#234](https://github.com/codesandbox/nodebox-internal/issues/234)) ([1774241](https://github.com/codesandbox/nodebox-internal/commit/17742414bc938707d9142e1895b64f522c5366a0))
+* update configuration steps ([#310](https://github.com/codesandbox/nodebox-internal/issues/310)) ([9d7df79](https://github.com/codesandbox/nodebox-internal/commit/9d7df79ffb90b67632e3e20ba2c2ef5125e0df4d))
+
+## [0.0.41](https://github.com/codesandbox/nodebox-internal/compare/nodebox-v0.0.40...nodebox-v0.0.41) (2023-02-23)
+
+
+### Features
+
+* **nodebox:** Add more fs methods to the public API ([#332](https://github.com/codesandbox/nodebox-internal/issues/332)) ([38c1abc](https://github.com/codesandbox/nodebox-internal/commit/38c1abc29b25d85665f67414042489131fb8637d))
+
 ## [0.0.40](https://github.com/codesandbox/nodebox-internal/compare/nodebox-v0.0.39...nodebox-v0.0.40) (2023-02-21)
 
 
