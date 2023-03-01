@@ -66,7 +66,7 @@ As we implement every module manually one by one, it is possible that some will 
 ## Documentation
 
 - [**Getting started**](#getting-started)
-- [API documentation](./api.md)
+- [API documentation](https://github.com/codesandbox/nodebox-internal/blob/main/packages/nodebox/api.md)
 
 ---
 
@@ -126,7 +126,7 @@ const runtime = new Nodebox({
 await runtime.connect();
 ```
 
-> Learn more about the [Nodebox API](./api.md).
+> Learn more about the [Nodebox API](https://github.com/codesandbox/nodebox-internal/blob/main/packages/nodebox/api.md).
 
 You want to establish **a single Nodebox instance** across your entire application. Bear that in mind during the setup phase and consult your framework's documentation and best practices regarding the most efficient way of achieving this.
 
@@ -199,11 +199,11 @@ const previewIframe = document.getElementById('preview-iframe');
 previewIframe.setAttribute('src', previewInfo.url);
 ```
 
-> Note that you can treat `shell.runCommand` similar to `spawn` in Node.js. Learn more about the Shell API in the [documentation](./api.md).
+> Note that you can treat `shell.runCommand` similar to `spawn` in Node.js. Learn more about the Shell API in the [documentation](https://github.com/codesandbox/nodebox-internal/blob/main/packages/nodebox/api.md).
 
 Once this command runs, it will return a shell reference we can use to retrieve the preview URL. By mounting that preview URL on our preview iframe from the setup, we can see the Next.js project running:
 
-![](./nextjs-preview.png)
+![](https://github.com/codesandbox/nodebox-internal/blob/main/packages/nodebox/nextjs-preview.png)
 
 That's it! 🎉 **Not a single server was spawned while running this Next.js application**. Everything was managed by Nodebox directly in your browser.
 

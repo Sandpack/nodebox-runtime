@@ -122,7 +122,7 @@ const content = await nodebox.fs.readFile('./index.js', 'utf8');
 
 - `path` `<string>`
 - `content` `<string | Uint8Array>`
-- `options` `<string | { encoding?: string, recursive?: boolean }>
+- `options` `<string | { encoding?: string, recursive?: boolean }>`
 - Returns: `<Promise>` Fulfills when the file content is successfully written.
 
 ```js

@@ -95,7 +95,7 @@ export class FileSystemApi {
   public async readFile(path: string, encoding: 'buffer'): Promise<Uint8Array>;
   public async readFile(path: string, encoding: BufferEncoding): Promise<string>;
 
-  public async readFile(path: string, encoding?: FSEncoding): Promise<FileContent | string> {
+  public async readFile(path: string, encoding?: FSEncoding): Promise<FileContent> {
     const response = await this.channel.send('fs/readFile', { path, encoding }).catch((error) => {
       throw new Error(format('Failed to read file at path "%s"', path), { cause: error });
     });
@@ -109,10 +109,10 @@ export class FileSystemApi {
    * Write a file at the given path.
    * Replaces the file content if the file already exists.
    */
-  public async writeFile(path: string, content: Uint8Array): Promise<void>;
-  public async writeFile(path: string, content: string, options: WriteFileOptions): Promise<void>;
+  public async writeFile(path: string, content: FileContent): Promise<void>;
+  public async writeFile(path: string, content: FileContent, options: WriteFileOptions): Promise<void>;
 
-  public async writeFile(path: string, content: FileContent | string, options?: WriteFileOptions): Promise<void> {
+  public async writeFile(path: string, content: FileContent, options?: WriteFileOptions): Promise<void> {
     let encoding = undefined;
     let recursive = false;
 

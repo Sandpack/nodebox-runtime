@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.3](https://github.com/codesandbox/nodebox-internal/compare/nodebox-v0.1.2...nodebox-v0.1.3) (2023-03-01)
+
+
+### Features
+
+* **shell:** introduce stdin api on shell ([#338](https://github.com/codesandbox/nodebox-internal/issues/338)) ([7630ca2](https://github.com/codesandbox/nodebox-internal/commit/7630ca295107e3a25cdd0d553f97240b79fa6b10))
+
+
+### Bug Fixes
+
+* **fs-writeFile:** content can be string or Uint8Array ([#346](https://github.com/codesandbox/nodebox-internal/issues/346)) ([8309deb](https://github.com/codesandbox/nodebox-internal/commit/8309deb35776b1a1dfee786bdf9b534ef08d99ee))
+
 ## [0.1.2](https://github.com/codesandbox/nodebox-internal/compare/nodebox-v0.1.1...nodebox-v0.1.2) (2023-02-23)
 
 
