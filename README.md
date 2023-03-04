@@ -66,7 +66,7 @@ As we implement every module manually one by one, it is possible that some will 
 ## Documentation
 
 - [**Getting started**](#getting-started)
-- [API documentation](https://github.com/codesandbox/nodebox-internal/blob/main/packages/nodebox/api.md)
+- [API documentation](https://github.com/codesandbox/nodebox-runtime/blob/main/packages/nodebox/api.md)
 
 ---
 
@@ -126,7 +126,7 @@ const runtime = new Nodebox({
 await runtime.connect();
 ```
 
-> Learn more about the [Nodebox API](https://github.com/codesandbox/nodebox-internal/blob/main/packages/nodebox/api.md).
+> Learn more about the [Nodebox API](https://github.com/codesandbox/nodebox-runtime/blob/main/packages/nodebox/api.md).
 
 You want to establish **a single Nodebox instance** across your entire application. Bear that in mind during the setup phase and consult your framework's documentation and best practices regarding the most efficient way of achieving this.
 
