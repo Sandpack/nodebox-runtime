@@ -199,7 +199,7 @@ const previewIframe = document.getElementById('preview-iframe');
 previewIframe.setAttribute('src', previewInfo.url);
 ```
 
-> Note that you can treat `shell.runCommand` similar to `spawn` in Node.js. Learn more about the Shell API in the [documentation](https://github.com/codesandbox/nodebox-runtimw/blob/main/packages/nodebox/api.md).
+> Note that you can treat `shell.runCommand` similar to `spawn` in Node.js. Learn more about the Shell API in the [documentation](https://github.com/codesandbox/nodebox-runtime/blob/main/packages/nodebox/api.md).
 
 Once this command runs, it will return a shell reference we can use to retrieve the preview URL. By mounting that preview URL on our preview iframe from the setup, we can see the Next.js project running:
 
