@@ -1,0 +1,127 @@
+„­/lib/index.jsÅ	"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = splitExportDeclaration;
+
+var _t = require("@babel/types");
+
+const {
+  cloneNode,
+  exportNamedDeclaration,
+  exportSpecifier,
+  identifier,
+  variableDeclaration,
+  variableDeclarator
+} = _t;
+
+function splitExportDeclaration(exportDeclaration) {
+  if (!exportDeclaration.isExportDeclaration() || exportDeclaration.isExportAllDeclaration()) {
+    throw new Error("Only default and named export declarations can be split.");
+  }
+
+  if (exportDeclaration.isExportDefaultDeclaration()) {
+    const declaration = exportDeclaration.get("declaration");
+    const standaloneDeclaration = declaration.isFunctionDeclaration() || declaration.isClassDeclaration();
+    const scope = declaration.isScope() ? declaration.scope.parent : declaration.scope;
+    let id = declaration.node.id;
+    let needBindingRegistration = false;
+
+    if (!id) {
+      needBindingRegistration = true;
+      id = scope.generateUidIdentifier("default");
+
+      if (standaloneDeclaration || declaration.isFunctionExpression() || declaration.isClassExpression()) {
+        declaration.node.id = cloneNode(id);
+      }
+    }
+
+    const updatedDeclaration = standaloneDeclaration ? declaration.node : variableDeclaration("var", [variableDeclarator(cloneNode(id), declaration.node)]);
+    const updatedExportDeclaration = exportNamedDeclaration(null, [exportSpecifier(cloneNode(id), identifier("default"))]);
+    exportDeclaration.insertAfter(updatedExportDeclaration);
+    exportDeclaration.replaceWith(updatedDeclaration);
+
+    if (needBindingRegistration) {
+      scope.registerDeclaration(exportDeclaration);
+    }
+
+    return exportDeclaration;
+  } else if (exportDeclaration.get("specifiers").length > 0) {
+    throw new Error("It doesn't make sense to split exported specifiers.");
+  }
+
+  const declaration = exportDeclaration.get("declaration");
+  const bindingIdentifiers = declaration.getOuterBindingIdentifiers();
+  const specifiers = Object.keys(bindingIdentifiers).map(name => {
+    return exportSpecifier(identifier(name), identifier(name));
+  });
+  const aliasDeclar = exportNamedDeclaration(null, specifiers);
+  exportDeclaration.insertAfter(aliasDeclar);
+  exportDeclaration.replaceWith(declaration.node);
+  return exportDeclaration;
+}ª/README.mdÅg# @babel/helper-split-export-declaration
+
+> 
+
+See our website [@babel/helper-split-export-declaration](https://babeljs.io/docs/en/babel-helper-split-export-declaration) for more information.
+
+## Install
+
+Using npm:
+
+```sh
+npm install --save @babel/helper-split-export-declaration
+```
+
+or using yarn:
+
+```sh
+yarn add @babel/helper-split-export-declaration
+```
+¨/LICENSEÅRMIT License
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+­/package.jsonÅd{
+  "name": "@babel/helper-split-export-declaration",
+  "version": "7.18.6",
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/babel/babel.git",
+    "directory": "packages/babel-helper-split-export-declaration"
+  },
+  "homepage": "https://babel.dev/docs/en/next/babel-helper-split-export-declaration",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./lib/index.js",
+  "dependencies": {
+    "@babel/types": "^7.18.6"
+  },
+  "engines": {
+    "node": ">=6.9.0"
+  },
+  "author": "The Babel Team (https://babel.dev/team)",
+  "type": "commonjs"
+}

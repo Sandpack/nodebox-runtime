@@ -203,7 +203,7 @@ previewIframe.setAttribute('src', previewInfo.url);
 
 Once this command runs, it will return a shell reference we can use to retrieve the preview URL. By mounting that preview URL on our preview iframe from the setup, we can see the Next.js project running:
 
-![](https://github.com/codesandbox/nodebox-internal/blob/main/packages/nodebox/nextjs-preview.png)
+![](https://github.com/codesandbox/nodebox-runtime/blob/main/packages/nodebox/nextjs-preview.png)
 
 That's it! 🎉 **Not a single server was spawned while running this Next.js application**. Everything was managed by Nodebox directly in your browser.
 

@@ -1,0 +1,109 @@
+„¨/licenseÅOMIT License
+
+Copyright (c) 2014 Petka Antonov
+              2015 Sindre Sorhus
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+©/index.jsÅé'use strict';
+
+let fastProto = null;
+
+// Creates an object with permanently fast properties in V8. See Toon Verwaest's
+// post https://medium.com/@tverwaes/setting-up-prototypes-in-v8-ec9c9491dfe2#5f62
+// for more details. Use %HasFastProperties(object) and the Node.js flag
+// --allow-natives-syntax to check whether an object has fast properties.
+function FastObject(o) {
+	// A prototype object will have "fast properties" enabled once it is checked
+	// against the inline property cache of a function, e.g. fastProto.property:
+	// https://github.com/v8/v8/blob/6.0.122/test/mjsunit/fast-prototype.js#L48-L63
+	if (fastProto !== null && typeof fastProto.property) {
+		const result = fastProto;
+		fastProto = FastObject.prototype = null;
+		return result;
+	}
+	fastProto = FastObject.prototype = o == null ? Object.create(null) : o;
+	return new FastObject;
+}
+
+// Initialize the inline property cache of FastObject
+FastObject();
+
+module.exports = function toFastproperties(o) {
+	return FastObject(o);
+};
+­/package.jsonÅ€{
+  "name": "to-fast-properties",
+  "version": "2.0.0",
+  "description": "Force V8 to use fast properties for an object",
+  "license": "MIT",
+  "repository": "sindresorhus/to-fast-properties",
+  "author": {
+    "name": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com"
+  },
+  "engines": {
+    "node": ">=4"
+  },
+  "scripts": {
+    "test": "node --allow-natives-syntax test.js"
+  },
+  "files": [
+    "index.js"
+  ],
+  "keywords": [
+    "object",
+    "obj",
+    "properties",
+    "props",
+    "v8",
+    "optimize",
+    "fast",
+    "convert",
+    "mode"
+  ],
+  "devDependencies": {
+    "ava": "0.0.4"
+  }
+}
+ª/readme.mdÅð# to-fast-properties [![Build Status](https://travis-ci.org/sindresorhus/to-fast-properties.svg?branch=master)](https://travis-ci.org/sindresorhus/to-fast-properties)
+
+> Force V8 to use fast properties for an object
+
+[Read more.](http://stackoverflow.com/questions/24987896/)
+
+Use `%HasFastProperties(object)` and `--allow-natives-syntax` to check whether an object already has fast properties.
+
+
+## Install
+
+```
+$ npm install --save to-fast-properties
+```
+
+
+## Usage
+
+```js
+const toFastProperties = require('to-fast-properties');
+
+const obj = {
+	foo: true,
+	bar: true
+};
+
+delete obj.foo;
+// `obj` now has slow properties
+
+toFastProperties(obj);
+// `obj` now has fast properties
+```
+
+
+## License
+
+MIT Â© Petka Antonov, John-David Dalton, Sindre Sorhus

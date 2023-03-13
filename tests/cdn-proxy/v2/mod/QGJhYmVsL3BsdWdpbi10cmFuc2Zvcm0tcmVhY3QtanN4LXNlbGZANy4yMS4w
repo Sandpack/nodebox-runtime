@@ -1,0 +1,138 @@
+Ö±/lib/index.js.map≈2{"version":3,"names":["TRACE_ID","getThisFunctionParent","path","scope","isFunctionParent","isArrowFunctionExpression","parent","isDerivedClass","classPath","node","superClass","isThisAllowed","parentMethodOrFunction","isMethod","kind","parentPath","declare","api","assertVersion","visitor","JSXOpeningElement","id","t","jsxIdentifier","trace","thisExpression","attributes","push","jsxAttribute","jsxExpressionContainer","name","Program","traverse"],"sources":["../src/index.ts"],"sourcesContent":["/**\n * This adds a __self={this} JSX attribute to all JSX elements, which React will use\n * to generate some runtime warnings. However, if the JSX element appears within a\n * constructor of a derived class, `__self={this}` will not be inserted in order to\n * prevent runtime errors.\n *\n * == JSX Literals ==\n *\n * <sometag />\n *\n * becomes:\n *\n * <sometag __self={this} />\n */\nimport { declare } from \"@babel/helper-plugin-utils\";\nimport { types as t } from \"@babel/core\";\nimport type { Visitor, NodePath } from \"@babel/traverse\";\n\nconst TRACE_ID = \"__self\";\n\n/**\n * Finds the closest parent function that provides `this`. Specifically, this looks for\n * the first parent function that isn't an arrow function.\n *\n * Derived from `Scope#getFunctionParent`\n */\nfunction getThisFunctionParent(\n  path: NodePath<t.JSXOpeningElement>,\n): NodePath<Exclude<t.FunctionParent, t.ArrowFunctionExpression>> | null {\n  let scope = path.scope;\n  do {\n    const { path } = scope;\n    if (path.isFunctionParent() && !path.isArrowFunctionExpression()) {\n      // @ts-expect-error TS does not exclude ArrowFunctionExpression from FunctionParent\n      return path;\n    }\n  } while ((scope = scope.parent));\n  return null;\n}\n\n/**\n * Returns whether the class has specified a superclass.\n */\nfunction isDerivedClass(classPath: NodePath<t.Class>) {\n  return classPath.node.superClass !== null;\n}\n\n/**\n * Returns whether `this` is allowed at given path.\n */\nfunction isThisAllowed(path: NodePath<t.JSXOpeningElement>) {\n  // This specifically skips arrow functions as they do not rewrite `this`.\n  const parentMethodOrFunction = getThisFunctionParent(path);\n  if (parentMethodOrFunction === null) {\n    // We are not in a method or function. It is fine to use `this`.\n    return true;\n  }\n  if (!parentMethodOrFunction.isMethod()) {\n    // If the closest parent is a regular function, `this` will be rebound, therefore it is fine to use `this`.\n    return true;\n  }\n  // Current node is within a method, so we need to check if the method is a constructor.\n  if (parentMethodOrFunction.node.kind !== \"constructor\") {\n    // We are not in a constructor, therefore it is always fine to use `this`.\n    return true;\n  }\n  // Now we are in a constructor. If it is a derived class, we do not reference `this`.\n  return !isDerivedClass(\n    parentMethodOrFunction.parentPath.parentPath as NodePath<t.Class>,\n  );\n}\n\nexport default declare(api => {\n  api.assertVersion(7);\n\n  const visitor: Visitor = {\n    JSXOpeningElement(path) {\n      if (!isThisAllowed(path)) {\n        return;\n      }\n      const node = path.node;\n      const id = t.jsxIdentifier(TRACE_ID);\n      const trace = t.thisExpression();\n\n      node.attributes.push(t.jsxAttribute(id, t.jsxExpressionContainer(trace)));\n    },\n  };\n\n  return {\n    name: \"transform-react-jsx-self\",\n    visitor: {\n      Program(path) {\n        path.traverse(visitor);\n      },\n    },\n  };\n});\n"],"mappings":";;;;;;AAcA;AACA;AAGA,MAAMA,QAAQ,GAAG,QAAQ;AAQzB,SAASC,qBAAqB,CAC5BC,IAAmC,EACoC;EACvE,IAAIC,KAAK,GAAGD,IAAI,CAACC,KAAK;EACtB,GAAG;IACD,MAAM;MAAED;IAAK,CAAC,GAAGC,KAAK;IACtB,IAAID,IAAI,CAACE,gBAAgB,EAAE,IAAI,CAACF,IAAI,CAACG,yBAAyB,EAAE,EAAE;MAEhE,OAAOH,IAAI;IACb;EACF,CAAC,QAASC,KAAK,GAAGA,KAAK,CAACG,MAAM;EAC9B,OAAO,IAAI;AACb;AAKA,SAASC,cAAc,CAACC,SAA4B,EAAE;EACpD,OAAOA,SAAS,CAACC,IAAI,CAACC,UAAU,KAAK,IAAI;AAC3C;AAKA,SAASC,aAAa,CAACT,IAAmC,EAAE;EAE1D,MAAMU,sBAAsB,GAAGX,qBAAqB,CAACC,IAAI,CAAC;EAC1D,IAAIU,sBAAsB,KAAK,IAAI,EAAE;IAEnC,OAAO,IAAI;EACb;EACA,IAAI,CAACA,sBAAsB,CAACC,QAAQ,EAAE,EAAE;IAEtC,OAAO,IAAI;EACb;EAEA,IAAID,sBAAsB,CAACH,IAAI,CAACK,IAAI,KAAK,aAAa,EAAE;IAEtD,OAAO,IAAI;EACb;EAEA,OAAO,CAACP,cAAc,CACpBK,sBAAsB,CAACG,UAAU,CAACA,UAAU,CAC7C;AACH;AAAC,eAEc,IAAAC,0BAAO,EAACC,GAAG,IAAI;EAC5BA,GAAG,CAACC,aAAa,CAAC,CAAC,CAAC;EAEpB,MAAMC,OAAgB,GAAG;IACvBC,iBAAiB,CAAClB,IAAI,EAAE;MACtB,IAAI,CAACS,aAAa,CAACT,IAAI,CAAC,EAAE;QACxB;MACF;MACA,MAAMO,IAAI,GAAGP,IAAI,CAACO,IAAI;MACtB,MAAMY,EAAE,GAAGC,WAAC,CAACC,aAAa,CAACvB,QAAQ,CAAC;MACpC,MAAMwB,KAAK,GAAGF,WAAC,CAACG,cAAc,EAAE;MAEhChB,IAAI,CAACiB,UAAU,CAACC,IAAI,CAACL,WAAC,CAACM,YAAY,CAACP,EAAE,EAAEC,WAAC,CAACO,sBAAsB,CAACL,KAAK,CAAC,CAAC,CAAC;IAC3E;EACF,CAAC;EAED,OAAO;IACLM,IAAI,EAAE,0BAA0B;IAChCX,OAAO,EAAE;MACPY,OAAO,CAAC7B,IAAI,EAAE;QACZA,IAAI,CAAC8B,QAAQ,CAACb,OAAO,CAAC;MACxB;IACF;EACF,CAAC;AACH,CAAC,CAAC;AAAA"}™/README.md≈ñ# @babel/plugin-transform-react-jsx-self
+
+> Add a __self prop to all JSX Elements
+
+See our website [@babel/plugin-transform-react-jsx-self](https://babeljs.io/docs/en/babel-plugin-transform-react-jsx-self) for more information.
+
+## Install
+
+Using npm:
+
+```sh
+npm install --save-dev @babel/plugin-transform-react-jsx-self
+```
+
+or using yarn:
+
+```sh
+yarn add @babel/plugin-transform-react-jsx-self --dev
+```
+®/LICENSE≈RMIT License
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+≠/lib/index.js≈4"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+var _helperPluginUtils = require("@babel/helper-plugin-utils");
+var _core = require("@babel/core");
+const TRACE_ID = "__self";
+function getThisFunctionParent(path) {
+  let scope = path.scope;
+  do {
+    const {
+      path
+    } = scope;
+    if (path.isFunctionParent() && !path.isArrowFunctionExpression()) {
+      return path;
+    }
+  } while (scope = scope.parent);
+  return null;
+}
+function isDerivedClass(classPath) {
+  return classPath.node.superClass !== null;
+}
+function isThisAllowed(path) {
+  const parentMethodOrFunction = getThisFunctionParent(path);
+  if (parentMethodOrFunction === null) {
+    return true;
+  }
+  if (!parentMethodOrFunction.isMethod()) {
+    return true;
+  }
+  if (parentMethodOrFunction.node.kind !== "constructor") {
+    return true;
+  }
+  return !isDerivedClass(parentMethodOrFunction.parentPath.parentPath);
+}
+var _default = (0, _helperPluginUtils.declare)(api => {
+  api.assertVersion(7);
+  const visitor = {
+    JSXOpeningElement(path) {
+      if (!isThisAllowed(path)) {
+        return;
+      }
+      const node = path.node;
+      const id = _core.types.jsxIdentifier(TRACE_ID);
+      const trace = _core.types.thisExpression();
+      node.attributes.push(_core.types.jsxAttribute(id, _core.types.jsxExpressionContainer(trace)));
+    }
+  };
+  return {
+    name: "transform-react-jsx-self",
+    visitor: {
+      Program(path) {
+        path.traverse(visitor);
+      }
+    }
+  };
+});
+exports.default = _default;
+
+//# sourceMappingURL=index.js.map
+≠/package.json≈ë{
+  "name": "@babel/plugin-transform-react-jsx-self",
+  "version": "7.21.0",
+  "description": "Add a __self prop to all JSX Elements",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/babel/babel.git",
+    "directory": "packages/babel-plugin-transform-react-jsx-self"
+  },
+  "homepage": "https://babel.dev/docs/en/next/babel-plugin-transform-react-jsx-self",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./lib/index.js",
+  "keywords": [
+    "babel-plugin"
+  ],
+  "dependencies": {
+    "@babel/helper-plugin-utils": "^7.20.2"
+  },
+  "peerDependencies": {
+    "@babel/core": "^7.0.0-0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.21.0",
+    "@babel/helper-plugin-test-runner": "^7.18.6",
+    "@babel/plugin-syntax-jsx": "^7.18.6"
+  },
+  "engines": {
+    "node": ">=6.9.0"
+  },
+  "author": "The Babel Team (https://babel.dev/team)",
+  "type": "commonjs"
+}

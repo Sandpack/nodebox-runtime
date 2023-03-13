@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.1.6](https://github.com/codesandbox/nodebox-internal/compare/nodebox-v0.1.5...nodebox-v0.1.6) (2023-03-07)
+
+
+### Features
+
+* **nodebox:** Implement fs.rm api ([#360](https://github.com/codesandbox/nodebox-internal/issues/360)) ([52d7dc3](https://github.com/codesandbox/nodebox-internal/commit/52d7dc3d589dddffb3ca6d0ccd342f9e409022c9))
+
+
+### Bug Fixes
+
+* **nodebox:** add repo url for npm find the package homepage ([#361](https://github.com/codesandbox/nodebox-internal/issues/361)) ([70057b7](https://github.com/codesandbox/nodebox-internal/commit/70057b7da7d97d6c5409c62fd329ba3f16824515))
+
+## [0.1.5](https://github.com/codesandbox/nodebox-internal/compare/nodebox-v0.1.4...nodebox-v0.1.5) (2023-03-05)
+
+
+### Bug Fixes
+
+* API page link ([#355](https://github.com/codesandbox/nodebox-internal/issues/355)) ([2c6970c](https://github.com/codesandbox/nodebox-internal/commit/2c6970c72d237258e10434c6f0b6f2232891be3d))
+
+## [0.1.4](https://github.com/codesandbox/nodebox-internal/compare/nodebox-v0.1.3...nodebox-v0.1.4) (2023-03-02)
+
+
+### Bug Fixes
+
+* **preview:** increase timeout message ([#349](https://github.com/codesandbox/nodebox-internal/issues/349)) ([3aba917](https://github.com/codesandbox/nodebox-internal/commit/3aba91788df1e5eb44f82f022c5298c11ecb2bf8))
+
 ## [0.1.3](https://github.com/codesandbox/nodebox-internal/compare/nodebox-v0.1.2...nodebox-v0.1.3) (2023-03-01)
 
 

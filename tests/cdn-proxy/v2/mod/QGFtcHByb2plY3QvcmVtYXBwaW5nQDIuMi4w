@@ -1,0 +1,1008 @@
+å∫/dist/remapping.umd.js.map≈v{"version":3,"file":"remapping.umd.js","sources":["../../src/source-map-tree.ts","../../src/build-source-map-tree.ts","../../src/source-map.ts","../../src/remapping.ts"],"sourcesContent":[null,null,null,null],"names":["GenMapping","decodedMappings","addSegment","setSourceContent","traceSegment","TraceMap","decodedMap","encodedMap"],"mappings":"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"}™/README.md≈à# @ampproject/remapping
+
+> Remap sequential sourcemaps through transformations to point at the original source code
+
+Remapping allows you to take the sourcemaps generated through transforming your code and "remap"
+them to the original source locations. Think "my minified code, transformed with babel and bundled
+with webpack", all pointing to the correct location in your original source code.
+
+With remapping, none of your source code transformations need to be aware of the input's sourcemap,
+they only need to generate an output sourcemap. This greatly simplifies building custom
+transformations (think a find-and-replace).
+
+## Installation
+
+```sh
+npm install @ampproject/remapping
+```
+
+## Usage
+
+```typescript
+function remapping(
+  map: SourceMap | SourceMap[],
+  loader: (file: string, ctx: LoaderContext) => (SourceMap | null | undefined),
+  options?: { excludeContent: boolean, decodedMappings: boolean }
+): SourceMap;
+
+// LoaderContext gives the loader the importing sourcemap, tree depth, the ability to override the
+// "source" location (where child sources are resolved relative to, or the location of original
+// source), and the ability to override the "content" of an original source for inclusion in the
+// output sourcemap.
+type LoaderContext = {
+ readonly importer: string;
+ readonly depth: number;
+ source: string;
+ content: string | null | undefined;
+}
+```
+
+`remapping` takes the final output sourcemap, and a `loader` function. For every source file pointer
+in the sourcemap, the `loader` will be called with the resolved path. If the path itself represents
+a transformed file (it has a sourcmap associated with it), then the `loader` should return that
+sourcemap. If not, the path will be treated as an original, untransformed source code.
+
+```js
+// Babel transformed "helloworld.js" into "transformed.js"
+const transformedMap = JSON.stringify({
+  file: 'transformed.js',
+  // 1st column of 2nd line of output file translates into the 1st source
+  // file, line 3, column 2
+  mappings: ';CAEE',
+  sources: ['helloworld.js'],
+  version: 3,
+});
+
+// Uglify minified "transformed.js" into "transformed.min.js"
+const minifiedTransformedMap = JSON.stringify({
+  file: 'transformed.min.js',
+  // 0th column of 1st line of output file translates into the 1st source
+  // file, line 2, column 1.
+  mappings: 'AACC',
+  names: [],
+  sources: ['transformed.js'],
+  version: 3,
+});
+
+const remapped = remapping(
+  minifiedTransformedMap,
+  (file, ctx) => {
+
+    // The "transformed.js" file is an transformed file.
+    if (file === 'transformed.js') {
+      // The root importer is empty.
+      console.assert(ctx.importer === '');
+      // The depth in the sourcemap tree we're currently loading.
+      // The root `minifiedTransformedMap` is depth 0, and its source children are depth 1, etc.
+      console.assert(ctx.depth === 1);
+
+      return transformedMap;
+    }
+
+    // Loader will be called to load transformedMap's source file pointers as well.
+    console.assert(file === 'helloworld.js');
+    // `transformed.js`'s sourcemap points into `helloworld.js`.
+    console.assert(ctx.importer === 'transformed.js');
+    // This is a source child of `transformed`, which is a source child of `minifiedTransformedMap`.
+    console.assert(ctx.depth === 2);
+    return null;
+  }
+);
+
+console.log(remapped);
+// {
+//   file: 'transpiled.min.js',
+//   mappings: 'AAEE',
+//   sources: ['helloworld.js'],
+//   version: 3,
+// };
+```
+
+In this example, `loader` will be called twice:
+
+1. `"transformed.js"`, the first source file pointer in the `minifiedTransformedMap`. We return the
+   associated sourcemap for it (its a transformed file, after all) so that sourcemap locations can
+   be traced through it into the source files it represents.
+2. `"helloworld.js"`, our original, unmodified source code. This file does not have a sourcemap, so
+   we return `null`.
+
+The `remapped` sourcemap now points from `transformed.min.js` into locations in `helloworld.js`. If
+you were to read the `mappings`, it says "0th column of the first line output line points to the 1st
+column of the 2nd line of the file `helloworld.js`".
+
+### Multiple transformations of a file
+
+As a convenience, if you have multiple single-source transformations of a file, you may pass an
+array of sourcemap files in the order of most-recent transformation sourcemap first. Note that this
+changes the `importer` and `depth` of each call to our loader. So our above example could have been
+written as:
+
+```js
+const remapped = remapping(
+  [minifiedTransformedMap, transformedMap],
+  () => null
+);
+
+console.log(remapped);
+// {
+//   file: 'transpiled.min.js',
+//   mappings: 'AAEE',
+//   sources: ['helloworld.js'],
+//   version: 3,
+// };
+```
+
+### Advanced control of the loading graph
+
+#### `source`
+
+The `source` property can overridden to any value to change the location of the current load. Eg,
+for an original source file, it allows us to change the location to the original source regardless
+of what the sourcemap source entry says. And for transformed files, it allows us to change the
+relative resolving location for child sources of the loaded sourcemap.
+
+```js
+const remapped = remapping(
+  minifiedTransformedMap,
+  (file, ctx) => {
+
+    if (file === 'transformed.js') {
+      // We pretend the transformed.js file actually exists in the 'src/' directory. When the nested
+      // source files are loaded, they will now be relative to `src/`.
+      ctx.source = 'src/transformed.js';
+      return transformedMap;
+    }
+
+    console.assert(file === 'src/helloworld.js');
+    // We could futher change the source of this original file, eg, to be inside a nested directory
+    // itself. This will be reflected in the remapped sourcemap.
+    ctx.source = 'src/nested/transformed.js';
+    return null;
+  }
+);
+
+console.log(remapped);
+// {
+//   ‚Ä¶,
+//   sources: ['src/nested/helloworld.js'],
+// };
+```
+
+
+#### `content`
+
+The `content` property can be overridden when we encounter an original source file. Eg, this allows
+you to manually provide the source content of the original file regardless of whether the
+`sourcesContent` field is present in the parent sourcemap. It can also be set to `null` to remove
+the source content.
+
+```js
+const remapped = remapping(
+  minifiedTransformedMap,
+  (file, ctx) => {
+
+    if (file === 'transformed.js') {
+      // transformedMap does not include a `sourcesContent` field, so usually the remapped sourcemap
+      // would not include any `sourcesContent` values.
+      return transformedMap;
+    }
+
+    console.assert(file === 'helloworld.js');
+    // We can read the file to provide the source content.
+    ctx.content = fs.readFileSync(file, 'utf8');
+    return null;
+  }
+);
+
+console.log(remapped);
+// {
+//   ‚Ä¶,
+//   sourcesContent: [
+//     'console.log("Hello world!")',
+//   ],
+// };
+```
+
+### Options
+
+#### excludeContent
+
+By default, `excludeContent` is `false`. Passing `{ excludeContent: true }` will exclude the
+`sourcesContent` field from the returned sourcemap. This is mainly useful when you want to reduce
+the size out the sourcemap.
+
+#### decodedMappings
+
+By default, `decodedMappings` is `false`. Passing `{ decodedMappings: true }` will leave the
+`mappings` field in a [decoded state](https://github.com/rich-harris/sourcemap-codec) instead of
+encoding into a VLQ string.
+≥/dist/remapping.mjs≈!import { decodedMappings, traceSegment, TraceMap } from '@jridgewell/trace-mapping';
+import { GenMapping, addSegment, setSourceContent, decodedMap, encodedMap } from '@jridgewell/gen-mapping';
+
+const SOURCELESS_MAPPING = {
+    source: null,
+    column: null,
+    line: null,
+    name: null,
+    content: null,
+};
+const EMPTY_SOURCES = [];
+function Source(map, sources, source, content) {
+    return {
+        map,
+        sources,
+        source,
+        content,
+    };
+}
+/**
+ * MapSource represents a single sourcemap, with the ability to trace mappings into its child nodes
+ * (which may themselves be SourceMapTrees).
+ */
+function MapSource(map, sources) {
+    return Source(map, sources, '', null);
+}
+/**
+ * A "leaf" node in the sourcemap tree, representing an original, unmodified source file. Recursive
+ * segment tracing ends at the `OriginalSource`.
+ */
+function OriginalSource(source, content) {
+    return Source(null, EMPTY_SOURCES, source, content);
+}
+/**
+ * traceMappings is only called on the root level SourceMapTree, and begins the process of
+ * resolving each mapping in terms of the original source files.
+ */
+function traceMappings(tree) {
+    const gen = new GenMapping({ file: tree.map.file });
+    const { sources: rootSources, map } = tree;
+    const rootNames = map.names;
+    const rootMappings = decodedMappings(map);
+    for (let i = 0; i < rootMappings.length; i++) {
+        const segments = rootMappings[i];
+        let lastSource = null;
+        let lastSourceLine = null;
+        let lastSourceColumn = null;
+        for (let j = 0; j < segments.length; j++) {
+            const segment = segments[j];
+            const genCol = segment[0];
+            let traced = SOURCELESS_MAPPING;
+            // 1-length segments only move the current generated column, there's no source information
+            // to gather from it.
+            if (segment.length !== 1) {
+                const source = rootSources[segment[1]];
+                traced = originalPositionFor(source, segment[2], segment[3], segment.length === 5 ? rootNames[segment[4]] : '');
+                // If the trace is invalid, then the trace ran into a sourcemap that doesn't contain a
+                // respective segment into an original source.
+                if (traced == null)
+                    continue;
+            }
+            // So we traced a segment down into its original source file. Now push a
+            // new segment pointing to this location.
+            const { column, line, name, content, source } = traced;
+            if (line === lastSourceLine && column === lastSourceColumn && source === lastSource) {
+                continue;
+            }
+            lastSourceLine = line;
+            lastSourceColumn = column;
+            lastSource = source;
+            // Sigh, TypeScript can't figure out source/line/column are either all null, or all non-null...
+            addSegment(gen, i, genCol, source, line, column, name);
+            if (content != null)
+                setSourceContent(gen, source, content);
+        }
+    }
+    return gen;
+}
+/**
+ * originalPositionFor is only called on children SourceMapTrees. It recurses down into its own
+ * child SourceMapTrees, until we find the original source map.
+ */
+function originalPositionFor(source, line, column, name) {
+    if (!source.map) {
+        return { column, line, name, source: source.source, content: source.content };
+    }
+    const segment = traceSegment(source.map, line, column);
+    // If we couldn't find a segment, then this doesn't exist in the sourcemap.
+    if (segment == null)
+        return null;
+    // 1-length segments only move the current generated column, there's no source information
+    // to gather from it.
+    if (segment.length === 1)
+        return SOURCELESS_MAPPING;
+    return originalPositionFor(source.sources[segment[1]], segment[2], segment[3], segment.length === 5 ? source.map.names[segment[4]] : name);
+}
+
+function asArray(value) {
+    if (Array.isArray(value))
+        return value;
+    return [value];
+}
+/**
+ * Recursively builds a tree structure out of sourcemap files, with each node
+ * being either an `OriginalSource` "leaf" or a `SourceMapTree` composed of
+ * `OriginalSource`s and `SourceMapTree`s.
+ *
+ * Every sourcemap is composed of a collection of source files and mappings
+ * into locations of those source files. When we generate a `SourceMapTree` for
+ * the sourcemap, we attempt to load each source file's own sourcemap. If it
+ * does not have an associated sourcemap, it is considered an original,
+ * unmodified source file.
+ */
+function buildSourceMapTree(input, loader) {
+    const maps = asArray(input).map((m) => new TraceMap(m, ''));
+    const map = maps.pop();
+    for (let i = 0; i < maps.length; i++) {
+        if (maps[i].sources.length > 1) {
+            throw new Error(`Transformation map ${i} must have exactly one source file.\n` +
+                'Did you specify these with the most recent transformation maps first?');
+        }
+    }
+    let tree = build(map, loader, '', 0);
+    for (let i = maps.length - 1; i >= 0; i--) {
+        tree = MapSource(maps[i], [tree]);
+    }
+    return tree;
+}
+function build(map, loader, importer, importerDepth) {
+    const { resolvedSources, sourcesContent } = map;
+    const depth = importerDepth + 1;
+    const children = resolvedSources.map((sourceFile, i) => {
+        // The loading context gives the loader more information about why this file is being loaded
+        // (eg, from which importer). It also allows the loader to override the location of the loaded
+        // sourcemap/original source, or to override the content in the sourcesContent field if it's
+        // an unmodified source file.
+        const ctx = {
+            importer,
+            depth,
+            source: sourceFile || '',
+            content: undefined,
+        };
+        // Use the provided loader callback to retrieve the file's sourcemap.
+        // TODO: We should eventually support async loading of sourcemap files.
+        const sourceMap = loader(ctx.source, ctx);
+        const { source, content } = ctx;
+        // If there is a sourcemap, then we need to recurse into it to load its source files.
+        if (sourceMap)
+            return build(new TraceMap(sourceMap, source), loader, source, depth);
+        // Else, it's an an unmodified source file.
+        // The contents of this unmodified source file can be overridden via the loader context,
+        // allowing it to be explicitly null or a string. If it remains undefined, we fall back to
+        // the importing sourcemap's `sourcesContent` field.
+        const sourceContent = content !== undefined ? content : sourcesContent ? sourcesContent[i] : null;
+        return OriginalSource(source, sourceContent);
+    });
+    return MapSource(map, children);
+}
+
+/**
+ * A SourceMap v3 compatible sourcemap, which only includes fields that were
+ * provided to it.
+ */
+class SourceMap {
+    constructor(map, options) {
+        const out = options.decodedMappings ? decodedMap(map) : encodedMap(map);
+        this.version = out.version; // SourceMap spec says this should be first.
+        this.file = out.file;
+        this.mappings = out.mappings;
+        this.names = out.names;
+        this.sourceRoot = out.sourceRoot;
+        this.sources = out.sources;
+        if (!options.excludeContent) {
+            this.sourcesContent = out.sourcesContent;
+        }
+    }
+    toString() {
+        return JSON.stringify(this);
+    }
+}
+
+/**
+ * Traces through all the mappings in the root sourcemap, through the sources
+ * (and their sourcemaps), all the way back to the original source location.
+ *
+ * `loader` will be called every time we encounter a source file. If it returns
+ * a sourcemap, we will recurse into that sourcemap to continue the trace. If
+ * it returns a falsey value, that source file is treated as an original,
+ * unmodified source file.
+ *
+ * Pass `excludeContent` to exclude any self-containing source file content
+ * from the output sourcemap.
+ *
+ * Pass `decodedMappings` to receive a SourceMap with decoded (instead of
+ * VLQ encoded) mappings.
+ */
+function remapping(input, loader, options) {
+    const opts = typeof options === 'object' ? options : { excludeContent: !!options, decodedMappings: false };
+    const tree = buildSourceMapTree(input, loader);
+    return new SourceMap(traceMappings(tree), opts);
+}
+
+export { remapping as default };
+//# sourceMappingURL=remapping.mjs.map
+ª/dist/types/source-map.d.ts≈Iimport type { GenMapping } from '@jridgewell/gen-mapping';
+import type { DecodedSourceMap, EncodedSourceMap, Options } from './types';
+/**
+ * A SourceMap v3 compatible sourcemap, which only includes fields that were
+ * provided to it.
+ */
+export default class SourceMap {
+    file?: string | null;
+    mappings: EncodedSourceMap['mappings'] | DecodedSourceMap['mappings'];
+    sourceRoot?: string;
+    names: string[];
+    sources: (string | null)[];
+    sourcesContent?: (string | null)[];
+    version: 3;
+    constructor(map: GenMapping, options: Options);
+    toString(): string;
+}
+∂/dist/remapping.umd.js≈%Ÿ(function (global, factory) {
+    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('@jridgewell/trace-mapping'), require('@jridgewell/gen-mapping')) :
+    typeof define === 'function' && define.amd ? define(['@jridgewell/trace-mapping', '@jridgewell/gen-mapping'], factory) :
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.remapping = factory(global.traceMapping, global.genMapping));
+})(this, (function (traceMapping, genMapping) { 'use strict';
+
+    const SOURCELESS_MAPPING = {
+        source: null,
+        column: null,
+        line: null,
+        name: null,
+        content: null,
+    };
+    const EMPTY_SOURCES = [];
+    function Source(map, sources, source, content) {
+        return {
+            map,
+            sources,
+            source,
+            content,
+        };
+    }
+    /**
+     * MapSource represents a single sourcemap, with the ability to trace mappings into its child nodes
+     * (which may themselves be SourceMapTrees).
+     */
+    function MapSource(map, sources) {
+        return Source(map, sources, '', null);
+    }
+    /**
+     * A "leaf" node in the sourcemap tree, representing an original, unmodified source file. Recursive
+     * segment tracing ends at the `OriginalSource`.
+     */
+    function OriginalSource(source, content) {
+        return Source(null, EMPTY_SOURCES, source, content);
+    }
+    /**
+     * traceMappings is only called on the root level SourceMapTree, and begins the process of
+     * resolving each mapping in terms of the original source files.
+     */
+    function traceMappings(tree) {
+        const gen = new genMapping.GenMapping({ file: tree.map.file });
+        const { sources: rootSources, map } = tree;
+        const rootNames = map.names;
+        const rootMappings = traceMapping.decodedMappings(map);
+        for (let i = 0; i < rootMappings.length; i++) {
+            const segments = rootMappings[i];
+            let lastSource = null;
+            let lastSourceLine = null;
+            let lastSourceColumn = null;
+            for (let j = 0; j < segments.length; j++) {
+                const segment = segments[j];
+                const genCol = segment[0];
+                let traced = SOURCELESS_MAPPING;
+                // 1-length segments only move the current generated column, there's no source information
+                // to gather from it.
+                if (segment.length !== 1) {
+                    const source = rootSources[segment[1]];
+                    traced = originalPositionFor(source, segment[2], segment[3], segment.length === 5 ? rootNames[segment[4]] : '');
+                    // If the trace is invalid, then the trace ran into a sourcemap that doesn't contain a
+                    // respective segment into an original source.
+                    if (traced == null)
+                        continue;
+                }
+                // So we traced a segment down into its original source file. Now push a
+                // new segment pointing to this location.
+                const { column, line, name, content, source } = traced;
+                if (line === lastSourceLine && column === lastSourceColumn && source === lastSource) {
+                    continue;
+                }
+                lastSourceLine = line;
+                lastSourceColumn = column;
+                lastSource = source;
+                // Sigh, TypeScript can't figure out source/line/column are either all null, or all non-null...
+                genMapping.addSegment(gen, i, genCol, source, line, column, name);
+                if (content != null)
+                    genMapping.setSourceContent(gen, source, content);
+            }
+        }
+        return gen;
+    }
+    /**
+     * originalPositionFor is only called on children SourceMapTrees. It recurses down into its own
+     * child SourceMapTrees, until we find the original source map.
+     */
+    function originalPositionFor(source, line, column, name) {
+        if (!source.map) {
+            return { column, line, name, source: source.source, content: source.content };
+        }
+        const segment = traceMapping.traceSegment(source.map, line, column);
+        // If we couldn't find a segment, then this doesn't exist in the sourcemap.
+        if (segment == null)
+            return null;
+        // 1-length segments only move the current generated column, there's no source information
+        // to gather from it.
+        if (segment.length === 1)
+            return SOURCELESS_MAPPING;
+        return originalPositionFor(source.sources[segment[1]], segment[2], segment[3], segment.length === 5 ? source.map.names[segment[4]] : name);
+    }
+
+    function asArray(value) {
+        if (Array.isArray(value))
+            return value;
+        return [value];
+    }
+    /**
+     * Recursively builds a tree structure out of sourcemap files, with each node
+     * being either an `OriginalSource` "leaf" or a `SourceMapTree` composed of
+     * `OriginalSource`s and `SourceMapTree`s.
+     *
+     * Every sourcemap is composed of a collection of source files and mappings
+     * into locations of those source files. When we generate a `SourceMapTree` for
+     * the sourcemap, we attempt to load each source file's own sourcemap. If it
+     * does not have an associated sourcemap, it is considered an original,
+     * unmodified source file.
+     */
+    function buildSourceMapTree(input, loader) {
+        const maps = asArray(input).map((m) => new traceMapping.TraceMap(m, ''));
+        const map = maps.pop();
+        for (let i = 0; i < maps.length; i++) {
+            if (maps[i].sources.length > 1) {
+                throw new Error(`Transformation map ${i} must have exactly one source file.\n` +
+                    'Did you specify these with the most recent transformation maps first?');
+            }
+        }
+        let tree = build(map, loader, '', 0);
+        for (let i = maps.length - 1; i >= 0; i--) {
+            tree = MapSource(maps[i], [tree]);
+        }
+        return tree;
+    }
+    function build(map, loader, importer, importerDepth) {
+        const { resolvedSources, sourcesContent } = map;
+        const depth = importerDepth + 1;
+        const children = resolvedSources.map((sourceFile, i) => {
+            // The loading context gives the loader more information about why this file is being loaded
+            // (eg, from which importer). It also allows the loader to override the location of the loaded
+            // sourcemap/original source, or to override the content in the sourcesContent field if it's
+            // an unmodified source file.
+            const ctx = {
+                importer,
+                depth,
+                source: sourceFile || '',
+                content: undefined,
+            };
+            // Use the provided loader callback to retrieve the file's sourcemap.
+            // TODO: We should eventually support async loading of sourcemap files.
+            const sourceMap = loader(ctx.source, ctx);
+            const { source, content } = ctx;
+            // If there is a sourcemap, then we need to recurse into it to load its source files.
+            if (sourceMap)
+                return build(new traceMapping.TraceMap(sourceMap, source), loader, source, depth);
+            // Else, it's an an unmodified source file.
+            // The contents of this unmodified source file can be overridden via the loader context,
+            // allowing it to be explicitly null or a string. If it remains undefined, we fall back to
+            // the importing sourcemap's `sourcesContent` field.
+            const sourceContent = content !== undefined ? content : sourcesContent ? sourcesContent[i] : null;
+            return OriginalSource(source, sourceContent);
+        });
+        return MapSource(map, children);
+    }
+
+    /**
+     * A SourceMap v3 compatible sourcemap, which only includes fields that were
+     * provided to it.
+     */
+    class SourceMap {
+        constructor(map, options) {
+            const out = options.decodedMappings ? genMapping.decodedMap(map) : genMapping.encodedMap(map);
+            this.version = out.version; // SourceMap spec says this should be first.
+            this.file = out.file;
+            this.mappings = out.mappings;
+            this.names = out.names;
+            this.sourceRoot = out.sourceRoot;
+            this.sources = out.sources;
+            if (!options.excludeContent) {
+                this.sourcesContent = out.sourcesContent;
+            }
+        }
+        toString() {
+            return JSON.stringify(this);
+        }
+    }
+
+    /**
+     * Traces through all the mappings in the root sourcemap, through the sources
+     * (and their sourcemaps), all the way back to the original source location.
+     *
+     * `loader` will be called every time we encounter a source file. If it returns
+     * a sourcemap, we will recurse into that sourcemap to continue the trace. If
+     * it returns a falsey value, that source file is treated as an original,
+     * unmodified source file.
+     *
+     * Pass `excludeContent` to exclude any self-containing source file content
+     * from the output sourcemap.
+     *
+     * Pass `decodedMappings` to receive a SourceMap with decoded (instead of
+     * VLQ encoded) mappings.
+     */
+    function remapping(input, loader, options) {
+        const opts = typeof options === 'object' ? options : { excludeContent: !!options, decodedMappings: false };
+        const tree = buildSourceMapTree(input, loader);
+        return new SourceMap(traceMappings(tree), opts);
+    }
+
+    return remapping;
+
+}));
+//# sourceMappingURL=remapping.umd.js.map
+∂/dist/types/types.d.ts≈?import type { SourceMapInput } from '@jridgewell/trace-mapping';
+export type { SourceMapSegment, DecodedSourceMap, EncodedSourceMap, } from '@jridgewell/trace-mapping';
+export type { SourceMapInput };
+export declare type LoaderContext = {
+    readonly importer: string;
+    readonly depth: number;
+    source: string;
+    content: string | null | undefined;
+};
+export declare type SourceMapLoader = (file: string, ctx: LoaderContext) => SourceMapInput | null | undefined | void;
+export declare type Options = {
+    excludeContent?: boolean;
+    decodedMappings?: boolean;
+};
+∑/dist/remapping.mjs.map≈‡{"version":3,"file":"remapping.mjs","sources":["../../src/source-map-tree.ts","../../src/build-source-map-tree.ts","../../src/source-map.ts","../../src/remapping.ts"],"sourcesContent":[null,null,null,null],"names":[],"mappings":"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"}≠/package.json≈á{
+  "name": "@ampproject/remapping",
+  "version": "2.2.0",
+  "description": "Remap sequential sourcemaps through transformations to point at the original source code",
+  "keywords": [
+    "source",
+    "map",
+    "remap"
+  ],
+  "main": "dist/remapping.umd.js",
+  "module": "dist/remapping.mjs",
+  "typings": "dist/types/remapping.d.ts",
+  "files": [
+    "dist"
+  ],
+  "author": "Justin Ridgewell <jridgewell@google.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ampproject/remapping.git"
+  },
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=6.0.0"
+  },
+  "scripts": {
+    "build": "run-s -n build:*",
+    "build:rollup": "rollup -c rollup.config.js",
+    "build:ts": "tsc --project tsconfig.build.json",
+    "lint": "run-s -n lint:*",
+    "lint:prettier": "npm run test:lint:prettier -- --write",
+    "lint:ts": "npm run test:lint:ts -- --fix",
+    "prebuild": "rm -rf dist",
+    "prepublishOnly": "npm run preversion",
+    "preversion": "run-s test build",
+    "test": "run-s -n test:lint test:only",
+    "test:debug": "node --inspect-brk node_modules/.bin/jest --runInBand",
+    "test:lint": "run-s -n test:lint:*",
+    "test:lint:prettier": "prettier --check '{src,test}/**/*.ts'",
+    "test:lint:ts": "eslint '{src,test}/**/*.ts'",
+    "test:only": "jest --coverage",
+    "test:watch": "jest --coverage --watch"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "8.3.2",
+    "@types/jest": "27.4.1",
+    "@typescript-eslint/eslint-plugin": "5.20.0",
+    "@typescript-eslint/parser": "5.20.0",
+    "eslint": "8.14.0",
+    "eslint-config-prettier": "8.5.0",
+    "jest": "27.5.1",
+    "jest-config": "27.5.1",
+    "npm-run-all": "4.1.5",
+    "prettier": "2.6.2",
+    "rollup": "2.70.2",
+    "ts-jest": "27.1.4",
+    "tslib": "2.4.0",
+    "typescript": "4.6.3"
+  },
+  "dependencies": {
+    "@jridgewell/gen-mapping": "^0.1.0",
+    "@jridgewell/trace-mapping": "^0.3.9"
+  }
+}
+Ÿ /dist/types/source-map-tree.d.ts≈ßimport { GenMapping } from '@jridgewell/gen-mapping';
+import type { TraceMap } from '@jridgewell/trace-mapping';
+export declare type SourceMapSegmentObject = {
+    column: number;
+    line: number;
+    name: string;
+    source: string;
+    content: string | null;
+} | {
+    column: null;
+    line: null;
+    name: null;
+    source: null;
+    content: null;
+};
+export declare type OriginalSource = {
+    map: TraceMap;
+    sources: Sources[];
+    source: string;
+    content: string | null;
+};
+export declare type MapSource = {
+    map: TraceMap;
+    sources: Sources[];
+    source: string;
+    content: string | null;
+};
+export declare type Sources = OriginalSource | MapSource;
+/**
+ * MapSource represents a single sourcemap, with the ability to trace mappings into its child nodes
+ * (which may themselves be SourceMapTrees).
+ */
+export declare function MapSource(map: TraceMap, sources: Sources[]): MapSource;
+/**
+ * A "leaf" node in the sourcemap tree, representing an original, unmodified source file. Recursive
+ * segment tracing ends at the `OriginalSource`.
+ */
+export declare function OriginalSource(source: string, content: string | null): OriginalSource;
+/**
+ * traceMappings is only called on the root level SourceMapTree, and begins the process of
+ * resolving each mapping in terms of the original source files.
+ */
+export declare function traceMappings(tree: MapSource): GenMapping;
+/**
+ * originalPositionFor is only called on children SourceMapTrees. It recurses down into its own
+ * child SourceMapTrees, until we find the original source map.
+ */
+export declare function originalPositionFor(source: Sources, line: number, column: number, name: string): SourceMapSegmentObject | null;
+Ÿ&/dist/types/build-source-map-tree.d.ts≈import type { MapSource as MapSourceType } from './source-map-tree';
+import type { SourceMapInput, SourceMapLoader } from './types';
+/**
+ * Recursively builds a tree structure out of sourcemap files, with each node
+ * being either an `OriginalSource` "leaf" or a `SourceMapTree` composed of
+ * `OriginalSource`s and `SourceMapTree`s.
+ *
+ * Every sourcemap is composed of a collection of source files and mappings
+ * into locations of those source files. When we generate a `SourceMapTree` for
+ * the sourcemap, we attempt to load each source file's own sourcemap. If it
+ * does not have an associated sourcemap, it is considered an original,
+ * unmodified source file.
+ */
+export default function buildSourceMapTree(input: SourceMapInput | SourceMapInput[], loader: SourceMapLoader): MapSourceType;
+∫/dist/types/remapping.d.ts≈+import SourceMap from './source-map';
+import type { SourceMapInput, SourceMapLoader, Options } from './types';
+export type { SourceMapSegment, EncodedSourceMap, EncodedSourceMap as RawSourceMap, DecodedSourceMap, SourceMapInput, SourceMapLoader, LoaderContext, Options, } from './types';
+/**
+ * Traces through all the mappings in the root sourcemap, through the sources
+ * (and their sourcemaps), all the way back to the original source location.
+ *
+ * `loader` will be called every time we encounter a source file. If it returns
+ * a sourcemap, we will recurse into that sourcemap to continue the trace. If
+ * it returns a falsey value, that source file is treated as an original,
+ * unmodified source file.
+ *
+ * Pass `excludeContent` to exclude any self-containing source file content
+ * from the output sourcemap.
+ *
+ * Pass `decodedMappings` to receive a SourceMap with decoded (instead of
+ * VLQ encoded) mappings.
+ */
+export default function remapping(input: SourceMapInput | SourceMapInput[], loader: SourceMapLoader, options?: boolean | Options): SourceMap;
+®/LICENSE≈,M
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "[]"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright 2019 Google LLC
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.

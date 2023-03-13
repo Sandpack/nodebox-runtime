@@ -1,6 +1,7 @@
 {
   "extends": "../tsconfig",
   "compilerOptions": {
+    "target": "esnext",
     "noEmit": true,
     "baseUrl": "../",
     "paths": {

@@ -12,6 +12,7 @@
   - [`fs.mkdir(path[, options])`](#nodeboxfsmkdirpath-options)
   - [`fs.readdir(path)`](#nodeboxfsreaddirpath)
   - [`fs.stat(path)`](#nodeboxfsstatpath)
+  - [`fs.rm(path[, options])`](#nodeboxfsrmpath-options)
   - [`fs.watch(glob, listener)`](#nodeboxfswatchglob-listener)
 - [Shell API](#shell-api)
   - [`shell.create()`](#nodeboxshellcreate)
@@ -157,6 +158,18 @@ await nodebox.fs.readdir('./a/b/c');
 await nodebox.fs.stat('./index.js');
 ```
 
+### `nodebox.fs.rm(path[, options])`
+
+- `path` `<string>`
+- `options` `<Object | undefined>`
+  - `recursive` `<boolean | undefined>` remove all nested files/directories as well
+  - `force` `<boolean | undefined>` don't throw if file/directory does not exist
+- Returns: `<Promise<void>>` Fulfills with the stats of the provided file.
+
+```js
+await nodebox.fs.rm('./index.js', { recursive: true, force: true });
+```
+
 ### `nodebox.fs.watch(glob, listener)`
 
 - `glob` `<string>` A glob pattern of the files to watch.
@@ -207,7 +220,7 @@ const shell = nodebox.shell.create();
 
 - `binary` `<string>` Global name or a path to the binary.
 - `args` `<Array>` List of arguments to pass to the commands.
-- `options` `<Object`>
+- `options` `<Object>`
   - `cwd` `<string>` Path to use as the current working directory.
   - `env` `<Object>`
 

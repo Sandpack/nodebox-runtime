@@ -12,7 +12,7 @@ export interface PreviewEvents {
   ];
 }
 
-const TIMEOUT = 10_000;
+const TIMEOUT = 20_000;
 
 export type PreviewInfo = {
   url: string;

@@ -121,6 +121,7 @@ module.exports = nextConfig;
     env: {
       NEXT_IGNORE_INCORRECT_LOCKFILE: 'true',
       NEXT_TELEMETRY_DISABLED: 'true',
+      __NEXT_DISABLE_MEMORY_WATCHER: 'true',
     },
   });
 };

@@ -1,0 +1,1139 @@
+á®/LICENSE≈3Copyright 2018 Logan Smyth <loganfsmyth@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+©/index.js≈%õ"use strict";
+
+// These use the global symbol registry so that multiple copies of this
+// library can work together in case they are not deduped.
+const GENSYNC_START = Symbol.for("gensync:v1:start");
+const GENSYNC_SUSPEND = Symbol.for("gensync:v1:suspend");
+
+const GENSYNC_EXPECTED_START = "GENSYNC_EXPECTED_START";
+const GENSYNC_EXPECTED_SUSPEND = "GENSYNC_EXPECTED_SUSPEND";
+const GENSYNC_OPTIONS_ERROR = "GENSYNC_OPTIONS_ERROR";
+const GENSYNC_RACE_NONEMPTY = "GENSYNC_RACE_NONEMPTY";
+const GENSYNC_ERRBACK_NO_CALLBACK = "GENSYNC_ERRBACK_NO_CALLBACK";
+
+module.exports = Object.assign(
+  function gensync(optsOrFn) {
+    let genFn = optsOrFn;
+    if (typeof optsOrFn !== "function") {
+      genFn = newGenerator(optsOrFn);
+    } else {
+      genFn = wrapGenerator(optsOrFn);
+    }
+
+    return Object.assign(genFn, makeFunctionAPI(genFn));
+  },
+  {
+    all: buildOperation({
+      name: "all",
+      arity: 1,
+      sync: function(args) {
+        const items = Array.from(args[0]);
+        return items.map(item => evaluateSync(item));
+      },
+      async: function(args, resolve, reject) {
+        const items = Array.from(args[0]);
+
+        if (items.length === 0) {
+          Promise.resolve().then(() => resolve([]));
+          return;
+        }
+
+        let count = 0;
+        const results = items.map(() => undefined);
+        items.forEach((item, i) => {
+          evaluateAsync(
+            item,
+            val => {
+              results[i] = val;
+              count += 1;
+
+              if (count === results.length) resolve(results);
+            },
+            reject
+          );
+        });
+      },
+    }),
+    race: buildOperation({
+      name: "race",
+      arity: 1,
+      sync: function(args) {
+        const items = Array.from(args[0]);
+        if (items.length === 0) {
+          throw makeError("Must race at least 1 item", GENSYNC_RACE_NONEMPTY);
+        }
+
+        return evaluateSync(items[0]);
+      },
+      async: function(args, resolve, reject) {
+        const items = Array.from(args[0]);
+        if (items.length === 0) {
+          throw makeError("Must race at least 1 item", GENSYNC_RACE_NONEMPTY);
+        }
+
+        for (const item of items) {
+          evaluateAsync(item, resolve, reject);
+        }
+      },
+    }),
+  }
+);
+
+/**
+ * Given a generator function, return the standard API object that executes
+ * the generator and calls the callbacks.
+ */
+function makeFunctionAPI(genFn) {
+  const fns = {
+    sync: function(...args) {
+      return evaluateSync(genFn.apply(this, args));
+    },
+    async: function(...args) {
+      return new Promise((resolve, reject) => {
+        evaluateAsync(genFn.apply(this, args), resolve, reject);
+      });
+    },
+    errback: function(...args) {
+      const cb = args.pop();
+      if (typeof cb !== "function") {
+        throw makeError(
+          "Asynchronous function called without callback",
+          GENSYNC_ERRBACK_NO_CALLBACK
+        );
+      }
+
+      let gen;
+      try {
+        gen = genFn.apply(this, args);
+      } catch (err) {
+        cb(err);
+        return;
+      }
+
+      evaluateAsync(gen, val => cb(undefined, val), err => cb(err));
+    },
+  };
+  return fns;
+}
+
+function assertTypeof(type, name, value, allowUndefined) {
+  if (
+    typeof value === type ||
+    (allowUndefined && typeof value === "undefined")
+  ) {
+    return;
+  }
+
+  let msg;
+  if (allowUndefined) {
+    msg = `Expected opts.${name} to be either a ${type}, or undefined.`;
+  } else {
+    msg = `Expected opts.${name} to be a ${type}.`;
+  }
+
+  throw makeError(msg, GENSYNC_OPTIONS_ERROR);
+}
+function makeError(msg, code) {
+  return Object.assign(new Error(msg), { code });
+}
+
+/**
+ * Given an options object, return a new generator that dispatches the
+ * correct handler based on sync or async execution.
+ */
+function newGenerator({ name, arity, sync, async, errback }) {
+  assertTypeof("string", "name", name, true /* allowUndefined */);
+  assertTypeof("number", "arity", arity, true /* allowUndefined */);
+  assertTypeof("function", "sync", sync);
+  assertTypeof("function", "async", async, true /* allowUndefined */);
+  assertTypeof("function", "errback", errback, true /* allowUndefined */);
+  if (async && errback) {
+    throw makeError(
+      "Expected one of either opts.async or opts.errback, but got _both_.",
+      GENSYNC_OPTIONS_ERROR
+    );
+  }
+
+  if (typeof name !== "string") {
+    let fnName;
+    if (errback && errback.name && errback.name !== "errback") {
+      fnName = errback.name;
+    }
+    if (async && async.name && async.name !== "async") {
+      fnName = async.name.replace(/Async$/, "");
+    }
+    if (sync && sync.name && sync.name !== "sync") {
+      fnName = sync.name.replace(/Sync$/, "");
+    }
+
+    if (typeof fnName === "string") {
+      name = fnName;
+    }
+  }
+
+  if (typeof arity !== "number") {
+    arity = sync.length;
+  }
+
+  return buildOperation({
+    name,
+    arity,
+    sync: function(args) {
+      return sync.apply(this, args);
+    },
+    async: function(args, resolve, reject) {
+      if (async) {
+        async.apply(this, args).then(resolve, reject);
+      } else if (errback) {
+        errback.call(this, ...args, (err, value) => {
+          if (err == null) resolve(value);
+          else reject(err);
+        });
+      } else {
+        resolve(sync.apply(this, args));
+      }
+    },
+  });
+}
+
+function wrapGenerator(genFn) {
+  return setFunctionMetadata(genFn.name, genFn.length, function(...args) {
+    return genFn.apply(this, args);
+  });
+}
+
+function buildOperation({ name, arity, sync, async }) {
+  return setFunctionMetadata(name, arity, function*(...args) {
+    const resume = yield GENSYNC_START;
+    if (!resume) {
+      // Break the tail call to avoid a bug in V8 v6.X with --harmony enabled.
+      const res = sync.call(this, args);
+      return res;
+    }
+
+    let result;
+    try {
+      async.call(
+        this,
+        args,
+        value => {
+          if (result) return;
+
+          result = { value };
+          resume();
+        },
+        err => {
+          if (result) return;
+
+          result = { err };
+          resume();
+        }
+      );
+    } catch (err) {
+      result = { err };
+      resume();
+    }
+
+    // Suspend until the callbacks run. Will resume synchronously if the
+    // callback was already called.
+    yield GENSYNC_SUSPEND;
+
+    if (result.hasOwnProperty("err")) {
+      throw result.err;
+    }
+
+    return result.value;
+  });
+}
+
+function evaluateSync(gen) {
+  let value;
+  while (!({ value } = gen.next()).done) {
+    assertStart(value, gen);
+  }
+  return value;
+}
+
+function evaluateAsync(gen, resolve, reject) {
+  (function step() {
+    try {
+      let value;
+      while (!({ value } = gen.next()).done) {
+        assertStart(value, gen);
+
+        // If this throws, it is considered to have broken the contract
+        // established for async handlers. If these handlers are called
+        // synchronously, it is also considered bad behavior.
+        let sync = true;
+        let didSyncResume = false;
+        const out = gen.next(() => {
+          if (sync) {
+            didSyncResume = true;
+          } else {
+            step();
+          }
+        });
+        sync = false;
+
+        assertSuspend(out, gen);
+
+        if (!didSyncResume) {
+          // Callback wasn't called synchronously, so break out of the loop
+          // and let it call 'step' later.
+          return;
+        }
+      }
+
+      return resolve(value);
+    } catch (err) {
+      return reject(err);
+    }
+  })();
+}
+
+function assertStart(value, gen) {
+  if (value === GENSYNC_START) return;
+
+  throwError(
+    gen,
+    makeError(
+      `Got unexpected yielded value in gensync generator: ${JSON.stringify(
+        value
+      )}. Did you perhaps mean to use 'yield*' instead of 'yield'?`,
+      GENSYNC_EXPECTED_START
+    )
+  );
+}
+function assertSuspend({ value, done }, gen) {
+  if (!done && value === GENSYNC_SUSPEND) return;
+
+  throwError(
+    gen,
+    makeError(
+      done
+        ? "Unexpected generator completion. If you get this, it is probably a gensync bug."
+        : `Expected GENSYNC_SUSPEND, got ${JSON.stringify(
+            value
+          )}. If you get this, it is probably a gensync bug.`,
+      GENSYNC_EXPECTED_SUSPEND
+    )
+  );
+}
+
+function throwError(gen, err) {
+  // Call `.throw` so that users can step in a debugger to easily see which
+  // 'yield' passed an unexpected value. If the `.throw` call didn't throw
+  // back to the generator, we explicitly do it to stop the error
+  // from being swallowed by user code try/catches.
+  if (gen.throw) gen.throw(err);
+  throw err;
+}
+
+function isIterable(value) {
+  return (
+    !!value &&
+    (typeof value === "object" || typeof value === "function") &&
+    !value[Symbol.iterator]
+  );
+}
+
+function setFunctionMetadata(name, arity, fn) {
+  if (typeof name === "string") {
+    // This should always work on the supported Node versions, but for the
+    // sake of users that are compiling to older versions, we check for
+    // configurability so we don't throw.
+    const nameDesc = Object.getOwnPropertyDescriptor(fn, "name");
+    if (!nameDesc || nameDesc.configurable) {
+      Object.defineProperty(
+        fn,
+        "name",
+        Object.assign(nameDesc || {}, {
+          configurable: true,
+          value: name,
+        })
+      );
+    }
+  }
+
+  if (typeof arity === "number") {
+    const lengthDesc = Object.getOwnPropertyDescriptor(fn, "length");
+    if (!lengthDesc || lengthDesc.configurable) {
+      Object.defineProperty(
+        fn,
+        "length",
+        Object.assign(lengthDesc || {}, {
+          configurable: true,
+          value: arity,
+        })
+      );
+    }
+  }
+
+  return fn;
+}
+™/README.md≈Ê# gensync
+
+This module allows for developers to write common code that can share
+implementation details, hiding whether an underlying request happens
+synchronously or asynchronously. This is in contrast with many current Node
+APIs which explicitly implement the same API twice, once with calls to
+synchronous functions, and once with asynchronous functions.
+
+Take for example `fs.readFile` and `fs.readFileSync`, if you're writing an API
+that loads a file and then performs a synchronous operation on the data, it
+can be frustrating to maintain two parallel functions.
+
+
+## Example
+
+```js
+const fs = require("fs");
+const gensync = require("gensync");
+
+const readFile = gensync({
+  sync: fs.readFileSync,
+  errback: fs.readFile,
+});
+
+const myOperation = gensync(function* (filename) {
+  const code = yield* readFile(filename, "utf8");
+
+  return "// some custom prefix\n" + code;
+});
+
+// Load and add the prefix synchronously:
+const result = myOperation.sync("./some-file.js");
+
+// Load and add the prefix asynchronously with promises:
+myOperation.async("./some-file.js").then(result => {
+
+});
+
+// Load and add the prefix asynchronously with promises:
+myOperation.errback("./some-file.js", (err, result) => {
+
+});
+```
+
+This could even be exposed as your official API by doing
+```js
+// Using the common 'Sync' suffix for sync functions, and 'Async' suffix for
+// promise-returning versions.
+exports.myOperationSync = myOperation.sync;
+exports.myOperationAsync = myOperation.async;
+exports.myOperation = myOperation.errback;
+```
+or potentially expose one of the async versions as the default, with a
+`.sync` property on the function to expose the synchronous version.
+```js
+module.exports = myOperation.errback;
+module.exports.sync = myOperation.sync;
+````
+
+
+## API
+
+### gensync(generatorFnOrOptions)
+
+Returns a function that can be "await"-ed in another `gensync` generator
+function, or executed via
+
+* `.sync(...args)` - Returns the computed value, or throws.
+* `.async(...args)` - Returns a promise for the computed value.
+* `.errback(...args, (err, result) => {})` - Calls the callback with the computed value, or error.
+
+
+#### Passed a generator
+
+Wraps the generator to populate the `.sync`/`.async`/`.errback` helpers above to
+allow for evaluation of the generator for the final value.
+
+##### Example
+
+```js
+const readFile = function* () {
+  return 42;
+};
+
+const readFileAndMore = gensync(function* (){
+  const val = yield* readFile();
+  return 42 + val;
+});
+
+// In general cases
+const code = readFileAndMore.sync("./file.js", "utf8");
+readFileAndMore.async("./file.js", "utf8").then(code => {})
+readFileAndMore.errback("./file.js", "utf8", (err, code) => {});
+
+// In a generator being called indirectly with .sync/.async/.errback
+const code = yield* readFileAndMore("./file.js", "utf8");
+```
+
+
+#### Passed an options object
+
+* `opts.sync`
+
+  Example: `(...args) => 4`
+
+  A function that will be called when `.sync()` is called on the `gensync()`
+  result, or when the result is passed to `yield*` in another generator that
+  is being run synchronously.
+
+  Also called for `.async()` calls if no async handlers are provided.
+
+* `opts.async`
+
+  Example: `async (...args) => 4`
+
+  A function that will be called when `.async()` or `.errback()` is called on
+  the `gensync()` result, or when the result is passed to `yield*` in another
+  generator that is being run asynchronously.
+
+* `opts.errback`
+
+  Example: `(...args, cb) => cb(null, 4)`
+
+  A function that will be called when `.async()` or `.errback()` is called on
+  the `gensync()` result, or when the result is passed to `yield*` in another
+  generator that is being run asynchronously.
+
+  This option allows for simpler compatibility with many existing Node APIs,
+  and also avoids introducing the extra even loop turns that promises introduce
+  to access the result value.
+
+* `opts.name`
+
+  Example: `"readFile"`
+
+  A string name to apply to the returned function. If no value is provided,
+  the name of `errback`/`async`/`sync` functions will be used, with any
+  `Sync` or `Async` suffix stripped off. If the callback is simply named
+  with ES6 inference (same name as the options property), the name is ignored.
+
+* `opts.arity`
+
+  Example: `4`
+
+  A number for the length to set on the returned function. If no value
+  is provided, the length will be carried over from the `sync` function's
+  `length` value.
+
+##### Example
+
+```js
+const readFile = gensync({
+  sync: fs.readFileSync,
+  errback: fs.readFile,
+});
+
+const code = readFile.sync("./file.js", "utf8");
+readFile.async("./file.js", "utf8").then(code => {})
+readFile.errback("./file.js", "utf8", (err, code) => {});
+```
+
+
+### gensync.all(iterable)
+
+`Promise.all`-like combinator that works with an iterable of generator objects
+that could be passed to `yield*` within a gensync generator.
+
+#### Example
+
+```js
+const loadFiles = gensync(function* () {
+  return yield* gensync.all([
+    readFile("./one.js"),
+    readFile("./two.js"),
+    readFile("./three.js"),
+  ]);
+});
+```
+
+
+### gensync.race(iterable)
+
+`Promise.race`-like combinator that works with an iterable of generator objects
+that could be passed to `yield*` within a gensync generator.
+
+#### Example
+
+```js
+const loadFiles = gensync(function* () {
+  return yield* gensync.race([
+    readFile("./one.js"),
+    readFile("./two.js"),
+    readFile("./three.js"),
+  ]);
+});
+```
+Æ/index.js.flow≈N// @flow
+
+opaque type Next = Function | void;
+opaque type Yield = mixed;
+
+export type Gensync<Args, Return> = {
+  (...args: Args): Handler<Return>,
+  sync(...args: Args): Return,
+  async(...args: Args): Promise<Return>,
+  // ...args: [...Args, Callback]
+  errback(...args: any[]): void,
+};
+
+export type Handler<Return> = Generator<Yield, Return, Next>;
+export type Options<Args, Return> = {
+  sync(...args: Args): Return,
+  arity?: number,
+  name?: string,
+} & (
+  | { async?: (...args: Args) => Promise<Return> }
+  // ...args: [...Args, Callback]
+  | { errback(...args: any[]): void }
+);
+
+declare module.exports: {
+  <Args, Return>(
+    Options<Args, Return> | ((...args: Args) => Handler<Return>)
+  ): Gensync<Args, Return>,
+
+  all<Return>(Array<Handler<Return>>): Handler<Return[]>,
+  race<Return>(Array<Handler<Return>>): Handler<Return>,
+};
+≥/test/index.test.js≈+"use strict";
+
+const promisify = require("util.promisify");
+const gensync = require("../");
+
+const TEST_ERROR = new Error("TEST_ERROR");
+
+const DID_ERROR = new Error("DID_ERROR");
+
+const doSuccess = gensync({
+  sync: () => 42,
+  async: () => Promise.resolve(42),
+});
+
+const doError = gensync({
+  sync: () => {
+    throw DID_ERROR;
+  },
+  async: () => Promise.reject(DID_ERROR),
+});
+
+function throwTestError() {
+  throw TEST_ERROR;
+}
+
+async function expectResult(
+  fn,
+  arg,
+  { error, value, expectSync = false, syncErrback = expectSync }
+) {
+  if (!expectSync) {
+    expect(() => fn.sync(arg)).toThrow(TEST_ERROR);
+  } else if (error) {
+    expect(() => fn.sync(arg)).toThrow(error);
+  } else {
+    expect(fn.sync(arg)).toBe(value);
+  }
+
+  if (error) {
+    await expect(fn.async(arg)).rejects.toBe(error);
+  } else {
+    await expect(fn.async(arg)).resolves.toBe(value);
+  }
+
+  await new Promise((resolve, reject) => {
+    let sync = true;
+    fn.errback(arg, (err, val) => {
+      try {
+        expect(err).toBe(error);
+        expect(val).toBe(value);
+        expect(sync).toBe(syncErrback);
+
+        resolve();
+      } catch (e) {
+        reject(e);
+      }
+    });
+    sync = false;
+  });
+}
+
+describe("gensync({})", () => {
+  describe("option validation", () => {
+    test("disallow async and errback handler together", () => {
+      try {
+        gensync({
+          sync: throwTestError,
+          async: throwTestError,
+          errback: throwTestError,
+        });
+
+        throwTestError();
+      } catch (err) {
+        expect(err.message).toMatch(
+          /Expected one of either opts.async or opts.errback, but got _both_\./
+        );
+        expect(err.code).toBe("GENSYNC_OPTIONS_ERROR");
+      }
+    });
+
+    test("disallow missing sync handler", () => {
+      try {
+        gensync({
+          async: throwTestError,
+        });
+
+        throwTestError();
+      } catch (err) {
+        expect(err.message).toMatch(/Expected opts.sync to be a function./);
+        expect(err.code).toBe("GENSYNC_OPTIONS_ERROR");
+      }
+    });
+
+    test("errback callback required", () => {
+      const fn = gensync({
+        sync: throwTestError,
+        async: throwTestError,
+      });
+
+      try {
+        fn.errback();
+
+        throwTestError();
+      } catch (err) {
+        expect(err.message).toMatch(/function called without callback/);
+        expect(err.code).toBe("GENSYNC_ERRBACK_NO_CALLBACK");
+      }
+    });
+  });
+
+  describe("generator function metadata", () => {
+    test("automatic naming", () => {
+      expect(
+        gensync({
+          sync: function readFileSync() {},
+          async: () => {},
+        }).name
+      ).toBe("readFile");
+      expect(
+        gensync({
+          sync: function readFile() {},
+          async: () => {},
+        }).name
+      ).toBe("readFile");
+      expect(
+        gensync({
+          sync: function readFileAsync() {},
+          async: () => {},
+        }).name
+      ).toBe("readFileAsync");
+
+      expect(
+        gensync({
+          sync: () => {},
+          async: function readFileSync() {},
+        }).name
+      ).toBe("readFileSync");
+      expect(
+        gensync({
+          sync: () => {},
+          async: function readFile() {},
+        }).name
+      ).toBe("readFile");
+      expect(
+        gensync({
+          sync: () => {},
+          async: function readFileAsync() {},
+        }).name
+      ).toBe("readFile");
+
+      expect(
+        gensync({
+          sync: () => {},
+          errback: function readFileSync() {},
+        }).name
+      ).toBe("readFileSync");
+      expect(
+        gensync({
+          sync: () => {},
+          errback: function readFile() {},
+        }).name
+      ).toBe("readFile");
+      expect(
+        gensync({
+          sync: () => {},
+          errback: function readFileAsync() {},
+        }).name
+      ).toBe("readFileAsync");
+    });
+
+    test("explicit naming", () => {
+      expect(
+        gensync({
+          name: "readFile",
+          sync: () => {},
+          async: () => {},
+        }).name
+      ).toBe("readFile");
+    });
+
+    test("default arity", () => {
+      expect(
+        gensync({
+          sync: function(a, b, c, d, e, f, g) {
+            throwTestError();
+          },
+          async: throwTestError,
+        }).length
+      ).toBe(7);
+    });
+
+    test("explicit arity", () => {
+      expect(
+        gensync({
+          arity: 3,
+          sync: throwTestError,
+          async: throwTestError,
+        }).length
+      ).toBe(3);
+    });
+  });
+
+  describe("'sync' handler", async () => {
+    test("success", async () => {
+      const fn = gensync({
+        sync: (...args) => JSON.stringify(args),
+      });
+
+      await expectResult(fn, 42, { value: "[42]", expectSync: true });
+    });
+
+    test("failure", async () => {
+      const fn = gensync({
+        sync: (...args) => {
+          throw JSON.stringify(args);
+        },
+      });
+
+      await expectResult(fn, 42, { error: "[42]", expectSync: true });
+    });
+  });
+
+  describe("'async' handler", async () => {
+    test("success", async () => {
+      const fn = gensync({
+        sync: throwTestError,
+        async: (...args) => Promise.resolve(JSON.stringify(args)),
+      });
+
+      await expectResult(fn, 42, { value: "[42]" });
+    });
+
+    test("failure", async () => {
+      const fn = gensync({
+        sync: throwTestError,
+        async: (...args) => Promise.reject(JSON.stringify(args)),
+      });
+
+      await expectResult(fn, 42, { error: "[42]" });
+    });
+  });
+
+  describe("'errback' sync handler", async () => {
+    test("success", async () => {
+      const fn = gensync({
+        sync: throwTestError,
+        errback: (...args) => args.pop()(null, JSON.stringify(args)),
+      });
+
+      await expectResult(fn, 42, { value: "[42]", syncErrback: true });
+    });
+
+    test("failure", async () => {
+      const fn = gensync({
+        sync: throwTestError,
+        errback: (...args) => args.pop()(JSON.stringify(args)),
+      });
+
+      await expectResult(fn, 42, { error: "[42]", syncErrback: true });
+    });
+  });
+
+  describe("'errback' async handler", async () => {
+    test("success", async () => {
+      const fn = gensync({
+        sync: throwTestError,
+        errback: (...args) =>
+          process.nextTick(() => args.pop()(null, JSON.stringify(args))),
+      });
+
+      await expectResult(fn, 42, { value: "[42]" });
+    });
+
+    test("failure", async () => {
+      const fn = gensync({
+        sync: throwTestError,
+        errback: (...args) =>
+          process.nextTick(() => args.pop()(JSON.stringify(args))),
+      });
+
+      await expectResult(fn, 42, { error: "[42]" });
+    });
+  });
+});
+
+describe("gensync(function* () {})", () => {
+  test("sync throw before body", async () => {
+    const fn = gensync(function*(arg = throwTestError()) {});
+
+    await expectResult(fn, undefined, {
+      error: TEST_ERROR,
+      syncErrback: true,
+    });
+  });
+
+  test("sync throw inside body", async () => {
+    const fn = gensync(function*() {
+      throwTestError();
+    });
+
+    await expectResult(fn, undefined, {
+      error: TEST_ERROR,
+      syncErrback: true,
+    });
+  });
+
+  test("async throw inside body", async () => {
+    const fn = gensync(function*() {
+      const val = yield* doSuccess();
+      throwTestError();
+    });
+
+    await expectResult(fn, undefined, {
+      error: TEST_ERROR,
+    });
+  });
+
+  test("error inside body", async () => {
+    const fn = gensync(function*() {
+      yield* doError();
+    });
+
+    await expectResult(fn, undefined, {
+      error: DID_ERROR,
+      expectSync: true,
+      syncErrback: false,
+    });
+  });
+
+  test("successful return value", async () => {
+    const fn = gensync(function*() {
+      const value = yield* doSuccess();
+
+      expect(value).toBe(42);
+
+      return 84;
+    });
+
+    await expectResult(fn, undefined, {
+      value: 84,
+      expectSync: true,
+      syncErrback: false,
+    });
+  });
+
+  test("successful final value", async () => {
+    const fn = gensync(function*() {
+      return 42;
+    });
+
+    await expectResult(fn, undefined, {
+      value: 42,
+      expectSync: true,
+    });
+  });
+
+  test("yield unexpected object", async () => {
+    const fn = gensync(function*() {
+      yield {};
+    });
+
+    try {
+      await fn.async();
+
+      throwTestError();
+    } catch (err) {
+      expect(err.message).toMatch(
+        /Got unexpected yielded value in gensync generator/
+      );
+      expect(err.code).toBe("GENSYNC_EXPECTED_START");
+    }
+  });
+
+  test("yield suspend yield", async () => {
+    const fn = gensync(function*() {
+      yield Symbol.for("gensync:v1:start");
+
+      // Should be "yield*" for no error.
+      yield {};
+    });
+
+    try {
+      await fn.async();
+
+      throwTestError();
+    } catch (err) {
+      expect(err.message).toMatch(/Expected GENSYNC_SUSPEND, got {}/);
+      expect(err.code).toBe("GENSYNC_EXPECTED_SUSPEND");
+    }
+  });
+
+  test("yield suspend return", async () => {
+    const fn = gensync(function*() {
+      yield Symbol.for("gensync:v1:start");
+
+      // Should be "yield*" for no error.
+      return {};
+    });
+
+    try {
+      await fn.async();
+
+      throwTestError();
+    } catch (err) {
+      expect(err.message).toMatch(/Unexpected generator completion/);
+      expect(err.code).toBe("GENSYNC_EXPECTED_SUSPEND");
+    }
+  });
+});
+
+describe("gensync.all()", () => {
+  test("success", async () => {
+    const fn = gensync(function*() {
+      const result = yield* gensync.all([doSuccess(), doSuccess()]);
+
+      expect(result).toEqual([42, 42]);
+    });
+
+    await expectResult(fn, undefined, {
+      value: undefined,
+      expectSync: true,
+      syncErrback: false,
+    });
+  });
+
+  test("error first", async () => {
+    const fn = gensync(function*() {
+      yield* gensync.all([doError(), doSuccess()]);
+    });
+
+    await expectResult(fn, undefined, {
+      error: DID_ERROR,
+      expectSync: true,
+      syncErrback: false,
+    });
+  });
+
+  test("error last", async () => {
+    const fn = gensync(function*() {
+      yield* gensync.all([doSuccess(), doError()]);
+    });
+
+    await expectResult(fn, undefined, {
+      error: DID_ERROR,
+      expectSync: true,
+      syncErrback: false,
+    });
+  });
+
+  test("empty list", async () => {
+    const fn = gensync(function*() {
+      yield* gensync.all([]);
+    });
+
+    await expectResult(fn, undefined, {
+      value: undefined,
+      expectSync: true,
+      syncErrback: false,
+    });
+  });
+});
+
+describe("gensync.race()", () => {
+  test("success", async () => {
+    const fn = gensync(function*() {
+      const result = yield* gensync.race([doSuccess(), doError()]);
+
+      expect(result).toEqual(42);
+    });
+
+    await expectResult(fn, undefined, {
+      value: undefined,
+      expectSync: true,
+      syncErrback: false,
+    });
+  });
+
+  test("error", async () => {
+    const fn = gensync(function*() {
+      yield* gensync.race([doError(), doSuccess()]);
+    });
+
+    await expectResult(fn, undefined, {
+      error: DID_ERROR,
+      expectSync: true,
+      syncErrback: false,
+    });
+  });
+});
+Æ/test/.babelrcƒD{
+  presets: [
+    ["env", { targets: { node: "current" }}],
+  ],
+}
+≠/package.json≈ä{
+  "name": "gensync",
+  "version": "1.0.0-beta.2",
+  "license": "MIT",
+  "description": "Allows users to use generators in order to write common functions that can be both sync or async.",
+  "main": "index.js",
+  "author": "Logan Smyth <loganfsmyth@gmail.com>",
+  "homepage": "https://github.com/loganfsmyth/gensync",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/loganfsmyth/gensync.git"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "engines": {
+    "node": ">=6.9.0"
+  },
+  "keywords": [
+    "async",
+    "sync",
+    "generators",
+    "async-await",
+    "callbacks"
+  ],
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-preset-env": "^1.6.1",
+    "eslint": "^4.19.1",
+    "eslint-config-prettier": "^2.9.0",
+    "eslint-plugin-node": "^6.0.1",
+    "eslint-plugin-prettier": "^2.6.0",
+    "flow-bin": "^0.71.0",
+    "jest": "^22.4.3",
+    "prettier": "^1.12.1"
+  }
+}

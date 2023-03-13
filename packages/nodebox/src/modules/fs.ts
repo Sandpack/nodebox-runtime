@@ -63,6 +63,12 @@ export interface FileSystemEvents {
     recursive?: boolean;
   };
 
+  'fs/rm': {
+    path: string;
+    force?: boolean;
+    recursive?: boolean;
+  };
+
   'fs/watch': {
     watcherId: string;
     includes: string[];
@@ -153,6 +159,13 @@ export class FileSystemApi {
       throw new Error('File not found');
     }
     return response.data;
+  }
+
+  public async rm(path: string, options?: { force?: boolean; recursive?: boolean }): Promise<void> {
+    const { force, recursive } = options || {};
+    await this.channel.send('fs/rm', { path, force, recursive }).catch((error) => {
+      throw new Error(format('Failed to remove file at path "%s"', path), { cause: error });
+    });
   }
 
   /**

@@ -1,0 +1,940 @@
+á≠/templates.js≈='use strict';
+const TEMPLATE_REGEX = /(?:\\(u[a-f\d]{4}|x[a-f\d]{2}|.))|(?:\{(~)?(\w+(?:\([^)]*\))?(?:\.\w+(?:\([^)]*\))?)*)(?:[ \t]|(?=\r?\n)))|(\})|((?:.|[\r\n\f])+?)/gi;
+const STYLE_REGEX = /(?:^|\.)(\w+)(?:\(([^)]*)\))?/g;
+const STRING_REGEX = /^(['"])((?:\\.|(?!\1)[^\\])*)\1$/;
+const ESCAPE_REGEX = /\\(u[a-f\d]{4}|x[a-f\d]{2}|.)|([^\\])/gi;
+
+const ESCAPES = new Map([
+	['n', '\n'],
+	['r', '\r'],
+	['t', '\t'],
+	['b', '\b'],
+	['f', '\f'],
+	['v', '\v'],
+	['0', '\0'],
+	['\\', '\\'],
+	['e', '\u001B'],
+	['a', '\u0007']
+]);
+
+function unescape(c) {
+	if ((c[0] === 'u' && c.length === 5) || (c[0] === 'x' && c.length === 3)) {
+		return String.fromCharCode(parseInt(c.slice(1), 16));
+	}
+
+	return ESCAPES.get(c) || c;
+}
+
+function parseArguments(name, args) {
+	const results = [];
+	const chunks = args.trim().split(/\s*,\s*/g);
+	let matches;
+
+	for (const chunk of chunks) {
+		if (!isNaN(chunk)) {
+			results.push(Number(chunk));
+		} else if ((matches = chunk.match(STRING_REGEX))) {
+			results.push(matches[2].replace(ESCAPE_REGEX, (m, escape, chr) => escape ? unescape(escape) : chr));
+		} else {
+			throw new Error(`Invalid Chalk template style argument: ${chunk} (in style '${name}')`);
+		}
+	}
+
+	return results;
+}
+
+function parseStyle(style) {
+	STYLE_REGEX.lastIndex = 0;
+
+	const results = [];
+	let matches;
+
+	while ((matches = STYLE_REGEX.exec(style)) !== null) {
+		const name = matches[1];
+
+		if (matches[2]) {
+			const args = parseArguments(name, matches[2]);
+			results.push([name].concat(args));
+		} else {
+			results.push([name]);
+		}
+	}
+
+	return results;
+}
+
+function buildStyle(chalk, styles) {
+	const enabled = {};
+
+	for (const layer of styles) {
+		for (const style of layer.styles) {
+			enabled[style[0]] = layer.inverse ? null : style.slice(1);
+		}
+	}
+
+	let current = chalk;
+	for (const styleName of Object.keys(enabled)) {
+		if (Array.isArray(enabled[styleName])) {
+			if (!(styleName in current)) {
+				throw new Error(`Unknown Chalk style: ${styleName}`);
+			}
+
+			if (enabled[styleName].length > 0) {
+				current = current[styleName].apply(current, enabled[styleName]);
+			} else {
+				current = current[styleName];
+			}
+		}
+	}
+
+	return current;
+}
+
+module.exports = (chalk, tmp) => {
+	const styles = [];
+	const chunks = [];
+	let chunk = [];
+
+	// eslint-disable-next-line max-params
+	tmp.replace(TEMPLATE_REGEX, (m, escapeChar, inverse, style, close, chr) => {
+		if (escapeChar) {
+			chunk.push(unescape(escapeChar));
+		} else if (style) {
+			const str = chunk.join('');
+			chunk = [];
+			chunks.push(styles.length === 0 ? str : buildStyle(chalk, styles)(str));
+			styles.push({inverse, styles: parseStyle(style)});
+		} else if (close) {
+			if (styles.length === 0) {
+				throw new Error('Found extraneous } in Chalk template literal');
+			}
+
+			chunks.push(buildStyle(chalk, styles)(chunk.join('')));
+			chunk = [];
+			styles.pop();
+		} else {
+			chunk.push(chr);
+		}
+	});
+
+	chunks.push(chunk.join(''));
+
+	if (styles.length > 0) {
+		const errMsg = `Chalk template literal is missing ${styles.length} closing bracket${styles.length === 1 ? '' : 's'} (\`}\`)`;
+		throw new Error(errMsg);
+	}
+
+	return chunks.join('');
+};
+™/readme.md≈*<h1 align="center">
+	<br>
+	<br>
+	<img width="320" src="media/logo.svg" alt="Chalk">
+	<br>
+	<br>
+	<br>
+</h1>
+
+> Terminal string styling done right
+
+[![Build Status](https://travis-ci.org/chalk/chalk.svg?branch=master)](https://travis-ci.org/chalk/chalk) [![Coverage Status](https://coveralls.io/repos/github/chalk/chalk/badge.svg?branch=master)](https://coveralls.io/github/chalk/chalk?branch=master) [![](https://img.shields.io/badge/unicorn-approved-ff69b4.svg)](https://www.youtube.com/watch?v=9auOCbH5Ns4) [![XO code style](https://img.shields.io/badge/code_style-XO-5ed9c7.svg)](https://github.com/xojs/xo) [![Mentioned in Awesome Node.js](https://awesome.re/mentioned-badge.svg)](https://github.com/sindresorhus/awesome-nodejs)
+
+### [See what's new in Chalk 2](https://github.com/chalk/chalk/releases/tag/v2.0.0)
+
+<img src="https://cdn.rawgit.com/chalk/ansi-styles/8261697c95bf34b6c7767e2cbe9941a851d59385/screenshot.svg" alt="" width="900">
+
+
+## Highlights
+
+- Expressive API
+- Highly performant
+- Ability to nest styles
+- [256/Truecolor color support](#256-and-truecolor-color-support)
+- Auto-detects color support
+- Doesn't extend `String.prototype`
+- Clean and focused
+- Actively maintained
+- [Used by ~23,000 packages](https://www.npmjs.com/browse/depended/chalk) as of December 31, 2017
+
+
+## Install
+
+```console
+$ npm install chalk
+```
+
+<a href="https://www.patreon.com/sindresorhus">
+	<img src="https://c5.patreon.com/external/logo/become_a_patron_button@2x.png" width="160">
+</a>
+
+
+## Usage
+
+```js
+const chalk = require('chalk');
+
+console.log(chalk.blue('Hello world!'));
+```
+
+Chalk comes with an easy to use composable API where you just chain and nest the styles you want.
+
+```js
+const chalk = require('chalk');
+const log = console.log;
+
+// Combine styled and normal strings
+log(chalk.blue('Hello') + ' World' + chalk.red('!'));
+
+// Compose multiple styles using the chainable API
+log(chalk.blue.bgRed.bold('Hello world!'));
+
+// Pass in multiple arguments
+log(chalk.blue('Hello', 'World!', 'Foo', 'bar', 'biz', 'baz'));
+
+// Nest styles
+log(chalk.red('Hello', chalk.underline.bgBlue('world') + '!'));
+
+// Nest styles of the same type even (color, underline, background)
+log(chalk.green(
+	'I am a green line ' +
+	chalk.blue.underline.bold('with a blue substring') +
+	' that becomes green again!'
+));
+
+// ES2015 template literal
+log(`
+CPU: ${chalk.red('90%')}
+RAM: ${chalk.green('40%')}
+DISK: ${chalk.yellow('70%')}
+`);
+
+// ES2015 tagged template literal
+log(chalk`
+CPU: {red ${cpu.totalPercent}%}
+RAM: {green ${ram.used / ram.total * 100}%}
+DISK: {rgb(255,131,0) ${disk.used / disk.total * 100}%}
+`);
+
+// Use RGB colors in terminal emulators that support it.
+log(chalk.keyword('orange')('Yay for orange colored text!'));
+log(chalk.rgb(123, 45, 67).underline('Underlined reddish color'));
+log(chalk.hex('#DEADED').bold('Bold gray!'));
+```
+
+Easily define your own themes:
+
+```js
+const chalk = require('chalk');
+
+const error = chalk.bold.red;
+const warning = chalk.keyword('orange');
+
+console.log(error('Error!'));
+console.log(warning('Warning!'));
+```
+
+Take advantage of console.log [string substitution](https://nodejs.org/docs/latest/api/console.html#console_console_log_data_args):
+
+```js
+const name = 'Sindre';
+console.log(chalk.green('Hello %s'), name);
+//=> 'Hello Sindre'
+```
+
+
+## API
+
+### chalk.`<style>[.<style>...](string, [string...])`
+
+Example: `chalk.red.bold.underline('Hello', 'world');`
+
+Chain [styles](#styles) and call the last one as a method with a string argument. Order doesn't matter, and later styles take precedent in case of a conflict. This simply means that `chalk.red.yellow.green` is equivalent to `chalk.green`.
+
+Multiple arguments will be separated by space.
+
+### chalk.enabled
+
+Color support is automatically detected, as is the level (see `chalk.level`). However, if you'd like to simply enable/disable Chalk, you can do so via the `.enabled` property.
+
+Chalk is enabled by default unless explicitly disabled via the constructor or `chalk.level` is `0`.
+
+If you need to change this in a reusable module, create a new instance:
+
+```js
+const ctx = new chalk.constructor({enabled: false});
+```
+
+### chalk.level
+
+Color support is automatically detected, but you can override it by setting the `level` property. You should however only do this in your own code as it applies globally to all Chalk consumers.
+
+If you need to change this in a reusable module, create a new instance:
+
+```js
+const ctx = new chalk.constructor({level: 0});
+```
+
+Levels are as follows:
+
+0. All colors disabled
+1. Basic color support (16 colors)
+2. 256 color support
+3. Truecolor support (16 million colors)
+
+### chalk.supportsColor
+
+Detect whether the terminal [supports color](https://github.com/chalk/supports-color). Used internally and handled for you, but exposed for convenience.
+
+Can be overridden by the user with the flags `--color` and `--no-color`. For situations where using `--color` is not possible, add the environment variable `FORCE_COLOR=1` to forcefully enable color or `FORCE_COLOR=0` to forcefully disable. The use of `FORCE_COLOR` overrides all other color support checks.
+
+Explicit 256/Truecolor mode can be enabled using the `--color=256` and `--color=16m` flags, respectively.
+
+
+## Styles
+
+### Modifiers
+
+- `reset`
+- `bold`
+- `dim`
+- `italic` *(Not widely supported)*
+- `underline`
+- `inverse`
+- `hidden`
+- `strikethrough` *(Not widely supported)*
+- `visible` (Text is emitted only if enabled)
+
+### Colors
+
+- `black`
+- `red`
+- `green`
+- `yellow`
+- `blue` *(On Windows the bright version is used since normal blue is illegible)*
+- `magenta`
+- `cyan`
+- `white`
+- `gray` ("bright black")
+- `redBright`
+- `greenBright`
+- `yellowBright`
+- `blueBright`
+- `magentaBright`
+- `cyanBright`
+- `whiteBright`
+
+### Background colors
+
+- `bgBlack`
+- `bgRed`
+- `bgGreen`
+- `bgYellow`
+- `bgBlue`
+- `bgMagenta`
+- `bgCyan`
+- `bgWhite`
+- `bgBlackBright`
+- `bgRedBright`
+- `bgGreenBright`
+- `bgYellowBright`
+- `bgBlueBright`
+- `bgMagentaBright`
+- `bgCyanBright`
+- `bgWhiteBright`
+
+
+## Tagged template literal
+
+Chalk can be used as a [tagged template literal](http://exploringjs.com/es6/ch_template-literals.html#_tagged-template-literals).
+
+```js
+const chalk = require('chalk');
+
+const miles = 18;
+const calculateFeet = miles => miles * 5280;
+
+console.log(chalk`
+  There are {bold 5280 feet} in a mile.
+  In {bold ${miles} miles}, there are {green.bold ${calculateFeet(miles)} feet}.
+`);
+```
+
+Blocks are delimited by an opening curly brace (`{`), a style, some content, and a closing curly brace (`}`).
+
+Template styles are chained exactly like normal Chalk styles. The following two statements are equivalent:
+
+```js
+console.log(chalk.bold.rgb(10, 100, 200)('Hello!'));
+console.log(chalk`{bold.rgb(10,100,200) Hello!}`);
+```
+
+Note that function styles (`rgb()`, `hsl()`, `keyword()`, etc.) may not contain spaces between parameters.
+
+All interpolated values (`` chalk`${foo}` ``) are converted to strings via the `.toString()` method. All curly braces (`{` and `}`) in interpolated value strings are escaped.
+
+
+## 256 and Truecolor color support
+
+Chalk supports 256 colors and [Truecolor](https://gist.github.com/XVilka/8346728) (16 million colors) on supported terminal apps.
+
+Colors are downsampled from 16 million RGB values to an ANSI color format that is supported by the terminal emulator (or by specifying `{level: n}` as a Chalk option). For example, Chalk configured to run at level 1 (basic color support) will downsample an RGB value of #FF0000 (red) to 31 (ANSI escape for red).
+
+Examples:
+
+- `chalk.hex('#DEADED').underline('Hello, world!')`
+- `chalk.keyword('orange')('Some orange text')`
+- `chalk.rgb(15, 100, 204).inverse('Hello!')`
+
+Background versions of these models are prefixed with `bg` and the first level of the module capitalized (e.g. `keyword` for foreground colors and `bgKeyword` for background colors).
+
+- `chalk.bgHex('#DEADED').underline('Hello, world!')`
+- `chalk.bgKeyword('orange')('Some orange text')`
+- `chalk.bgRgb(15, 100, 204).inverse('Hello!')`
+
+The following color models can be used:
+
+- [`rgb`](https://en.wikipedia.org/wiki/RGB_color_model) - Example: `chalk.rgb(255, 136, 0).bold('Orange!')`
+- [`hex`](https://en.wikipedia.org/wiki/Web_colors#Hex_triplet) - Example: `chalk.hex('#FF8800').bold('Orange!')`
+- [`keyword`](https://www.w3.org/wiki/CSS/Properties/color/keywords) (CSS keywords) - Example: `chalk.keyword('orange').bold('Orange!')`
+- [`hsl`](https://en.wikipedia.org/wiki/HSL_and_HSV) - Example: `chalk.hsl(32, 100, 50).bold('Orange!')`
+- [`hsv`](https://en.wikipedia.org/wiki/HSL_and_HSV) - Example: `chalk.hsv(32, 100, 100).bold('Orange!')`
+- [`hwb`](https://en.wikipedia.org/wiki/HWB_color_model)  - Example: `chalk.hwb(32, 0, 50).bold('Orange!')`
+- `ansi16`
+- `ansi256`
+
+
+## Windows
+
+If you're on Windows, do yourself a favor and use [`cmder`](http://cmder.net/) instead of `cmd.exe`.
+
+
+## Origin story
+
+[colors.js](https://github.com/Marak/colors.js) used to be the most popular string styling module, but it has serious deficiencies like extending `String.prototype` which causes all kinds of [problems](https://github.com/yeoman/yo/issues/68) and the package is unmaintained. Although there are other packages, they either do too much or not enough. Chalk is a clean and focused alternative.
+
+
+## Related
+
+- [chalk-cli](https://github.com/chalk/chalk-cli) - CLI for this module
+- [ansi-styles](https://github.com/chalk/ansi-styles) - ANSI escape codes for styling strings in the terminal
+- [supports-color](https://github.com/chalk/supports-color) - Detect whether a terminal supports color
+- [strip-ansi](https://github.com/chalk/strip-ansi) - Strip ANSI escape codes
+- [strip-ansi-stream](https://github.com/chalk/strip-ansi-stream) - Strip ANSI escape codes from a stream
+- [has-ansi](https://github.com/chalk/has-ansi) - Check if a string has ANSI escape codes
+- [ansi-regex](https://github.com/chalk/ansi-regex) - Regular expression for matching ANSI escape codes
+- [wrap-ansi](https://github.com/chalk/wrap-ansi) - Wordwrap a string with ANSI escape codes
+- [slice-ansi](https://github.com/chalk/slice-ansi) - Slice a string with ANSI escape codes
+- [color-convert](https://github.com/qix-/color-convert) - Converts colors between different models
+- [chalk-animation](https://github.com/bokub/chalk-animation) - Animate strings in the terminal
+- [gradient-string](https://github.com/bokub/gradient-string) - Apply color gradients to strings
+- [chalk-pipe](https://github.com/LitoMore/chalk-pipe) - Create chalk style schemes with simpler style strings
+- [terminal-link](https://github.com/sindresorhus/terminal-link) - Create clickable links in the terminal
+
+
+## Maintainers
+
+- [Sindre Sorhus](https://github.com/sindresorhus)
+- [Josh Junon](https://github.com/qix-)
+
+
+## License
+
+MIT
+Æ/index.js.flow≈Å// @flow strict
+
+type TemplateStringsArray = $ReadOnlyArray<string>;
+
+export type Level = $Values<{
+	None: 0,
+	Basic: 1,
+	Ansi256: 2,
+	TrueColor: 3
+}>;
+
+export type ChalkOptions = {|
+	enabled?: boolean,
+	level?: Level
+|};
+
+export type ColorSupport = {|
+	level: Level,
+	hasBasic: boolean,
+	has256: boolean,
+	has16m: boolean
+|};
+
+export interface Chalk {
+	(...text: string[]): string,
+	(text: TemplateStringsArray, ...placeholders: string[]): string,
+	constructor(options?: ChalkOptions): Chalk,
+	enabled: boolean,
+	level: Level,
+	rgb(r: number, g: number, b: number): Chalk,
+	hsl(h: number, s: number, l: number): Chalk,
+	hsv(h: number, s: number, v: number): Chalk,
+	hwb(h: number, w: number, b: number): Chalk,
+	bgHex(color: string): Chalk,
+	bgKeyword(color: string): Chalk,
+	bgRgb(r: number, g: number, b: number): Chalk,
+	bgHsl(h: number, s: number, l: number): Chalk,
+	bgHsv(h: number, s: number, v: number): Chalk,
+	bgHwb(h: number, w: number, b: number): Chalk,
+	hex(color: string): Chalk,
+	keyword(color: string): Chalk,
+
+	+reset: Chalk,
+	+bold: Chalk,
+	+dim: Chalk,
+	+italic: Chalk,
+	+underline: Chalk,
+	+inverse: Chalk,
+	+hidden: Chalk,
+	+strikethrough: Chalk,
+
+	+visible: Chalk,
+
+	+black: Chalk,
+	+red: Chalk,
+	+green: Chalk,
+	+yellow: Chalk,
+	+blue: Chalk,
+	+magenta: Chalk,
+	+cyan: Chalk,
+	+white: Chalk,
+	+gray: Chalk,
+	+grey: Chalk,
+	+blackBright: Chalk,
+	+redBright: Chalk,
+	+greenBright: Chalk,
+	+yellowBright: Chalk,
+	+blueBright: Chalk,
+	+magentaBright: Chalk,
+	+cyanBright: Chalk,
+	+whiteBright: Chalk,
+
+	+bgBlack: Chalk,
+	+bgRed: Chalk,
+	+bgGreen: Chalk,
+	+bgYellow: Chalk,
+	+bgBlue: Chalk,
+	+bgMagenta: Chalk,
+	+bgCyan: Chalk,
+	+bgWhite: Chalk,
+	+bgBlackBright: Chalk,
+	+bgRedBright: Chalk,
+	+bgGreenBright: Chalk,
+	+bgYellowBright: Chalk,
+	+bgBlueBright: Chalk,
+	+bgMagentaBright: Chalk,
+	+bgCyanBright: Chalk,
+	+bgWhiteBrigh: Chalk,
+
+	supportsColor: ColorSupport
+};
+
+declare module.exports: Chalk;
+®/license≈UMIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+±/types/index.d.ts≈	1// Type definitions for Chalk
+// Definitions by: Thomas Sauer <https://github.com/t-sauer>
+
+export const enum Level {
+	None = 0,
+	Basic = 1,
+	Ansi256 = 2,
+	TrueColor = 3
+}
+
+export interface ChalkOptions {
+	enabled?: boolean;
+	level?: Level;
+}
+
+export interface ChalkConstructor {
+	new (options?: ChalkOptions): Chalk;
+	(options?: ChalkOptions): Chalk;
+}
+
+export interface ColorSupport {
+	level: Level;
+	hasBasic: boolean;
+	has256: boolean;
+	has16m: boolean;
+}
+
+export interface Chalk {
+	(...text: string[]): string;
+	(text: TemplateStringsArray, ...placeholders: string[]): string;
+	constructor: ChalkConstructor;
+	enabled: boolean;
+	level: Level;
+	rgb(r: number, g: number, b: number): this;
+	hsl(h: number, s: number, l: number): this;
+	hsv(h: number, s: number, v: number): this;
+	hwb(h: number, w: number, b: number): this;
+	bgHex(color: string): this;
+	bgKeyword(color: string): this;
+	bgRgb(r: number, g: number, b: number): this;
+	bgHsl(h: number, s: number, l: number): this;
+	bgHsv(h: number, s: number, v: number): this;
+	bgHwb(h: number, w: number, b: number): this;
+	hex(color: string): this;
+	keyword(color: string): this;
+
+	readonly reset: this;
+	readonly bold: this;
+	readonly dim: this;
+	readonly italic: this;
+	readonly underline: this;
+	readonly inverse: this;
+	readonly hidden: this;
+	readonly strikethrough: this;
+
+	readonly visible: this;
+
+	readonly black: this;
+	readonly red: this;
+	readonly green: this;
+	readonly yellow: this;
+	readonly blue: this;
+	readonly magenta: this;
+	readonly cyan: this;
+	readonly white: this;
+	readonly gray: this;
+	readonly grey: this;
+	readonly blackBright: this;
+	readonly redBright: this;
+	readonly greenBright: this;
+	readonly yellowBright: this;
+	readonly blueBright: this;
+	readonly magentaBright: this;
+	readonly cyanBright: this;
+	readonly whiteBright: this;
+
+	readonly bgBlack: this;
+	readonly bgRed: this;
+	readonly bgGreen: this;
+	readonly bgYellow: this;
+	readonly bgBlue: this;
+	readonly bgMagenta: this;
+	readonly bgCyan: this;
+	readonly bgWhite: this;
+	readonly bgBlackBright: this;
+	readonly bgRedBright: this;
+	readonly bgGreenBright: this;
+	readonly bgYellowBright: this;
+	readonly bgBlueBright: this;
+	readonly bgMagentaBright: this;
+	readonly bgCyanBright: this;
+	readonly bgWhiteBright: this;
+}
+
+declare const chalk: Chalk & { supportsColor: ColorSupport };
+
+export default chalk
+©/index.js≈''use strict';
+const escapeStringRegexp = require('escape-string-regexp');
+const ansiStyles = require('ansi-styles');
+const stdoutColor = require('supports-color').stdout;
+
+const template = require('./templates.js');
+
+const isSimpleWindowsTerm = process.platform === 'win32' && !(process.env.TERM || '').toLowerCase().startsWith('xterm');
+
+// `supportsColor.level` ‚Üí `ansiStyles.color[name]` mapping
+const levelMapping = ['ansi', 'ansi', 'ansi256', 'ansi16m'];
+
+// `color-convert` models to exclude from the Chalk API due to conflicts and such
+const skipModels = new Set(['gray']);
+
+const styles = Object.create(null);
+
+function applyOptions(obj, options) {
+	options = options || {};
+
+	// Detect level if not set manually
+	const scLevel = stdoutColor ? stdoutColor.level : 0;
+	obj.level = options.level === undefined ? scLevel : options.level;
+	obj.enabled = 'enabled' in options ? options.enabled : obj.level > 0;
+}
+
+function Chalk(options) {
+	// We check for this.template here since calling `chalk.constructor()`
+	// by itself will have a `this` of a previously constructed chalk object
+	if (!this || !(this instanceof Chalk) || this.template) {
+		const chalk = {};
+		applyOptions(chalk, options);
+
+		chalk.template = function () {
+			const args = [].slice.call(arguments);
+			return chalkTag.apply(null, [chalk.template].concat(args));
+		};
+
+		Object.setPrototypeOf(chalk, Chalk.prototype);
+		Object.setPrototypeOf(chalk.template, chalk);
+
+		chalk.template.constructor = Chalk;
+
+		return chalk.template;
+	}
+
+	applyOptions(this, options);
+}
+
+// Use bright blue on Windows as the normal blue color is illegible
+if (isSimpleWindowsTerm) {
+	ansiStyles.blue.open = '\u001B[94m';
+}
+
+for (const key of Object.keys(ansiStyles)) {
+	ansiStyles[key].closeRe = new RegExp(escapeStringRegexp(ansiStyles[key].close), 'g');
+
+	styles[key] = {
+		get() {
+			const codes = ansiStyles[key];
+			return build.call(this, this._styles ? this._styles.concat(codes) : [codes], this._empty, key);
+		}
+	};
+}
+
+styles.visible = {
+	get() {
+		return build.call(this, this._styles || [], true, 'visible');
+	}
+};
+
+ansiStyles.color.closeRe = new RegExp(escapeStringRegexp(ansiStyles.color.close), 'g');
+for (const model of Object.keys(ansiStyles.color.ansi)) {
+	if (skipModels.has(model)) {
+		continue;
+	}
+
+	styles[model] = {
+		get() {
+			const level = this.level;
+			return function () {
+				const open = ansiStyles.color[levelMapping[level]][model].apply(null, arguments);
+				const codes = {
+					open,
+					close: ansiStyles.color.close,
+					closeRe: ansiStyles.color.closeRe
+				};
+				return build.call(this, this._styles ? this._styles.concat(codes) : [codes], this._empty, model);
+			};
+		}
+	};
+}
+
+ansiStyles.bgColor.closeRe = new RegExp(escapeStringRegexp(ansiStyles.bgColor.close), 'g');
+for (const model of Object.keys(ansiStyles.bgColor.ansi)) {
+	if (skipModels.has(model)) {
+		continue;
+	}
+
+	const bgModel = 'bg' + model[0].toUpperCase() + model.slice(1);
+	styles[bgModel] = {
+		get() {
+			const level = this.level;
+			return function () {
+				const open = ansiStyles.bgColor[levelMapping[level]][model].apply(null, arguments);
+				const codes = {
+					open,
+					close: ansiStyles.bgColor.close,
+					closeRe: ansiStyles.bgColor.closeRe
+				};
+				return build.call(this, this._styles ? this._styles.concat(codes) : [codes], this._empty, model);
+			};
+		}
+	};
+}
+
+const proto = Object.defineProperties(() => {}, styles);
+
+function build(_styles, _empty, key) {
+	const builder = function () {
+		return applyStyle.apply(builder, arguments);
+	};
+
+	builder._styles = _styles;
+	builder._empty = _empty;
+
+	const self = this;
+
+	Object.defineProperty(builder, 'level', {
+		enumerable: true,
+		get() {
+			return self.level;
+		},
+		set(level) {
+			self.level = level;
+		}
+	});
+
+	Object.defineProperty(builder, 'enabled', {
+		enumerable: true,
+		get() {
+			return self.enabled;
+		},
+		set(enabled) {
+			self.enabled = enabled;
+		}
+	});
+
+	// See below for fix regarding invisible grey/dim combination on Windows
+	builder.hasGrey = this.hasGrey || key === 'gray' || key === 'grey';
+
+	// `__proto__` is used because we must return a function, but there is
+	// no way to create a function with a different prototype
+	builder.__proto__ = proto; // eslint-disable-line no-proto
+
+	return builder;
+}
+
+function applyStyle() {
+	// Support varags, but simply cast to string in case there's only one arg
+	const args = arguments;
+	const argsLen = args.length;
+	let str = String(arguments[0]);
+
+	if (argsLen === 0) {
+		return '';
+	}
+
+	if (argsLen > 1) {
+		// Don't slice `arguments`, it prevents V8 optimizations
+		for (let a = 1; a < argsLen; a++) {
+			str += ' ' + args[a];
+		}
+	}
+
+	if (!this.enabled || this.level <= 0 || !str) {
+		return this._empty ? '' : str;
+	}
+
+	// Turns out that on Windows dimmed gray text becomes invisible in cmd.exe,
+	// see https://github.com/chalk/chalk/issues/58
+	// If we're on Windows and we're dealing with a gray color, temporarily make 'dim' a noop.
+	const originalDim = ansiStyles.dim.open;
+	if (isSimpleWindowsTerm && this.hasGrey) {
+		ansiStyles.dim.open = '';
+	}
+
+	for (const code of this._styles.slice().reverse()) {
+		// Replace any instances already present with a re-opening code
+		// otherwise only the part of the string until said closing code
+		// will be colored, and the rest will simply be 'plain'.
+		str = code.open + str.replace(code.closeRe, code.open) + code.close;
+
+		// Close the styling before a linebreak and reopen
+		// after next line to fix a bleed issue on macOS
+		// https://github.com/chalk/chalk/pull/92
+		str = str.replace(/\r?\n/g, `${code.close}$&${code.open}`);
+	}
+
+	// Reset the original `dim` if we changed it to work around the Windows dimmed gray issue
+	ansiStyles.dim.open = originalDim;
+
+	return str;
+}
+
+function chalkTag(chalk, strings) {
+	if (!Array.isArray(strings)) {
+		// If chalk() was called by itself or with a string,
+		// return the string itself as a string.
+		return [].slice.call(arguments, 1).join(' ');
+	}
+
+	const args = [].slice.call(arguments, 2);
+	const parts = [strings.raw[0]];
+
+	for (let i = 1; i < strings.length; i++) {
+		parts.push(String(args[i - 1]).replace(/[{}\\]/g, '\\$&'));
+		parts.push(String(strings.raw[i]));
+	}
+
+	return template(chalk, parts.join(''));
+}
+
+Object.defineProperties(Chalk.prototype, styles);
+
+module.exports = Chalk(); // eslint-disable-line new-cap
+module.exports.supportsColor = stdoutColor;
+module.exports.default = module.exports; // For TypeScript
+≠/package.json≈´{
+	"name": "chalk",
+	"version": "2.4.2",
+	"description": "Terminal string styling done right",
+	"license": "MIT",
+	"repository": "chalk/chalk",
+	"engines": {
+		"node": ">=4"
+	},
+	"scripts": {
+		"test": "xo && tsc --project types && flow --max-warnings=0 && nyc ava",
+		"bench": "matcha benchmark.js",
+		"coveralls": "nyc report --reporter=text-lcov | coveralls"
+	},
+	"files": [
+		"index.js",
+		"templates.js",
+		"types/index.d.ts",
+		"index.js.flow"
+	],
+	"keywords": [
+		"color",
+		"colour",
+		"colors",
+		"terminal",
+		"console",
+		"cli",
+		"string",
+		"str",
+		"ansi",
+		"style",
+		"styles",
+		"tty",
+		"formatting",
+		"rgb",
+		"256",
+		"shell",
+		"xterm",
+		"log",
+		"logging",
+		"command-line",
+		"text"
+	],
+	"dependencies": {
+		"ansi-styles": "^3.2.1",
+		"escape-string-regexp": "^1.0.5",
+		"supports-color": "^5.3.0"
+	},
+	"devDependencies": {
+		"ava": "*",
+		"coveralls": "^3.0.0",
+		"execa": "^0.9.0",
+		"flow-bin": "^0.68.0",
+		"import-fresh": "^2.0.0",
+		"matcha": "^0.7.0",
+		"nyc": "^11.0.2",
+		"resolve-from": "^4.0.0",
+		"typescript": "^2.5.3",
+		"xo": "*"
+	},
+	"types": "types/index.d.ts",
+	"xo": {
+		"envs": [
+			"node",
+			"mocha"
+		],
+		"ignores": [
+			"test/_flow.js"
+		]
+	}
+}

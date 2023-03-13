@@ -1,0 +1,1270 @@
+è∂/lib/dynamic-import.js≈Ä"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.buildDynamicImport = buildDynamicImport;
+exports.getDynamicImportSource = getDynamicImportSource;
+var t = require("@babel/types");
+var _template = require("@babel/template");
+function getDynamicImportSource(node) {
+  const [source] = node.arguments;
+  return t.isStringLiteral(source) || t.isTemplateLiteral(source) ? source : _template.default.expression.ast`\`\${${source}}\``;
+}
+function buildDynamicImport(node, deferToThen, wrapWithPromise, builder) {
+  const [specifier] = node.arguments;
+  if (t.isStringLiteral(specifier) || t.isTemplateLiteral(specifier) && specifier.quasis.length === 0) {
+    if (deferToThen) {
+      return _template.default.expression.ast`
+        Promise.resolve().then(() => ${builder(specifier)})
+      `;
+    } else return builder(specifier);
+  }
+  const specifierToString = t.isTemplateLiteral(specifier) ? t.identifier("specifier") : t.templateLiteral([t.templateElement({
+    raw: ""
+  }), t.templateElement({
+    raw: ""
+  })], [t.identifier("specifier")]);
+  if (deferToThen) {
+    return _template.default.expression.ast`
+      (specifier =>
+        new Promise(r => r(${specifierToString}))
+          .then(s => ${builder(t.identifier("s"))})
+      )(${specifier})
+    `;
+  } else if (wrapWithPromise) {
+    return _template.default.expression.ast`
+      (specifier =>
+        new Promise(r => r(${builder(specifierToString)}))
+      )(${specifier})
+    `;
+  } else {
+    return _template.default.expression.ast`
+      (specifier => ${builder(specifierToString)})(${specifier})
+    `;
+  }
+}
+
+//# sourceMappingURL=dynamic-import.js.map
+∑/lib/get-module-name.js≈∆"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = getModuleName;
+{
+  const originalGetModuleName = getModuleName;
+  exports.default = getModuleName = function getModuleName(rootOpts, pluginOpts) {
+    var _pluginOpts$moduleId, _pluginOpts$moduleIds, _pluginOpts$getModule, _pluginOpts$moduleRoo;
+    return originalGetModuleName(rootOpts, {
+      moduleId: (_pluginOpts$moduleId = pluginOpts.moduleId) != null ? _pluginOpts$moduleId : rootOpts.moduleId,
+      moduleIds: (_pluginOpts$moduleIds = pluginOpts.moduleIds) != null ? _pluginOpts$moduleIds : rootOpts.moduleIds,
+      getModuleId: (_pluginOpts$getModule = pluginOpts.getModuleId) != null ? _pluginOpts$getModule : rootOpts.getModuleId,
+      moduleRoot: (_pluginOpts$moduleRoo = pluginOpts.moduleRoot) != null ? _pluginOpts$moduleRoo : rootOpts.moduleRoot
+    });
+  };
+}
+function getModuleName(rootOpts, pluginOpts) {
+  const {
+    filename,
+    filenameRelative = filename,
+    sourceRoot = pluginOpts.moduleRoot
+  } = rootOpts;
+  const {
+    moduleId,
+    moduleIds = !!moduleId,
+    getModuleId,
+    moduleRoot = sourceRoot
+  } = pluginOpts;
+  if (!moduleIds) return null;
+  if (moduleId != null && !getModuleId) {
+    return moduleId;
+  }
+  let moduleName = moduleRoot != null ? moduleRoot + "/" : "";
+  if (filenameRelative) {
+    const sourceRootReplacer = sourceRoot != null ? new RegExp("^" + sourceRoot + "/?") : "";
+    moduleName += filenameRelative.replace(sourceRootReplacer, "").replace(/\.(\w*?)$/, "");
+  }
+  moduleName = moduleName.replace(/\\/g, "/");
+  if (getModuleId) {
+    return getModuleId(moduleName) || moduleName;
+  } else {
+    return moduleName;
+  }
+}
+
+//# sourceMappingURL=get-module-name.js.map
+≠/package.json≈‘{
+  "name": "@babel/helper-module-transforms",
+  "version": "7.21.2",
+  "description": "Babel helper functions for implementing ES6 module transformations",
+  "author": "The Babel Team (https://babel.dev/team)",
+  "homepage": "https://babel.dev/docs/en/next/babel-helper-module-transforms",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/babel/babel.git",
+    "directory": "packages/babel-helper-module-transforms"
+  },
+  "main": "./lib/index.js",
+  "dependencies": {
+    "@babel/helper-environment-visitor": "^7.18.9",
+    "@babel/helper-module-imports": "^7.18.6",
+    "@babel/helper-simple-access": "^7.20.2",
+    "@babel/helper-split-export-declaration": "^7.18.6",
+    "@babel/helper-validator-identifier": "^7.19.1",
+    "@babel/template": "^7.20.7",
+    "@babel/traverse": "^7.21.2",
+    "@babel/types": "^7.21.2"
+  },
+  "engines": {
+    "node": ">=6.9.0"
+  },
+  "type": "commonjs"
+}¥/lib/rewrite-this.js≈«"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = rewriteThis;
+var _helperEnvironmentVisitor = require("@babel/helper-environment-visitor");
+var _traverse = require("@babel/traverse");
+var _t = require("@babel/types");
+const {
+  numericLiteral,
+  unaryExpression
+} = _t;
+const rewriteThisVisitor = _traverse.default.visitors.merge([_helperEnvironmentVisitor.default, {
+  ThisExpression(path) {
+    path.replaceWith(unaryExpression("void", numericLiteral(0), true));
+  }
+}]);
+function rewriteThis(programPath) {
+  (0, _traverse.default)(programPath.node, Object.assign({}, rewriteThisVisitor, {
+    noScope: true
+  }));
+}
+
+//# sourceMappingURL=rewrite-this.js.map
+Ÿ#/lib/normalize-and-load-metadata.js≈1Í"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = normalizeModuleAndLoadMetadata;
+exports.hasExports = hasExports;
+exports.isSideEffectImport = isSideEffectImport;
+exports.validateImportInteropOption = validateImportInteropOption;
+var _path = require("path");
+var _helperValidatorIdentifier = require("@babel/helper-validator-identifier");
+var _helperSplitExportDeclaration = require("@babel/helper-split-export-declaration");
+function hasExports(metadata) {
+  return metadata.hasExports;
+}
+function isSideEffectImport(source) {
+  return source.imports.size === 0 && source.importsNamespace.size === 0 && source.reexports.size === 0 && source.reexportNamespace.size === 0 && !source.reexportAll;
+}
+function validateImportInteropOption(importInterop) {
+  if (typeof importInterop !== "function" && importInterop !== "none" && importInterop !== "babel" && importInterop !== "node") {
+    throw new Error(`.importInterop must be one of "none", "babel", "node", or a function returning one of those values (received ${importInterop}).`);
+  }
+  return importInterop;
+}
+function resolveImportInterop(importInterop, source, filename) {
+  if (typeof importInterop === "function") {
+    return validateImportInteropOption(importInterop(source, filename));
+  }
+  return importInterop;
+}
+function normalizeModuleAndLoadMetadata(programPath, exportName, {
+  importInterop,
+  initializeReexports = false,
+  lazy = false,
+  esNamespaceOnly = false,
+  filename
+}) {
+  if (!exportName) {
+    exportName = programPath.scope.generateUidIdentifier("exports").name;
+  }
+  const stringSpecifiers = new Set();
+  nameAnonymousExports(programPath);
+  const {
+    local,
+    sources,
+    hasExports
+  } = getModuleMetadata(programPath, {
+    initializeReexports,
+    lazy
+  }, stringSpecifiers);
+  removeImportExportDeclarations(programPath);
+  for (const [source, metadata] of sources) {
+    if (metadata.importsNamespace.size > 0) {
+      metadata.name = metadata.importsNamespace.values().next().value;
+    }
+    const resolvedInterop = resolveImportInterop(importInterop, source, filename);
+    if (resolvedInterop === "none") {
+      metadata.interop = "none";
+    } else if (resolvedInterop === "node" && metadata.interop === "namespace") {
+      metadata.interop = "node-namespace";
+    } else if (resolvedInterop === "node" && metadata.interop === "default") {
+      metadata.interop = "node-default";
+    } else if (esNamespaceOnly && metadata.interop === "namespace") {
+      metadata.interop = "default";
+    }
+  }
+  return {
+    exportName,
+    exportNameListName: null,
+    hasExports,
+    local,
+    source: sources,
+    stringSpecifiers
+  };
+}
+function getExportSpecifierName(path, stringSpecifiers) {
+  if (path.isIdentifier()) {
+    return path.node.name;
+  } else if (path.isStringLiteral()) {
+    const stringValue = path.node.value;
+    if (!(0, _helperValidatorIdentifier.isIdentifierName)(stringValue)) {
+      stringSpecifiers.add(stringValue);
+    }
+    return stringValue;
+  } else {
+    throw new Error(`Expected export specifier to be either Identifier or StringLiteral, got ${path.node.type}`);
+  }
+}
+function assertExportSpecifier(path) {
+  if (path.isExportSpecifier()) {
+    return;
+  } else if (path.isExportNamespaceSpecifier()) {
+    throw path.buildCodeFrameError("Export namespace should be first transformed by `@babel/plugin-proposal-export-namespace-from`.");
+  } else {
+    throw path.buildCodeFrameError("Unexpected export specifier type");
+  }
+}
+function getModuleMetadata(programPath, {
+  lazy,
+  initializeReexports
+}, stringSpecifiers) {
+  const localData = getLocalExportMetadata(programPath, initializeReexports, stringSpecifiers);
+  const sourceData = new Map();
+  const getData = sourceNode => {
+    const source = sourceNode.value;
+    let data = sourceData.get(source);
+    if (!data) {
+      data = {
+        name: programPath.scope.generateUidIdentifier((0, _path.basename)(source, (0, _path.extname)(source))).name,
+        interop: "none",
+        loc: null,
+        imports: new Map(),
+        importsNamespace: new Set(),
+        reexports: new Map(),
+        reexportNamespace: new Set(),
+        reexportAll: null,
+        lazy: false,
+        referenced: false
+      };
+      sourceData.set(source, data);
+    }
+    return data;
+  };
+  let hasExports = false;
+  programPath.get("body").forEach(child => {
+    if (child.isImportDeclaration()) {
+      const data = getData(child.node.source);
+      if (!data.loc) data.loc = child.node.loc;
+      child.get("specifiers").forEach(spec => {
+        if (spec.isImportDefaultSpecifier()) {
+          const localName = spec.get("local").node.name;
+          data.imports.set(localName, "default");
+          const reexport = localData.get(localName);
+          if (reexport) {
+            localData.delete(localName);
+            reexport.names.forEach(name => {
+              data.reexports.set(name, "default");
+            });
+            data.referenced = true;
+          }
+        } else if (spec.isImportNamespaceSpecifier()) {
+          const localName = spec.get("local").node.name;
+          data.importsNamespace.add(localName);
+          const reexport = localData.get(localName);
+          if (reexport) {
+            localData.delete(localName);
+            reexport.names.forEach(name => {
+              data.reexportNamespace.add(name);
+            });
+            data.referenced = true;
+          }
+        } else if (spec.isImportSpecifier()) {
+          const importName = getExportSpecifierName(spec.get("imported"), stringSpecifiers);
+          const localName = spec.get("local").node.name;
+          data.imports.set(localName, importName);
+          const reexport = localData.get(localName);
+          if (reexport) {
+            localData.delete(localName);
+            reexport.names.forEach(name => {
+              data.reexports.set(name, importName);
+            });
+            data.referenced = true;
+          }
+        }
+      });
+    } else if (child.isExportAllDeclaration()) {
+      hasExports = true;
+      const data = getData(child.node.source);
+      if (!data.loc) data.loc = child.node.loc;
+      data.reexportAll = {
+        loc: child.node.loc
+      };
+      data.referenced = true;
+    } else if (child.isExportNamedDeclaration() && child.node.source) {
+      hasExports = true;
+      const data = getData(child.node.source);
+      if (!data.loc) data.loc = child.node.loc;
+      child.get("specifiers").forEach(spec => {
+        assertExportSpecifier(spec);
+        const importName = getExportSpecifierName(spec.get("local"), stringSpecifiers);
+        const exportName = getExportSpecifierName(spec.get("exported"), stringSpecifiers);
+        data.reexports.set(exportName, importName);
+        data.referenced = true;
+        if (exportName === "__esModule") {
+          throw spec.get("exported").buildCodeFrameError('Illegal export "__esModule".');
+        }
+      });
+    } else if (child.isExportNamedDeclaration() || child.isExportDefaultDeclaration()) {
+      hasExports = true;
+    }
+  });
+  for (const metadata of sourceData.values()) {
+    let needsDefault = false;
+    let needsNamed = false;
+    if (metadata.importsNamespace.size > 0) {
+      needsDefault = true;
+      needsNamed = true;
+    }
+    if (metadata.reexportAll) {
+      needsNamed = true;
+    }
+    for (const importName of metadata.imports.values()) {
+      if (importName === "default") needsDefault = true;else needsNamed = true;
+    }
+    for (const importName of metadata.reexports.values()) {
+      if (importName === "default") needsDefault = true;else needsNamed = true;
+    }
+    if (needsDefault && needsNamed) {
+      metadata.interop = "namespace";
+    } else if (needsDefault) {
+      metadata.interop = "default";
+    }
+  }
+  for (const [source, metadata] of sourceData) {
+    if (lazy !== false && !(isSideEffectImport(metadata) || metadata.reexportAll)) {
+      if (lazy === true) {
+        metadata.lazy = !/\./.test(source);
+      } else if (Array.isArray(lazy)) {
+        metadata.lazy = lazy.indexOf(source) !== -1;
+      } else if (typeof lazy === "function") {
+        metadata.lazy = lazy(source);
+      } else {
+        throw new Error(`.lazy must be a boolean, string array, or function`);
+      }
+    }
+  }
+  return {
+    hasExports,
+    local: localData,
+    sources: sourceData
+  };
+}
+function getLocalExportMetadata(programPath, initializeReexports, stringSpecifiers) {
+  const bindingKindLookup = new Map();
+  programPath.get("body").forEach(child => {
+    let kind;
+    if (child.isImportDeclaration()) {
+      kind = "import";
+    } else {
+      if (child.isExportDefaultDeclaration()) {
+        child = child.get("declaration");
+      }
+      if (child.isExportNamedDeclaration()) {
+        if (child.node.declaration) {
+          child = child.get("declaration");
+        } else if (initializeReexports && child.node.source && child.get("source").isStringLiteral()) {
+          child.get("specifiers").forEach(spec => {
+            assertExportSpecifier(spec);
+            bindingKindLookup.set(spec.get("local").node.name, "block");
+          });
+          return;
+        }
+      }
+      if (child.isFunctionDeclaration()) {
+        kind = "hoisted";
+      } else if (child.isClassDeclaration()) {
+        kind = "block";
+      } else if (child.isVariableDeclaration({
+        kind: "var"
+      })) {
+        kind = "var";
+      } else if (child.isVariableDeclaration()) {
+        kind = "block";
+      } else {
+        return;
+      }
+    }
+    Object.keys(child.getOuterBindingIdentifiers()).forEach(name => {
+      bindingKindLookup.set(name, kind);
+    });
+  });
+  const localMetadata = new Map();
+  const getLocalMetadata = idPath => {
+    const localName = idPath.node.name;
+    let metadata = localMetadata.get(localName);
+    if (!metadata) {
+      const kind = bindingKindLookup.get(localName);
+      if (kind === undefined) {
+        throw idPath.buildCodeFrameError(`Exporting local "${localName}", which is not declared.`);
+      }
+      metadata = {
+        names: [],
+        kind
+      };
+      localMetadata.set(localName, metadata);
+    }
+    return metadata;
+  };
+  programPath.get("body").forEach(child => {
+    if (child.isExportNamedDeclaration() && (initializeReexports || !child.node.source)) {
+      if (child.node.declaration) {
+        const declaration = child.get("declaration");
+        const ids = declaration.getOuterBindingIdentifierPaths();
+        Object.keys(ids).forEach(name => {
+          if (name === "__esModule") {
+            throw declaration.buildCodeFrameError('Illegal export "__esModule".');
+          }
+          getLocalMetadata(ids[name]).names.push(name);
+        });
+      } else {
+        child.get("specifiers").forEach(spec => {
+          const local = spec.get("local");
+          const exported = spec.get("exported");
+          const localMetadata = getLocalMetadata(local);
+          const exportName = getExportSpecifierName(exported, stringSpecifiers);
+          if (exportName === "__esModule") {
+            throw exported.buildCodeFrameError('Illegal export "__esModule".');
+          }
+          localMetadata.names.push(exportName);
+        });
+      }
+    } else if (child.isExportDefaultDeclaration()) {
+      const declaration = child.get("declaration");
+      if (declaration.isFunctionDeclaration() || declaration.isClassDeclaration()) {
+        getLocalMetadata(declaration.get("id")).names.push("default");
+      } else {
+        throw declaration.buildCodeFrameError("Unexpected default expression export.");
+      }
+    }
+  });
+  return localMetadata;
+}
+function nameAnonymousExports(programPath) {
+  programPath.get("body").forEach(child => {
+    if (!child.isExportDefaultDeclaration()) return;
+    (0, _helperSplitExportDeclaration.default)(child);
+  });
+}
+function removeImportExportDeclarations(programPath) {
+  programPath.get("body").forEach(child => {
+    if (child.isImportDeclaration()) {
+      child.remove();
+    } else if (child.isExportNamedDeclaration()) {
+      if (child.node.declaration) {
+        child.node.declaration._blockHoist = child.node._blockHoist;
+        child.replaceWith(child.node.declaration);
+      } else {
+        child.remove();
+      }
+    } else if (child.isExportDefaultDeclaration()) {
+      const declaration = child.get("declaration");
+      if (declaration.isFunctionDeclaration() || declaration.isClassDeclaration()) {
+        declaration._blockHoist = child.node._blockHoist;
+        child.replaceWith(declaration);
+      } else {
+        throw declaration.buildCodeFrameError("Unexpected default expression export.");
+      }
+    } else if (child.isExportAllDeclaration()) {
+      child.remove();
+    }
+  });
+}
+
+//# sourceMappingURL=normalize-and-load-metadata.js.map
+±/lib/index.js.map≈nô{"version":3,"names":["booleanLiteral","callExpression","cloneNode","directive","directiveLiteral","expressionStatement","identifier","isIdentifier","memberExpression","stringLiteral","valueToNode","variableDeclaration","variableDeclarator","rewriteModuleStatementsAndPrepareHeader","path","loose","exportName","strict","allowTopLevelThis","strictMode","noInterop","importInterop","lazy","esNamespaceOnly","filename","constantReexports","enumerableModuleMeta","noIncompleteNsImportDetection","validateImportInteropOption","assert","isModule","node","sourceType","meta","normalizeModuleAndLoadMetadata","initializeReexports","rewriteThis","rewriteLiveReferences","hasStrict","directives","some","value","unshiftContainer","headers","hasExports","push","buildESModuleHeader","nameList","buildExportNameListDeclaration","exportNameListName","name","statement","buildExportInitializationStatements","ensureStatementsHoisted","statements","forEach","header","_blockHoist","wrapInterop","programPath","expr","type","hub","addHelper","helper","Error","buildNamespaceInitStatements","metadata","sourceMetadata","srcNamespace","localName","importsNamespace","template","NAME","SOURCE","buildReexportsFromMeta","reexportNamespace","EXPORTS","NAMESPACE","reexportAll","buildNamespaceReexport","loc","ReexportTemplate","constant","constantComputed","spec","namespace","stringSpecifiers","Array","from","reexports","importName","NAMESPACE_IMPORT","interop","has","astNodes","EXPORT_NAME","VERIFY_NAME_LIST","EXPORTS_LIST","exportedVars","Object","create","data","local","values","names","hasReexport","source","keys","length","scope","generateUidIdentifier","default","initStatements","kind","buildInitStatement","reexportsStatements","i","sort","a","b","results","initStatement","chunkSize","uninitializedExportNames","j","buildUndefinedNode","InitTemplate","computed","expression","exportNames","initExpr","reduce","acc","params","VALUE"],"sources":["../src/index.ts"],"sourcesContent":["import assert from \"assert\";\nimport {\n  booleanLiteral,\n  callExpression,\n  cloneNode,\n  directive,\n  directiveLiteral,\n  expressionStatement,\n  identifier,\n  isIdentifier,\n  memberExpression,\n  stringLiteral,\n  valueToNode,\n  variableDeclaration,\n  variableDeclarator,\n} from \"@babel/types\";\nimport type * as t from \"@babel/types\";\nimport template from \"@babel/template\";\n\nimport { isModule } from \"@babel/helper-module-imports\";\n\nimport rewriteThis from \"./rewrite-this\";\nimport rewriteLiveReferences from \"./rewrite-live-references\";\nimport normalizeModuleAndLoadMetadata, {\n  hasExports,\n  isSideEffectImport,\n  validateImportInteropOption,\n} from \"./normalize-and-load-metadata\";\nimport type {\n  ImportInterop,\n  InteropType,\n  Lazy,\n  ModuleMetadata,\n  SourceModuleMetadata,\n} from \"./normalize-and-load-metadata\";\nimport type { NodePath } from \"@babel/traverse\";\n\nexport { buildDynamicImport, getDynamicImportSource } from \"./dynamic-import\";\n\nexport { default as getModuleName } from \"./get-module-name\";\nexport type { PluginOptions } from \"./get-module-name\";\n\nexport { hasExports, isSideEffectImport, isModule, rewriteThis };\n\nexport interface RewriteModuleStatementsAndPrepareHeaderOptions {\n  exportName?: string;\n  strict: boolean;\n  allowTopLevelThis?: boolean;\n  strictMode: boolean;\n  loose?: boolean;\n  importInterop?: ImportInterop;\n  noInterop?: boolean;\n  lazy?: Lazy;\n  esNamespaceOnly?: boolean;\n  filename: string | undefined;\n  constantReexports?: boolean | void;\n  enumerableModuleMeta?: boolean | void;\n  noIncompleteNsImportDetection?: boolean | void;\n}\n\n/**\n * Perform all of the generic ES6 module rewriting needed to handle initial\n * module processing. This function will rewrite the majority of the given\n * program to reference the modules described by the returned metadata,\n * and returns a list of statements for use when initializing the module.\n */\nexport function rewriteModuleStatementsAndPrepareHeader(\n  path: NodePath<t.Program>,\n  {\n    // TODO(Babel 8): Remove this\n    loose,\n\n    exportName,\n    strict,\n    allowTopLevelThis,\n    strictMode,\n    noInterop,\n    importInterop = noInterop ? \"none\" : \"babel\",\n    lazy,\n    esNamespaceOnly,\n    filename,\n\n    constantReexports = loose,\n    enumerableModuleMeta = loose,\n    noIncompleteNsImportDetection,\n  }: RewriteModuleStatementsAndPrepareHeaderOptions,\n) {\n  validateImportInteropOption(importInterop);\n  assert(isModule(path), \"Cannot process module statements in a script\");\n  path.node.sourceType = \"script\";\n\n  const meta = normalizeModuleAndLoadMetadata(path, exportName, {\n    importInterop,\n    initializeReexports: constantReexports,\n    lazy,\n    esNamespaceOnly,\n    filename,\n  });\n\n  if (!allowTopLevelThis) {\n    rewriteThis(path);\n  }\n\n  rewriteLiveReferences(path, meta);\n\n  if (strictMode !== false) {\n    const hasStrict = path.node.directives.some(directive => {\n      return directive.value.value === \"use strict\";\n    });\n    if (!hasStrict) {\n      path.unshiftContainer(\n        \"directives\",\n        directive(directiveLiteral(\"use strict\")),\n      );\n    }\n  }\n\n  const headers = [];\n  if (hasExports(meta) && !strict) {\n    headers.push(buildESModuleHeader(meta, enumerableModuleMeta));\n  }\n\n  const nameList = buildExportNameListDeclaration(path, meta);\n\n  if (nameList) {\n    meta.exportNameListName = nameList.name;\n    headers.push(nameList.statement);\n  }\n\n  // Create all of the statically known named exports.\n  headers.push(\n    ...buildExportInitializationStatements(\n      path,\n      meta,\n      constantReexports,\n      noIncompleteNsImportDetection,\n    ),\n  );\n\n  return { meta, headers };\n}\n\n/**\n * Flag a set of statements as hoisted above all else so that module init\n * statements all run before user code.\n */\nexport function ensureStatementsHoisted(statements: t.Statement[]) {\n  // Force all of the header fields to be at the top of the file.\n  statements.forEach(header => {\n    // @ts-expect-error Fixme: handle _blockHoist property\n    header._blockHoist = 3;\n  });\n}\n\n/**\n * Given an expression for a standard import object, like \"require('foo')\",\n * wrap it in a call to the interop helpers based on the type.\n */\nexport function wrapInterop(\n  programPath: NodePath,\n  expr: t.Expression,\n  type: InteropType,\n): t.CallExpression {\n  if (type === \"none\") {\n    return null;\n  }\n\n  if (type === \"node-namespace\") {\n    return callExpression(programPath.hub.addHelper(\"interopRequireWildcard\"), [\n      expr,\n      booleanLiteral(true),\n    ]);\n  } else if (type === \"node-default\") {\n    return null;\n  }\n\n  let helper;\n  if (type === \"default\") {\n    helper = \"interopRequireDefault\";\n  } else if (type === \"namespace\") {\n    helper = \"interopRequireWildcard\";\n  } else {\n    throw new Error(`Unknown interop: ${type}`);\n  }\n\n  return callExpression(programPath.hub.addHelper(helper), [expr]);\n}\n\n/**\n * Create the runtime initialization statements for a given requested source.\n * These will initialize all of the runtime import/export logic that\n * can't be handled statically by the statements created by\n * buildExportInitializationStatements().\n */\nexport function buildNamespaceInitStatements(\n  metadata: ModuleMetadata,\n  sourceMetadata: SourceModuleMetadata,\n  constantReexports: boolean | void = false,\n) {\n  const statements = [];\n\n  let srcNamespace: t.Node = identifier(sourceMetadata.name);\n  if (sourceMetadata.lazy) srcNamespace = callExpression(srcNamespace, []);\n\n  for (const localName of sourceMetadata.importsNamespace) {\n    if (localName === sourceMetadata.name) continue;\n\n    // Create and assign binding to namespace object\n    statements.push(\n      template.statement`var NAME = SOURCE;`({\n        NAME: localName,\n        SOURCE: cloneNode(srcNamespace),\n      }),\n    );\n  }\n  if (constantReexports) {\n    statements.push(...buildReexportsFromMeta(metadata, sourceMetadata, true));\n  }\n  for (const exportName of sourceMetadata.reexportNamespace) {\n    // Assign export to namespace object.\n    statements.push(\n      (sourceMetadata.lazy\n        ? template.statement`\n            Object.defineProperty(EXPORTS, \"NAME\", {\n              enumerable: true,\n              get: function() {\n                return NAMESPACE;\n              }\n            });\n          `\n        : template.statement`EXPORTS.NAME = NAMESPACE;`)({\n        EXPORTS: metadata.exportName,\n        NAME: exportName,\n        NAMESPACE: cloneNode(srcNamespace),\n      }),\n    );\n  }\n  if (sourceMetadata.reexportAll) {\n    const statement = buildNamespaceReexport(\n      metadata,\n      cloneNode(srcNamespace),\n      constantReexports,\n    );\n    statement.loc = sourceMetadata.reexportAll.loc;\n\n    // Iterate props creating getter for each prop.\n    statements.push(statement);\n  }\n  return statements;\n}\n\nconst ReexportTemplate = {\n  constant: template.statement`EXPORTS.EXPORT_NAME = NAMESPACE_IMPORT;`,\n  constantComputed: template.statement`EXPORTS[\"EXPORT_NAME\"] = NAMESPACE_IMPORT;`,\n  spec: template.statement`\n    Object.defineProperty(EXPORTS, \"EXPORT_NAME\", {\n      enumerable: true,\n      get: function() {\n        return NAMESPACE_IMPORT;\n      },\n    });\n    `,\n};\n\nfunction buildReexportsFromMeta(\n  meta: ModuleMetadata,\n  metadata: SourceModuleMetadata,\n  constantReexports: boolean,\n) {\n  const namespace = metadata.lazy\n    ? callExpression(identifier(metadata.name), [])\n    : identifier(metadata.name);\n\n  const { stringSpecifiers } = meta;\n  return Array.from(metadata.reexports, ([exportName, importName]) => {\n    let NAMESPACE_IMPORT: t.Expression = cloneNode(namespace);\n    if (importName === \"default\" && metadata.interop === \"node-default\") {\n      // Nothing, it's ok as-is\n    } else if (stringSpecifiers.has(importName)) {\n      NAMESPACE_IMPORT = memberExpression(\n        NAMESPACE_IMPORT,\n        stringLiteral(importName),\n        true,\n      );\n    } else {\n      NAMESPACE_IMPORT = memberExpression(\n        NAMESPACE_IMPORT,\n        identifier(importName),\n      );\n    }\n    const astNodes = {\n      EXPORTS: meta.exportName,\n      EXPORT_NAME: exportName,\n      NAMESPACE_IMPORT,\n    };\n    if (constantReexports || isIdentifier(NAMESPACE_IMPORT)) {\n      if (stringSpecifiers.has(exportName)) {\n        return ReexportTemplate.constantComputed(astNodes);\n      } else {\n        return ReexportTemplate.constant(astNodes);\n      }\n    } else {\n      return ReexportTemplate.spec(astNodes);\n    }\n  });\n}\n\n/**\n * Build an \"__esModule\" header statement setting the property on a given object.\n */\nfunction buildESModuleHeader(\n  metadata: ModuleMetadata,\n  enumerableModuleMeta: boolean | void = false,\n) {\n  return (\n    enumerableModuleMeta\n      ? template.statement`\n        EXPORTS.__esModule = true;\n      `\n      : template.statement`\n        Object.defineProperty(EXPORTS, \"__esModule\", {\n          value: true,\n        });\n      `\n  )({ EXPORTS: metadata.exportName });\n}\n\n/**\n * Create a re-export initialization loop for a specific imported namespace.\n */\nfunction buildNamespaceReexport(\n  metadata: ModuleMetadata,\n  namespace: t.Identifier | t.CallExpression,\n  constantReexports: boolean | void,\n) {\n  return (\n    constantReexports\n      ? template.statement`\n        Object.keys(NAMESPACE).forEach(function(key) {\n          if (key === \"default\" || key === \"__esModule\") return;\n          VERIFY_NAME_LIST;\n          if (key in EXPORTS && EXPORTS[key] === NAMESPACE[key]) return;\n\n          EXPORTS[key] = NAMESPACE[key];\n        });\n      `\n      : // Also skip already assigned bindings if they are strictly equal\n        // to be somewhat more spec-compliant when a file has multiple\n        // namespace re-exports that would cause a binding to be exported\n        // multiple times. However, multiple bindings of the same name that\n        // export the same primitive value are silently skipped\n        // (the spec requires an \"ambiguous bindings\" early error here).\n        template.statement`\n        Object.keys(NAMESPACE).forEach(function(key) {\n          if (key === \"default\" || key === \"__esModule\") return;\n          VERIFY_NAME_LIST;\n          if (key in EXPORTS && EXPORTS[key] === NAMESPACE[key]) return;\n\n          Object.defineProperty(EXPORTS, key, {\n            enumerable: true,\n            get: function() {\n              return NAMESPACE[key];\n            },\n          });\n        });\n    `\n  )({\n    NAMESPACE: namespace,\n    EXPORTS: metadata.exportName,\n    VERIFY_NAME_LIST: metadata.exportNameListName\n      ? template`\n            if (Object.prototype.hasOwnProperty.call(EXPORTS_LIST, key)) return;\n          `({ EXPORTS_LIST: metadata.exportNameListName })\n      : null,\n  });\n}\n\n/**\n * Build a statement declaring a variable that contains all of the exported\n * variable names in an object so they can easily be referenced from an\n * export * from statement to check for conflicts.\n */\nfunction buildExportNameListDeclaration(\n  programPath: NodePath,\n  metadata: ModuleMetadata,\n) {\n  const exportedVars = Object.create(null);\n  for (const data of metadata.local.values()) {\n    for (const name of data.names) {\n      exportedVars[name] = true;\n    }\n  }\n\n  let hasReexport = false;\n  for (const data of metadata.source.values()) {\n    for (const exportName of data.reexports.keys()) {\n      exportedVars[exportName] = true;\n    }\n    for (const exportName of data.reexportNamespace) {\n      exportedVars[exportName] = true;\n    }\n\n    hasReexport = hasReexport || !!data.reexportAll;\n  }\n\n  if (!hasReexport || Object.keys(exportedVars).length === 0) return null;\n\n  const name = programPath.scope.generateUidIdentifier(\"exportNames\");\n\n  delete exportedVars.default;\n\n  return {\n    name: name.name,\n    statement: variableDeclaration(\"var\", [\n      variableDeclarator(name, valueToNode(exportedVars)),\n    ]),\n  };\n}\n\n/**\n * Create a set of statements that will initialize all of the statically-known\n * export names with their expected values.\n */\nfunction buildExportInitializationStatements(\n  programPath: NodePath,\n  metadata: ModuleMetadata,\n  constantReexports: boolean | void = false,\n  noIncompleteNsImportDetection: boolean | void = false,\n) {\n  const initStatements: Array<[string, t.Statement | null]> = [];\n\n  for (const [localName, data] of metadata.local) {\n    if (data.kind === \"import\") {\n      // No-open since these are explicitly set with the \"reexports\" block.\n    } else if (data.kind === \"hoisted\") {\n      initStatements.push([\n        // data.names is always of length 1 because a hoisted export\n        // name must be id of a function declaration\n        data.names[0],\n        buildInitStatement(metadata, data.names, identifier(localName)),\n      ]);\n    } else if (!noIncompleteNsImportDetection) {\n      for (const exportName of data.names) {\n        initStatements.push([exportName, null]);\n      }\n    }\n  }\n\n  for (const data of metadata.source.values()) {\n    if (!constantReexports) {\n      const reexportsStatements = buildReexportsFromMeta(metadata, data, false);\n      const reexports = [...data.reexports.keys()];\n      for (let i = 0; i < reexportsStatements.length; i++) {\n        initStatements.push([reexports[i], reexportsStatements[i]]);\n      }\n    }\n    if (!noIncompleteNsImportDetection) {\n      for (const exportName of data.reexportNamespace) {\n        initStatements.push([exportName, null]);\n      }\n    }\n  }\n\n  // https://tc39.es/ecma262/#sec-module-namespace-exotic-objects\n  // The [Exports] list is ordered as if an Array of those String values\n  // had been sorted using %Array.prototype.sort% using undefined as comparefn\n  initStatements.sort(([a], [b]) => {\n    if (a < b) return -1;\n    if (b < a) return 1;\n    return 0;\n  });\n\n  const results = [];\n  if (noIncompleteNsImportDetection) {\n    for (const [, initStatement] of initStatements) {\n      results.push(initStatement);\n    }\n  } else {\n    // We generate init statements (`exports.a = exports.b = ... = void 0`)\n    // for every 100 exported names to avoid deeply-nested AST structures.\n    const chunkSize = 100;\n    for (let i = 0; i < initStatements.length; i += chunkSize) {\n      let uninitializedExportNames = [];\n      for (let j = 0; j < chunkSize && i + j < initStatements.length; j++) {\n        const [exportName, initStatement] = initStatements[i + j];\n        if (initStatement !== null) {\n          if (uninitializedExportNames.length > 0) {\n            results.push(\n              buildInitStatement(\n                metadata,\n                uninitializedExportNames,\n                programPath.scope.buildUndefinedNode(),\n              ),\n            );\n            // reset after uninitializedExportNames has been transformed\n            // to init statements\n            uninitializedExportNames = [];\n          }\n          results.push(initStatement);\n        } else {\n          uninitializedExportNames.push(exportName);\n        }\n      }\n      if (uninitializedExportNames.length > 0) {\n        results.push(\n          buildInitStatement(\n            metadata,\n            uninitializedExportNames,\n            programPath.scope.buildUndefinedNode(),\n          ),\n        );\n      }\n    }\n  }\n\n  return results;\n}\n\n/**\n * Given a set of export names, create a set of nested assignments to\n * initialize them all to a given expression.\n */\nconst InitTemplate = {\n  computed: template.expression`EXPORTS[\"NAME\"] = VALUE`,\n  default: template.expression`EXPORTS.NAME = VALUE`,\n};\n\nfunction buildInitStatement(\n  metadata: ModuleMetadata,\n  exportNames: string[],\n  initExpr: t.Expression,\n) {\n  const { stringSpecifiers, exportName: EXPORTS } = metadata;\n  return expressionStatement(\n    exportNames.reduce((acc, exportName) => {\n      const params = {\n        EXPORTS,\n        NAME: exportName,\n        VALUE: acc,\n      };\n      if (stringSpecifiers.has(exportName)) {\n        return InitTemplate.computed(params);\n      } else {\n        return InitTemplate.default(params);\n      }\n    }, initExpr),\n  );\n}\n"],"mappings":"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"}®/LICENSE≈RMIT License
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+∫/lib/dynamic-import.js.map≈H{"version":3,"names":["getDynamicImportSource","node","source","arguments","t","isStringLiteral","isTemplateLiteral","template","expression","ast","buildDynamicImport","deferToThen","wrapWithPromise","builder","specifier","quasis","length","specifierToString","identifier","templateLiteral","templateElement","raw"],"sources":["../src/dynamic-import.ts"],"sourcesContent":["// Heavily inspired by\n// https://github.com/airbnb/babel-plugin-dynamic-import-node/blob/master/src/utils.js\n\nimport * as t from \"@babel/types\";\nimport template from \"@babel/template\";\n\n// TODO(Babel 8): Remove this\nexport function getDynamicImportSource(\n  node: t.CallExpression,\n): t.StringLiteral | t.TemplateLiteral {\n  const [source] = node.arguments;\n\n  return t.isStringLiteral(source) || t.isTemplateLiteral(source)\n    ? source\n    : (template.expression.ast`\\`\\${${source}}\\`` as t.TemplateLiteral);\n}\n\nexport function buildDynamicImport(\n  node: t.CallExpression,\n  deferToThen: boolean,\n  wrapWithPromise: boolean,\n  builder: (specifier: t.Expression) => t.Expression,\n): t.Expression {\n  const [specifier] = node.arguments;\n\n  if (\n    t.isStringLiteral(specifier) ||\n    (t.isTemplateLiteral(specifier) && specifier.quasis.length === 0)\n  ) {\n    if (deferToThen) {\n      return template.expression.ast`\n        Promise.resolve().then(() => ${builder(specifier)})\n      `;\n    } else return builder(specifier);\n  }\n\n  const specifierToString = t.isTemplateLiteral(specifier)\n    ? t.identifier(\"specifier\")\n    : t.templateLiteral(\n        [t.templateElement({ raw: \"\" }), t.templateElement({ raw: \"\" })],\n        [t.identifier(\"specifier\")],\n      );\n\n  if (deferToThen) {\n    return template.expression.ast`\n      (specifier =>\n        new Promise(r => r(${specifierToString}))\n          .then(s => ${builder(t.identifier(\"s\"))})\n      )(${specifier})\n    `;\n  } else if (wrapWithPromise) {\n    return template.expression.ast`\n      (specifier =>\n        new Promise(r => r(${builder(specifierToString)}))\n      )(${specifier})\n    `;\n  } else {\n    return template.expression.ast`\n      (specifier => ${builder(specifierToString)})(${specifier})\n    `;\n  }\n}\n"],"mappings":";;;;;;;AAGA;AACA;AAGO,SAASA,sBAAsB,CACpCC,IAAsB,EACe;EACrC,MAAM,CAACC,MAAM,CAAC,GAAGD,IAAI,CAACE,SAAS;EAE/B,OAAOC,CAAC,CAACC,eAAe,CAACH,MAAM,CAAC,IAAIE,CAAC,CAACE,iBAAiB,CAACJ,MAAM,CAAC,GAC3DA,MAAM,GACLK,iBAAQ,CAACC,UAAU,CAACC,GAAI,QAAOP,MAAO,KAA0B;AACvE;AAEO,SAASQ,kBAAkB,CAChCT,IAAsB,EACtBU,WAAoB,EACpBC,eAAwB,EACxBC,OAAkD,EACpC;EACd,MAAM,CAACC,SAAS,CAAC,GAAGb,IAAI,CAACE,SAAS;EAElC,IACEC,CAAC,CAACC,eAAe,CAACS,SAAS,CAAC,IAC3BV,CAAC,CAACE,iBAAiB,CAACQ,SAAS,CAAC,IAAIA,SAAS,CAACC,MAAM,CAACC,MAAM,KAAK,CAAE,EACjE;IACA,IAAIL,WAAW,EAAE;MACf,OAAOJ,iBAAQ,CAACC,UAAU,CAACC,GAAI;AACrC,uCAAuCI,OAAO,CAACC,SAAS,CAAE;AAC1D,OAAO;IACH,CAAC,MAAM,OAAOD,OAAO,CAACC,SAAS,CAAC;EAClC;EAEA,MAAMG,iBAAiB,GAAGb,CAAC,CAACE,iBAAiB,CAACQ,SAAS,CAAC,GACpDV,CAAC,CAACc,UAAU,CAAC,WAAW,CAAC,GACzBd,CAAC,CAACe,eAAe,CACf,CAACf,CAAC,CAACgB,eAAe,CAAC;IAAEC,GAAG,EAAE;EAAG,CAAC,CAAC,EAAEjB,CAAC,CAACgB,eAAe,CAAC;IAAEC,GAAG,EAAE;EAAG,CAAC,CAAC,CAAC,EAChE,CAACjB,CAAC,CAACc,UAAU,CAAC,WAAW,CAAC,CAAC,CAC5B;EAEL,IAAIP,WAAW,EAAE;IACf,OAAOJ,iBAAQ,CAACC,UAAU,CAACC,GAAI;AACnC;AACA,6BAA6BQ,iBAAkB;AAC/C,uBAAuBJ,OAAO,CAACT,CAAC,CAACc,UAAU,CAAC,GAAG,CAAC,CAAE;AAClD,UAAUJ,SAAU;AACpB,KAAK;EACH,CAAC,MAAM,IAAIF,eAAe,EAAE;IAC1B,OAAOL,iBAAQ,CAACC,UAAU,CAACC,GAAI;AACnC;AACA,6BAA6BI,OAAO,CAACI,iBAAiB,CAAE;AACxD,UAAUH,SAAU;AACpB,KAAK;EACH,CAAC,MAAM;IACL,OAAOP,iBAAQ,CAACC,UAAU,CAACC,GAAI;AACnC,sBAAsBI,OAAO,CAACI,iBAAiB,CAAE,KAAIH,SAAU;AAC/D,KAAK;EACH;AACF"}∏/lib/rewrite-this.js.map≈©{"version":3,"names":["numericLiteral","unaryExpression","rewriteThisVisitor","traverse","visitors","merge","environmentVisitor","ThisExpression","path","replaceWith","rewriteThis","programPath","node","noScope"],"sources":["../src/rewrite-this.ts"],"sourcesContent":["import environmentVisitor from \"@babel/helper-environment-visitor\";\nimport traverse from \"@babel/traverse\";\nimport { numericLiteral, unaryExpression } from \"@babel/types\";\n\nimport type { NodePath, Visitor } from \"@babel/traverse\";\n\n/**\n * A visitor to walk the tree, rewriting all `this` references in the top-level scope to be\n * `void 0` (undefined).\n */\nconst rewriteThisVisitor: Visitor = traverse.visitors.merge([\n  environmentVisitor,\n  {\n    ThisExpression(path) {\n      path.replaceWith(unaryExpression(\"void\", numericLiteral(0), true));\n    },\n  },\n]);\n\nexport default function rewriteThis(programPath: NodePath) {\n  // Rewrite \"this\" to be \"undefined\".\n  traverse(programPath.node, { ...rewriteThisVisitor, noScope: true });\n}\n"],"mappings":";;;;;;AAAA;AACA;AACA;AAA+D;EAAtDA,cAAc;EAAEC;AAAe;AAQxC,MAAMC,kBAA2B,GAAGC,iBAAQ,CAACC,QAAQ,CAACC,KAAK,CAAC,CAC1DC,iCAAkB,EAClB;EACEC,cAAc,CAACC,IAAI,EAAE;IACnBA,IAAI,CAACC,WAAW,CAACR,eAAe,CAAC,MAAM,EAAED,cAAc,CAAC,CAAC,CAAC,EAAE,IAAI,CAAC,CAAC;EACpE;AACF,CAAC,CACF,CAAC;AAEa,SAASU,WAAW,CAACC,WAAqB,EAAE;EAEzD,IAAAR,iBAAQ,EAACQ,WAAW,CAACC,IAAI,oBAAOV,kBAAkB;IAAEW,OAAO,EAAE;EAAI,GAAG;AACtE"}ø/lib/rewrite-live-references.js≈/õ"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = rewriteLiveReferences;
+var _assert = require("assert");
+var _t = require("@babel/types");
+var _template = require("@babel/template");
+var _helperSimpleAccess = require("@babel/helper-simple-access");
+const {
+  assignmentExpression,
+  callExpression,
+  cloneNode,
+  expressionStatement,
+  getOuterBindingIdentifiers,
+  identifier,
+  isMemberExpression,
+  isVariableDeclaration,
+  jsxIdentifier,
+  jsxMemberExpression,
+  memberExpression,
+  numericLiteral,
+  sequenceExpression,
+  stringLiteral,
+  variableDeclaration,
+  variableDeclarator
+} = _t;
+function isInType(path) {
+  do {
+    switch (path.parent.type) {
+      case "TSTypeAnnotation":
+      case "TSTypeAliasDeclaration":
+      case "TSTypeReference":
+      case "TypeAnnotation":
+      case "TypeAlias":
+        return true;
+      case "ExportSpecifier":
+        return path.parentPath.parent.exportKind === "type";
+      default:
+        if (path.parentPath.isStatement() || path.parentPath.isExpression()) {
+          return false;
+        }
+    }
+  } while (path = path.parentPath);
+}
+function rewriteLiveReferences(programPath, metadata) {
+  const imported = new Map();
+  const exported = new Map();
+  const requeueInParent = path => {
+    programPath.requeue(path);
+  };
+  for (const [source, data] of metadata.source) {
+    for (const [localName, importName] of data.imports) {
+      imported.set(localName, [source, importName, null]);
+    }
+    for (const localName of data.importsNamespace) {
+      imported.set(localName, [source, null, localName]);
+    }
+  }
+  for (const [local, data] of metadata.local) {
+    let exportMeta = exported.get(local);
+    if (!exportMeta) {
+      exportMeta = [];
+      exported.set(local, exportMeta);
+    }
+    exportMeta.push(...data.names);
+  }
+  const rewriteBindingInitVisitorState = {
+    metadata,
+    requeueInParent,
+    scope: programPath.scope,
+    exported
+  };
+  programPath.traverse(rewriteBindingInitVisitor, rewriteBindingInitVisitorState);
+  (0, _helperSimpleAccess.default)(programPath, new Set([...Array.from(imported.keys()), ...Array.from(exported.keys())]), false);
+  const rewriteReferencesVisitorState = {
+    seen: new WeakSet(),
+    metadata,
+    requeueInParent,
+    scope: programPath.scope,
+    imported,
+    exported,
+    buildImportReference: ([source, importName, localName], identNode) => {
+      const meta = metadata.source.get(source);
+      meta.referenced = true;
+      if (localName) {
+        if (meta.lazy) {
+          identNode = callExpression(identNode, []);
+        }
+        return identNode;
+      }
+      let namespace = identifier(meta.name);
+      if (meta.lazy) namespace = callExpression(namespace, []);
+      if (importName === "default" && meta.interop === "node-default") {
+        return namespace;
+      }
+      const computed = metadata.stringSpecifiers.has(importName);
+      return memberExpression(namespace, computed ? stringLiteral(importName) : identifier(importName), computed);
+    }
+  };
+  programPath.traverse(rewriteReferencesVisitor, rewriteReferencesVisitorState);
+}
+const rewriteBindingInitVisitor = {
+  Scope(path) {
+    path.skip();
+  },
+  ClassDeclaration(path) {
+    const {
+      requeueInParent,
+      exported,
+      metadata
+    } = this;
+    const {
+      id
+    } = path.node;
+    if (!id) throw new Error("Expected class to have a name");
+    const localName = id.name;
+    const exportNames = exported.get(localName) || [];
+    if (exportNames.length > 0) {
+      const statement = expressionStatement(buildBindingExportAssignmentExpression(metadata, exportNames, identifier(localName), path.scope));
+      statement._blockHoist = path.node._blockHoist;
+      requeueInParent(path.insertAfter(statement)[0]);
+    }
+  },
+  VariableDeclaration(path) {
+    const {
+      requeueInParent,
+      exported,
+      metadata
+    } = this;
+    Object.keys(path.getOuterBindingIdentifiers()).forEach(localName => {
+      const exportNames = exported.get(localName) || [];
+      if (exportNames.length > 0) {
+        const statement = expressionStatement(buildBindingExportAssignmentExpression(metadata, exportNames, identifier(localName), path.scope));
+        statement._blockHoist = path.node._blockHoist;
+        requeueInParent(path.insertAfter(statement)[0]);
+      }
+    });
+  }
+};
+const buildBindingExportAssignmentExpression = (metadata, exportNames, localExpr, scope) => {
+  const exportsObjectName = metadata.exportName;
+  for (let currentScope = scope; currentScope != null; currentScope = currentScope.parent) {
+    if (currentScope.hasOwnBinding(exportsObjectName)) {
+      currentScope.rename(exportsObjectName);
+    }
+  }
+  return (exportNames || []).reduce((expr, exportName) => {
+    const {
+      stringSpecifiers
+    } = metadata;
+    const computed = stringSpecifiers.has(exportName);
+    return assignmentExpression("=", memberExpression(identifier(exportsObjectName), computed ? stringLiteral(exportName) : identifier(exportName), computed), expr);
+  }, localExpr);
+};
+const buildImportThrow = localName => {
+  return _template.default.expression.ast`
+    (function() {
+      throw new Error('"' + '${localName}' + '" is read-only.');
+    })()
+  `;
+};
+const rewriteReferencesVisitor = {
+  ReferencedIdentifier(path) {
+    const {
+      seen,
+      buildImportReference,
+      scope,
+      imported,
+      requeueInParent
+    } = this;
+    if (seen.has(path.node)) return;
+    seen.add(path.node);
+    const localName = path.node.name;
+    const importData = imported.get(localName);
+    if (importData) {
+      if (isInType(path)) {
+        throw path.buildCodeFrameError(`Cannot transform the imported binding "${localName}" since it's also used in a type annotation. ` + `Please strip type annotations using @babel/preset-typescript or @babel/preset-flow.`);
+      }
+      const localBinding = path.scope.getBinding(localName);
+      const rootBinding = scope.getBinding(localName);
+      if (rootBinding !== localBinding) return;
+      const ref = buildImportReference(importData, path.node);
+      ref.loc = path.node.loc;
+      if ((path.parentPath.isCallExpression({
+        callee: path.node
+      }) || path.parentPath.isOptionalCallExpression({
+        callee: path.node
+      }) || path.parentPath.isTaggedTemplateExpression({
+        tag: path.node
+      })) && isMemberExpression(ref)) {
+        path.replaceWith(sequenceExpression([numericLiteral(0), ref]));
+      } else if (path.isJSXIdentifier() && isMemberExpression(ref)) {
+        const {
+          object,
+          property
+        } = ref;
+        path.replaceWith(jsxMemberExpression(jsxIdentifier(object.name), jsxIdentifier(property.name)));
+      } else {
+        path.replaceWith(ref);
+      }
+      requeueInParent(path);
+      path.skip();
+    }
+  },
+  UpdateExpression(path) {
+    const {
+      scope,
+      seen,
+      imported,
+      exported,
+      requeueInParent,
+      buildImportReference
+    } = this;
+    if (seen.has(path.node)) return;
+    seen.add(path.node);
+    const arg = path.get("argument");
+    if (arg.isMemberExpression()) return;
+    const update = path.node;
+    if (arg.isIdentifier()) {
+      const localName = arg.node.name;
+      if (scope.getBinding(localName) !== path.scope.getBinding(localName)) {
+        return;
+      }
+      const exportedNames = exported.get(localName);
+      const importData = imported.get(localName);
+      if ((exportedNames == null ? void 0 : exportedNames.length) > 0 || importData) {
+        if (importData) {
+          path.replaceWith(assignmentExpression(update.operator[0] + "=", buildImportReference(importData, arg.node), buildImportThrow(localName)));
+        } else if (update.prefix) {
+          path.replaceWith(buildBindingExportAssignmentExpression(this.metadata, exportedNames, cloneNode(update), path.scope));
+        } else {
+          const ref = scope.generateDeclaredUidIdentifier(localName);
+          path.replaceWith(sequenceExpression([assignmentExpression("=", cloneNode(ref), cloneNode(update)), buildBindingExportAssignmentExpression(this.metadata, exportedNames, identifier(localName), path.scope), cloneNode(ref)]));
+        }
+      }
+    }
+    requeueInParent(path);
+    path.skip();
+  },
+  AssignmentExpression: {
+    exit(path) {
+      const {
+        scope,
+        seen,
+        imported,
+        exported,
+        requeueInParent,
+        buildImportReference
+      } = this;
+      if (seen.has(path.node)) return;
+      seen.add(path.node);
+      const left = path.get("left");
+      if (left.isMemberExpression()) return;
+      if (left.isIdentifier()) {
+        const localName = left.node.name;
+        if (scope.getBinding(localName) !== path.scope.getBinding(localName)) {
+          return;
+        }
+        const exportedNames = exported.get(localName);
+        const importData = imported.get(localName);
+        if ((exportedNames == null ? void 0 : exportedNames.length) > 0 || importData) {
+          _assert(path.node.operator === "=", "Path was not simplified");
+          const assignment = path.node;
+          if (importData) {
+            assignment.left = buildImportReference(importData, left.node);
+            assignment.right = sequenceExpression([assignment.right, buildImportThrow(localName)]);
+          }
+          path.replaceWith(buildBindingExportAssignmentExpression(this.metadata, exportedNames, assignment, path.scope));
+          requeueInParent(path);
+        }
+      } else {
+        const ids = left.getOuterBindingIdentifiers();
+        const programScopeIds = Object.keys(ids).filter(localName => scope.getBinding(localName) === path.scope.getBinding(localName));
+        const id = programScopeIds.find(localName => imported.has(localName));
+        if (id) {
+          path.node.right = sequenceExpression([path.node.right, buildImportThrow(id)]);
+        }
+        const items = [];
+        programScopeIds.forEach(localName => {
+          const exportedNames = exported.get(localName) || [];
+          if (exportedNames.length > 0) {
+            items.push(buildBindingExportAssignmentExpression(this.metadata, exportedNames, identifier(localName), path.scope));
+          }
+        });
+        if (items.length > 0) {
+          let node = sequenceExpression(items);
+          if (path.parentPath.isExpressionStatement()) {
+            node = expressionStatement(node);
+            node._blockHoist = path.parentPath.node._blockHoist;
+          }
+          const statement = path.insertAfter(node)[0];
+          requeueInParent(statement);
+        }
+      }
+    }
+  },
+  "ForOfStatement|ForInStatement"(path) {
+    const {
+      scope,
+      node
+    } = path;
+    const {
+      left
+    } = node;
+    const {
+      exported,
+      imported,
+      scope: programScope
+    } = this;
+    if (!isVariableDeclaration(left)) {
+      let didTransformExport = false,
+        importConstViolationName;
+      const loopBodyScope = path.get("body").scope;
+      for (const name of Object.keys(getOuterBindingIdentifiers(left))) {
+        if (programScope.getBinding(name) === scope.getBinding(name)) {
+          if (exported.has(name)) {
+            didTransformExport = true;
+            if (loopBodyScope.hasOwnBinding(name)) {
+              loopBodyScope.rename(name);
+            }
+          }
+          if (imported.has(name) && !importConstViolationName) {
+            importConstViolationName = name;
+          }
+        }
+      }
+      if (!didTransformExport && !importConstViolationName) {
+        return;
+      }
+      path.ensureBlock();
+      const bodyPath = path.get("body");
+      const newLoopId = scope.generateUidIdentifierBasedOnNode(left);
+      path.get("left").replaceWith(variableDeclaration("let", [variableDeclarator(cloneNode(newLoopId))]));
+      scope.registerDeclaration(path.get("left"));
+      if (didTransformExport) {
+        bodyPath.unshiftContainer("body", expressionStatement(assignmentExpression("=", left, newLoopId)));
+      }
+      if (importConstViolationName) {
+        bodyPath.unshiftContainer("body", expressionStatement(buildImportThrow(importConstViolationName)));
+      }
+    }
+  }
+};
+
+//# sourceMappingURL=rewrite-live-references.js.map
+™/README.md≈Ü# @babel/helper-module-transforms
+
+> Babel helper functions for implementing ES6 module transformations
+
+See our website [@babel/helper-module-transforms](https://babeljs.io/docs/en/babel-helper-module-transforms) for more information.
+
+## Install
+
+Using npm:
+
+```sh
+npm install --save @babel/helper-module-transforms
+```
+
+or using yarn:
+
+```sh
+yarn add @babel/helper-module-transforms
+```
+≠/lib/index.js≈0ﬁ"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+Object.defineProperty(exports, "buildDynamicImport", {
+  enumerable: true,
+  get: function () {
+    return _dynamicImport.buildDynamicImport;
+  }
+});
+exports.buildNamespaceInitStatements = buildNamespaceInitStatements;
+exports.ensureStatementsHoisted = ensureStatementsHoisted;
+Object.defineProperty(exports, "getDynamicImportSource", {
+  enumerable: true,
+  get: function () {
+    return _dynamicImport.getDynamicImportSource;
+  }
+});
+Object.defineProperty(exports, "getModuleName", {
+  enumerable: true,
+  get: function () {
+    return _getModuleName.default;
+  }
+});
+Object.defineProperty(exports, "hasExports", {
+  enumerable: true,
+  get: function () {
+    return _normalizeAndLoadMetadata.hasExports;
+  }
+});
+Object.defineProperty(exports, "isModule", {
+  enumerable: true,
+  get: function () {
+    return _helperModuleImports.isModule;
+  }
+});
+Object.defineProperty(exports, "isSideEffectImport", {
+  enumerable: true,
+  get: function () {
+    return _normalizeAndLoadMetadata.isSideEffectImport;
+  }
+});
+exports.rewriteModuleStatementsAndPrepareHeader = rewriteModuleStatementsAndPrepareHeader;
+Object.defineProperty(exports, "rewriteThis", {
+  enumerable: true,
+  get: function () {
+    return _rewriteThis.default;
+  }
+});
+exports.wrapInterop = wrapInterop;
+var _assert = require("assert");
+var _t = require("@babel/types");
+var _template = require("@babel/template");
+var _helperModuleImports = require("@babel/helper-module-imports");
+var _rewriteThis = require("./rewrite-this");
+var _rewriteLiveReferences = require("./rewrite-live-references");
+var _normalizeAndLoadMetadata = require("./normalize-and-load-metadata");
+var _dynamicImport = require("./dynamic-import");
+var _getModuleName = require("./get-module-name");
+const {
+  booleanLiteral,
+  callExpression,
+  cloneNode,
+  directive,
+  directiveLiteral,
+  expressionStatement,
+  identifier,
+  isIdentifier,
+  memberExpression,
+  stringLiteral,
+  valueToNode,
+  variableDeclaration,
+  variableDeclarator
+} = _t;
+function rewriteModuleStatementsAndPrepareHeader(path, {
+  loose,
+  exportName,
+  strict,
+  allowTopLevelThis,
+  strictMode,
+  noInterop,
+  importInterop = noInterop ? "none" : "babel",
+  lazy,
+  esNamespaceOnly,
+  filename,
+  constantReexports = loose,
+  enumerableModuleMeta = loose,
+  noIncompleteNsImportDetection
+}) {
+  (0, _normalizeAndLoadMetadata.validateImportInteropOption)(importInterop);
+  _assert((0, _helperModuleImports.isModule)(path), "Cannot process module statements in a script");
+  path.node.sourceType = "script";
+  const meta = (0, _normalizeAndLoadMetadata.default)(path, exportName, {
+    importInterop,
+    initializeReexports: constantReexports,
+    lazy,
+    esNamespaceOnly,
+    filename
+  });
+  if (!allowTopLevelThis) {
+    (0, _rewriteThis.default)(path);
+  }
+  (0, _rewriteLiveReferences.default)(path, meta);
+  if (strictMode !== false) {
+    const hasStrict = path.node.directives.some(directive => {
+      return directive.value.value === "use strict";
+    });
+    if (!hasStrict) {
+      path.unshiftContainer("directives", directive(directiveLiteral("use strict")));
+    }
+  }
+  const headers = [];
+  if ((0, _normalizeAndLoadMetadata.hasExports)(meta) && !strict) {
+    headers.push(buildESModuleHeader(meta, enumerableModuleMeta));
+  }
+  const nameList = buildExportNameListDeclaration(path, meta);
+  if (nameList) {
+    meta.exportNameListName = nameList.name;
+    headers.push(nameList.statement);
+  }
+  headers.push(...buildExportInitializationStatements(path, meta, constantReexports, noIncompleteNsImportDetection));
+  return {
+    meta,
+    headers
+  };
+}
+function ensureStatementsHoisted(statements) {
+  statements.forEach(header => {
+    header._blockHoist = 3;
+  });
+}
+function wrapInterop(programPath, expr, type) {
+  if (type === "none") {
+    return null;
+  }
+  if (type === "node-namespace") {
+    return callExpression(programPath.hub.addHelper("interopRequireWildcard"), [expr, booleanLiteral(true)]);
+  } else if (type === "node-default") {
+    return null;
+  }
+  let helper;
+  if (type === "default") {
+    helper = "interopRequireDefault";
+  } else if (type === "namespace") {
+    helper = "interopRequireWildcard";
+  } else {
+    throw new Error(`Unknown interop: ${type}`);
+  }
+  return callExpression(programPath.hub.addHelper(helper), [expr]);
+}
+function buildNamespaceInitStatements(metadata, sourceMetadata, constantReexports = false) {
+  const statements = [];
+  let srcNamespace = identifier(sourceMetadata.name);
+  if (sourceMetadata.lazy) srcNamespace = callExpression(srcNamespace, []);
+  for (const localName of sourceMetadata.importsNamespace) {
+    if (localName === sourceMetadata.name) continue;
+    statements.push(_template.default.statement`var NAME = SOURCE;`({
+      NAME: localName,
+      SOURCE: cloneNode(srcNamespace)
+    }));
+  }
+  if (constantReexports) {
+    statements.push(...buildReexportsFromMeta(metadata, sourceMetadata, true));
+  }
+  for (const exportName of sourceMetadata.reexportNamespace) {
+    statements.push((sourceMetadata.lazy ? _template.default.statement`
+            Object.defineProperty(EXPORTS, "NAME", {
+              enumerable: true,
+              get: function() {
+                return NAMESPACE;
+              }
+            });
+          ` : _template.default.statement`EXPORTS.NAME = NAMESPACE;`)({
+      EXPORTS: metadata.exportName,
+      NAME: exportName,
+      NAMESPACE: cloneNode(srcNamespace)
+    }));
+  }
+  if (sourceMetadata.reexportAll) {
+    const statement = buildNamespaceReexport(metadata, cloneNode(srcNamespace), constantReexports);
+    statement.loc = sourceMetadata.reexportAll.loc;
+    statements.push(statement);
+  }
+  return statements;
+}
+const ReexportTemplate = {
+  constant: _template.default.statement`EXPORTS.EXPORT_NAME = NAMESPACE_IMPORT;`,
+  constantComputed: _template.default.statement`EXPORTS["EXPORT_NAME"] = NAMESPACE_IMPORT;`,
+  spec: _template.default.statement`
+    Object.defineProperty(EXPORTS, "EXPORT_NAME", {
+      enumerable: true,
+      get: function() {
+        return NAMESPACE_IMPORT;
+      },
+    });
+    `
+};
+function buildReexportsFromMeta(meta, metadata, constantReexports) {
+  const namespace = metadata.lazy ? callExpression(identifier(metadata.name), []) : identifier(metadata.name);
+  const {
+    stringSpecifiers
+  } = meta;
+  return Array.from(metadata.reexports, ([exportName, importName]) => {
+    let NAMESPACE_IMPORT = cloneNode(namespace);
+    if (importName === "default" && metadata.interop === "node-default") {} else if (stringSpecifiers.has(importName)) {
+      NAMESPACE_IMPORT = memberExpression(NAMESPACE_IMPORT, stringLiteral(importName), true);
+    } else {
+      NAMESPACE_IMPORT = memberExpression(NAMESPACE_IMPORT, identifier(importName));
+    }
+    const astNodes = {
+      EXPORTS: meta.exportName,
+      EXPORT_NAME: exportName,
+      NAMESPACE_IMPORT
+    };
+    if (constantReexports || isIdentifier(NAMESPACE_IMPORT)) {
+      if (stringSpecifiers.has(exportName)) {
+        return ReexportTemplate.constantComputed(astNodes);
+      } else {
+        return ReexportTemplate.constant(astNodes);
+      }
+    } else {
+      return ReexportTemplate.spec(astNodes);
+    }
+  });
+}
+function buildESModuleHeader(metadata, enumerableModuleMeta = false) {
+  return (enumerableModuleMeta ? _template.default.statement`
+        EXPORTS.__esModule = true;
+      ` : _template.default.statement`
+        Object.defineProperty(EXPORTS, "__esModule", {
+          value: true,
+        });
+      `)({
+    EXPORTS: metadata.exportName
+  });
+}
+function buildNamespaceReexport(metadata, namespace, constantReexports) {
+  return (constantReexports ? _template.default.statement`
+        Object.keys(NAMESPACE).forEach(function(key) {
+          if (key === "default" || key === "__esModule") return;
+          VERIFY_NAME_LIST;
+          if (key in EXPORTS && EXPORTS[key] === NAMESPACE[key]) return;
+
+          EXPORTS[key] = NAMESPACE[key];
+        });
+      ` : _template.default.statement`
+        Object.keys(NAMESPACE).forEach(function(key) {
+          if (key === "default" || key === "__esModule") return;
+          VERIFY_NAME_LIST;
+          if (key in EXPORTS && EXPORTS[key] === NAMESPACE[key]) return;
+
+          Object.defineProperty(EXPORTS, key, {
+            enumerable: true,
+            get: function() {
+              return NAMESPACE[key];
+            },
+          });
+        });
+    `)({
+    NAMESPACE: namespace,
+    EXPORTS: metadata.exportName,
+    VERIFY_NAME_LIST: metadata.exportNameListName ? (0, _template.default)`
+            if (Object.prototype.hasOwnProperty.call(EXPORTS_LIST, key)) return;
+          `({
+      EXPORTS_LIST: metadata.exportNameListName
+    }) : null
+  });
+}
+function buildExportNameListDeclaration(programPath, metadata) {
+  const exportedVars = Object.create(null);
+  for (const data of metadata.local.values()) {
+    for (const name of data.names) {
+      exportedVars[name] = true;
+    }
+  }
+  let hasReexport = false;
+  for (const data of metadata.source.values()) {
+    for (const exportName of data.reexports.keys()) {
+      exportedVars[exportName] = true;
+    }
+    for (const exportName of data.reexportNamespace) {
+      exportedVars[exportName] = true;
+    }
+    hasReexport = hasReexport || !!data.reexportAll;
+  }
+  if (!hasReexport || Object.keys(exportedVars).length === 0) return null;
+  const name = programPath.scope.generateUidIdentifier("exportNames");
+  delete exportedVars.default;
+  return {
+    name: name.name,
+    statement: variableDeclaration("var", [variableDeclarator(name, valueToNode(exportedVars))])
+  };
+}
+function buildExportInitializationStatements(programPath, metadata, constantReexports = false, noIncompleteNsImportDetection = false) {
+  const initStatements = [];
+  for (const [localName, data] of metadata.local) {
+    if (data.kind === "import") {} else if (data.kind === "hoisted") {
+      initStatements.push([data.names[0], buildInitStatement(metadata, data.names, identifier(localName))]);
+    } else if (!noIncompleteNsImportDetection) {
+      for (const exportName of data.names) {
+        initStatements.push([exportName, null]);
+      }
+    }
+  }
+  for (const data of metadata.source.values()) {
+    if (!constantReexports) {
+      const reexportsStatements = buildReexportsFromMeta(metadata, data, false);
+      const reexports = [...data.reexports.keys()];
+      for (let i = 0; i < reexportsStatements.length; i++) {
+        initStatements.push([reexports[i], reexportsStatements[i]]);
+      }
+    }
+    if (!noIncompleteNsImportDetection) {
+      for (const exportName of data.reexportNamespace) {
+        initStatements.push([exportName, null]);
+      }
+    }
+  }
+  initStatements.sort(([a], [b]) => {
+    if (a < b) return -1;
+    if (b < a) return 1;
+    return 0;
+  });
+  const results = [];
+  if (noIncompleteNsImportDetection) {
+    for (const [, initStatement] of initStatements) {
+      results.push(initStatement);
+    }
+  } else {
+    const chunkSize = 100;
+    for (let i = 0; i < initStatements.length; i += chunkSize) {
+      let uninitializedExportNames = [];
+      for (let j = 0; j < chunkSize && i + j < initStatements.length; j++) {
+        const [exportName, initStatement] = initStatements[i + j];
+        if (initStatement !== null) {
+          if (uninitializedExportNames.length > 0) {
+            results.push(buildInitStatement(metadata, uninitializedExportNames, programPath.scope.buildUndefinedNode()));
+            uninitializedExportNames = [];
+          }
+          results.push(initStatement);
+        } else {
+          uninitializedExportNames.push(exportName);
+        }
+      }
+      if (uninitializedExportNames.length > 0) {
+        results.push(buildInitStatement(metadata, uninitializedExportNames, programPath.scope.buildUndefinedNode()));
+      }
+    }
+  }
+  return results;
+}
+const InitTemplate = {
+  computed: _template.default.expression`EXPORTS["NAME"] = VALUE`,
+  default: _template.default.expression`EXPORTS.NAME = VALUE`
+};
+function buildInitStatement(metadata, exportNames, initExpr) {
+  const {
+    stringSpecifiers,
+    exportName: EXPORTS
+  } = metadata;
+  return expressionStatement(exportNames.reduce((acc, exportName) => {
+    const params = {
+      EXPORTS,
+      NAME: exportName,
+      VALUE: acc
+    };
+    if (stringSpecifiers.has(exportName)) {
+      return InitTemplate.computed(params);
+    } else {
+      return InitTemplate.default(params);
+    }
+  }, initExpr));
+}
+
+//# sourceMappingURL=index.js.map
+Ÿ#/lib/rewrite-live-references.js.map≈z¡{"version":3,"names":["assignmentExpression","callExpression","cloneNode","expressionStatement","getOuterBindingIdentifiers","identifier","isMemberExpression","isVariableDeclaration","jsxIdentifier","jsxMemberExpression","memberExpression","numericLiteral","sequenceExpression","stringLiteral","variableDeclaration","variableDeclarator","isInType","path","parent","type","parentPath","exportKind","isStatement","isExpression","rewriteLiveReferences","programPath","metadata","imported","Map","exported","requeueInParent","requeue","source","data","localName","importName","imports","set","importsNamespace","local","exportMeta","get","push","names","rewriteBindingInitVisitorState","scope","traverse","rewriteBindingInitVisitor","simplifyAccess","Set","Array","from","keys","rewriteReferencesVisitorState","seen","WeakSet","buildImportReference","identNode","meta","referenced","lazy","namespace","name","interop","computed","stringSpecifiers","has","rewriteReferencesVisitor","Scope","skip","ClassDeclaration","id","node","Error","exportNames","length","statement","buildBindingExportAssignmentExpression","_blockHoist","insertAfter","VariableDeclaration","Object","forEach","localExpr","exportsObjectName","exportName","currentScope","hasOwnBinding","rename","reduce","expr","buildImportThrow","template","expression","ast","ReferencedIdentifier","add","importData","buildCodeFrameError","localBinding","getBinding","rootBinding","ref","loc","isCallExpression","callee","isOptionalCallExpression","isTaggedTemplateExpression","tag","replaceWith","isJSXIdentifier","object","property","UpdateExpression","arg","update","isIdentifier","exportedNames","operator","prefix","generateDeclaredUidIdentifier","AssignmentExpression","exit","left","assert","assignment","right","ids","programScopeIds","filter","find","items","isExpressionStatement","programScope","didTransformExport","importConstViolationName","loopBodyScope","ensureBlock","bodyPath","newLoopId","generateUidIdentifierBasedOnNode","registerDeclaration","unshiftContainer"],"sources":["../src/rewrite-live-references.ts"],"sourcesContent":["import assert from \"assert\";\nimport {\n  assignmentExpression,\n  callExpression,\n  cloneNode,\n  expressionStatement,\n  getOuterBindingIdentifiers,\n  identifier,\n  isMemberExpression,\n  isVariableDeclaration,\n  jsxIdentifier,\n  jsxMemberExpression,\n  memberExpression,\n  numericLiteral,\n  sequenceExpression,\n  stringLiteral,\n  variableDeclaration,\n  variableDeclarator,\n} from \"@babel/types\";\nimport type * as t from \"@babel/types\";\nimport template from \"@babel/template\";\nimport type { NodePath, Visitor, Scope } from \"@babel/traverse\";\nimport simplifyAccess from \"@babel/helper-simple-access\";\n\nimport type { ModuleMetadata } from \"./normalize-and-load-metadata\";\n\ninterface RewriteReferencesVisitorState {\n  exported: Map<any, any>;\n  metadata: ModuleMetadata;\n  requeueInParent: (path: NodePath) => void;\n  scope: Scope;\n  imported: Map<any, any>;\n  buildImportReference: (\n    [source, importName, localName]: readonly [string, string, string],\n    identNode: t.Identifier | t.CallExpression | t.JSXIdentifier,\n  ) => any;\n  seen: WeakSet<object>;\n}\n\ninterface RewriteBindingInitVisitorState {\n  exported: Map<any, any>;\n  metadata: ModuleMetadata;\n  requeueInParent: (path: NodePath) => void;\n  scope: Scope;\n}\n\nfunction isInType(path: NodePath) {\n  do {\n    switch (path.parent.type) {\n      case \"TSTypeAnnotation\":\n      case \"TSTypeAliasDeclaration\":\n      case \"TSTypeReference\":\n      case \"TypeAnnotation\":\n      case \"TypeAlias\":\n        return true;\n      case \"ExportSpecifier\":\n        return (\n          (\n            path.parentPath.parent as\n              | t.ExportDefaultDeclaration\n              | t.ExportNamedDeclaration\n          ).exportKind === \"type\"\n        );\n      default:\n        if (path.parentPath.isStatement() || path.parentPath.isExpression()) {\n          return false;\n        }\n    }\n  } while ((path = path.parentPath));\n}\n\nexport default function rewriteLiveReferences(\n  programPath: NodePath<t.Program>,\n  metadata: ModuleMetadata,\n) {\n  const imported = new Map();\n  const exported = new Map();\n  const requeueInParent = (path: NodePath) => {\n    // Manually re-queue `exports.default =` expressions so that the ES3\n    // transform has an opportunity to convert them. Ideally this would\n    // happen automatically from the replaceWith above. See #4140 for\n    // more info.\n    programPath.requeue(path);\n  };\n\n  for (const [source, data] of metadata.source) {\n    for (const [localName, importName] of data.imports) {\n      imported.set(localName, [source, importName, null]);\n    }\n    for (const localName of data.importsNamespace) {\n      imported.set(localName, [source, null, localName]);\n    }\n  }\n\n  for (const [local, data] of metadata.local) {\n    let exportMeta = exported.get(local);\n    if (!exportMeta) {\n      exportMeta = [];\n      exported.set(local, exportMeta);\n    }\n\n    exportMeta.push(...data.names);\n  }\n\n  // Rewrite initialization of bindings to update exports.\n  const rewriteBindingInitVisitorState: RewriteBindingInitVisitorState = {\n    metadata,\n    requeueInParent,\n    scope: programPath.scope,\n    exported, // local name => exported name list\n  };\n  programPath.traverse(\n    // eslint-disable-next-line @typescript-eslint/no-use-before-define\n    rewriteBindingInitVisitor,\n    rewriteBindingInitVisitorState,\n  );\n\n  simplifyAccess(\n    programPath,\n    // NOTE(logan): The 'Array.from' calls are to make this code with in loose mode.\n    new Set([...Array.from(imported.keys()), ...Array.from(exported.keys())]),\n    false,\n  );\n\n  // Rewrite reads/writes from imports and exports to have the correct behavior.\n  const rewriteReferencesVisitorState: RewriteReferencesVisitorState = {\n    seen: new WeakSet(),\n    metadata,\n    requeueInParent,\n    scope: programPath.scope,\n    imported, // local / import\n    exported, // local name => exported name list\n    buildImportReference: ([source, importName, localName], identNode) => {\n      const meta = metadata.source.get(source);\n      meta.referenced = true;\n\n      if (localName) {\n        if (meta.lazy) {\n          identNode = callExpression(\n            // @ts-expect-error Fixme: we should handle the case when identNode is a JSXIdentifier\n            identNode,\n            [],\n          );\n        }\n        return identNode;\n      }\n\n      let namespace: t.Expression = identifier(meta.name);\n      if (meta.lazy) namespace = callExpression(namespace, []);\n\n      if (importName === \"default\" && meta.interop === \"node-default\") {\n        return namespace;\n      }\n\n      const computed = metadata.stringSpecifiers.has(importName);\n\n      return memberExpression(\n        namespace,\n        computed ? stringLiteral(importName) : identifier(importName),\n        computed,\n      );\n    },\n  };\n  // eslint-disable-next-line @typescript-eslint/no-use-before-define\n  programPath.traverse(rewriteReferencesVisitor, rewriteReferencesVisitorState);\n}\n\n/**\n * A visitor to inject export update statements during binding initialization.\n */\nconst rewriteBindingInitVisitor: Visitor<RewriteBindingInitVisitorState> = {\n  Scope(path) {\n    path.skip();\n  },\n  ClassDeclaration(path) {\n    const { requeueInParent, exported, metadata } = this;\n\n    const { id } = path.node;\n    if (!id) throw new Error(\"Expected class to have a name\");\n    const localName = id.name;\n\n    const exportNames = exported.get(localName) || [];\n    if (exportNames.length > 0) {\n      const statement = expressionStatement(\n        // eslint-disable-next-line @typescript-eslint/no-use-before-define\n        buildBindingExportAssignmentExpression(\n          metadata,\n          exportNames,\n          identifier(localName),\n          path.scope,\n        ),\n      );\n      // @ts-expect-error todo(flow->ts): avoid mutations\n      statement._blockHoist = path.node._blockHoist;\n\n      requeueInParent(path.insertAfter(statement)[0]);\n    }\n  },\n  VariableDeclaration(path) {\n    const { requeueInParent, exported, metadata } = this;\n\n    Object.keys(path.getOuterBindingIdentifiers()).forEach(localName => {\n      const exportNames = exported.get(localName) || [];\n\n      if (exportNames.length > 0) {\n        const statement = expressionStatement(\n          // eslint-disable-next-line @typescript-eslint/no-use-before-define\n          buildBindingExportAssignmentExpression(\n            metadata,\n            exportNames,\n            identifier(localName),\n            path.scope,\n          ),\n        );\n        // @ts-expect-error todo(flow->ts): avoid mutations\n        statement._blockHoist = path.node._blockHoist;\n\n        requeueInParent(path.insertAfter(statement)[0]);\n      }\n    });\n  },\n};\n\nconst buildBindingExportAssignmentExpression = (\n  metadata: ModuleMetadata,\n  exportNames: string[],\n  localExpr: t.Expression,\n  scope: Scope,\n) => {\n  const exportsObjectName = metadata.exportName;\n  for (\n    let currentScope = scope;\n    currentScope != null;\n    currentScope = currentScope.parent\n  ) {\n    if (currentScope.hasOwnBinding(exportsObjectName)) {\n      currentScope.rename(exportsObjectName);\n    }\n  }\n  return (exportNames || []).reduce((expr, exportName) => {\n    // class Foo {} export { Foo, Foo as Bar };\n    // as\n    // class Foo {} exports.Foo = exports.Bar = Foo;\n    const { stringSpecifiers } = metadata;\n    const computed = stringSpecifiers.has(exportName);\n    return assignmentExpression(\n      \"=\",\n      memberExpression(\n        identifier(exportsObjectName),\n        computed ? stringLiteral(exportName) : identifier(exportName),\n        /* computed */ computed,\n      ),\n      expr,\n    );\n  }, localExpr);\n};\n\nconst buildImportThrow = (localName: string) => {\n  return template.expression.ast`\n    (function() {\n      throw new Error('\"' + '${localName}' + '\" is read-only.');\n    })()\n  `;\n};\n\nconst rewriteReferencesVisitor: Visitor<RewriteReferencesVisitorState> = {\n  ReferencedIdentifier(path) {\n    const { seen, buildImportReference, scope, imported, requeueInParent } =\n      this;\n    if (seen.has(path.node)) return;\n    seen.add(path.node);\n\n    const localName = path.node.name;\n\n    const importData = imported.get(localName);\n    if (importData) {\n      if (isInType(path)) {\n        throw path.buildCodeFrameError(\n          `Cannot transform the imported binding \"${localName}\" since it's also used in a type annotation. ` +\n            `Please strip type annotations using @babel/preset-typescript or @babel/preset-flow.`,\n        );\n      }\n\n      const localBinding = path.scope.getBinding(localName);\n      const rootBinding = scope.getBinding(localName);\n\n      // redeclared in this scope\n      if (rootBinding !== localBinding) return;\n\n      const ref = buildImportReference(importData, path.node);\n\n      // Preserve the binding location so that sourcemaps are nicer.\n      ref.loc = path.node.loc;\n\n      if (\n        (path.parentPath.isCallExpression({ callee: path.node }) ||\n          path.parentPath.isOptionalCallExpression({ callee: path.node }) ||\n          path.parentPath.isTaggedTemplateExpression({ tag: path.node })) &&\n        isMemberExpression(ref)\n      ) {\n        path.replaceWith(sequenceExpression([numericLiteral(0), ref]));\n      } else if (path.isJSXIdentifier() && isMemberExpression(ref)) {\n        const { object, property } = ref;\n        path.replaceWith(\n          jsxMemberExpression(\n            // @ts-expect-error todo(flow->ts): possible bug `object` might not have a name\n            jsxIdentifier(object.name),\n            // @ts-expect-error todo(flow->ts): possible bug `property` might not have a name\n            jsxIdentifier(property.name),\n          ),\n        );\n      } else {\n        path.replaceWith(ref);\n      }\n\n      requeueInParent(path);\n\n      // The path could have been replaced with an identifier that would\n      // otherwise be re-visited, so we skip processing its children.\n      path.skip();\n    }\n  },\n\n  UpdateExpression(path) {\n    const {\n      scope,\n      seen,\n      imported,\n      exported,\n      requeueInParent,\n      buildImportReference,\n    } = this;\n\n    if (seen.has(path.node)) return;\n\n    seen.add(path.node);\n\n    const arg = path.get(\"argument\");\n\n    // No change needed\n    if (arg.isMemberExpression()) return;\n\n    const update = path.node;\n\n    if (arg.isIdentifier()) {\n      const localName = arg.node.name;\n\n      // redeclared in this scope\n      if (scope.getBinding(localName) !== path.scope.getBinding(localName)) {\n        return;\n      }\n\n      const exportedNames = exported.get(localName);\n      const importData = imported.get(localName);\n\n      if (exportedNames?.length > 0 || importData) {\n        if (importData) {\n          path.replaceWith(\n            assignmentExpression(\n              update.operator[0] + \"=\",\n              buildImportReference(importData, arg.node),\n              buildImportThrow(localName),\n            ),\n          );\n        } else if (update.prefix) {\n          // ++foo\n          // =>   exports.foo = ++foo\n          path.replaceWith(\n            buildBindingExportAssignmentExpression(\n              this.metadata,\n              exportedNames,\n              cloneNode(update),\n              path.scope,\n            ),\n          );\n        } else {\n          // foo++\n          // =>   (ref = i++, exports.i = i, ref)\n          const ref = scope.generateDeclaredUidIdentifier(localName);\n\n          path.replaceWith(\n            sequenceExpression([\n              assignmentExpression(\"=\", cloneNode(ref), cloneNode(update)),\n              buildBindingExportAssignmentExpression(\n                this.metadata,\n                exportedNames,\n                identifier(localName),\n                path.scope,\n              ),\n              cloneNode(ref),\n            ]),\n          );\n        }\n      }\n    }\n\n    requeueInParent(path);\n    path.skip();\n  },\n\n  AssignmentExpression: {\n    exit(path) {\n      const {\n        scope,\n        seen,\n        imported,\n        exported,\n        requeueInParent,\n        buildImportReference,\n      } = this;\n\n      if (seen.has(path.node)) return;\n      seen.add(path.node);\n\n      const left = path.get(\"left\");\n\n      // No change needed\n      if (left.isMemberExpression()) return;\n\n      if (left.isIdentifier()) {\n        // Simple update-assign foo += 1; export { foo };\n        // =>   exports.foo =  (foo += 1);\n        const localName = left.node.name;\n\n        // redeclared in this scope\n        if (scope.getBinding(localName) !== path.scope.getBinding(localName)) {\n          return;\n        }\n\n        const exportedNames = exported.get(localName);\n        const importData = imported.get(localName);\n        if (exportedNames?.length > 0 || importData) {\n          assert(path.node.operator === \"=\", \"Path was not simplified\");\n\n          const assignment = path.node;\n\n          if (importData) {\n            assignment.left = buildImportReference(importData, left.node);\n\n            assignment.right = sequenceExpression([\n              assignment.right,\n              buildImportThrow(localName),\n            ]);\n          }\n\n          path.replaceWith(\n            buildBindingExportAssignmentExpression(\n              this.metadata,\n              exportedNames,\n              assignment,\n              path.scope,\n            ),\n          );\n          requeueInParent(path);\n        }\n      } else {\n        const ids = left.getOuterBindingIdentifiers();\n        const programScopeIds = Object.keys(ids).filter(\n          localName =>\n            scope.getBinding(localName) === path.scope.getBinding(localName),\n        );\n        const id = programScopeIds.find(localName => imported.has(localName));\n\n        if (id) {\n          path.node.right = sequenceExpression([\n            path.node.right,\n            buildImportThrow(id),\n          ]);\n        }\n\n        // Complex ({a, b, c} = {}); export { a, c };\n        // =>   ({a, b, c} = {}), (exports.a = a, exports.c = c);\n        const items: t.Expression[] = [];\n        programScopeIds.forEach(localName => {\n          const exportedNames = exported.get(localName) || [];\n          if (exportedNames.length > 0) {\n            items.push(\n              buildBindingExportAssignmentExpression(\n                this.metadata,\n                exportedNames,\n                identifier(localName),\n                path.scope,\n              ),\n            );\n          }\n        });\n\n        if (items.length > 0) {\n          let node: t.Node = sequenceExpression(items);\n          if (path.parentPath.isExpressionStatement()) {\n            node = expressionStatement(node);\n            // @ts-expect-error todo(flow->ts): avoid mutations\n            node._blockHoist = path.parentPath.node._blockHoist;\n          }\n\n          const statement = path.insertAfter(node)[0];\n          requeueInParent(statement);\n        }\n      }\n    },\n  },\n  \"ForOfStatement|ForInStatement\"(\n    path: NodePath<t.ForOfStatement | t.ForInStatement>,\n  ) {\n    const { scope, node } = path;\n    const { left } = node;\n    const { exported, imported, scope: programScope } = this;\n\n    if (!isVariableDeclaration(left)) {\n      let didTransformExport = false,\n        importConstViolationName;\n      const loopBodyScope = path.get(\"body\").scope;\n      for (const name of Object.keys(getOuterBindingIdentifiers(left))) {\n        if (programScope.getBinding(name) === scope.getBinding(name)) {\n          if (exported.has(name)) {\n            didTransformExport = true;\n            if (loopBodyScope.hasOwnBinding(name)) {\n              loopBodyScope.rename(name);\n            }\n          }\n          if (imported.has(name) && !importConstViolationName) {\n            importConstViolationName = name;\n          }\n        }\n      }\n      if (!didTransformExport && !importConstViolationName) {\n        return;\n      }\n\n      path.ensureBlock();\n      const bodyPath = path.get(\"body\");\n\n      const newLoopId = scope.generateUidIdentifierBasedOnNode(left);\n      path\n        .get(\"left\")\n        .replaceWith(\n          variableDeclaration(\"let\", [\n            variableDeclarator(cloneNode(newLoopId)),\n          ]),\n        );\n      scope.registerDeclaration(path.get(\"left\"));\n\n      if (didTransformExport) {\n        bodyPath.unshiftContainer(\n          \"body\",\n          expressionStatement(assignmentExpression(\"=\", left, newLoopId)),\n        );\n      }\n      if (importConstViolationName) {\n        bodyPath.unshiftContainer(\n          \"body\",\n          expressionStatement(buildImportThrow(importConstViolationName)),\n        );\n      }\n    }\n  },\n};\n"],"mappings":"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"}ª/lib/get-module-name.js.map≈`{"version":3,"names":["originalGetModuleName","getModuleName","rootOpts","pluginOpts","moduleId","moduleIds","getModuleId","moduleRoot","filename","filenameRelative","sourceRoot","moduleName","sourceRootReplacer","RegExp","replace"],"sources":["../src/get-module-name.ts"],"sourcesContent":["type RootOptions = {\n  filename?: string;\n  filenameRelative?: string;\n  sourceRoot?: string;\n};\n\nexport type PluginOptions = {\n  moduleId?: string;\n  moduleIds?: boolean;\n  getModuleId?: (moduleName: string) => string | null | undefined;\n  moduleRoot?: string;\n};\n\nif (!process.env.BABEL_8_BREAKING) {\n  const originalGetModuleName = getModuleName;\n\n  // @ts-expect-error TS doesn't like reassigning a function.\n  // eslint-disable-next-line no-func-assign\n  getModuleName = function getModuleName(\n    rootOpts: RootOptions & PluginOptions,\n    pluginOpts: PluginOptions,\n  ): string | null {\n    return originalGetModuleName(rootOpts, {\n      moduleId: pluginOpts.moduleId ?? rootOpts.moduleId,\n      moduleIds: pluginOpts.moduleIds ?? rootOpts.moduleIds,\n      getModuleId: pluginOpts.getModuleId ?? rootOpts.getModuleId,\n      moduleRoot: pluginOpts.moduleRoot ?? rootOpts.moduleRoot,\n    });\n  };\n}\n\nexport default function getModuleName(\n  rootOpts: RootOptions,\n  pluginOpts: PluginOptions,\n): string | null {\n  const {\n    filename,\n    filenameRelative = filename,\n    sourceRoot = pluginOpts.moduleRoot,\n  } = rootOpts;\n\n  const {\n    moduleId,\n    moduleIds = !!moduleId,\n\n    getModuleId,\n\n    moduleRoot = sourceRoot,\n  } = pluginOpts;\n\n  if (!moduleIds) return null;\n\n  // moduleId is n/a if a `getModuleId()` is provided\n  if (moduleId != null && !getModuleId) {\n    return moduleId;\n  }\n\n  let moduleName = moduleRoot != null ? moduleRoot + \"/\" : \"\";\n\n  if (filenameRelative) {\n    const sourceRootReplacer =\n      sourceRoot != null ? new RegExp(\"^\" + sourceRoot + \"/?\") : \"\";\n\n    moduleName += filenameRelative\n      // remove sourceRoot from filename\n      .replace(sourceRootReplacer, \"\")\n      // remove extension\n      .replace(/\\.(\\w*?)$/, \"\");\n  }\n\n  // normalize path separators\n  moduleName = moduleName.replace(/\\\\/g, \"/\");\n\n  if (getModuleId) {\n    // If return is falsy, assume they want us to use our generated default name\n    return getModuleId(moduleName) || moduleName;\n  } else {\n    return moduleName;\n  }\n}\n"],"mappings":";;;;;;AAamC;EACjC,MAAMA,qBAAqB,GAAGC,aAAa;EAI3C,kBAAAA,aAAa,GAAG,SAASA,aAAa,CACpCC,QAAqC,EACrCC,UAAyB,EACV;IAAA;IACf,OAAOH,qBAAqB,CAACE,QAAQ,EAAE;MACrCE,QAAQ,0BAAED,UAAU,CAACC,QAAQ,mCAAIF,QAAQ,CAACE,QAAQ;MAClDC,SAAS,2BAAEF,UAAU,CAACE,SAAS,oCAAIH,QAAQ,CAACG,SAAS;MACrDC,WAAW,2BAAEH,UAAU,CAACG,WAAW,oCAAIJ,QAAQ,CAACI,WAAW;MAC3DC,UAAU,2BAAEJ,UAAU,CAACI,UAAU,oCAAIL,QAAQ,CAACK;IAChD,CAAC,CAAC;EACJ,CAAC;AACH;AAEe,SAASN,aAAa,CACnCC,QAAqB,EACrBC,UAAyB,EACV;EACf,MAAM;IACJK,QAAQ;IACRC,gBAAgB,GAAGD,QAAQ;IAC3BE,UAAU,GAAGP,UAAU,CAACI;EAC1B,CAAC,GAAGL,QAAQ;EAEZ,MAAM;IACJE,QAAQ;IACRC,SAAS,GAAG,CAAC,CAACD,QAAQ;IAEtBE,WAAW;IAEXC,UAAU,GAAGG;EACf,CAAC,GAAGP,UAAU;EAEd,IAAI,CAACE,SAAS,EAAE,OAAO,IAAI;EAG3B,IAAID,QAAQ,IAAI,IAAI,IAAI,CAACE,WAAW,EAAE;IACpC,OAAOF,QAAQ;EACjB;EAEA,IAAIO,UAAU,GAAGJ,UAAU,IAAI,IAAI,GAAGA,UAAU,GAAG,GAAG,GAAG,EAAE;EAE3D,IAAIE,gBAAgB,EAAE;IACpB,MAAMG,kBAAkB,GACtBF,UAAU,IAAI,IAAI,GAAG,IAAIG,MAAM,CAAC,GAAG,GAAGH,UAAU,GAAG,IAAI,CAAC,GAAG,EAAE;IAE/DC,UAAU,IAAIF,gBAAgB,CAE3BK,OAAO,CAACF,kBAAkB,EAAE,EAAE,CAAC,CAE/BE,OAAO,CAAC,WAAW,EAAE,EAAE,CAAC;EAC7B;EAGAH,UAAU,GAAGA,UAAU,CAACG,OAAO,CAAC,KAAK,EAAE,GAAG,CAAC;EAE3C,IAAIR,WAAW,EAAE;IAEf,OAAOA,WAAW,CAACK,UAAU,CAAC,IAAIA,UAAU;EAC9C,CAAC,MAAM;IACL,OAAOA,UAAU;EACnB;AACF"}Ÿ'/lib/normalize-and-load-metadata.js.map≈Çê{"version":3,"names":["hasExports","metadata","isSideEffectImport","source","imports","size","importsNamespace","reexports","reexportNamespace","reexportAll","validateImportInteropOption","importInterop","Error","resolveImportInterop","filename","normalizeModuleAndLoadMetadata","programPath","exportName","initializeReexports","lazy","esNamespaceOnly","scope","generateUidIdentifier","name","stringSpecifiers","Set","nameAnonymousExports","local","sources","getModuleMetadata","removeImportExportDeclarations","values","next","value","resolvedInterop","interop","exportNameListName","getExportSpecifierName","path","isIdentifier","node","isStringLiteral","stringValue","isIdentifierName","add","type","assertExportSpecifier","isExportSpecifier","isExportNamespaceSpecifier","buildCodeFrameError","localData","getLocalExportMetadata","sourceData","Map","getData","sourceNode","data","get","basename","extname","loc","referenced","set","forEach","child","isImportDeclaration","spec","isImportDefaultSpecifier","localName","reexport","delete","names","isImportNamespaceSpecifier","isImportSpecifier","importName","isExportAllDeclaration","isExportNamedDeclaration","isExportDefaultDeclaration","needsDefault","needsNamed","test","Array","isArray","indexOf","bindingKindLookup","kind","declaration","isFunctionDeclaration","isClassDeclaration","isVariableDeclaration","Object","keys","getOuterBindingIdentifiers","localMetadata","getLocalMetadata","idPath","undefined","ids","getOuterBindingIdentifierPaths","push","exported","splitExportDeclaration","remove","_blockHoist","replaceWith"],"sources":["../src/normalize-and-load-metadata.ts"],"sourcesContent":["import { basename, extname } from \"path\";\nimport type * as t from \"@babel/types\";\n\nimport { isIdentifierName } from \"@babel/helper-validator-identifier\";\nimport splitExportDeclaration from \"@babel/helper-split-export-declaration\";\nimport type { NodePath } from \"@babel/traverse\";\n\nexport interface ModuleMetadata {\n  exportName: string;\n  // The name of the variable that will reference an object containing export names.\n  exportNameListName: null | string;\n  hasExports: boolean;\n  // Lookup from local binding to export information.\n  local: Map<string, LocalExportMetadata>;\n  // Lookup of source file to source file metadata.\n  source: Map<string, SourceModuleMetadata>;\n  // List of names that should only be printed as string literals.\n  // i.e. `import { \"any unicode\" as foo } from \"some-module\"`\n  // `stringSpecifiers` is Set(1) [\"any unicode\"]\n  // In most cases `stringSpecifiers` is an empty Set\n  stringSpecifiers: Set<string>;\n}\n\nexport type InteropType =\n  | \"default\" // Babel interop for default-only imports\n  | \"namespace\" // Babel interop for namespace or default+named imports\n  | \"node-default\" // Node.js interop for default-only imports\n  | \"node-namespace\" // Node.js interop for namespace or default+named imports\n  | \"none\"; // No interop, or named-only imports\n\nexport type ImportInterop =\n  | \"none\"\n  | \"babel\"\n  | \"node\"\n  | ((source: string, filename?: string) => \"none\" | \"babel\" | \"node\");\n\nexport type Lazy = boolean | string[] | ((source: string) => boolean);\n\nexport interface SourceModuleMetadata {\n  // A unique variable name to use for this namespace object. Centralized for simplicity.\n  name: string;\n  loc: t.SourceLocation | undefined | null;\n  interop: InteropType;\n  // Local binding to reference from this source namespace. Key: Local name, value: Import name\n  imports: Map<string, string>;\n  // Local names that reference namespace object.\n  importsNamespace: Set<string>;\n  // Reexports to create for namespace. Key: Export name, value: Import name\n  reexports: Map<string, string>;\n  // List of names to re-export namespace as.\n  reexportNamespace: Set<string>;\n  // Tracks if the source should be re-exported.\n  reexportAll: null | {\n    loc: t.SourceLocation | undefined | null;\n  };\n  lazy?: Lazy;\n  referenced: boolean;\n}\n\nexport interface LocalExportMetadata {\n  names: Array<string>; // names of exports,\n  kind: \"import\" | \"hoisted\" | \"block\" | \"var\";\n}\n\n/**\n * Check if the module has any exports that need handling.\n */\nexport function hasExports(metadata: ModuleMetadata) {\n  return metadata.hasExports;\n}\n\n/**\n * Check if a given source is an anonymous import, e.g. \"import 'foo';\"\n */\nexport function isSideEffectImport(source: SourceModuleMetadata) {\n  return (\n    source.imports.size === 0 &&\n    source.importsNamespace.size === 0 &&\n    source.reexports.size === 0 &&\n    source.reexportNamespace.size === 0 &&\n    !source.reexportAll\n  );\n}\n\nexport function validateImportInteropOption(\n  importInterop: any,\n): importInterop is ImportInterop {\n  if (\n    typeof importInterop !== \"function\" &&\n    importInterop !== \"none\" &&\n    importInterop !== \"babel\" &&\n    importInterop !== \"node\"\n  ) {\n    throw new Error(\n      `.importInterop must be one of \"none\", \"babel\", \"node\", or a function returning one of those values (received ${importInterop}).`,\n    );\n  }\n  return importInterop;\n}\n\nfunction resolveImportInterop(\n  importInterop: ImportInterop,\n  source: string,\n  filename: string | undefined,\n) {\n  if (typeof importInterop === \"function\") {\n    return validateImportInteropOption(importInterop(source, filename));\n  }\n  return importInterop;\n}\n\n/**\n * Remove all imports and exports from the file, and return all metadata\n * needed to reconstruct the module's behavior.\n */\nexport default function normalizeModuleAndLoadMetadata(\n  programPath: NodePath<t.Program>,\n  exportName: string,\n  {\n    importInterop,\n    initializeReexports = false,\n    lazy = false,\n    esNamespaceOnly = false,\n    filename,\n  }: {\n    importInterop: ImportInterop;\n    initializeReexports: boolean | void;\n    lazy: Lazy;\n    esNamespaceOnly: boolean;\n    filename: string;\n  },\n): ModuleMetadata {\n  if (!exportName) {\n    exportName = programPath.scope.generateUidIdentifier(\"exports\").name;\n  }\n  const stringSpecifiers = new Set<string>();\n\n  nameAnonymousExports(programPath);\n\n  const { local, sources, hasExports } = getModuleMetadata(\n    programPath,\n    { initializeReexports, lazy },\n    stringSpecifiers,\n  );\n\n  removeImportExportDeclarations(programPath);\n\n  // Reuse the imported namespace name if there is one.\n  for (const [source, metadata] of sources) {\n    if (metadata.importsNamespace.size > 0) {\n      // This is kind of gross. If we stop using `loose: true` we should\n      // just make this destructuring assignment.\n      metadata.name = metadata.importsNamespace.values().next().value;\n    }\n\n    const resolvedInterop = resolveImportInterop(\n      importInterop,\n      source,\n      filename,\n    );\n\n    if (resolvedInterop === \"none\") {\n      metadata.interop = \"none\";\n    } else if (resolvedInterop === \"node\" && metadata.interop === \"namespace\") {\n      metadata.interop = \"node-namespace\";\n    } else if (resolvedInterop === \"node\" && metadata.interop === \"default\") {\n      metadata.interop = \"node-default\";\n    } else if (esNamespaceOnly && metadata.interop === \"namespace\") {\n      // Both the default and namespace interops pass through __esModule\n      // objects, but the namespace interop is used to enable Babel's\n      // destructuring-like interop behavior for normal CommonJS.\n      // Since some tooling has started to remove that behavior, we expose\n      // it as the `esNamespace` option.\n      metadata.interop = \"default\";\n    }\n  }\n\n  return {\n    exportName,\n    exportNameListName: null,\n    hasExports,\n    local,\n    source: sources,\n    stringSpecifiers,\n  };\n}\n\nfunction getExportSpecifierName(\n  path: NodePath,\n  stringSpecifiers: Set<string>,\n): string {\n  if (path.isIdentifier()) {\n    return path.node.name;\n  } else if (path.isStringLiteral()) {\n    const stringValue = path.node.value;\n    // add specifier value to `stringSpecifiers` only when it can not be converted to an identifier name\n    // i.e In `import { \"foo\" as bar }`\n    // we do not consider `\"foo\"` to be a `stringSpecifier` because we can treat it as\n    // `import { foo as bar }`\n    // This helps minimize the size of `stringSpecifiers` and reduce overhead of checking valid identifier names\n    // when building transpiled code from metadata\n    if (!isIdentifierName(stringValue)) {\n      stringSpecifiers.add(stringValue);\n    }\n    return stringValue;\n  } else {\n    throw new Error(\n      `Expected export specifier to be either Identifier or StringLiteral, got ${path.node.type}`,\n    );\n  }\n}\n\nfunction assertExportSpecifier(\n  path: NodePath,\n): asserts path is NodePath<t.ExportSpecifier> {\n  if (path.isExportSpecifier()) {\n    return;\n  } else if (path.isExportNamespaceSpecifier()) {\n    throw path.buildCodeFrameError(\n      \"Export namespace should be first transformed by `@babel/plugin-proposal-export-namespace-from`.\",\n    );\n  } else {\n    throw path.buildCodeFrameError(\"Unexpected export specifier type\");\n  }\n}\n\n/**\n * Get metadata about the imports and exports present in this module.\n */\nfunction getModuleMetadata(\n  programPath: NodePath<t.Program>,\n  {\n    lazy,\n    initializeReexports,\n  }: {\n    // todo(flow-ts) changed from boolean, to match expected usage inside the function\n    lazy: boolean | string[] | ((source: string) => boolean);\n    initializeReexports: boolean | void;\n  },\n  stringSpecifiers: Set<string>,\n) {\n  const localData = getLocalExportMetadata(\n    programPath,\n    initializeReexports,\n    stringSpecifiers,\n  );\n\n  const sourceData = new Map<string, SourceModuleMetadata>();\n  const getData = (sourceNode: t.StringLiteral) => {\n    const source = sourceNode.value;\n\n    let data = sourceData.get(source);\n    if (!data) {\n      data = {\n        name: programPath.scope.generateUidIdentifier(\n          basename(source, extname(source)),\n        ).name,\n\n        interop: \"none\",\n\n        loc: null,\n\n        // Data about the requested sources and names.\n        imports: new Map(),\n        importsNamespace: new Set(),\n\n        // Metadata about data that is passed directly from source to export.\n        reexports: new Map(),\n        reexportNamespace: new Set(),\n        reexportAll: null,\n\n        lazy: false,\n\n        referenced: false,\n      };\n      sourceData.set(source, data);\n    }\n    return data;\n  };\n  let hasExports = false;\n  programPath.get(\"body\").forEach(child => {\n    if (child.isImportDeclaration()) {\n      const data = getData(child.node.source);\n      if (!data.loc) data.loc = child.node.loc;\n\n      child.get(\"specifiers\").forEach(spec => {\n        if (spec.isImportDefaultSpecifier()) {\n          const localName = spec.get(\"local\").node.name;\n\n          data.imports.set(localName, \"default\");\n\n          const reexport = localData.get(localName);\n          if (reexport) {\n            localData.delete(localName);\n\n            reexport.names.forEach(name => {\n              data.reexports.set(name, \"default\");\n            });\n            data.referenced = true;\n          }\n        } else if (spec.isImportNamespaceSpecifier()) {\n          const localName = spec.get(\"local\").node.name;\n\n          data.importsNamespace.add(localName);\n          const reexport = localData.get(localName);\n          if (reexport) {\n            localData.delete(localName);\n\n            reexport.names.forEach(name => {\n              data.reexportNamespace.add(name);\n            });\n            data.referenced = true;\n          }\n        } else if (spec.isImportSpecifier()) {\n          const importName = getExportSpecifierName(\n            spec.get(\"imported\"),\n            stringSpecifiers,\n          );\n          const localName = spec.get(\"local\").node.name;\n\n          data.imports.set(localName, importName);\n\n          const reexport = localData.get(localName);\n          if (reexport) {\n            localData.delete(localName);\n\n            reexport.names.forEach(name => {\n              data.reexports.set(name, importName);\n            });\n            data.referenced = true;\n          }\n        }\n      });\n    } else if (child.isExportAllDeclaration()) {\n      hasExports = true;\n      const data = getData(child.node.source);\n      if (!data.loc) data.loc = child.node.loc;\n\n      data.reexportAll = {\n        loc: child.node.loc,\n      };\n      data.referenced = true;\n    } else if (child.isExportNamedDeclaration() && child.node.source) {\n      hasExports = true;\n      const data = getData(child.node.source);\n      if (!data.loc) data.loc = child.node.loc;\n\n      child.get(\"specifiers\").forEach(spec => {\n        assertExportSpecifier(spec);\n        const importName = getExportSpecifierName(\n          spec.get(\"local\"),\n          stringSpecifiers,\n        );\n        const exportName = getExportSpecifierName(\n          spec.get(\"exported\"),\n          stringSpecifiers,\n        );\n\n        data.reexports.set(exportName, importName);\n        data.referenced = true;\n\n        if (exportName === \"__esModule\") {\n          throw spec\n            .get(\"exported\")\n            .buildCodeFrameError('Illegal export \"__esModule\".');\n        }\n      });\n    } else if (\n      child.isExportNamedDeclaration() ||\n      child.isExportDefaultDeclaration()\n    ) {\n      hasExports = true;\n    }\n  });\n\n  for (const metadata of sourceData.values()) {\n    let needsDefault = false;\n    let needsNamed = false;\n\n    if (metadata.importsNamespace.size > 0) {\n      needsDefault = true;\n      needsNamed = true;\n    }\n\n    if (metadata.reexportAll) {\n      needsNamed = true;\n    }\n\n    for (const importName of metadata.imports.values()) {\n      if (importName === \"default\") needsDefault = true;\n      else needsNamed = true;\n    }\n    for (const importName of metadata.reexports.values()) {\n      if (importName === \"default\") needsDefault = true;\n      else needsNamed = true;\n    }\n\n    if (needsDefault && needsNamed) {\n      // TODO(logan): Using the namespace interop here is unfortunate. Revisit.\n      metadata.interop = \"namespace\";\n    } else if (needsDefault) {\n      metadata.interop = \"default\";\n    }\n  }\n\n  for (const [source, metadata] of sourceData) {\n    if (\n      lazy !== false &&\n      !(isSideEffectImport(metadata) || metadata.reexportAll)\n    ) {\n      if (lazy === true) {\n        // 'true' means that local relative files are eagerly loaded and\n        // dependency modules are loaded lazily.\n        metadata.lazy = !/\\./.test(source);\n      } else if (Array.isArray(lazy)) {\n        metadata.lazy = lazy.indexOf(source) !== -1;\n      } else if (typeof lazy === \"function\") {\n        metadata.lazy = lazy(source);\n      } else {\n        throw new Error(`.lazy must be a boolean, string array, or function`);\n      }\n    }\n  }\n\n  return {\n    hasExports,\n    local: localData,\n    sources: sourceData,\n  };\n}\n\ntype ModuleBindingKind = \"import\" | \"hoisted\" | \"block\" | \"var\";\n/**\n * Get metadata about local variables that are exported.\n */\nfunction getLocalExportMetadata(\n  programPath: NodePath<t.Program>,\n  initializeReexports: boolean | void,\n  stringSpecifiers: Set<string>,\n): Map<string, LocalExportMetadata> {\n  const bindingKindLookup = new Map();\n\n  programPath.get(\"body\").forEach((child: NodePath) => {\n    let kind: ModuleBindingKind;\n    if (child.isImportDeclaration()) {\n      kind = \"import\";\n    } else {\n      if (child.isExportDefaultDeclaration()) {\n        child = child.get(\"declaration\");\n      }\n      if (child.isExportNamedDeclaration()) {\n        if (child.node.declaration) {\n          child = child.get(\"declaration\");\n        } else if (\n          initializeReexports &&\n          child.node.source &&\n          child.get(\"source\").isStringLiteral()\n        ) {\n          child.get(\"specifiers\").forEach(spec => {\n            assertExportSpecifier(spec);\n            bindingKindLookup.set(spec.get(\"local\").node.name, \"block\");\n          });\n          return;\n        }\n      }\n\n      if (child.isFunctionDeclaration()) {\n        kind = \"hoisted\";\n      } else if (child.isClassDeclaration()) {\n        kind = \"block\";\n      } else if (child.isVariableDeclaration({ kind: \"var\" })) {\n        kind = \"var\";\n      } else if (child.isVariableDeclaration()) {\n        kind = \"block\";\n      } else {\n        return;\n      }\n    }\n\n    Object.keys(child.getOuterBindingIdentifiers()).forEach(name => {\n      bindingKindLookup.set(name, kind);\n    });\n  });\n\n  const localMetadata = new Map();\n  const getLocalMetadata = (idPath: NodePath<t.Identifier>) => {\n    const localName = idPath.node.name;\n    let metadata = localMetadata.get(localName);\n\n    if (!metadata) {\n      const kind = bindingKindLookup.get(localName);\n\n      if (kind === undefined) {\n        throw idPath.buildCodeFrameError(\n          `Exporting local \"${localName}\", which is not declared.`,\n        );\n      }\n\n      metadata = {\n        names: [],\n        kind,\n      };\n      localMetadata.set(localName, metadata);\n    }\n    return metadata;\n  };\n\n  programPath.get(\"body\").forEach(child => {\n    if (\n      child.isExportNamedDeclaration() &&\n      (initializeReexports || !child.node.source)\n    ) {\n      if (child.node.declaration) {\n        const declaration = child.get(\"declaration\");\n        const ids = declaration.getOuterBindingIdentifierPaths();\n        Object.keys(ids).forEach(name => {\n          if (name === \"__esModule\") {\n            throw declaration.buildCodeFrameError(\n              'Illegal export \"__esModule\".',\n            );\n          }\n          getLocalMetadata(ids[name]).names.push(name);\n        });\n      } else {\n        child.get(\"specifiers\").forEach(spec => {\n          const local = spec.get(\"local\");\n          const exported = spec.get(\"exported\");\n          const localMetadata = getLocalMetadata(local);\n          const exportName = getExportSpecifierName(exported, stringSpecifiers);\n\n          if (exportName === \"__esModule\") {\n            throw exported.buildCodeFrameError('Illegal export \"__esModule\".');\n          }\n          localMetadata.names.push(exportName);\n        });\n      }\n    } else if (child.isExportDefaultDeclaration()) {\n      const declaration = child.get(\"declaration\");\n      if (\n        declaration.isFunctionDeclaration() ||\n        declaration.isClassDeclaration()\n      ) {\n        // @ts-expect-error todo(flow->ts): improve babel-types\n        getLocalMetadata(declaration.get(\"id\")).names.push(\"default\");\n      } else {\n        // These should have been removed by the nameAnonymousExports() call.\n        throw declaration.buildCodeFrameError(\n          \"Unexpected default expression export.\",\n        );\n      }\n    }\n  });\n  return localMetadata;\n}\n\n/**\n * Ensure that all exported values have local binding names.\n */\nfunction nameAnonymousExports(programPath: NodePath<t.Program>) {\n  // Name anonymous exported locals.\n  programPath.get(\"body\").forEach(child => {\n    if (!child.isExportDefaultDeclaration()) return;\n    splitExportDeclaration(child);\n  });\n}\n\nfunction removeImportExportDeclarations(programPath: NodePath<t.Program>) {\n  programPath.get(\"body\").forEach(child => {\n    if (child.isImportDeclaration()) {\n      child.remove();\n    } else if (child.isExportNamedDeclaration()) {\n      if (child.node.declaration) {\n        // @ts-expect-error todo(flow->ts): avoid mutations\n        child.node.declaration._blockHoist = child.node._blockHoist;\n        child.replaceWith(child.node.declaration);\n      } else {\n        child.remove();\n      }\n    } else if (child.isExportDefaultDeclaration()) {\n      // export default foo;\n      const declaration = child.get(\"declaration\");\n      if (\n        declaration.isFunctionDeclaration() ||\n        declaration.isClassDeclaration()\n      ) {\n        // @ts-expect-error todo(flow->ts): avoid mutations\n        declaration._blockHoist = child.node._blockHoist;\n        child.replaceWith(\n          declaration as NodePath<t.FunctionDeclaration | t.ClassDeclaration>,\n        );\n      } else {\n        // These should have been removed by the nameAnonymousExports() call.\n        throw declaration.buildCodeFrameError(\n          \"Unexpected default expression export.\",\n        );\n      }\n    } else if (child.isExportAllDeclaration()) {\n      child.remove();\n    }\n  });\n}\n"],"mappings":"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"}

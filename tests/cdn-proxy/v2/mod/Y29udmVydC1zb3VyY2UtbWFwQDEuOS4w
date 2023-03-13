@@ -1,0 +1,366 @@
+Ñ≠/package.json≈J{
+  "name": "convert-source-map",
+  "version": "1.9.0",
+  "description": "Converts a source-map from/to  different formats and allows adding/changing properties.",
+  "main": "index.js",
+  "scripts": {
+    "test": "tap test/*.js --color"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/thlorenz/convert-source-map.git"
+  },
+  "homepage": "https://github.com/thlorenz/convert-source-map",
+  "devDependencies": {
+    "inline-source-map": "~0.6.2",
+    "tap": "~9.0.0"
+  },
+  "keywords": [
+    "convert",
+    "sourcemap",
+    "source",
+    "map",
+    "browser",
+    "debug"
+  ],
+  "author": {
+    "name": "Thorsten Lorenz",
+    "email": "thlorenz@gmx.de",
+    "url": "http://thlorenz.com"
+  },
+  "license": "MIT",
+  "engine": {
+    "node": ">=0.6"
+  },
+  "files": [
+    "index.js"
+  ],
+  "browser": {
+    "fs": false
+  }
+}
+™/README.md≈ù# convert-source-map [![Build Status][ci-image]][ci-url]
+
+Converts a source-map from/to  different formats and allows adding/changing properties.
+
+```js
+var convert = require('convert-source-map');
+
+var json = convert
+  .fromComment('//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiYnVpbGQvZm9vLm1pbi5qcyIsInNvdXJjZXMiOlsic3JjL2Zvby5qcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiQUFBQSIsInNvdXJjZVJvb3QiOiIvIn0=')
+  .toJSON();
+
+var modified = convert
+  .fromComment('//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiYnVpbGQvZm9vLm1pbi5qcyIsInNvdXJjZXMiOlsic3JjL2Zvby5qcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiQUFBQSIsInNvdXJjZVJvb3QiOiIvIn0=')
+  .setProperty('sources', [ 'SRC/FOO.JS' ])
+  .toJSON();
+
+console.log(json);
+console.log(modified);
+```
+
+```json
+{"version":3,"file":"build/foo.min.js","sources":["src/foo.js"],"names":[],"mappings":"AAAA","sourceRoot":"/"}
+{"version":3,"file":"build/foo.min.js","sources":["SRC/FOO.JS"],"names":[],"mappings":"AAAA","sourceRoot":"/"}
+```
+
+## API
+
+### fromObject(obj)
+
+Returns source map converter from given object.
+
+### fromJSON(json)
+
+Returns source map converter from given json string.
+
+### fromBase64(base64)
+
+Returns source map converter from given base64 encoded json string.
+
+### fromComment(comment)
+
+Returns source map converter from given base64 encoded json string prefixed with `//# sourceMappingURL=...`.
+
+### fromMapFileComment(comment, mapFileDir)
+
+Returns source map converter from given `filename` by parsing `//# sourceMappingURL=filename`.
+
+`filename` must point to a file that is found inside the `mapFileDir`. Most tools store this file right next to the
+generated file, i.e. the one containing the source map.
+
+### fromSource(source)
+
+Finds last sourcemap comment in file and returns source map converter or returns null if no source map comment was found.
+
+### fromMapFileSource(source, mapFileDir)
+
+Finds last sourcemap comment in file and returns source map converter or returns null if no source map comment was
+found.
+
+The sourcemap will be read from the map file found by parsing `# sourceMappingURL=file` comment. For more info see
+fromMapFileComment.
+
+### toObject()
+
+Returns a copy of the underlying source map.
+
+### toJSON([space])
+
+Converts source map to json string. If `space` is given (optional), this will be passed to
+[JSON.stringify](https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/JSON/stringify) when the
+JSON string is generated.
+
+### toBase64()
+
+Converts source map to base64 encoded json string.
+
+### toComment([options])
+
+Converts source map to an inline comment that can be appended to the source-file.
+
+By default, the comment is formatted like: `//# sourceMappingURL=...`, which you would
+normally see in a JS source file.
+
+When `options.multiline == true`, the comment is formatted like: `/*# sourceMappingURL=... */`, which you would find in a CSS source file.
+
+### addProperty(key, value)
+
+Adds given property to the source map. Throws an error if property already exists.
+
+### setProperty(key, value)
+
+Sets given property to the source map. If property doesn't exist it is added, otherwise its value is updated.
+
+### getProperty(key)
+
+Gets given property of the source map.
+
+### removeComments(src)
+
+Returns `src` with all source map comments removed
+
+### removeMapFileComments(src)
+
+Returns `src` with all source map comments pointing to map files removed.
+
+### commentRegex
+
+Provides __a fresh__ RegExp each time it is accessed. Can be used to find source map comments.
+
+### mapFileCommentRegex
+
+Provides __a fresh__ RegExp each time it is accessed. Can be used to find source map comments pointing to map files.
+
+### generateMapFileComment(file, [options])
+
+Returns a comment that links to an external source map via `file`.
+
+By default, the comment is formatted like: `//# sourceMappingURL=...`, which you would normally see in a JS source file.
+
+When `options.multiline == true`, the comment is formatted like: `/*# sourceMappingURL=... */`, which you would find in a CSS source file.
+
+[ci-url]: https://github.com/thlorenz/convert-source-map/actions?query=workflow:ci
+[ci-image]: https://img.shields.io/github/workflow/status/thlorenz/convert-source-map/CI?style=flat-square
+®/LICENSE≈6Copyright 2013 Thorsten Lorenz. 
+All rights reserved.
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+©/index.js≈ç'use strict';
+var fs = require('fs');
+var path = require('path');
+
+Object.defineProperty(exports, 'commentRegex', {
+  get: function getCommentRegex () {
+    return /^\s*\/(?:\/|\*)[@#]\s+sourceMappingURL=data:(?:application|text)\/json;(?:charset[:=]\S+?;)?base64,(?:.*)$/mg;
+  }
+});
+
+Object.defineProperty(exports, 'mapFileCommentRegex', {
+  get: function getMapFileCommentRegex () {
+    // Matches sourceMappingURL in either // or /* comment styles.
+    return /(?:\/\/[@#][ \t]+sourceMappingURL=([^\s'"`]+?)[ \t]*$)|(?:\/\*[@#][ \t]+sourceMappingURL=([^\*]+?)[ \t]*(?:\*\/){1}[ \t]*$)/mg;
+  }
+});
+
+var decodeBase64;
+if (typeof Buffer !== 'undefined') {
+  if (typeof Buffer.from === 'function') {
+    decodeBase64 = decodeBase64WithBufferFrom;
+  } else {
+    decodeBase64 = decodeBase64WithNewBuffer;
+  }
+} else {
+  decodeBase64 = decodeBase64WithAtob;
+}
+
+function decodeBase64WithBufferFrom(base64) {
+  return Buffer.from(base64, 'base64').toString();
+}
+
+function decodeBase64WithNewBuffer(base64) {
+  if (typeof value === 'number') {
+    throw new TypeError('The value to decode must not be of type number.');
+  }
+  return new Buffer(base64, 'base64').toString();
+}
+
+function decodeBase64WithAtob(base64) {
+  return decodeURIComponent(escape(atob(base64)));
+}
+
+function stripComment(sm) {
+  return sm.split(',').pop();
+}
+
+function readFromFileMap(sm, dir) {
+  // NOTE: this will only work on the server since it attempts to read the map file
+
+  var r = exports.mapFileCommentRegex.exec(sm);
+
+  // for some odd reason //# .. captures in 1 and /* .. */ in 2
+  var filename = r[1] || r[2];
+  var filepath = path.resolve(dir, filename);
+
+  try {
+    return fs.readFileSync(filepath, 'utf8');
+  } catch (e) {
+    throw new Error('An error occurred while trying to read the map file at ' + filepath + '\n' + e);
+  }
+}
+
+function Converter (sm, opts) {
+  opts = opts || {};
+
+  if (opts.isFileComment) sm = readFromFileMap(sm, opts.commentFileDir);
+  if (opts.hasComment) sm = stripComment(sm);
+  if (opts.isEncoded) sm = decodeBase64(sm);
+  if (opts.isJSON || opts.isEncoded) sm = JSON.parse(sm);
+
+  this.sourcemap = sm;
+}
+
+Converter.prototype.toJSON = function (space) {
+  return JSON.stringify(this.sourcemap, null, space);
+};
+
+if (typeof Buffer !== 'undefined') {
+  if (typeof Buffer.from === 'function') {
+    Converter.prototype.toBase64 = encodeBase64WithBufferFrom;
+  } else {
+    Converter.prototype.toBase64 = encodeBase64WithNewBuffer;
+  }
+} else {
+  Converter.prototype.toBase64 = encodeBase64WithBtoa;
+}
+
+function encodeBase64WithBufferFrom() {
+  var json = this.toJSON();
+  return Buffer.from(json, 'utf8').toString('base64');
+}
+
+function encodeBase64WithNewBuffer() {
+  var json = this.toJSON();
+  if (typeof json === 'number') {
+    throw new TypeError('The json to encode must not be of type number.');
+  }
+  return new Buffer(json, 'utf8').toString('base64');
+}
+
+function encodeBase64WithBtoa() {
+  var json = this.toJSON();
+  return btoa(unescape(encodeURIComponent(json)));
+}
+
+Converter.prototype.toComment = function (options) {
+  var base64 = this.toBase64();
+  var data = 'sourceMappingURL=data:application/json;charset=utf-8;base64,' + base64;
+  return options && options.multiline ? '/*# ' + data + ' */' : '//# ' + data;
+};
+
+// returns copy instead of original
+Converter.prototype.toObject = function () {
+  return JSON.parse(this.toJSON());
+};
+
+Converter.prototype.addProperty = function (key, value) {
+  if (this.sourcemap.hasOwnProperty(key)) throw new Error('property "' + key + '" already exists on the sourcemap, use set property instead');
+  return this.setProperty(key, value);
+};
+
+Converter.prototype.setProperty = function (key, value) {
+  this.sourcemap[key] = value;
+  return this;
+};
+
+Converter.prototype.getProperty = function (key) {
+  return this.sourcemap[key];
+};
+
+exports.fromObject = function (obj) {
+  return new Converter(obj);
+};
+
+exports.fromJSON = function (json) {
+  return new Converter(json, { isJSON: true });
+};
+
+exports.fromBase64 = function (base64) {
+  return new Converter(base64, { isEncoded: true });
+};
+
+exports.fromComment = function (comment) {
+  comment = comment
+    .replace(/^\/\*/g, '//')
+    .replace(/\*\/$/g, '');
+
+  return new Converter(comment, { isEncoded: true, hasComment: true });
+};
+
+exports.fromMapFileComment = function (comment, dir) {
+  return new Converter(comment, { commentFileDir: dir, isFileComment: true, isJSON: true });
+};
+
+// Finds last sourcemap comment in file or returns null if none was found
+exports.fromSource = function (content) {
+  var m = content.match(exports.commentRegex);
+  return m ? exports.fromComment(m.pop()) : null;
+};
+
+// Finds last sourcemap comment in file or returns null if none was found
+exports.fromMapFileSource = function (content, dir) {
+  var m = content.match(exports.mapFileCommentRegex);
+  return m ? exports.fromMapFileComment(m.pop(), dir) : null;
+};
+
+exports.removeComments = function (src) {
+  return src.replace(exports.commentRegex, '');
+};
+
+exports.removeMapFileComments = function (src) {
+  return src.replace(exports.mapFileCommentRegex, '');
+};
+
+exports.generateMapFileComment = function (file, options) {
+  var data = 'sourceMappingURL=' + file;
+  return options && options.multiline ? '/*# ' + data + ' */' : '//# ' + data;
+};

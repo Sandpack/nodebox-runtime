@@ -1,0 +1,311 @@
+â∂/dist/set-array.umd.js≈i(function (global, factory) {
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+    typeof define === 'function' && define.amd ? define(['exports'], factory) :
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.setArray = {}));
+})(this, (function (exports) { 'use strict';
+
+    /**
+     * Gets the index associated with `key` in the backing array, if it is already present.
+     */
+    exports.get = void 0;
+    /**
+     * Puts `key` into the backing array, if it is not already present. Returns
+     * the index of the `key` in the backing array.
+     */
+    exports.put = void 0;
+    /**
+     * Pops the last added item out of the SetArray.
+     */
+    exports.pop = void 0;
+    /**
+     * SetArray acts like a `Set` (allowing only one occurrence of a string `key`), but provides the
+     * index of the `key` in the backing array.
+     *
+     * This is designed to allow synchronizing a second array with the contents of the backing array,
+     * like how in a sourcemap `sourcesContent[i]` is the source content associated with `source[i]`,
+     * and there are never duplicates.
+     */
+    class SetArray {
+        constructor() {
+            this._indexes = { __proto__: null };
+            this.array = [];
+        }
+    }
+    (() => {
+        exports.get = (strarr, key) => strarr._indexes[key];
+        exports.put = (strarr, key) => {
+            // The key may or may not be present. If it is present, it's a number.
+            const index = exports.get(strarr, key);
+            if (index !== undefined)
+                return index;
+            const { array, _indexes: indexes } = strarr;
+            return (indexes[key] = array.push(key) - 1);
+        };
+        exports.pop = (strarr) => {
+            const { array, _indexes: indexes } = strarr;
+            if (array.length === 0)
+                return;
+            const last = array.pop();
+            indexes[last] = undefined;
+        };
+    })();
+
+    exports.SetArray = SetArray;
+
+    Object.defineProperty(exports, '__esModule', { value: true });
+
+}));
+//# sourceMappingURL=set-array.umd.js.map
+∫/dist/set-array.umd.js.map≈
+s{"version":3,"file":"set-array.umd.js","sources":["../src/set-array.ts"],"sourcesContent":["/**\n * Gets the index associated with `key` in the backing array, if it is already present.\n */\nexport let get: (strarr: SetArray, key: string) => number | undefined;\n\n/**\n * Puts `key` into the backing array, if it is not already present. Returns\n * the index of the `key` in the backing array.\n */\nexport let put: (strarr: SetArray, key: string) => number;\n\n/**\n * Pops the last added item out of the SetArray.\n */\nexport let pop: (strarr: SetArray) => void;\n\n/**\n * SetArray acts like a `Set` (allowing only one occurrence of a string `key`), but provides the\n * index of the `key` in the backing array.\n *\n * This is designed to allow synchronizing a second array with the contents of the backing array,\n * like how in a sourcemap `sourcesContent[i]` is the source content associated with `source[i]`,\n * and there are never duplicates.\n */\nexport class SetArray {\n  private declare _indexes: { [key: string]: number | undefined };\n  declare array: readonly string[];\n\n  constructor() {\n    this._indexes = { __proto__: null } as any;\n    this.array = [];\n  }\n\n  static {\n    get = (strarr, key) => strarr._indexes[key];\n\n    put = (strarr, key) => {\n      // The key may or may not be present. If it is present, it's a number.\n      const index = get(strarr, key);\n      if (index !== undefined) return index;\n\n      const { array, _indexes: indexes } = strarr;\n\n      return (indexes[key] = (array as string[]).push(key) - 1);\n    };\n\n    pop = (strarr) => {\n      const { array, _indexes: indexes } = strarr;\n      if (array.length === 0) return;\n\n      const last = (array as string[]).pop()!;\n      indexes[last] = undefined;\n    };\n  }\n}\n"],"names":["get","put","pop"],"mappings":";;;;;;IAAA;;;AAGWA,yBAA2D;IAEtE;;;;AAIWC,yBAA+C;IAE1D;;;AAGWC,yBAAgC;IAE3C;;;;;;;;UAQa,QAAQ;QAInB;YACE,IAAI,CAAC,QAAQ,GAAG,EAAE,SAAS,EAAE,IAAI,EAAS,CAAC;YAC3C,IAAI,CAAC,KAAK,GAAG,EAAE,CAAC;SACjB;KAuBF;IArBC;QACEF,WAAG,GAAG,CAAC,MAAM,EAAE,GAAG,KAAK,MAAM,CAAC,QAAQ,CAAC,GAAG,CAAC,CAAC;QAE5CC,WAAG,GAAG,CAAC,MAAM,EAAE,GAAG;;YAEhB,MAAM,KAAK,GAAGD,WAAG,CAAC,MAAM,EAAE,GAAG,CAAC,CAAC;YAC/B,IAAI,KAAK,KAAK,SAAS;gBAAE,OAAO,KAAK,CAAC;YAEtC,MAAM,EAAE,KAAK,EAAE,QAAQ,EAAE,OAAO,EAAE,GAAG,MAAM,CAAC;YAE5C,QAAQ,OAAO,CAAC,GAAG,CAAC,GAAI,KAAkB,CAAC,IAAI,CAAC,GAAG,CAAC,GAAG,CAAC,EAAE;SAC3D,CAAC;QAEFE,WAAG,GAAG,CAAC,MAAM;YACX,MAAM,EAAE,KAAK,EAAE,QAAQ,EAAE,OAAO,EAAE,GAAG,MAAM,CAAC;YAC5C,IAAI,KAAK,CAAC,MAAM,KAAK,CAAC;gBAAE,OAAO;YAE/B,MAAM,IAAI,GAAI,KAAkB,CAAC,GAAG,EAAG,CAAC;YACxC,OAAO,CAAC,IAAI,CAAC,GAAG,SAAS,CAAC;SAC3B,CAAC;IACJ,CAAC,GAAA;;;;;;;;;;"}®/LICENSE≈8Copyright 2022 Justin Ridgewell <jridgewell@google.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+≠/package.json≈ﬂ{
+  "name": "@jridgewell/set-array",
+  "version": "1.1.2",
+  "description": "Like a Set, but provides the index of the `key` in the backing array",
+  "keywords": [],
+  "author": "Justin Ridgewell <justin@ridgewell.name>",
+  "license": "MIT",
+  "repository": "https://github.com/jridgewell/set-array",
+  "main": "dist/set-array.umd.js",
+  "module": "dist/set-array.mjs",
+  "typings": "dist/types/set-array.d.ts",
+  "exports": {
+    ".": [
+      {
+        "types": "./dist/types/set-array.d.ts",
+        "browser": "./dist/set-array.umd.js",
+        "require": "./dist/set-array.umd.js",
+        "import": "./dist/set-array.mjs"
+      },
+      "./dist/set-array.umd.js"
+    ],
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "engines": {
+    "node": ">=6.0.0"
+  },
+  "scripts": {
+    "prebuild": "rm -rf dist",
+    "build": "run-s -n build:*",
+    "build:rollup": "rollup -c rollup.config.js",
+    "build:ts": "tsc --project tsconfig.build.json",
+    "lint": "run-s -n lint:*",
+    "lint:prettier": "npm run test:lint:prettier -- --write",
+    "lint:ts": "npm run test:lint:ts -- --fix",
+    "pretest": "run-s build:rollup",
+    "test": "run-s -n test:lint test:only",
+    "test:debug": "mocha --inspect-brk",
+    "test:lint": "run-s -n test:lint:*",
+    "test:lint:prettier": "prettier --check '{src,test}/**/*.ts'",
+    "test:lint:ts": "eslint '{src,test}/**/*.ts'",
+    "test:only": "mocha",
+    "test:coverage": "c8 mocha",
+    "test:watch": "mocha --watch",
+    "prepublishOnly": "npm run preversion",
+    "preversion": "run-s test build"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "8.3.0",
+    "@types/mocha": "9.1.1",
+    "@types/node": "17.0.29",
+    "@typescript-eslint/eslint-plugin": "5.10.0",
+    "@typescript-eslint/parser": "5.10.0",
+    "c8": "7.11.0",
+    "eslint": "8.7.0",
+    "eslint-config-prettier": "8.3.0",
+    "mocha": "9.2.0",
+    "npm-run-all": "4.1.5",
+    "prettier": "2.5.1",
+    "rollup": "2.66.0",
+    "typescript": "4.5.5"
+  }
+}
+∫/dist/types/set-array.d.ts≈À/**
+ * Gets the index associated with `key` in the backing array, if it is already present.
+ */
+export declare let get: (strarr: SetArray, key: string) => number | undefined;
+/**
+ * Puts `key` into the backing array, if it is not already present. Returns
+ * the index of the `key` in the backing array.
+ */
+export declare let put: (strarr: SetArray, key: string) => number;
+/**
+ * Pops the last added item out of the SetArray.
+ */
+export declare let pop: (strarr: SetArray) => void;
+/**
+ * SetArray acts like a `Set` (allowing only one occurrence of a string `key`), but provides the
+ * index of the `key` in the backing array.
+ *
+ * This is designed to allow synchronizing a second array with the contents of the backing array,
+ * like how in a sourcemap `sourcesContent[i]` is the source content associated with `source[i]`,
+ * and there are never duplicates.
+ */
+export declare class SetArray {
+    private _indexes;
+    array: readonly string[];
+    constructor();
+}
+™/README.md≈G# @jridgewell/set-array
+
+> Like a Set, but provides the index of the `key` in the backing array
+
+This is designed to allow synchronizing a second array with the contents of the backing array, like
+how in a sourcemap `sourcesContent[i]` is the source content associated with `source[i]`, and there
+are never duplicates.
+
+## Installation
+
+```sh
+npm install @jridgewell/set-array
+```
+
+## Usage
+
+```js
+import { SetArray, get, put, pop } from '@jridgewell/set-array';
+
+const sa = new SetArray();
+
+let index = put(sa, 'first');
+assert.strictEqual(index, 0);
+
+index = put(sa, 'second');
+assert.strictEqual(index, 1);
+
+assert.deepEqual(sa.array, [ 'first', 'second' ]);
+
+index = get(sa, 'first');
+assert.strictEqual(index, 0);
+
+pop(sa);
+index = get(sa, 'second');
+assert.strictEqual(index, undefined);
+assert.deepEqual(sa.array, [ 'first' ]);
+```
+∑/dist/set-array.mjs.map≈
+G{"version":3,"file":"set-array.mjs","sources":["../src/set-array.ts"],"sourcesContent":["/**\n * Gets the index associated with `key` in the backing array, if it is already present.\n */\nexport let get: (strarr: SetArray, key: string) => number | undefined;\n\n/**\n * Puts `key` into the backing array, if it is not already present. Returns\n * the index of the `key` in the backing array.\n */\nexport let put: (strarr: SetArray, key: string) => number;\n\n/**\n * Pops the last added item out of the SetArray.\n */\nexport let pop: (strarr: SetArray) => void;\n\n/**\n * SetArray acts like a `Set` (allowing only one occurrence of a string `key`), but provides the\n * index of the `key` in the backing array.\n *\n * This is designed to allow synchronizing a second array with the contents of the backing array,\n * like how in a sourcemap `sourcesContent[i]` is the source content associated with `source[i]`,\n * and there are never duplicates.\n */\nexport class SetArray {\n  private declare _indexes: { [key: string]: number | undefined };\n  declare array: readonly string[];\n\n  constructor() {\n    this._indexes = { __proto__: null } as any;\n    this.array = [];\n  }\n\n  static {\n    get = (strarr, key) => strarr._indexes[key];\n\n    put = (strarr, key) => {\n      // The key may or may not be present. If it is present, it's a number.\n      const index = get(strarr, key);\n      if (index !== undefined) return index;\n\n      const { array, _indexes: indexes } = strarr;\n\n      return (indexes[key] = (array as string[]).push(key) - 1);\n    };\n\n    pop = (strarr) => {\n      const { array, _indexes: indexes } = strarr;\n      if (array.length === 0) return;\n\n      const last = (array as string[]).pop()!;\n      indexes[last] = undefined;\n    };\n  }\n}\n"],"names":[],"mappings":"AAAA;;;IAGW,IAA2D;AAEtE;;;;IAIW,IAA+C;AAE1D;;;IAGW,IAAgC;AAE3C;;;;;;;;MAQa,QAAQ;IAInB;QACE,IAAI,CAAC,QAAQ,GAAG,EAAE,SAAS,EAAE,IAAI,EAAS,CAAC;QAC3C,IAAI,CAAC,KAAK,GAAG,EAAE,CAAC;KACjB;CAuBF;AArBC;IACE,GAAG,GAAG,CAAC,MAAM,EAAE,GAAG,KAAK,MAAM,CAAC,QAAQ,CAAC,GAAG,CAAC,CAAC;IAE5C,GAAG,GAAG,CAAC,MAAM,EAAE,GAAG;;QAEhB,MAAM,KAAK,GAAG,GAAG,CAAC,MAAM,EAAE,GAAG,CAAC,CAAC;QAC/B,IAAI,KAAK,KAAK,SAAS;YAAE,OAAO,KAAK,CAAC;QAEtC,MAAM,EAAE,KAAK,EAAE,QAAQ,EAAE,OAAO,EAAE,GAAG,MAAM,CAAC;QAE5C,QAAQ,OAAO,CAAC,GAAG,CAAC,GAAI,KAAkB,CAAC,IAAI,CAAC,GAAG,CAAC,GAAG,CAAC,EAAE;KAC3D,CAAC;IAEF,GAAG,GAAG,CAAC,MAAM;QACX,MAAM,EAAE,KAAK,EAAE,QAAQ,EAAE,OAAO,EAAE,GAAG,MAAM,CAAC;QAC5C,IAAI,KAAK,CAAC,MAAM,KAAK,CAAC;YAAE,OAAO;QAE/B,MAAM,IAAI,GAAI,KAAkB,CAAC,GAAG,EAAG,CAAC;QACxC,OAAO,CAAC,IAAI,CAAC,GAAG,SAAS,CAAC;KAC3B,CAAC;AACJ,CAAC,GAAA;;;;"}≥/dist/set-array.mjs≈√/**
+ * Gets the index associated with `key` in the backing array, if it is already present.
+ */
+let get;
+/**
+ * Puts `key` into the backing array, if it is not already present. Returns
+ * the index of the `key` in the backing array.
+ */
+let put;
+/**
+ * Pops the last added item out of the SetArray.
+ */
+let pop;
+/**
+ * SetArray acts like a `Set` (allowing only one occurrence of a string `key`), but provides the
+ * index of the `key` in the backing array.
+ *
+ * This is designed to allow synchronizing a second array with the contents of the backing array,
+ * like how in a sourcemap `sourcesContent[i]` is the source content associated with `source[i]`,
+ * and there are never duplicates.
+ */
+class SetArray {
+    constructor() {
+        this._indexes = { __proto__: null };
+        this.array = [];
+    }
+}
+(() => {
+    get = (strarr, key) => strarr._indexes[key];
+    put = (strarr, key) => {
+        // The key may or may not be present. If it is present, it's a number.
+        const index = get(strarr, key);
+        if (index !== undefined)
+            return index;
+        const { array, _indexes: indexes } = strarr;
+        return (indexes[key] = array.push(key) - 1);
+    };
+    pop = (strarr) => {
+        const { array, _indexes: indexes } = strarr;
+        if (array.length === 0)
+            return;
+        const last = array.pop();
+        indexes[last] = undefined;
+    };
+})();
+
+export { SetArray, get, pop, put };
+//# sourceMappingURL=set-array.mjs.map
+±/src/set-array.ts≈p/**
+ * Gets the index associated with `key` in the backing array, if it is already present.
+ */
+export let get: (strarr: SetArray, key: string) => number | undefined;
+
+/**
+ * Puts `key` into the backing array, if it is not already present. Returns
+ * the index of the `key` in the backing array.
+ */
+export let put: (strarr: SetArray, key: string) => number;
+
+/**
+ * Pops the last added item out of the SetArray.
+ */
+export let pop: (strarr: SetArray) => void;
+
+/**
+ * SetArray acts like a `Set` (allowing only one occurrence of a string `key`), but provides the
+ * index of the `key` in the backing array.
+ *
+ * This is designed to allow synchronizing a second array with the contents of the backing array,
+ * like how in a sourcemap `sourcesContent[i]` is the source content associated with `source[i]`,
+ * and there are never duplicates.
+ */
+export class SetArray {
+  private declare _indexes: { [key: string]: number | undefined };
+  declare array: readonly string[];
+
+  constructor() {
+    this._indexes = { __proto__: null } as any;
+    this.array = [];
+  }
+
+  static {
+    get = (strarr, key) => strarr._indexes[key];
+
+    put = (strarr, key) => {
+      // The key may or may not be present. If it is present, it's a number.
+      const index = get(strarr, key);
+      if (index !== undefined) return index;
+
+      const { array, _indexes: indexes } = strarr;
+
+      return (indexes[key] = (array as string[]).push(key) - 1);
+    };
+
+    pop = (strarr) => {
+      const { array, _indexes: indexes } = strarr;
+      if (array.length === 0) return;
+
+      const last = (array as string[]).pop()!;
+      indexes[last] = undefined;
+    };
+  }
+}

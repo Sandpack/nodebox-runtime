@@ -52,6 +52,7 @@ export type WorkerStatusUpdate =
   | {
       state: 'downloaded_module';
       name: string;
+      version: string;
       totalPending: number;
     }
   | {

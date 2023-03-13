@@ -1,0 +1,165 @@
+Ö™/README.md≈ã# @babel/helper-simple-access
+
+> Babel helper for ensuring that access to a given value is performed through simple accesses
+
+See our website [@babel/helper-simple-access](https://babeljs.io/docs/en/babel-helper-simple-access) for more information.
+
+## Install
+
+Using npm:
+
+```sh
+npm install --save @babel/helper-simple-access
+```
+
+or using yarn:
+
+```sh
+yarn add @babel/helper-simple-access
+```
+±/lib/index.js.map≈ Û{"version":3,"names":["LOGICAL_OPERATORS","assignmentExpression","binaryExpression","cloneNode","identifier","logicalExpression","numericLiteral","sequenceExpression","unaryExpression","simpleAssignmentVisitor","UpdateExpression","exit","path","scope","bindingNames","includeUpdateExpression","arg","get","isIdentifier","localName","node","name","has","getBinding","parentPath","isExpressionStatement","isCompletionRecord","operator","replaceWith","prefix","old","generateUidIdentifierBasedOnNode","varName","push","id","binary","AssignmentExpression","seen","add","left","slice","includes","right","simplifyAccess","traverse","WeakSet"],"sources":["../src/index.ts"],"sourcesContent":["import {\n  LOGICAL_OPERATORS,\n  assignmentExpression,\n  binaryExpression,\n  cloneNode,\n  identifier,\n  logicalExpression,\n  numericLiteral,\n  sequenceExpression,\n  unaryExpression,\n} from \"@babel/types\";\nimport type * as t from \"@babel/types\";\nimport type { NodePath, Scope, Visitor } from \"@babel/traverse\";\n\ntype State = {\n  scope: Scope;\n  bindingNames: Set<string>;\n  seen: WeakSet<t.Node>;\n  includeUpdateExpression: boolean;\n};\n\nconst simpleAssignmentVisitor: Visitor<State> = {\n  // TODO(Babel 8): Remove UpdateExpression\n  UpdateExpression: {\n    exit(path) {\n      const { scope, bindingNames, includeUpdateExpression } = this;\n      if (!includeUpdateExpression) {\n        return;\n      }\n\n      const arg = path.get(\"argument\");\n      if (!arg.isIdentifier()) return;\n      const localName = arg.node.name;\n\n      if (!bindingNames.has(localName)) return;\n\n      // redeclared in this scope\n      if (scope.getBinding(localName) !== path.scope.getBinding(localName)) {\n        return;\n      }\n\n      if (\n        path.parentPath.isExpressionStatement() &&\n        !path.isCompletionRecord()\n      ) {\n        // ++i => (i += 1);\n        const operator = path.node.operator == \"++\" ? \"+=\" : \"-=\";\n        path.replaceWith(\n          assignmentExpression(operator, arg.node, numericLiteral(1)),\n        );\n      } else if (path.node.prefix) {\n        // ++i => (i = (+i) + 1);\n        path.replaceWith(\n          assignmentExpression(\n            \"=\",\n            identifier(localName),\n            binaryExpression(\n              path.node.operator[0] as \"+\" | \"-\",\n              unaryExpression(\"+\", arg.node),\n              numericLiteral(1),\n            ),\n          ),\n        );\n      } else {\n        const old = path.scope.generateUidIdentifierBasedOnNode(\n          arg.node,\n          \"old\",\n        );\n        const varName = old.name;\n        path.scope.push({ id: old });\n\n        const binary = binaryExpression(\n          path.node.operator[0] as \"+\" | \"-\",\n          identifier(varName),\n          // todo: support bigint\n          numericLiteral(1),\n        );\n\n        // i++ => (_old = (+i), i = _old + 1, _old)\n        path.replaceWith(\n          sequenceExpression([\n            assignmentExpression(\n              \"=\",\n              identifier(varName),\n              unaryExpression(\"+\", arg.node),\n            ),\n            assignmentExpression(\"=\", cloneNode(arg.node), binary),\n            identifier(varName),\n          ]),\n        );\n      }\n    },\n  },\n\n  AssignmentExpression: {\n    exit(path) {\n      const { scope, seen, bindingNames } = this;\n\n      if (path.node.operator === \"=\") return;\n\n      if (seen.has(path.node)) return;\n      seen.add(path.node);\n\n      const left = path.get(\"left\");\n      if (!left.isIdentifier()) return;\n\n      // Simple update-assign foo += 1;\n      // =>   exports.foo =  (foo += 1);\n      const localName = left.node.name;\n\n      if (!bindingNames.has(localName)) return;\n\n      // redeclared in this scope\n      if (scope.getBinding(localName) !== path.scope.getBinding(localName)) {\n        return;\n      }\n\n      const operator = path.node.operator.slice(0, -1);\n      if (LOGICAL_OPERATORS.includes(operator)) {\n        // &&, ||, ??\n        // (foo &&= bar) => (foo && foo = bar)\n        path.replaceWith(\n          logicalExpression(\n            // @ts-expect-error Guarded by LOGICAL_OPERATORS.includes\n            operator,\n            path.node.left,\n            assignmentExpression(\n              \"=\",\n              cloneNode(path.node.left),\n              path.node.right,\n            ),\n          ),\n        );\n      } else {\n        // (foo += bar) => (foo = foo + bar)\n        path.node.right = binaryExpression(\n          // @ts-expect-error An assignment expression operator removing \"=\" must\n          // be a valid binary operator\n          operator,\n          cloneNode(path.node.left),\n          path.node.right,\n        );\n        path.node.operator = \"=\";\n      }\n    },\n  },\n};\n\nexport default function simplifyAccess(\n  path: NodePath,\n  bindingNames: Set<string>,\n  // TODO(Babel 8): Remove this\n  includeUpdateExpression: boolean = true,\n) {\n  path.traverse(simpleAssignmentVisitor, {\n    scope: path.scope,\n    bindingNames,\n    seen: new WeakSet(),\n    includeUpdateExpression,\n  });\n}\n"],"mappings":"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"}≠/package.json≈˘{
+  "name": "@babel/helper-simple-access",
+  "version": "7.20.2",
+  "description": "Babel helper for ensuring that access to a given value is performed through simple accesses",
+  "author": "The Babel Team (https://babel.dev/team)",
+  "homepage": "https://babel.dev/docs/en/next/babel-helper-simple-access",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/babel/babel.git",
+    "directory": "packages/babel-helper-simple-access"
+  },
+  "main": "./lib/index.js",
+  "dependencies": {
+    "@babel/types": "^7.20.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.2",
+    "@babel/traverse": "^7.20.1"
+  },
+  "engines": {
+    "node": ">=6.9.0"
+  },
+  "type": "commonjs"
+}®/LICENSE≈RMIT License
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+≠/lib/index.js≈∏"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = simplifyAccess;
+var _t = require("@babel/types");
+const {
+  LOGICAL_OPERATORS,
+  assignmentExpression,
+  binaryExpression,
+  cloneNode,
+  identifier,
+  logicalExpression,
+  numericLiteral,
+  sequenceExpression,
+  unaryExpression
+} = _t;
+const simpleAssignmentVisitor = {
+  UpdateExpression: {
+    exit(path) {
+      const {
+        scope,
+        bindingNames,
+        includeUpdateExpression
+      } = this;
+      if (!includeUpdateExpression) {
+        return;
+      }
+      const arg = path.get("argument");
+      if (!arg.isIdentifier()) return;
+      const localName = arg.node.name;
+      if (!bindingNames.has(localName)) return;
+
+      if (scope.getBinding(localName) !== path.scope.getBinding(localName)) {
+        return;
+      }
+      if (path.parentPath.isExpressionStatement() && !path.isCompletionRecord()) {
+        const operator = path.node.operator == "++" ? "+=" : "-=";
+        path.replaceWith(assignmentExpression(operator, arg.node, numericLiteral(1)));
+      } else if (path.node.prefix) {
+        path.replaceWith(assignmentExpression("=", identifier(localName), binaryExpression(path.node.operator[0], unaryExpression("+", arg.node), numericLiteral(1))));
+      } else {
+        const old = path.scope.generateUidIdentifierBasedOnNode(arg.node, "old");
+        const varName = old.name;
+        path.scope.push({
+          id: old
+        });
+        const binary = binaryExpression(path.node.operator[0], identifier(varName),
+        numericLiteral(1));
+
+        path.replaceWith(sequenceExpression([assignmentExpression("=", identifier(varName), unaryExpression("+", arg.node)), assignmentExpression("=", cloneNode(arg.node), binary), identifier(varName)]));
+      }
+    }
+  },
+  AssignmentExpression: {
+    exit(path) {
+      const {
+        scope,
+        seen,
+        bindingNames
+      } = this;
+      if (path.node.operator === "=") return;
+      if (seen.has(path.node)) return;
+      seen.add(path.node);
+      const left = path.get("left");
+      if (!left.isIdentifier()) return;
+
+      const localName = left.node.name;
+      if (!bindingNames.has(localName)) return;
+
+      if (scope.getBinding(localName) !== path.scope.getBinding(localName)) {
+        return;
+      }
+      const operator = path.node.operator.slice(0, -1);
+      if (LOGICAL_OPERATORS.includes(operator)) {
+        path.replaceWith(logicalExpression(
+        operator, path.node.left, assignmentExpression("=", cloneNode(path.node.left), path.node.right)));
+      } else {
+        path.node.right = binaryExpression(
+        operator, cloneNode(path.node.left), path.node.right);
+        path.node.operator = "=";
+      }
+    }
+  }
+};
+function simplifyAccess(path, bindingNames,
+includeUpdateExpression = true) {
+  path.traverse(simpleAssignmentVisitor, {
+    scope: path.scope,
+    bindingNames,
+    seen: new WeakSet(),
+    includeUpdateExpression
+  });
+}
+
+//# sourceMappingURL=index.js.map
