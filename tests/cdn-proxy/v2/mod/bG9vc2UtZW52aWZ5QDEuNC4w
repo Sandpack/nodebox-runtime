@@ -1,4 +1,52 @@
-ˆ«/replace.jsÅü'use strict';
+ˆª/README.mdÅ/# loose-envify
+
+[![Build Status](https://travis-ci.org/zertosh/loose-envify.svg?branch=master)](https://travis-ci.org/zertosh/loose-envify)
+
+Fast (and loose) selective `process.env` replacer using [js-tokens](https://github.com/lydell/js-tokens) instead of an AST. Works just like [envify](https://github.com/hughsk/envify) but much faster.
+
+## Gotchas
+
+* Doesn't handle broken syntax.
+* Doesn't look inside embedded expressions in template strings.
+  - **this won't work:**
+  ```js
+  console.log(`the current env is ${process.env.NODE_ENV}`);
+  ```
+* Doesn't replace oddly-spaced or oddly-commented expressions.
+  - **this won't work:**
+  ```js
+  console.log(process./*won't*/env./*work*/NODE_ENV);
+  ```
+
+## Usage/Options
+
+loose-envify has the exact same interface as [envify](https://github.com/hughsk/envify), including the CLI.
+
+## Benchmark
+
+```
+envify:
+
+  $ for i in {1..5}; do node bench/bench.js 'envify'; done
+  708ms
+  727ms
+  791ms
+  719ms
+  720ms
+
+loose-envify:
+
+  $ for i in {1..5}; do node bench/bench.js '../'; done
+  51ms
+  52ms
+  52ms
+  52ms
+  52ms
+```
+©/index.jsÄH'use strict';
+
+module.exports = require('./loose-envify')(process.env);
+«/replace.jsÅü'use strict';
 
 var jsTokens = require('js-tokens').default;
 
@@ -63,91 +111,22 @@ function getReplacementString(envs, name, purge) {
 }
 
 module.exports = replace;
-ª/README.mdÅ/# loose-envify
-
-[![Build Status](https://travis-ci.org/zertosh/loose-envify.svg?branch=master)](https://travis-ci.org/zertosh/loose-envify)
-
-Fast (and loose) selective `process.env` replacer using [js-tokens](https://github.com/lydell/js-tokens) instead of an AST. Works just like [envify](https://github.com/hughsk/envify) but much faster.
-
-## Gotchas
-
-* Doesn't handle broken syntax.
-* Doesn't look inside embedded expressions in template strings.
-  - **this won't work:**
-  ```js
-  console.log(`the current env is ${process.env.NODE_ENV}`);
-  ```
-* Doesn't replace oddly-spaced or oddly-commented expressions.
-  - **this won't work:**
-  ```js
-  console.log(process./*won't*/env./*work*/NODE_ENV);
-  ```
-
-## Usage/Options
-
-loose-envify has the exact same interface as [envify](https://github.com/hughsk/envify), including the CLI.
-
-## Benchmark
-
-```
-envify:
-
-  $ for i in {1..5}; do node bench/bench.js 'envify'; done
-  708ms
-  727ms
-  791ms
-  719ms
-  720ms
-
-loose-envify:
-
-  $ for i in {1..5}; do node bench/bench.js '../'; done
-  51ms
-  52ms
-  52ms
-  52ms
-  52ms
-```
-°/loose-envify.jsÅ'use strict';
-
-var stream = require('stream');
-var util = require('util');
-var replace = require('./replace');
-
-var jsonExtRe = /\.json$/;
-
-module.exports = function(rootEnv) {
-  rootEnv = rootEnv || process.env;
-  return function (file, trOpts) {
-    if (jsonExtRe.test(file)) {
-      return stream.PassThrough();
-    }
-    var envs = trOpts ? [rootEnv, trOpts] : [rootEnv];
-    return new LooseEnvify(envs);
-  };
-};
-
-function LooseEnvify(envs) {
-  stream.Transform.call(this);
-  this._data = '';
-  this._envs = envs;
-}
-util.inherits(LooseEnvify, stream.Transform);
-
-LooseEnvify.prototype._transform = function(buf, enc, cb) {
-  this._data += buf;
-  cb();
-};
-
-LooseEnvify.prototype._flush = function(cb) {
-  var replaced = replace(this._data, this._envs);
-  this.push(replaced);
-  cb();
-};
-ª/custom.jsÄS// envify compatibility
+§/cli.jsÅd#!/usr/bin/env node
 'use strict';
 
-module.exports = require('./loose-envify');
+var looseEnvify = require('./');
+var fs = require('fs');
+
+if (process.argv[2]) {
+  fs.createReadStream(process.argv[2], {encoding: 'utf8'})
+    .pipe(looseEnvify(process.argv[2]))
+    .pipe(process.stdout);
+} else {
+  process.stdin.resume()
+  process.stdin
+    .pipe(looseEnvify(__filename))
+    .pipe(process.stdout);
+}
 ¨/LICENSEÅLThe MIT License (MIT)
 
 Copyright (c) 2015 Andres Suarez <zertosh@gmail.com>
@@ -169,6 +148,10 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+ª/custom.jsÄS// envify compatibility
+'use strict';
+
+module.exports = require('./loose-envify');
 ­/package.jsonÅ){
   "name": "loose-envify",
   "version": "1.4.0",
@@ -205,22 +188,39 @@ THE SOFTWARE.
     "tap": "^8.0.0"
   }
 }
-§/cli.jsÅd#!/usr/bin/env node
-'use strict';
+°/loose-envify.jsÅ'use strict';
 
-var looseEnvify = require('./');
-var fs = require('fs');
+var stream = require('stream');
+var util = require('util');
+var replace = require('./replace');
 
-if (process.argv[2]) {
-  fs.createReadStream(process.argv[2], {encoding: 'utf8'})
-    .pipe(looseEnvify(process.argv[2]))
-    .pipe(process.stdout);
-} else {
-  process.stdin.resume()
-  process.stdin
-    .pipe(looseEnvify(__filename))
-    .pipe(process.stdout);
+var jsonExtRe = /\.json$/;
+
+module.exports = function(rootEnv) {
+  rootEnv = rootEnv || process.env;
+  return function (file, trOpts) {
+    if (jsonExtRe.test(file)) {
+      return stream.PassThrough();
+    }
+    var envs = trOpts ? [rootEnv, trOpts] : [rootEnv];
+    return new LooseEnvify(envs);
+  };
+};
+
+function LooseEnvify(envs) {
+  stream.Transform.call(this);
+  this._data = '';
+  this._envs = envs;
 }
-©/index.jsÄH'use strict';
+util.inherits(LooseEnvify, stream.Transform);
 
-module.exports = require('./loose-envify')(process.env);
+LooseEnvify.prototype._transform = function(buf, enc, cb) {
+  this._data += buf;
+  cb();
+};
+
+LooseEnvify.prototype._flush = function(cb) {
+  var replaced = replace(this._data, this._envs);
+  this.push(replaced);
+  cb();
+};

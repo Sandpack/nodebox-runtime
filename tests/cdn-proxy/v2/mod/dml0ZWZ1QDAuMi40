@@ -1,135 +1,4 @@
-‡­/package.jsonÅY{
-  "name": "vitefu",
-  "description": "Utilities for building frameworks with Vite",
-  "version": "0.2.4",
-  "license": "MIT",
-  "type": "module",
-  "types": "./index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./index.d.ts",
-      "import": "./src/index.js",
-      "require": "./src/index.cjs"
-    }
-  },
-  "files": [
-    "src",
-    "index.d.ts"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/svitejs/vitefu.git"
-  },
-  "bugs": {
-    "url": "https://github.com/svitejs/vitefu/issues"
-  },
-  "keywords": [
-    "vite",
-    "framework",
-    "utilities"
-  ],
-  "peerDependencies": {
-    "vite": "^3.0.0 || ^4.0.0"
-  },
-  "peerDependenciesMeta": {
-    "vite": {
-      "optional": true
-    }
-  },
-  "devDependencies": {
-    "uvu": "^0.5.6",
-    "vite": "^3.2.3"
-  },
-  "scripts": {
-    "test": "uvu tests \".*\\.test\\.js\""
-  }
-}­/src/sync.cjsÅ§// contains synchronous API only so it can be exported as CJS and ESM
-
-/** @type {import('..').isDepIncluded} */
-function isDepIncluded(dep, optimizeDepsInclude) {
-  return optimizeDepsInclude.some((id) => parseIncludeStr(id) === dep)
-}
-
-/** @type {import('..').isDepExcluded} */
-function isDepExcluded(dep, optimizeDepsExclude) {
-  dep = parseIncludeStr(dep)
-  return optimizeDepsExclude.some(
-    (id) => id === dep || dep.startsWith(`${id}/`)
-  )
-}
-
-/** @type {import('..').isDepNoExternaled} */
-function isDepNoExternaled(dep, ssrNoExternal) {
-  if (ssrNoExternal === true) {
-    return true
-  } else {
-    return isMatch(dep, ssrNoExternal)
-  }
-}
-
-/** @type {import('..').isDepExternaled} */
-function isDepExternaled(dep, ssrExternal) {
-  return ssrExternal.includes(dep)
-}
-
-/**
- * @param {string} raw could be "foo" or "foo > bar" etc
- */
-function parseIncludeStr(raw) {
-  const lastArrow = raw.lastIndexOf('>')
-  return lastArrow === -1 ? raw : raw.slice(lastArrow + 1).trim()
-}
-
-/**
- * @param {string} target
- * @param {string | RegExp | (string | RegExp)[]} pattern
- */
-function isMatch(target, pattern) {
-  if (Array.isArray(pattern)) {
-    return pattern.some((p) => isMatch(target, p))
-  } else if (typeof pattern === 'string') {
-    return target === pattern
-  } else if (pattern instanceof RegExp) {
-    return pattern.test(target)
-  }
-}
-
-module.exports = {
-  isDepIncluded,
-  isDepExcluded,
-  isDepNoExternaled,
-  isDepExternaled
-}
-®/src/index.cjsÅõ// CJS -> ESM proxy file
-// Reference: https://github.com/vitejs/vite/blob/9f268dad2e82c0f1276b1098c0a28f1cf245aa50/packages/vite/index.cjs
-
-module.exports = require('./sync.cjs')
-
-// redirect async functions to ESM
-const asyncFunctions = [
-  'crawlFrameworkPkgs',
-  'findDepPkgJsonPath',
-  'findClosestPkgJsonPath',
-  'pkgNeedsOptimization'
-]
-
-for (const fn of asyncFunctions) {
-  module.exports[fn] = function () {
-    return import('./index.js').then((mod) => mod[fn].apply(this, arguments))
-  }
-}
-ª/README.mdÄs# vitefu
-
-Utilities for building frameworks with Vite.
-
-## Usage
-
-See [index.d.ts](./index.d.ts).
-
-## License
-
-MIT
-­/src/index.jsÅ%èimport fs from 'node:fs/promises'
+‡­/src/index.jsÅ%èimport fs from 'node:fs/promises'
 import fsSync from 'node:fs'
 import path from 'node:path'
 import {
@@ -399,27 +268,6 @@ export async function pkgNeedsOptimization(pkgJson, pkgJsonPath) {
 async function readJson(findDepPkgJsonPath) {
   return JSON.parse(await fs.readFile(findDepPkgJsonPath, 'utf8'))
 }
-¨/LICENSEÅ2MIT License
-
-Copyright (c) 2022 Bjorn and Dominik
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
 «/index.d.tsÅºimport type { DepOptimizationOptions, SSROptions, UserConfig } from 'vite'
 
 export interface CrawlFrameworkPkgsOptions {
@@ -598,3 +446,155 @@ export declare function isDepExternaled(
   dep: string,
   ssrExternal: NonNullable<SSROptions['external']>
 ): boolean
+­/package.jsonÅY{
+  "name": "vitefu",
+  "description": "Utilities for building frameworks with Vite",
+  "version": "0.2.4",
+  "license": "MIT",
+  "type": "module",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./src/index.js",
+      "require": "./src/index.cjs"
+    }
+  },
+  "files": [
+    "src",
+    "index.d.ts"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/svitejs/vitefu.git"
+  },
+  "bugs": {
+    "url": "https://github.com/svitejs/vitefu/issues"
+  },
+  "keywords": [
+    "vite",
+    "framework",
+    "utilities"
+  ],
+  "peerDependencies": {
+    "vite": "^3.0.0 || ^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "vite": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "uvu": "^0.5.6",
+    "vite": "^3.2.3"
+  },
+  "scripts": {
+    "test": "uvu tests \".*\\.test\\.js\""
+  }
+}ª/README.mdÄs# vitefu
+
+Utilities for building frameworks with Vite.
+
+## Usage
+
+See [index.d.ts](./index.d.ts).
+
+## License
+
+MIT
+¨/LICENSEÅ2MIT License
+
+Copyright (c) 2022 Bjorn and Dominik
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+­/src/sync.cjsÅ§// contains synchronous API only so it can be exported as CJS and ESM
+
+/** @type {import('..').isDepIncluded} */
+function isDepIncluded(dep, optimizeDepsInclude) {
+  return optimizeDepsInclude.some((id) => parseIncludeStr(id) === dep)
+}
+
+/** @type {import('..').isDepExcluded} */
+function isDepExcluded(dep, optimizeDepsExclude) {
+  dep = parseIncludeStr(dep)
+  return optimizeDepsExclude.some(
+    (id) => id === dep || dep.startsWith(`${id}/`)
+  )
+}
+
+/** @type {import('..').isDepNoExternaled} */
+function isDepNoExternaled(dep, ssrNoExternal) {
+  if (ssrNoExternal === true) {
+    return true
+  } else {
+    return isMatch(dep, ssrNoExternal)
+  }
+}
+
+/** @type {import('..').isDepExternaled} */
+function isDepExternaled(dep, ssrExternal) {
+  return ssrExternal.includes(dep)
+}
+
+/**
+ * @param {string} raw could be "foo" or "foo > bar" etc
+ */
+function parseIncludeStr(raw) {
+  const lastArrow = raw.lastIndexOf('>')
+  return lastArrow === -1 ? raw : raw.slice(lastArrow + 1).trim()
+}
+
+/**
+ * @param {string} target
+ * @param {string | RegExp | (string | RegExp)[]} pattern
+ */
+function isMatch(target, pattern) {
+  if (Array.isArray(pattern)) {
+    return pattern.some((p) => isMatch(target, p))
+  } else if (typeof pattern === 'string') {
+    return target === pattern
+  } else if (pattern instanceof RegExp) {
+    return pattern.test(target)
+  }
+}
+
+module.exports = {
+  isDepIncluded,
+  isDepExcluded,
+  isDepNoExternaled,
+  isDepExternaled
+}
+®/src/index.cjsÅõ// CJS -> ESM proxy file
+// Reference: https://github.com/vitejs/vite/blob/9f268dad2e82c0f1276b1098c0a28f1cf245aa50/packages/vite/index.cjs
+
+module.exports = require('./sync.cjs')
+
+// redirect async functions to ESM
+const asyncFunctions = [
+  'crawlFrameworkPkgs',
+  'findDepPkgJsonPath',
+  'findClosestPkgJsonPath',
+  'pkgNeedsOptimization'
+]
+
+for (const fn of asyncFunctions) {
+  module.exports[fn] = function () {
+    return import('./index.js').then((mod) => mod[fn].apply(this, arguments))
+  }
+}

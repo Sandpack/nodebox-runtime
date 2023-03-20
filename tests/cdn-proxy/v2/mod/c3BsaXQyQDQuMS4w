@@ -1,4 +1,43 @@
-†¨/test.jsÅÕ'use strict'
+†­/package.jsonÅY{
+  "name": "split2",
+  "version": "4.1.0",
+  "description": "split a Text Stream into a Line Stream, using Stream 3",
+  "main": "index.js",
+  "scripts": {
+    "lint": "standard --verbose",
+    "unit": "nyc --lines 100 --branches 100 --functions 100 --check-coverage --reporter=text tape test.js",
+    "coverage": "nyc --reporter=html --reporter=cobertura --reporter=text tape test/test.js",
+    "test:report": "npm run lint && npm run unit:report",
+    "test": "npm run lint && npm run unit",
+    "legacy": "tape test.js"
+  },
+  "pre-commit": [
+    "test"
+  ],
+  "website": "https://github.com/mcollina/split2",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mcollina/split2.git"
+  },
+  "bugs": {
+    "url": "http://github.com/mcollina/split2/issues"
+  },
+  "engines": {
+    "node": ">= 10.x"
+  },
+  "author": "Matteo Collina <hello@matteocollina.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "binary-split": "^1.0.3",
+    "callback-stream": "^1.1.0",
+    "fastbench": "^1.0.0",
+    "nyc": "^15.0.1",
+    "pre-commit": "^1.1.2",
+    "standard": "^16.0.1",
+    "tape": "^5.0.0"
+  }
+}
+¨/test.jsÅÕ'use strict'
 
 const test = require('tape')
 const split = require('./')
@@ -531,6 +570,19 @@ function split (matcher, mapper, options) {
 }
 
 module.exports = split
+¨/LICENSEÅüCopyright (c) 2014-2018, Matteo Collina <hello@matteocollina.com>
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ©/bench.jsÅØ'use strict'
 
 const split = require('./')
@@ -643,55 +695,3 @@ ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
 WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-¨/LICENSEÅüCopyright (c) 2014-2018, Matteo Collina <hello@matteocollina.com>
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted, provided that the above
-copyright notice and this permission notice appear in all copies.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
-IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-­/package.jsonÅY{
-  "name": "split2",
-  "version": "4.1.0",
-  "description": "split a Text Stream into a Line Stream, using Stream 3",
-  "main": "index.js",
-  "scripts": {
-    "lint": "standard --verbose",
-    "unit": "nyc --lines 100 --branches 100 --functions 100 --check-coverage --reporter=text tape test.js",
-    "coverage": "nyc --reporter=html --reporter=cobertura --reporter=text tape test/test.js",
-    "test:report": "npm run lint && npm run unit:report",
-    "test": "npm run lint && npm run unit",
-    "legacy": "tape test.js"
-  },
-  "pre-commit": [
-    "test"
-  ],
-  "website": "https://github.com/mcollina/split2",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/mcollina/split2.git"
-  },
-  "bugs": {
-    "url": "http://github.com/mcollina/split2/issues"
-  },
-  "engines": {
-    "node": ">= 10.x"
-  },
-  "author": "Matteo Collina <hello@matteocollina.com>",
-  "license": "ISC",
-  "devDependencies": {
-    "binary-split": "^1.0.3",
-    "callback-stream": "^1.1.0",
-    "fastbench": "^1.0.0",
-    "nyc": "^15.0.1",
-    "pre-commit": "^1.1.2",
-    "standard": "^16.0.1",
-    "tape": "^5.0.0"
-  }
-}

@@ -1,56 +1,24 @@
-��/.npmignore�'npm-debug.*
-node_modules/
-coverage/
-�/index.d.ts��/**
- * Calculates the UTF8 byte length of a string.
- * @param {string} string String
- * @returns {number} Byte length
- */
-export function length(string: string): number;
-
-/**
- * Reads UTF8 bytes as a string.
- * @param {Uint8Array} buffer Source buffer
- * @param {number} start Source start
- * @param {number} end Source end
- * @returns {string} String read
- */
-export function read(buffer: Uint8Array, start: number, end: number): string;
-
-/**
- * Writes a string as UTF8 bytes.
- * @param {string} string Source string
- * @param {Uint8Array} buffer Destination buffer
- * @param {number} offset Destination offset
- * @returns {number} Bytes written
- */
-export function write(string: string, buffer: Uint8Array, offset: number): number;
-�/LICENSE��Copyright (c) 2016, Daniel Wirtz  All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
-
-* Redistributions of source code must retain the above copyright
-  notice, this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright
-  notice, this list of conditions and the following disclaimer in the
-  documentation and/or other materials provided with the distribution.
-* Neither the name of its author, nor the names of its contributors
-  may be used to endorse or promote products derived from this software
-  without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+��/package.json�'{
+  "name": "@protobufjs/utf8",
+  "description": "A minimal UTF8 implementation for number arrays.",
+  "version": "1.1.0",
+  "author": "Daniel Wirtz <dcode+protobufjs@dcode.io>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dcodeIO/protobuf.js.git"
+  },
+  "license": "BSD-3-Clause",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "devDependencies": {
+    "istanbul": "^0.4.5",
+    "tape": "^4.6.3"
+  },
+  "scripts": {
+    "test": "tape tests/*.js",
+    "coverage": "istanbul cover node_modules/tape/bin/tape tests/*.js"
+  }
+}
 �/tests/index.js��var tape = require("tape");
 
 var utf8 = require("..");
@@ -108,132 +76,26 @@ tape.test("utf8", function(test) {
     });
 
 });
-�/package.json�'{
-  "name": "@protobufjs/utf8",
-  "description": "A minimal UTF8 implementation for number arrays.",
-  "version": "1.1.0",
-  "author": "Daniel Wirtz <dcode+protobufjs@dcode.io>",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/dcodeIO/protobuf.js.git"
-  },
-  "license": "BSD-3-Clause",
-  "main": "index.js",
-  "types": "index.d.ts",
-  "devDependencies": {
-    "istanbul": "^0.4.5",
-    "tape": "^4.6.3"
-  },
-  "scripts": {
-    "test": "tape tests/*.js",
-    "coverage": "istanbul cover node_modules/tape/bin/tape tests/*.js"
-  }
-}
-�/index.js�-"use strict";
+�/README.md��@protobufjs/utf8
+================
+[![npm](https://img.shields.io/npm/v/@protobufjs/utf8.svg)](https://www.npmjs.com/package/@protobufjs/utf8)
 
-/**
- * A minimal UTF8 implementation for number arrays.
- * @memberof util
- * @namespace
- */
-var utf8 = exports;
+A minimal UTF8 implementation for number arrays.
 
-/**
- * Calculates the UTF8 byte length of a string.
- * @param {string} string String
- * @returns {number} Byte length
- */
-utf8.length = function utf8_length(string) {
-    var len = 0,
-        c = 0;
-    for (var i = 0; i < string.length; ++i) {
-        c = string.charCodeAt(i);
-        if (c < 128)
-            len += 1;
-        else if (c < 2048)
-            len += 2;
-        else if ((c & 0xFC00) === 0xD800 && (string.charCodeAt(i + 1) & 0xFC00) === 0xDC00) {
-            ++i;
-            len += 4;
-        } else
-            len += 3;
-    }
-    return len;
-};
+API
+---
 
-/**
- * Reads UTF8 bytes as a string.
- * @param {Uint8Array} buffer Source buffer
- * @param {number} start Source start
- * @param {number} end Source end
- * @returns {string} String read
- */
-utf8.read = function utf8_read(buffer, start, end) {
-    var len = end - start;
-    if (len < 1)
-        return "";
-    var parts = null,
-        chunk = [],
-        i = 0, // char offset
-        t;     // temporary
-    while (start < end) {
-        t = buffer[start++];
-        if (t < 128)
-            chunk[i++] = t;
-        else if (t > 191 && t < 224)
-            chunk[i++] = (t & 31) << 6 | buffer[start++] & 63;
-        else if (t > 239 && t < 365) {
-            t = ((t & 7) << 18 | (buffer[start++] & 63) << 12 | (buffer[start++] & 63) << 6 | buffer[start++] & 63) - 0x10000;
-            chunk[i++] = 0xD800 + (t >> 10);
-            chunk[i++] = 0xDC00 + (t & 1023);
-        } else
-            chunk[i++] = (t & 15) << 12 | (buffer[start++] & 63) << 6 | buffer[start++] & 63;
-        if (i > 8191) {
-            (parts || (parts = [])).push(String.fromCharCode.apply(String, chunk));
-            i = 0;
-        }
-    }
-    if (parts) {
-        if (i)
-            parts.push(String.fromCharCode.apply(String, chunk.slice(0, i)));
-        return parts.join("");
-    }
-    return String.fromCharCode.apply(String, chunk.slice(0, i));
-};
+* **utf8.length(string: `string`): `number`**<br />
+  Calculates the UTF8 byte length of a string.
 
-/**
- * Writes a string as UTF8 bytes.
- * @param {string} string Source string
- * @param {Uint8Array} buffer Destination buffer
- * @param {number} offset Destination offset
- * @returns {number} Bytes written
- */
-utf8.write = function utf8_write(string, buffer, offset) {
-    var start = offset,
-        c1, // character 1
-        c2; // character 2
-    for (var i = 0; i < string.length; ++i) {
-        c1 = string.charCodeAt(i);
-        if (c1 < 128) {
-            buffer[offset++] = c1;
-        } else if (c1 < 2048) {
-            buffer[offset++] = c1 >> 6       | 192;
-            buffer[offset++] = c1       & 63 | 128;
-        } else if ((c1 & 0xFC00) === 0xD800 && ((c2 = string.charCodeAt(i + 1)) & 0xFC00) === 0xDC00) {
-            c1 = 0x10000 + ((c1 & 0x03FF) << 10) + (c2 & 0x03FF);
-            ++i;
-            buffer[offset++] = c1 >> 18      | 240;
-            buffer[offset++] = c1 >> 12 & 63 | 128;
-            buffer[offset++] = c1 >> 6  & 63 | 128;
-            buffer[offset++] = c1       & 63 | 128;
-        } else {
-            buffer[offset++] = c1 >> 12      | 224;
-            buffer[offset++] = c1 >> 6  & 63 | 128;
-            buffer[offset++] = c1       & 63 | 128;
-        }
-    }
-    return offset - start;
-};
+* **utf8.read(buffer: `Uint8Array`, start: `number`, end: `number`): `string`**<br />
+  Reads UTF8 bytes as a string.
+
+* **utf8.write(string: `string`, buffer: `Uint8Array`, offset: `number`): `number`**<br />
+  Writes a string as UTF8 bytes.
+
+
+**License:** [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause)
 �/tests/data/utf8.txt�8-UTF-8 encoded sample plain-text file
 ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
 
@@ -450,23 +312,161 @@ Surrogates:
 
 𠜎 𠜱 𠝹 𠱓 𠱸 𠲖 𠳏 𠳕 𠴕 𠵼 𠵿 𠸎 𠸏 𠹷 𠺝 𠺢 𠻗 𠻹 𠻺 𠼭 𠼮 𠽌 𠾴 𠾼 𠿪 𡁜 𡁯 𡁵 𡁶 𡁻 𡃁
 𡃉 𡇙 𢃇 𢞵 𢫕 𢭃 𢯊 𢱑 𢱕 𢳂 𢴈 𢵌 𢵧 𢺳 𣲷 𤓓 𤶸 𤷪 𥄫 𦉘 𦟌 𦧲 𦧺 𧨾 𨅝 𨈇 𨋢 𨳊 𨳍 𨳒 𩶘
-�/README.md��@protobufjs/utf8
-================
-[![npm](https://img.shields.io/npm/v/@protobufjs/utf8.svg)](https://www.npmjs.com/package/@protobufjs/utf8)
+�/LICENSE��Copyright (c) 2016, Daniel Wirtz  All rights reserved.
 
-A minimal UTF8 implementation for number arrays.
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
 
-API
----
+* Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution.
+* Neither the name of its author, nor the names of its contributors
+  may be used to endorse or promote products derived from this software
+  without specific prior written permission.
 
-* **utf8.length(string: `string`): `number`**<br />
-  Calculates the UTF8 byte length of a string.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+�/.npmignore�'npm-debug.*
+node_modules/
+coverage/
+�/index.d.ts��/**
+ * Calculates the UTF8 byte length of a string.
+ * @param {string} string String
+ * @returns {number} Byte length
+ */
+export function length(string: string): number;
 
-* **utf8.read(buffer: `Uint8Array`, start: `number`, end: `number`): `string`**<br />
-  Reads UTF8 bytes as a string.
+/**
+ * Reads UTF8 bytes as a string.
+ * @param {Uint8Array} buffer Source buffer
+ * @param {number} start Source start
+ * @param {number} end Source end
+ * @returns {string} String read
+ */
+export function read(buffer: Uint8Array, start: number, end: number): string;
 
-* **utf8.write(string: `string`, buffer: `Uint8Array`, offset: `number`): `number`**<br />
-  Writes a string as UTF8 bytes.
+/**
+ * Writes a string as UTF8 bytes.
+ * @param {string} string Source string
+ * @param {Uint8Array} buffer Destination buffer
+ * @param {number} offset Destination offset
+ * @returns {number} Bytes written
+ */
+export function write(string: string, buffer: Uint8Array, offset: number): number;
+�/index.js�-"use strict";
 
+/**
+ * A minimal UTF8 implementation for number arrays.
+ * @memberof util
+ * @namespace
+ */
+var utf8 = exports;
 
-**License:** [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause)
+/**
+ * Calculates the UTF8 byte length of a string.
+ * @param {string} string String
+ * @returns {number} Byte length
+ */
+utf8.length = function utf8_length(string) {
+    var len = 0,
+        c = 0;
+    for (var i = 0; i < string.length; ++i) {
+        c = string.charCodeAt(i);
+        if (c < 128)
+            len += 1;
+        else if (c < 2048)
+            len += 2;
+        else if ((c & 0xFC00) === 0xD800 && (string.charCodeAt(i + 1) & 0xFC00) === 0xDC00) {
+            ++i;
+            len += 4;
+        } else
+            len += 3;
+    }
+    return len;
+};
+
+/**
+ * Reads UTF8 bytes as a string.
+ * @param {Uint8Array} buffer Source buffer
+ * @param {number} start Source start
+ * @param {number} end Source end
+ * @returns {string} String read
+ */
+utf8.read = function utf8_read(buffer, start, end) {
+    var len = end - start;
+    if (len < 1)
+        return "";
+    var parts = null,
+        chunk = [],
+        i = 0, // char offset
+        t;     // temporary
+    while (start < end) {
+        t = buffer[start++];
+        if (t < 128)
+            chunk[i++] = t;
+        else if (t > 191 && t < 224)
+            chunk[i++] = (t & 31) << 6 | buffer[start++] & 63;
+        else if (t > 239 && t < 365) {
+            t = ((t & 7) << 18 | (buffer[start++] & 63) << 12 | (buffer[start++] & 63) << 6 | buffer[start++] & 63) - 0x10000;
+            chunk[i++] = 0xD800 + (t >> 10);
+            chunk[i++] = 0xDC00 + (t & 1023);
+        } else
+            chunk[i++] = (t & 15) << 12 | (buffer[start++] & 63) << 6 | buffer[start++] & 63;
+        if (i > 8191) {
+            (parts || (parts = [])).push(String.fromCharCode.apply(String, chunk));
+            i = 0;
+        }
+    }
+    if (parts) {
+        if (i)
+            parts.push(String.fromCharCode.apply(String, chunk.slice(0, i)));
+        return parts.join("");
+    }
+    return String.fromCharCode.apply(String, chunk.slice(0, i));
+};
+
+/**
+ * Writes a string as UTF8 bytes.
+ * @param {string} string Source string
+ * @param {Uint8Array} buffer Destination buffer
+ * @param {number} offset Destination offset
+ * @returns {number} Bytes written
+ */
+utf8.write = function utf8_write(string, buffer, offset) {
+    var start = offset,
+        c1, // character 1
+        c2; // character 2
+    for (var i = 0; i < string.length; ++i) {
+        c1 = string.charCodeAt(i);
+        if (c1 < 128) {
+            buffer[offset++] = c1;
+        } else if (c1 < 2048) {
+            buffer[offset++] = c1 >> 6       | 192;
+            buffer[offset++] = c1       & 63 | 128;
+        } else if ((c1 & 0xFC00) === 0xD800 && ((c2 = string.charCodeAt(i + 1)) & 0xFC00) === 0xDC00) {
+            c1 = 0x10000 + ((c1 & 0x03FF) << 10) + (c2 & 0x03FF);
+            ++i;
+            buffer[offset++] = c1 >> 18      | 240;
+            buffer[offset++] = c1 >> 12 & 63 | 128;
+            buffer[offset++] = c1 >> 6  & 63 | 128;
+            buffer[offset++] = c1       & 63 | 128;
+        } else {
+            buffer[offset++] = c1 >> 12      | 224;
+            buffer[offset++] = c1 >> 6  & 63 | 128;
+            buffer[offset++] = c1       & 63 | 128;
+        }
+    }
+    return offset - start;
+};

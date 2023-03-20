@@ -1,4 +1,9 @@
-á®/LICENSE≈ISC License
+á∞/picocolors.d.tsƒäimport { Colors } from "./types"
+
+declare const picocolors: Colors & { createColors: (enabled?: boolean) => Colors }
+
+export = picocolors
+®/LICENSE≈ISC License
 
 Copyright (c) 2021 Alexey Raspopov, Kostiantyn Denysov, Anton Verinov
 
@@ -13,6 +18,27 @@ ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
 WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+™/README.md≈n# picocolors
+
+The tiniest and the fastest library for terminal output formatting with ANSI colors.
+
+```javascript
+import pc from "picocolors"
+
+console.log(
+  pc.green(`How are ${pc.italic(`you`)} doing?`)
+)
+```
+
+- **No dependencies.**
+- **14 times** smaller and **2 times** faster than chalk.
+- Used by popular tools like PostCSS, SVGO, Stylelint, and Browserslist.
+- Node.js v6+ & browsers support. Support for both CJS and ESM projects.
+- TypeScript type declarations included.
+- [`NO_COLOR`](https://no-color.org/) friendly.
+
+## Docs
+Read **[full docs](https://github.com/alexeyraspopov/picocolors#readme)** on GitHub.
 ©/types.ts≈bexport type Formatter = (input: string | number | null | undefined) => string
 
 export interface Colors {
@@ -43,27 +69,31 @@ export interface Colors {
 	bgCyan: Formatter
 	bgWhite: Formatter
 }
-™/README.md≈n# picocolors
-
-The tiniest and the fastest library for terminal output formatting with ANSI colors.
-
-```javascript
-import pc from "picocolors"
-
-console.log(
-  pc.green(`How are ${pc.italic(`you`)} doing?`)
-)
-```
-
-- **No dependencies.**
-- **14 times** smaller and **2 times** faster than chalk.
-- Used by popular tools like PostCSS, SVGO, Stylelint, and Browserslist.
-- Node.js v6+ & browsers support. Support for both CJS and ESM projects.
-- TypeScript type declarations included.
-- [`NO_COLOR`](https://no-color.org/) friendly.
-
-## Docs
-Read **[full docs](https://github.com/alexeyraspopov/picocolors#readme)** on GitHub.
+≠/package.json≈&{
+  "name": "picocolors",
+  "version": "1.0.0",
+  "main": "./picocolors.js",
+  "types": "./picocolors.d.ts",
+  "browser": {
+    "./picocolors.js": "./picocolors.browser.js"
+  },
+  "sideEffects": false,
+  "description": "The tiniest and the fastest library for terminal output formatting with ANSI colors",
+  "files": [
+    "picocolors.*",
+    "types.ts"
+  ],
+  "keywords": [
+    "terminal",
+    "colors",
+    "formatting",
+    "cli",
+    "console"
+  ],
+  "author": "Alexey Raspopov",
+  "repository": "alexeyraspopov/picocolors",
+  "license": "ISC"
+}
 Æ/picocolors.js≈
 "let tty = require("tty")
 
@@ -123,36 +153,6 @@ let createColors = (enabled = isColorSupported) => ({
 
 module.exports = createColors()
 module.exports.createColors = createColors
-≠/package.json≈&{
-  "name": "picocolors",
-  "version": "1.0.0",
-  "main": "./picocolors.js",
-  "types": "./picocolors.d.ts",
-  "browser": {
-    "./picocolors.js": "./picocolors.browser.js"
-  },
-  "sideEffects": false,
-  "description": "The tiniest and the fastest library for terminal output formatting with ANSI colors",
-  "files": [
-    "picocolors.*",
-    "types.ts"
-  ],
-  "keywords": [
-    "terminal",
-    "colors",
-    "formatting",
-    "cli",
-    "console"
-  ],
-  "author": "Alexey Raspopov",
-  "repository": "alexeyraspopov/picocolors",
-  "license": "ISC"
-}
-∞/picocolors.d.tsƒäimport { Colors } from "./types"
-
-declare const picocolors: Colors & { createColors: (enabled?: boolean) => Colors }
-
-export = picocolors
 ∂/picocolors.browser.js≈hvar x=String;
 var create=function() {return {isColorSupported:false,reset:x,bold:x,dim:x,italic:x,underline:x,inverse:x,hidden:x,strikethrough:x,black:x,red:x,green:x,yellow:x,blue:x,magenta:x,cyan:x,white:x,gray:x,bgBlack:x,bgRed:x,bgGreen:x,bgYellow:x,bgBlue:x,bgMagenta:x,bgCyan:x,bgWhite:x}};
 module.exports=create();

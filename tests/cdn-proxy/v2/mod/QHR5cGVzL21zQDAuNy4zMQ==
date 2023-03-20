@@ -1,4 +1,64 @@
-„«/index.d.tsÅ1// Type definitions for ms v0.7.1
+„ª/README.mdÅÍ# Installation
+> `npm install --save @types/ms`
+
+# Summary
+This package contains type definitions for ms (https://github.com/zeit/ms).
+
+# Details
+Files were exported from https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/ms
+
+Additional Details
+ * Last updated: Wed, 04 Sep 2019 20:48:21 GMT
+ * Dependencies: none
+ * Global values: none
+
+# Credits
+These definitions were written by Zhiyuan Wang <https://github.com/danny8002>.
+¨/LICENSEÅŸ    MIT License
+
+    Copyright (c) Microsoft Corporation. All rights reserved.
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE
+­/package.jsonÅ¡{
+    "name": "@types/ms",
+    "version": "0.7.31",
+    "description": "TypeScript definitions for ms",
+    "license": "MIT",
+    "contributors": [
+        {
+            "name": "Zhiyuan Wang",
+            "url": "https://github.com/danny8002",
+            "githubUsername": "danny8002"
+        }
+    ],
+    "main": "",
+    "types": "index",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+        "directory": "types/ms"
+    },
+    "scripts": {},
+    "dependencies": {},
+    "typesPublisherContentHash": "ff2ed90b1d3539f07c5e91fe5cac8d4aa504a3290632a4e76a02d1684dcfabfc",
+    "typeScriptVersion": "2.0"
+}«/index.d.tsÅ1// Type definitions for ms v0.7.1
 // Project: https://github.com/zeit/ms
 // Definitions by: Zhiyuan Wang <https://github.com/danny8002>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
@@ -23,63 +83,3 @@ declare function ms(value: number, options?: { long: boolean }): string;
 declare function ms(value: string): number;
 
 export = ms;
-­/package.jsonÅ¡{
-    "name": "@types/ms",
-    "version": "0.7.31",
-    "description": "TypeScript definitions for ms",
-    "license": "MIT",
-    "contributors": [
-        {
-            "name": "Zhiyuan Wang",
-            "url": "https://github.com/danny8002",
-            "githubUsername": "danny8002"
-        }
-    ],
-    "main": "",
-    "types": "index",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
-        "directory": "types/ms"
-    },
-    "scripts": {},
-    "dependencies": {},
-    "typesPublisherContentHash": "ff2ed90b1d3539f07c5e91fe5cac8d4aa504a3290632a4e76a02d1684dcfabfc",
-    "typeScriptVersion": "2.0"
-}¨/LICENSEÅŸ    MIT License
-
-    Copyright (c) Microsoft Corporation. All rights reserved.
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE
-ª/README.mdÅÍ# Installation
-> `npm install --save @types/ms`
-
-# Summary
-This package contains type definitions for ms (https://github.com/zeit/ms).
-
-# Details
-Files were exported from https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/ms
-
-Additional Details
- * Last updated: Wed, 04 Sep 2019 20:48:21 GMT
- * Dependencies: none
- * Global values: none
-
-# Credits
-These definitions were written by Zhiyuan Wang <https://github.com/danny8002>.

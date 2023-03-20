@@ -1,42 +1,25 @@
-…«/HISTORY.mdÅ1.1.2 / 2017-09-23
-==================
+…¨/LICENSEÅF(The MIT License)
 
-  * perf: improve header token parsing speed
+Copyright (c) 2014-2017 Douglas Christopher Wilson
 
-1.1.1 / 2017-03-20
-==================
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
 
-  * perf: hoist regular expression
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
 
-1.1.0 / 2015-09-29
-==================
-
-  * Only accept valid field names in the `field` argument
-    - Ensures the resulting string is a valid HTTP header value
-
-1.0.1 / 2015-07-08
-==================
-
-  * Fix setting empty header from empty `field`
-  * perf: enable strict mode
-  * perf: remove argument reassignments
-
-1.0.0 / 2014-08-10
-==================
-
-  * Accept valid `Vary` header string as `field`
-  * Add `vary.append` for low-level string manipulation
-  * Move to `jshttp` orgainzation
-
-0.1.0 / 2014-06-05
-==================
-
-  * Support array of fields to set
-
-0.0.0 / 2014-06-04
-==================
-
-  * Initial release
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ª/README.mdÅ
 œ# vary
 
@@ -139,71 +122,6 @@ $ npm test
 [coveralls-url]: https://coveralls.io/r/jshttp/vary
 [downloads-image]: https://img.shields.io/npm/dm/vary.svg
 [downloads-url]: https://npmjs.org/package/vary
-¨/LICENSEÅF(The MIT License)
-
-Copyright (c) 2014-2017 Douglas Christopher Wilson
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-'Software'), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-­/package.jsonÅ¿{
-  "name": "vary",
-  "description": "Manipulate the HTTP Vary header",
-  "version": "1.1.2",
-  "author": "Douglas Christopher Wilson <doug@somethingdoug.com>",
-  "license": "MIT",
-  "keywords": [
-    "http",
-    "res",
-    "vary"
-  ],
-  "repository": "jshttp/vary",
-  "devDependencies": {
-    "beautify-benchmark": "0.2.4",
-    "benchmark": "2.1.4",
-    "eslint": "3.19.0",
-    "eslint-config-standard": "10.2.1",
-    "eslint-plugin-import": "2.7.0",
-    "eslint-plugin-markdown": "1.0.0-beta.6",
-    "eslint-plugin-node": "5.1.1",
-    "eslint-plugin-promise": "3.5.0",
-    "eslint-plugin-standard": "3.0.1",
-    "istanbul": "0.4.5",
-    "mocha": "2.5.3",
-    "supertest": "1.1.0"
-  },
-  "files": [
-    "HISTORY.md",
-    "LICENSE",
-    "README.md",
-    "index.js"
-  ],
-  "engines": {
-    "node": ">= 0.8"
-  },
-  "scripts": {
-    "bench": "node benchmark/index.js",
-    "lint": "eslint --plugin markdown --ext js,md .",
-    "test": "mocha --reporter spec --bail --check-leaks test/",
-    "test-cov": "istanbul cover node_modules/mocha/bin/_mocha -- --reporter dot --check-leaks test/",
-    "test-travis": "istanbul cover node_modules/mocha/bin/_mocha --report lcovonly -- --reporter spec --check-leaks test/"
-  }
-}
 ©/index.jsÅr/*!
  * vary
  * Copyright(c) 2014-2017 Douglas Christopher Wilson
@@ -351,5 +269,87 @@ function vary (res, field) {
   // set new header
   if ((val = append(header, field))) {
     res.setHeader('Vary', val)
+  }
+}
+«/HISTORY.mdÅ1.1.2 / 2017-09-23
+==================
+
+  * perf: improve header token parsing speed
+
+1.1.1 / 2017-03-20
+==================
+
+  * perf: hoist regular expression
+
+1.1.0 / 2015-09-29
+==================
+
+  * Only accept valid field names in the `field` argument
+    - Ensures the resulting string is a valid HTTP header value
+
+1.0.1 / 2015-07-08
+==================
+
+  * Fix setting empty header from empty `field`
+  * perf: enable strict mode
+  * perf: remove argument reassignments
+
+1.0.0 / 2014-08-10
+==================
+
+  * Accept valid `Vary` header string as `field`
+  * Add `vary.append` for low-level string manipulation
+  * Move to `jshttp` orgainzation
+
+0.1.0 / 2014-06-05
+==================
+
+  * Support array of fields to set
+
+0.0.0 / 2014-06-04
+==================
+
+  * Initial release
+­/package.jsonÅ¿{
+  "name": "vary",
+  "description": "Manipulate the HTTP Vary header",
+  "version": "1.1.2",
+  "author": "Douglas Christopher Wilson <doug@somethingdoug.com>",
+  "license": "MIT",
+  "keywords": [
+    "http",
+    "res",
+    "vary"
+  ],
+  "repository": "jshttp/vary",
+  "devDependencies": {
+    "beautify-benchmark": "0.2.4",
+    "benchmark": "2.1.4",
+    "eslint": "3.19.0",
+    "eslint-config-standard": "10.2.1",
+    "eslint-plugin-import": "2.7.0",
+    "eslint-plugin-markdown": "1.0.0-beta.6",
+    "eslint-plugin-node": "5.1.1",
+    "eslint-plugin-promise": "3.5.0",
+    "eslint-plugin-standard": "3.0.1",
+    "istanbul": "0.4.5",
+    "mocha": "2.5.3",
+    "supertest": "1.1.0"
+  },
+  "files": [
+    "HISTORY.md",
+    "LICENSE",
+    "README.md",
+    "index.js"
+  ],
+  "engines": {
+    "node": ">= 0.8"
+  },
+  "scripts": {
+    "bench": "node benchmark/index.js",
+    "lint": "eslint --plugin markdown --ext js,md .",
+    "test": "mocha --reporter spec --bail --check-leaks test/",
+    "test-cov": "istanbul cover node_modules/mocha/bin/_mocha -- --reporter dot --check-leaks test/",
+    "test-travis": "istanbul cover node_modules/mocha/bin/_mocha --report lcovonly -- --reporter spec --check-leaks test/"
   }
 }

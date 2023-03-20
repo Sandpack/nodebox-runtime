@@ -1,100 +1,4 @@
-ä∏/lib/util/readShebang.js≈%'use strict';
-
-const fs = require('fs');
-const shebangCommand = require('shebang-command');
-
-function readShebang(command) {
-    // Read the first 150 bytes from the file
-    const size = 150;
-    const buffer = Buffer.alloc(size);
-
-    let fd;
-
-    try {
-        fd = fs.openSync(command, 'r');
-        fs.readSync(fd, buffer, 0, size, 0);
-        fs.closeSync(fd);
-    } catch (e) { /* Empty */ }
-
-    // Attempt to extract shebang (null is returned if not a shebang)
-    return shebangCommand(buffer.toString());
-}
-
-module.exports = readShebang;
-≠/package.json≈w{
-  "name": "cross-spawn",
-  "version": "7.0.3",
-  "description": "Cross platform child_process#spawn and child_process#spawnSync",
-  "keywords": [
-    "spawn",
-    "spawnSync",
-    "windows",
-    "cross-platform",
-    "path-ext",
-    "shebang",
-    "cmd",
-    "execute"
-  ],
-  "author": "Andr√© Cruz <andre@moxy.studio>",
-  "homepage": "https://github.com/moxystudio/node-cross-spawn",
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:moxystudio/node-cross-spawn.git"
-  },
-  "license": "MIT",
-  "main": "index.js",
-  "files": [
-    "lib"
-  ],
-  "scripts": {
-    "lint": "eslint .",
-    "test": "jest --env node --coverage",
-    "prerelease": "npm t && npm run lint",
-    "release": "standard-version",
-    "postrelease": "git push --follow-tags origin HEAD && npm publish"
-  },
-  "husky": {
-    "hooks": {
-      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
-      "pre-commit": "lint-staged"
-    }
-  },
-  "lint-staged": {
-    "*.js": [
-      "eslint --fix",
-      "git add"
-    ]
-  },
-  "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
-    ]
-  },
-  "dependencies": {
-    "path-key": "^3.1.0",
-    "shebang-command": "^2.0.0",
-    "which": "^2.0.1"
-  },
-  "devDependencies": {
-    "@commitlint/cli": "^8.1.0",
-    "@commitlint/config-conventional": "^8.1.0",
-    "babel-core": "^6.26.3",
-    "babel-jest": "^24.9.0",
-    "babel-preset-moxy": "^3.1.0",
-    "eslint": "^5.16.0",
-    "eslint-config-moxy": "^7.1.0",
-    "husky": "^3.0.5",
-    "jest": "^24.9.0",
-    "lint-staged": "^9.2.5",
-    "mkdirp": "^0.5.1",
-    "rimraf": "^3.0.0",
-    "standard-version": "^7.0.0"
-  },
-  "engines": {
-    "node": ">= 8"
-  }
-}
-™/README.md≈x# cross-spawn
+ä™/README.md≈x# cross-spawn
 
 [![NPM version][npm-image]][npm-url] [![Downloads][downloads-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Build status][appveyor-image]][appveyor-url] [![Coverage Status][codecov-image]][codecov-url] [![Dependency status][david-dm-image]][david-dm-url] [![Dev Dependency status][david-dm-dev-image]][david-dm-dev-url]
 
@@ -190,6 +94,29 @@ Remember to always test your code on Windows!
 ## License
 
 Released under the [MIT License](https://www.opensource.org/licenses/mit-license.php).
+∏/lib/util/readShebang.js≈%'use strict';
+
+const fs = require('fs');
+const shebangCommand = require('shebang-command');
+
+function readShebang(command) {
+    // Read the first 150 bytes from the file
+    const size = 150;
+    const buffer = Buffer.alloc(size);
+
+    let fd;
+
+    try {
+        fd = fs.openSync(command, 'r');
+        fs.readSync(fd, buffer, 0, size, 0);
+        fs.closeSync(fd);
+    } catch (e) { /* Empty */ }
+
+    // Attempt to extract shebang (null is returned if not a shebang)
+    return shebangCommand(buffer.toString());
+}
+
+module.exports = readShebang;
 ≠/lib/parse.js≈˘'use strict';
 
 const path = require('path');
@@ -281,86 +208,142 @@ function parse(command, args, options) {
 }
 
 module.exports = parse;
-®/LICENSE≈QThe MIT License (MIT)
+©/index.js≈®'use strict';
 
-Copyright (c) 2018 Made With MOXY Lda <hello@moxy.studio>
+const cp = require('child_process');
+const parse = require('./lib/parse');
+const enoent = require('./lib/enoent');
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+function spawn(command, args, options) {
+    // Parse the arguments
+    const parsed = parse(command, args, options);
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+    // Spawn the child process
+    const spawned = cp.spawn(parsed.command, parsed.args, parsed.options);
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-Æ/lib/enoent.js≈»'use strict';
+    // Hook into child process "exit" event to emit an error if the command
+    // does not exists, see: https://github.com/IndigoUnited/node-cross-spawn/issues/16
+    enoent.hookChildProcess(spawned, parsed);
 
-const isWin = process.platform === 'win32';
-
-function notFoundError(original, syscall) {
-    return Object.assign(new Error(`${syscall} ${original.command} ENOENT`), {
-        code: 'ENOENT',
-        errno: 'ENOENT',
-        syscall: `${syscall} ${original.command}`,
-        path: original.command,
-        spawnargs: original.args,
-    });
+    return spawned;
 }
 
-function hookChildProcess(cp, parsed) {
-    if (!isWin) {
-        return;
-    }
+function spawnSync(command, args, options) {
+    // Parse the arguments
+    const parsed = parse(command, args, options);
 
-    const originalEmit = cp.emit;
+    // Spawn the child process
+    const result = cp.spawnSync(parsed.command, parsed.args, parsed.options);
 
-    cp.emit = function (name, arg1) {
-        // If emitting "exit" event and exit code is 1, we need to check if
-        // the command exists and emit an "error" instead
-        // See https://github.com/IndigoUnited/node-cross-spawn/issues/16
-        if (name === 'exit') {
-            const err = verifyENOENT(arg1, parsed, 'spawn');
+    // Analyze if the command does not exist, see: https://github.com/IndigoUnited/node-cross-spawn/issues/16
+    result.error = result.error || enoent.verifyENOENTSync(result.status, parsed);
 
-            if (err) {
-                return originalEmit.call(cp, 'error', err);
-            }
+    return result;
+}
+
+module.exports = spawn;
+module.exports.spawn = spawn;
+module.exports.sync = spawnSync;
+
+module.exports._parse = parse;
+module.exports._enoent = enoent;
+ª/lib/util/resolveCommand.js≈'use strict';
+
+const path = require('path');
+const which = require('which');
+const getPathKey = require('path-key');
+
+function resolveCommandAttempt(parsed, withoutPathExt) {
+    const env = parsed.options.env || process.env;
+    const cwd = process.cwd();
+    const hasCustomCwd = parsed.options.cwd != null;
+    // Worker threads do not have process.chdir()
+    const shouldSwitchCwd = hasCustomCwd && process.chdir !== undefined && !process.chdir.disabled;
+
+    // If a custom `cwd` was specified, we need to change the process cwd
+    // because `which` will do stat calls but does not support a custom cwd
+    if (shouldSwitchCwd) {
+        try {
+            process.chdir(parsed.options.cwd);
+        } catch (err) {
+            /* Empty */
         }
-
-        return originalEmit.apply(cp, arguments); // eslint-disable-line prefer-rest-params
-    };
-}
-
-function verifyENOENT(status, parsed) {
-    if (isWin && status === 1 && !parsed.file) {
-        return notFoundError(parsed.original, 'spawn');
     }
 
-    return null;
-}
+    let resolved;
 
-function verifyENOENTSync(status, parsed) {
-    if (isWin && status === 1 && !parsed.file) {
-        return notFoundError(parsed.original, 'spawnSync');
+    try {
+        resolved = which.sync(parsed.command, {
+            path: env[getPathKey({ env })],
+            pathExt: withoutPathExt ? path.delimiter : undefined,
+        });
+    } catch (e) {
+        /* Empty */
+    } finally {
+        if (shouldSwitchCwd) {
+            process.chdir(cwd);
+        }
     }
 
-    return null;
+    // If we successfully resolved, ensure that an absolute path is returned
+    // Note that when a custom `cwd` was used, we need to resolve to an absolute path based on it
+    if (resolved) {
+        resolved = path.resolve(hasCustomCwd ? parsed.options.cwd : '', resolved);
+    }
+
+    return resolved;
 }
 
-module.exports = {
-    hookChildProcess,
-    verifyENOENT,
-    verifyENOENTSync,
-    notFoundError,
-};
+function resolveCommand(parsed) {
+    return resolveCommandAttempt(parsed) || resolveCommandAttempt(parsed, true);
+}
+
+module.exports = resolveCommand;
+≥/lib/util/escape.js≈î'use strict';
+
+// See http://www.robvanderwoude.com/escapechars.php
+const metaCharsRegExp = /([()\][%!^"`<>&|;, *?])/g;
+
+function escapeCommand(arg) {
+    // Escape meta chars
+    arg = arg.replace(metaCharsRegExp, '^$1');
+
+    return arg;
+}
+
+function escapeArgument(arg, doubleEscapeMetaChars) {
+    // Convert to string
+    arg = `${arg}`;
+
+    // Algorithm below is based on https://qntm.org/cmd
+
+    // Sequence of backslashes followed by a double quote:
+    // double up all the backslashes and escape the double quote
+    arg = arg.replace(/(\\*)"/g, '$1$1\\"');
+
+    // Sequence of backslashes followed by the end of the string
+    // (which will become a double quote later):
+    // double up all the backslashes
+    arg = arg.replace(/(\\*)$/, '$1$1');
+
+    // All other backslashes occur literally
+
+    // Quote the whole thing:
+    arg = `"${arg}"`;
+
+    // Escape meta chars
+    arg = arg.replace(metaCharsRegExp, '^$1');
+
+    // Double escape meta chars if necessary
+    if (doubleEscapeMetaChars) {
+        arg = arg.replace(metaCharsRegExp, '^$1');
+    }
+
+    return arg;
+}
+
+module.exports.command = escapeCommand;
+module.exports.argument = escapeArgument;
 ≠/CHANGELOG.md≈`# Changelog
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
@@ -491,139 +474,156 @@ All notable changes to this project will be documented in this file. See [standa
 
 * refactor some code to make it more clear
 * update README caveats
-≥/lib/util/escape.js≈î'use strict';
+Æ/lib/enoent.js≈»'use strict';
 
-// See http://www.robvanderwoude.com/escapechars.php
-const metaCharsRegExp = /([()\][%!^"`<>&|;, *?])/g;
+const isWin = process.platform === 'win32';
 
-function escapeCommand(arg) {
-    // Escape meta chars
-    arg = arg.replace(metaCharsRegExp, '^$1');
-
-    return arg;
+function notFoundError(original, syscall) {
+    return Object.assign(new Error(`${syscall} ${original.command} ENOENT`), {
+        code: 'ENOENT',
+        errno: 'ENOENT',
+        syscall: `${syscall} ${original.command}`,
+        path: original.command,
+        spawnargs: original.args,
+    });
 }
 
-function escapeArgument(arg, doubleEscapeMetaChars) {
-    // Convert to string
-    arg = `${arg}`;
-
-    // Algorithm below is based on https://qntm.org/cmd
-
-    // Sequence of backslashes followed by a double quote:
-    // double up all the backslashes and escape the double quote
-    arg = arg.replace(/(\\*)"/g, '$1$1\\"');
-
-    // Sequence of backslashes followed by the end of the string
-    // (which will become a double quote later):
-    // double up all the backslashes
-    arg = arg.replace(/(\\*)$/, '$1$1');
-
-    // All other backslashes occur literally
-
-    // Quote the whole thing:
-    arg = `"${arg}"`;
-
-    // Escape meta chars
-    arg = arg.replace(metaCharsRegExp, '^$1');
-
-    // Double escape meta chars if necessary
-    if (doubleEscapeMetaChars) {
-        arg = arg.replace(metaCharsRegExp, '^$1');
+function hookChildProcess(cp, parsed) {
+    if (!isWin) {
+        return;
     }
 
-    return arg;
-}
+    const originalEmit = cp.emit;
 
-module.exports.command = escapeCommand;
-module.exports.argument = escapeArgument;
-©/index.js≈®'use strict';
+    cp.emit = function (name, arg1) {
+        // If emitting "exit" event and exit code is 1, we need to check if
+        // the command exists and emit an "error" instead
+        // See https://github.com/IndigoUnited/node-cross-spawn/issues/16
+        if (name === 'exit') {
+            const err = verifyENOENT(arg1, parsed, 'spawn');
 
-const cp = require('child_process');
-const parse = require('./lib/parse');
-const enoent = require('./lib/enoent');
-
-function spawn(command, args, options) {
-    // Parse the arguments
-    const parsed = parse(command, args, options);
-
-    // Spawn the child process
-    const spawned = cp.spawn(parsed.command, parsed.args, parsed.options);
-
-    // Hook into child process "exit" event to emit an error if the command
-    // does not exists, see: https://github.com/IndigoUnited/node-cross-spawn/issues/16
-    enoent.hookChildProcess(spawned, parsed);
-
-    return spawned;
-}
-
-function spawnSync(command, args, options) {
-    // Parse the arguments
-    const parsed = parse(command, args, options);
-
-    // Spawn the child process
-    const result = cp.spawnSync(parsed.command, parsed.args, parsed.options);
-
-    // Analyze if the command does not exist, see: https://github.com/IndigoUnited/node-cross-spawn/issues/16
-    result.error = result.error || enoent.verifyENOENTSync(result.status, parsed);
-
-    return result;
-}
-
-module.exports = spawn;
-module.exports.spawn = spawn;
-module.exports.sync = spawnSync;
-
-module.exports._parse = parse;
-module.exports._enoent = enoent;
-ª/lib/util/resolveCommand.js≈'use strict';
-
-const path = require('path');
-const which = require('which');
-const getPathKey = require('path-key');
-
-function resolveCommandAttempt(parsed, withoutPathExt) {
-    const env = parsed.options.env || process.env;
-    const cwd = process.cwd();
-    const hasCustomCwd = parsed.options.cwd != null;
-    // Worker threads do not have process.chdir()
-    const shouldSwitchCwd = hasCustomCwd && process.chdir !== undefined && !process.chdir.disabled;
-
-    // If a custom `cwd` was specified, we need to change the process cwd
-    // because `which` will do stat calls but does not support a custom cwd
-    if (shouldSwitchCwd) {
-        try {
-            process.chdir(parsed.options.cwd);
-        } catch (err) {
-            /* Empty */
+            if (err) {
+                return originalEmit.call(cp, 'error', err);
+            }
         }
-    }
 
-    let resolved;
-
-    try {
-        resolved = which.sync(parsed.command, {
-            path: env[getPathKey({ env })],
-            pathExt: withoutPathExt ? path.delimiter : undefined,
-        });
-    } catch (e) {
-        /* Empty */
-    } finally {
-        if (shouldSwitchCwd) {
-            process.chdir(cwd);
-        }
-    }
-
-    // If we successfully resolved, ensure that an absolute path is returned
-    // Note that when a custom `cwd` was used, we need to resolve to an absolute path based on it
-    if (resolved) {
-        resolved = path.resolve(hasCustomCwd ? parsed.options.cwd : '', resolved);
-    }
-
-    return resolved;
+        return originalEmit.apply(cp, arguments); // eslint-disable-line prefer-rest-params
+    };
 }
 
-function resolveCommand(parsed) {
-    return resolveCommandAttempt(parsed) || resolveCommandAttempt(parsed, true);
+function verifyENOENT(status, parsed) {
+    if (isWin && status === 1 && !parsed.file) {
+        return notFoundError(parsed.original, 'spawn');
+    }
+
+    return null;
 }
 
-module.exports = resolveCommand;
+function verifyENOENTSync(status, parsed) {
+    if (isWin && status === 1 && !parsed.file) {
+        return notFoundError(parsed.original, 'spawnSync');
+    }
+
+    return null;
+}
+
+module.exports = {
+    hookChildProcess,
+    verifyENOENT,
+    verifyENOENTSync,
+    notFoundError,
+};
+≠/package.json≈w{
+  "name": "cross-spawn",
+  "version": "7.0.3",
+  "description": "Cross platform child_process#spawn and child_process#spawnSync",
+  "keywords": [
+    "spawn",
+    "spawnSync",
+    "windows",
+    "cross-platform",
+    "path-ext",
+    "shebang",
+    "cmd",
+    "execute"
+  ],
+  "author": "Andr√© Cruz <andre@moxy.studio>",
+  "homepage": "https://github.com/moxystudio/node-cross-spawn",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:moxystudio/node-cross-spawn.git"
+  },
+  "license": "MIT",
+  "main": "index.js",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "test": "jest --env node --coverage",
+    "prerelease": "npm t && npm run lint",
+    "release": "standard-version",
+    "postrelease": "git push --follow-tags origin HEAD && npm publish"
+  },
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "git add"
+    ]
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "dependencies": {
+    "path-key": "^3.1.0",
+    "shebang-command": "^2.0.0",
+    "which": "^2.0.1"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^8.1.0",
+    "@commitlint/config-conventional": "^8.1.0",
+    "babel-core": "^6.26.3",
+    "babel-jest": "^24.9.0",
+    "babel-preset-moxy": "^3.1.0",
+    "eslint": "^5.16.0",
+    "eslint-config-moxy": "^7.1.0",
+    "husky": "^3.0.5",
+    "jest": "^24.9.0",
+    "lint-staged": "^9.2.5",
+    "mkdirp": "^0.5.1",
+    "rimraf": "^3.0.0",
+    "standard-version": "^7.0.0"
+  },
+  "engines": {
+    "node": ">= 8"
+  }
+}
+®/LICENSE≈QThe MIT License (MIT)
+
+Copyright (c) 2018 Made With MOXY Lda <hello@moxy.studio>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.

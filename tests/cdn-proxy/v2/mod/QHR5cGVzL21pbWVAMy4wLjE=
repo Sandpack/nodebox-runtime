@@ -1,35 +1,10 @@
-†«/index.d.tsÅ3// Type definitions for mime 3.0
-// Project: https://github.com/broofa/node-mime
-// Definitions by: Jeff Goddard <https://github.com/jedigo>
-//                 Daniel Hritzkiv <https://github.com/dhritzkiv>
-// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
+†ª/lite.d.tsÄsimport Mime = require('./Mime');
 
-// Originally imported from: https://github.com/soywiz/typescript-node-definitions/mime.d.ts
+declare const mimelite: Mime;
 
-import Mime = require('./Mime');
+export as namespace mimelite;
 
-export as namespace mime;
-
-declare namespace mime {
-    interface TypeMap {
-        [key: string]: string[];
-    }
-}
-
-declare const mime: Mime;
-
-export = mime;
-ª/Mime.d.tsÅimport type { TypeMap } from './index';
-
-declare class Mime {
-    constructor(typeMap: TypeMap, ...mimes: TypeMap[]);
-
-    getType(path: string): string | null;
-    getExtension(mime: string): string | null;
-    define(typeMap: TypeMap, force?: boolean): void;
-}
-
-export = Mime;
+export = mimelite;
 ¨/LICENSEÅu    MIT License
 
     Copyright (c) Microsoft Corporation.
@@ -51,13 +26,6 @@ export = Mime;
     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE
-ª/lite.d.tsÄsimport Mime = require('./Mime');
-
-declare const mimelite: Mime;
-
-export as namespace mimelite;
-
-export = mimelite;
 ­/package.jsonÅ›{
     "name": "@types/mime",
     "version": "3.0.1",
@@ -87,7 +55,18 @@ export = mimelite;
     "dependencies": {},
     "typesPublisherContentHash": "594e1e4777af908b69119d71c37be0a70e63c840095dcdb0881343b51b7286f3",
     "typeScriptVersion": "4.0"
-}ª/README.mdÅ"# Installation
+}ª/Mime.d.tsÅimport type { TypeMap } from './index';
+
+declare class Mime {
+    constructor(typeMap: TypeMap, ...mimes: TypeMap[]);
+
+    getType(path: string): string | null;
+    getExtension(mime: string): string | null;
+    define(typeMap: TypeMap, force?: boolean): void;
+}
+
+export = Mime;
+ª/README.mdÅ"# Installation
 > `npm install --save @types/mime`
 
 # Summary
@@ -103,3 +82,24 @@ Files were exported from https://github.com/DefinitelyTyped/DefinitelyTyped/tree
 
 # Credits
 These definitions were written by [Jeff Goddard](https://github.com/jedigo), and [Daniel Hritzkiv](https://github.com/dhritzkiv).
+«/index.d.tsÅ3// Type definitions for mime 3.0
+// Project: https://github.com/broofa/node-mime
+// Definitions by: Jeff Goddard <https://github.com/jedigo>
+//                 Daniel Hritzkiv <https://github.com/dhritzkiv>
+// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
+
+// Originally imported from: https://github.com/soywiz/typescript-node-definitions/mime.d.ts
+
+import Mime = require('./Mime');
+
+export as namespace mime;
+
+declare namespace mime {
+    interface TypeMap {
+        [key: string]: string[];
+    }
+}
+
+declare const mime: Mime;
+
+export = mime;

@@ -51,11 +51,6 @@
 	},
 	"browser": "browser.js"
 }
-«/browser.jsÄC'use strict';
-module.exports = {
-	stdout: false,
-	stderr: false
-};
 ª/readme.mdÅI# supports-color [![Build Status](https://travis-ci.org/chalk/supports-color.svg?branch=master)](https://travis-ci.org/chalk/supports-color)
 
 > Detect whether a terminal supports color
@@ -253,6 +248,11 @@ module.exports = {
 	supportsColor: getSupportLevel,
 	stdout: getSupportLevel(process.stdout),
 	stderr: getSupportLevel(process.stderr)
+};
+«/browser.jsÄC'use strict';
+module.exports = {
+	stdout: false,
+	stderr: false
 };
 ¨/licenseÅUMIT License
 

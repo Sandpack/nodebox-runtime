@@ -1,0 +1,285 @@
+†°/dist/index.d.tsÅ·/// <reference types="node" />
+export interface MimeBuffer extends Buffer {
+    type: string;
+    typeFull: string;
+    charset: string;
+}
+/**
+ * Returns a `Buffer` instance from the given data URI `uri`.
+ *
+ * @param {String} uri Data URI to turn into a Buffer instance
+ * @returns {Buffer} Buffer instance from Data URI
+ * @api public
+ */
+export declare function dataUriToBuffer(uri: string): MimeBuffer;
+export default dataUriToBuffer;
+ª/README.mdÅndata-uri-to-buffer
+==================
+### Generate a Buffer instance from a [Data URI][rfc] string
+[![Build Status](https://travis-ci.org/TooTallNate/node-data-uri-to-buffer.svg?branch=master)](https://travis-ci.org/TooTallNate/node-data-uri-to-buffer)
+
+This module accepts a ["data" URI][rfc] String of data, and returns a
+node.js `Buffer` instance with the decoded data.
+
+
+Installation
+------------
+
+Install with `npm`:
+
+``` bash
+$ npm install data-uri-to-buffer
+```
+
+
+Example
+-------
+
+``` js
+import dataUriToBuffer from 'data-uri-to-buffer';
+
+// plain-text data is supported
+let uri = 'data:,Hello%2C%20World!';
+let decoded = dataUriToBuffer(uri);
+console.log(decoded.toString());
+// 'Hello, World!'
+
+// base64-encoded data is supported
+uri = 'data:text/plain;base64,SGVsbG8sIFdvcmxkIQ%3D%3D';
+decoded = dataUriToBuffer(uri);
+console.log(decoded.toString());
+// 'Hello, World!'
+```
+
+
+API
+---
+
+### dataUriToBuffer(String uri) â†’ Buffer
+
+The `type` property on the Buffer instance gets set to the main type portion of
+the "mediatype" portion of the "data" URI, or defaults to `"text/plain"` if not
+specified.
+
+The `typeFull` property on the Buffer instance gets set to the entire
+"mediatype" portion of the "data" URI (including all parameters), or defaults
+to `"text/plain;charset=US-ASCII"` if not specified.
+
+The `charset` property on the Buffer instance gets set to the Charset portion of
+the "mediatype" portion of the "data" URI, or defaults to `"US-ASCII"` if the
+entire type is not specified, or defaults to `""` otherwise.
+
+*Note*: If the only the main type is specified but not the charset, e.g.
+`"data:text/plain,abc"`, the charset is set to the empty string. The spec only
+defaults to US-ASCII as charset if the entire type is not specified.
+
+
+License
+-------
+
+(The MIT License)
+
+Copyright (c) 2014 Nathan Rajlich &lt;nathan@tootallnate.net&gt;
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+[rfc]: http://tools.ietf.org/html/rfc2397
+®/dist/index.jsÅ</**
+ * Returns a `Buffer` instance from the given data URI `uri`.
+ *
+ * @param {String} uri Data URI to turn into a Buffer instance
+ * @returns {Buffer} Buffer instance from Data URI
+ * @api public
+ */
+export function dataUriToBuffer(uri) {
+    if (!/^data:/i.test(uri)) {
+        throw new TypeError('`uri` does not appear to be a Data URI (must begin with "data:")');
+    }
+    // strip newlines
+    uri = uri.replace(/\r?\n/g, '');
+    // split the URI up into the "metadata" and the "data" portions
+    const firstComma = uri.indexOf(',');
+    if (firstComma === -1 || firstComma <= 4) {
+        throw new TypeError('malformed data: URI');
+    }
+    // remove the "data:" scheme and parse the metadata
+    const meta = uri.substring(5, firstComma).split(';');
+    let charset = '';
+    let base64 = false;
+    const type = meta[0] || 'text/plain';
+    let typeFull = type;
+    for (let i = 1; i < meta.length; i++) {
+        if (meta[i] === 'base64') {
+            base64 = true;
+        }
+        else if (meta[i]) {
+            typeFull += `;${meta[i]}`;
+            if (meta[i].indexOf('charset=') === 0) {
+                charset = meta[i].substring(8);
+            }
+        }
+    }
+    // defaults to US-ASCII only if type is not provided
+    if (!meta[0] && !charset.length) {
+        typeFull += ';charset=US-ASCII';
+        charset = 'US-ASCII';
+    }
+    // get the encoded data portion and decode URI-encoded chars
+    const encoding = base64 ? 'base64' : 'ascii';
+    const data = unescape(uri.substring(firstComma + 1));
+    const buffer = Buffer.from(data, encoding);
+    // set `.type` and `.typeFull` properties to MIME type
+    buffer.type = type;
+    buffer.typeFull = typeFull;
+    // set the `.charset` property
+    buffer.charset = charset;
+    return buffer;
+}
+export default dataUriToBuffer;
+//# sourceMappingURL=index.js.map²/dist/index.js.mapÅ¡{"version":3,"file":"index.js","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":"AAMA;;;;;;GAMG;AACH,MAAM,UAAU,eAAe,CAAC,GAAW;IAC1C,IAAI,CAAC,SAAS,CAAC,IAAI,CAAC,GAAG,CAAC,EAAE;QACzB,MAAM,IAAI,SAAS,CAClB,kEAAkE,CAClE,CAAC;KACF;IAED,iBAAiB;IACjB,GAAG,GAAG,GAAG,CAAC,OAAO,CAAC,QAAQ,EAAE,EAAE,CAAC,CAAC;IAEhC,+DAA+D;IAC/D,MAAM,UAAU,GAAG,GAAG,CAAC,OAAO,CAAC,GAAG,CAAC,CAAC;IACpC,IAAI,UAAU,KAAK,CAAC,CAAC,IAAI,UAAU,IAAI,CAAC,EAAE;QACzC,MAAM,IAAI,SAAS,CAAC,qBAAqB,CAAC,CAAC;KAC3C;IAED,mDAAmD;IACnD,MAAM,IAAI,GAAG,GAAG,CAAC,SAAS,CAAC,CAAC,EAAE,UAAU,CAAC,CAAC,KAAK,CAAC,GAAG,CAAC,CAAC;IAErD,IAAI,OAAO,GAAG,EAAE,CAAC;IACjB,IAAI,MAAM,GAAG,KAAK,CAAC;IACnB,MAAM,IAAI,GAAG,IAAI,CAAC,CAAC,CAAC,IAAI,YAAY,CAAC;IACrC,IAAI,QAAQ,GAAG,IAAI,CAAC;IACpB,KAAK,IAAI,CAAC,GAAG,CAAC,EAAE,CAAC,GAAG,IAAI,CAAC,MAAM,EAAE,CAAC,EAAE,EAAE;QACrC,IAAI,IAAI,CAAC,CAAC,CAAC,KAAK,QAAQ,EAAE;YACzB,MAAM,GAAG,IAAI,CAAC;SACd;aAAM,IAAG,IAAI,CAAC,CAAC,CAAC,EAAE;YAClB,QAAQ,IAAI,IAAM,IAAI,CAAC,CAAC,CAAC,EAAE,CAAC;YAC5B,IAAI,IAAI,CAAC,CAAC,CAAC,CAAC,OAAO,CAAC,UAAU,CAAC,KAAK,CAAC,EAAE;gBACtC,OAAO,GAAG,IAAI,CAAC,CAAC,CAAC,CAAC,SAAS,CAAC,CAAC,CAAC,CAAC;aAC/B;SACD;KACD;IACD,oDAAoD;IACpD,IAAI,CAAC,IAAI,CAAC,CAAC,CAAC,IAAI,CAAC,OAAO,CAAC,MAAM,EAAE;QAChC,QAAQ,IAAI,mBAAmB,CAAC;QAChC,OAAO,GAAG,UAAU,CAAC;KACrB;IAED,4DAA4D;IAC5D,MAAM,QAAQ,GAAG,MAAM,CAAC,CAAC,CAAC,QAAQ,CAAC,CAAC,CAAC,OAAO,CAAC;IAC7C,MAAM,IAAI,GAAG,QAAQ,CAAC,GAAG,CAAC,SAAS,CAAC,UAAU,GAAG,CAAC,CAAC,CAAC,CAAC;IACrD,MAAM,MAAM,GAAG,MAAM,CAAC,IAAI,CAAC,IAAI,EAAE,QAAQ,CAAe,CAAC;IAEzD,sDAAsD;IACtD,MAAM,CAAC,IAAI,GAAG,IAAI,CAAC;IACnB,MAAM,CAAC,QAAQ,GAAG,QAAQ,CAAC;IAE3B,8BAA8B;IAC9B,MAAM,CAAC,OAAO,GAAG,OAAO,CAAC;IAEzB,OAAO,MAAM,CAAC;AACf,CAAC;AAED,eAAe,eAAe,CAAC"}­/src/index.tsÅùexport interface MimeBuffer extends Buffer {
+	type: string;
+	typeFull: string;
+	charset: string;
+}
+
+/**
+ * Returns a `Buffer` instance from the given data URI `uri`.
+ *
+ * @param {String} uri Data URI to turn into a Buffer instance
+ * @returns {Buffer} Buffer instance from Data URI
+ * @api public
+ */
+export function dataUriToBuffer(uri: string): MimeBuffer {
+	if (!/^data:/i.test(uri)) {
+		throw new TypeError(
+			'`uri` does not appear to be a Data URI (must begin with "data:")'
+		);
+	}
+
+	// strip newlines
+	uri = uri.replace(/\r?\n/g, '');
+
+	// split the URI up into the "metadata" and the "data" portions
+	const firstComma = uri.indexOf(',');
+	if (firstComma === -1 || firstComma <= 4) {
+		throw new TypeError('malformed data: URI');
+	}
+
+	// remove the "data:" scheme and parse the metadata
+	const meta = uri.substring(5, firstComma).split(';');
+
+	let charset = '';
+	let base64 = false;
+	const type = meta[0] || 'text/plain';
+	let typeFull = type;
+	for (let i = 1; i < meta.length; i++) {
+		if (meta[i] === 'base64') {
+			base64 = true;
+		} else if(meta[i]) {
+			typeFull += `;${  meta[i]}`;
+			if (meta[i].indexOf('charset=') === 0) {
+				charset = meta[i].substring(8);
+			}
+		}
+	}
+	// defaults to US-ASCII only if type is not provided
+	if (!meta[0] && !charset.length) {
+		typeFull += ';charset=US-ASCII';
+		charset = 'US-ASCII';
+	}
+
+	// get the encoded data portion and decode URI-encoded chars
+	const encoding = base64 ? 'base64' : 'ascii';
+	const data = unescape(uri.substring(firstComma + 1));
+	const buffer = Buffer.from(data, encoding) as MimeBuffer;
+
+	// set `.type` and `.typeFull` properties to MIME type
+	buffer.type = type;
+	buffer.typeFull = typeFull;
+
+	// set the `.charset` property
+	buffer.charset = charset;
+
+	return buffer;
+}
+
+export default dataUriToBuffer;
+­/package.jsonÅF{
+  "name": "data-uri-to-buffer",
+  "version": "4.0.1",
+  "description": "Generate a Buffer instance from a Data URI string",
+  "type": "module",
+  "exports": "./dist/index.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "prepublishOnly": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/TooTallNate/node-data-uri-to-buffer.git"
+  },
+  "engines": {
+    "node": ">= 12"
+  },
+  "keywords": [
+    "data",
+    "uri",
+    "datauri",
+    "data-uri",
+    "buffer",
+    "convert",
+    "rfc2397",
+    "2397"
+  ],
+  "author": "Nathan Rajlich <nathan@tootallnate.net> (http://n8.io/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/TooTallNate/node-data-uri-to-buffer/issues"
+  },
+  "homepage": "https://github.com/TooTallNate/node-data-uri-to-buffer",
+  "devDependencies": {
+    "@types/jest": "^27.0.2",
+    "@types/node": "^12.20.36",
+    "jest": "^27.3.1",
+    "ts-jest": "^27.0.7",
+    "typescript": "^4.4.4"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "globals": {
+      "ts-jest": {
+        "diagnostics": false,
+        "isolatedModules": true
+      }
+    },
+    "verbose": false,
+    "testEnvironment": "node",
+    "testMatch": [
+      "<rootDir>/test/**/*.test.ts"
+    ]
+  }
+}

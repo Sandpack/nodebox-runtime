@@ -1,16 +1,69 @@
-†ª/README.mdÅù@protobufjs/fetch
-=================
-[![npm](https://img.shields.io/npm/v/@protobufjs/fetch.svg)](https://www.npmjs.com/package/@protobufjs/fetch)
+†¯/tests/index.jsÅšvar tape = require("tape");
 
-Fetches the contents of a file accross node and browsers.
+var fetch = require("..");
 
-API
----
+tape.test("fetch", function(test) {
 
-* **fetch(path: `string`, [options: { binary: boolean } ], [callback: `function(error: ?Error, [contents: string])`]): `Promise<string|Uint8Array>|undefined`**
-  Fetches the contents of a file.
+    if (typeof Promise !== "undefined") {
+        var promise = fetch("NOTFOUND");
+        promise.catch(function() {});
+        test.ok(promise instanceof Promise, "should return a promise if callback has been omitted");
+    }
 
-**License:** [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause)
+    // TODO - some way to test this properly?
+    
+    test.end();
+});
+­/package.jsonÅ¬{
+  "name": "@protobufjs/fetch",
+  "description": "Fetches the contents of a file accross node and browsers.",
+  "version": "1.1.0",
+  "author": "Daniel Wirtz <dcode+protobufjs@dcode.io>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dcodeIO/protobuf.js.git"
+  },
+  "dependencies": {
+    "@protobufjs/aspromise": "^1.1.1",
+    "@protobufjs/inquire": "^1.1.0"
+  },
+  "license": "BSD-3-Clause",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "devDependencies": {
+    "istanbul": "^0.4.5",
+    "tape": "^4.6.3"
+  },
+  "scripts": {
+    "test": "tape tests/*.js",
+    "coverage": "istanbul cover node_modules/tape/bin/tape tests/*.js"
+  }
+}¨/LICENSEÅáCopyright (c) 2016, Daniel Wirtz  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+* Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution.
+* Neither the name of its author, nor the names of its contributors
+  may be used to endorse or promote products derived from this software
+  without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ©/index.jsÅ«"use strict";
 module.exports = fetch;
 
@@ -126,56 +179,19 @@ fetch.xhr = function fetch_xhr(filename, options, callback) {
     xhr.open("GET", filename);
     xhr.send();
 };
-­/package.jsonÅ¬{
-  "name": "@protobufjs/fetch",
-  "description": "Fetches the contents of a file accross node and browsers.",
-  "version": "1.1.0",
-  "author": "Daniel Wirtz <dcode+protobufjs@dcode.io>",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/dcodeIO/protobuf.js.git"
-  },
-  "dependencies": {
-    "@protobufjs/aspromise": "^1.1.1",
-    "@protobufjs/inquire": "^1.1.0"
-  },
-  "license": "BSD-3-Clause",
-  "main": "index.js",
-  "types": "index.d.ts",
-  "devDependencies": {
-    "istanbul": "^0.4.5",
-    "tape": "^4.6.3"
-  },
-  "scripts": {
-    "test": "tape tests/*.js",
-    "coverage": "istanbul cover node_modules/tape/bin/tape tests/*.js"
-  }
-}¨/LICENSEÅáCopyright (c) 2016, Daniel Wirtz  All rights reserved.
+ª/README.mdÅù@protobufjs/fetch
+=================
+[![npm](https://img.shields.io/npm/v/@protobufjs/fetch.svg)](https://www.npmjs.com/package/@protobufjs/fetch)
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
+Fetches the contents of a file accross node and browsers.
 
-* Redistributions of source code must retain the above copyright
-  notice, this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright
-  notice, this list of conditions and the following disclaimer in the
-  documentation and/or other materials provided with the distribution.
-* Neither the name of its author, nor the names of its contributors
-  may be used to endorse or promote products derived from this software
-  without specific prior written permission.
+API
+---
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+* **fetch(path: `string`, [options: { binary: boolean } ], [callback: `function(error: ?Error, [contents: string])`]): `Promise<string|Uint8Array>|undefined`**
+  Fetches the contents of a file.
+
+**License:** [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause)
 «/index.d.tsÅoexport = fetch;
 
 /**
@@ -232,19 +248,3 @@ declare function fetch(path: string, callback: FetchCallback): void;
  * @variation 3
  */
 declare function fetch(path: string, options?: FetchOptions): Promise<(string|Uint8Array)>;
-¯/tests/index.jsÅšvar tape = require("tape");
-
-var fetch = require("..");
-
-tape.test("fetch", function(test) {
-
-    if (typeof Promise !== "undefined") {
-        var promise = fetch("NOTFOUND");
-        promise.catch(function() {});
-        test.ok(promise instanceof Promise, "should return a promise if callback has been omitted");
-    }
-
-    // TODO - some way to test this properly?
-    
-    test.end();
-});

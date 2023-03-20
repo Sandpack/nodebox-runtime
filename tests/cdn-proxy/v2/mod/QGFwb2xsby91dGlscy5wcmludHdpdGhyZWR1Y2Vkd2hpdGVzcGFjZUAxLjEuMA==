@@ -1,38 +1,4 @@
-â≠/package.json≈¢{
-  "name": "@apollo/utils.printwithreducedwhitespace",
-  "version": "1.1.0",
-  "description": "Print an AST with as little whitespace as possible",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/apollographql/apollo-utils.git",
-    "directory": "printWithReducedWhitespace/"
-  },
-  "keywords": [
-    "apollo",
-    "graphql",
-    "typescript",
-    "node"
-  ],
-  "author": "Apollo <packages@apollographql.com>",
-  "license": "MIT",
-  "engines": {
-    "node": ">=12.13.0"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "peerDependencies": {
-    "graphql": "14.x || 15.x || 16.x"
-  }
-}
-¥/dist/index.d.ts.mapƒ {"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":"AAAA,OAAO,EAAgB,YAAY,EAAmB,MAAM,SAAS,CAAC;AAKtE,wBAAgB,0BAA0B,CAAC,GAAG,EAAE,YAAY,GAAG,MAAM,CA2BpE"}º/src/__tests__/tsconfig.jsonƒq{
-  "extends": "../../../../tsconfig.test.base",
-  "include": ["**/*"],
-  "references": [{ "path": "../../" }]
-}
-Ÿ1/src/__tests__/printWithReducedWhitespace.test.ts≈vimport gql from "graphql-tag";
+â¥/dist/index.d.ts.mapƒ {"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":"AAAA,OAAO,EAAgB,YAAY,EAAmB,MAAM,SAAS,CAAC;AAKtE,wBAAgB,0BAA0B,CAAC,GAAG,EAAE,YAAY,GAAG,MAAM,CA2BpE"}Ÿ1/src/__tests__/printWithReducedWhitespace.test.ts≈vimport gql from "graphql-tag";
 import { printWithReducedWhitespace } from "..";
 
 describe("printWithReducedWhitespace", () => {
@@ -66,6 +32,27 @@ describe("printWithReducedWhitespace", () => {
     });
   });
 });
+≤/dist/index.js.map≈[{"version":3,"file":"index.js","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":";;;AAAA,qCAAsE;AAKtE,SAAgB,0BAA0B,CAAC,GAAiB;IAU1D,MAAM,YAAY,GAAG,IAAA,eAAK,EAAC,GAAG,EAAE;QAC9B,WAAW,CAAC,IAAqB;YAC/B,OAAO;gBACL,GAAG,IAAI;gBACP,KAAK,EAAE,MAAM,CAAC,IAAI,CAAC,IAAI,CAAC,KAAK,EAAE,MAAM,CAAC,CAAC,QAAQ,CAAC,KAAK,CAAC;gBACtD,KAAK,EAAE,KAAK;aACb,CAAC;QACJ,CAAC;KACF,CAAC,CAAC;IACH,MAAM,cAAc,GAAG,IAAA,eAAK,EAAC,YAAY,CAAC,CAAC;IAC3C,MAAM,oBAAoB,GAAG,cAAc;SACxC,OAAO,CAAC,MAAM,EAAE,GAAG,CAAC;SACpB,OAAO,CAAC,mBAAmB,EAAE,CAAC,CAAC,EAAE,CAAC,EAAE,EAAE,CAAC,CAAC,CAAC;SACzC,OAAO,CAAC,mBAAmB,EAAE,CAAC,CAAC,EAAE,CAAC,EAAE,EAAE,CAAC,CAAC,CAAC,CAAC;IAC7C,OAAO,oBAAoB,CAAC,OAAO,CAAC,gBAAgB,EAAE,CAAC,CAAC,EAAE,GAAG,EAAE,EAAE,CAC/D,IAAI,CAAC,SAAS,CAAC,MAAM,CAAC,IAAI,CAAC,GAAG,EAAE,KAAK,CAAC,CAAC,QAAQ,CAAC,MAAM,CAAC,CAAC,CACzD,CAAC;AACJ,CAAC;AA3BD,gEA2BC"}®/LICENSE≈]MIT License
+
+Copyright (c) 2022 Apollo Graph, Inc. (Formerly Meteor Development Group, Inc.)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ≠/src/index.ts≈–import { visit, print, DocumentNode, StringValueNode } from "graphql";
 // Like the graphql-js print function, but deleting whitespace wherever
 // feasible. Specifically, all whitespace (outside of string literals) is
@@ -99,9 +86,7 @@ export function printWithReducedWhitespace(ast: DocumentNode): string {
     JSON.stringify(Buffer.from(hex, "hex").toString("utf8")),
   );
 }
-∞/dist/index.d.tsƒöimport { DocumentNode } from "graphql";
-export declare function printWithReducedWhitespace(ast: DocumentNode): string;
-//# sourceMappingURL=index.d.ts.mapÆ/dist/index.js≈´"use strict";
+Æ/dist/index.js≈´"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.printWithReducedWhitespace = void 0;
 const graphql_1 = require("graphql");
@@ -123,25 +108,40 @@ function printWithReducedWhitespace(ast) {
     return minimizedButStillHex.replace(/"([a-f0-9]+)"/g, (_, hex) => JSON.stringify(Buffer.from(hex, "hex").toString("utf8")));
 }
 exports.printWithReducedWhitespace = printWithReducedWhitespace;
-//# sourceMappingURL=index.js.map®/LICENSE≈]MIT License
-
-Copyright (c) 2022 Apollo Graph, Inc. (Formerly Meteor Development Group, Inc.)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-≤/dist/index.js.map≈[{"version":3,"file":"index.js","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":";;;AAAA,qCAAsE;AAKtE,SAAgB,0BAA0B,CAAC,GAAiB;IAU1D,MAAM,YAAY,GAAG,IAAA,eAAK,EAAC,GAAG,EAAE;QAC9B,WAAW,CAAC,IAAqB;YAC/B,OAAO;gBACL,GAAG,IAAI;gBACP,KAAK,EAAE,MAAM,CAAC,IAAI,CAAC,IAAI,CAAC,KAAK,EAAE,MAAM,CAAC,CAAC,QAAQ,CAAC,KAAK,CAAC;gBACtD,KAAK,EAAE,KAAK;aACb,CAAC;QACJ,CAAC;KACF,CAAC,CAAC;IACH,MAAM,cAAc,GAAG,IAAA,eAAK,EAAC,YAAY,CAAC,CAAC;IAC3C,MAAM,oBAAoB,GAAG,cAAc;SACxC,OAAO,CAAC,MAAM,EAAE,GAAG,CAAC;SACpB,OAAO,CAAC,mBAAmB,EAAE,CAAC,CAAC,EAAE,CAAC,EAAE,EAAE,CAAC,CAAC,CAAC;SACzC,OAAO,CAAC,mBAAmB,EAAE,CAAC,CAAC,EAAE,CAAC,EAAE,EAAE,CAAC,CAAC,CAAC,CAAC;IAC7C,OAAO,oBAAoB,CAAC,OAAO,CAAC,gBAAgB,EAAE,CAAC,CAAC,EAAE,GAAG,EAAE,EAAE,CAC/D,IAAI,CAAC,SAAS,CAAC,MAAM,CAAC,IAAI,CAAC,GAAG,EAAE,KAAK,CAAC,CAAC,QAAQ,CAAC,MAAM,CAAC,CAAC,CACzD,CAAC;AACJ,CAAC;AA3BD,gEA2BC"}
+//# sourceMappingURL=index.js.map≠/package.json≈¢{
+  "name": "@apollo/utils.printwithreducedwhitespace",
+  "version": "1.1.0",
+  "description": "Print an AST with as little whitespace as possible",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apollographql/apollo-utils.git",
+    "directory": "printWithReducedWhitespace/"
+  },
+  "keywords": [
+    "apollo",
+    "graphql",
+    "typescript",
+    "node"
+  ],
+  "author": "Apollo <packages@apollographql.com>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=12.13.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "graphql": "14.x || 15.x || 16.x"
+  }
+}
+º/src/__tests__/tsconfig.jsonƒq{
+  "extends": "../../../../tsconfig.test.base",
+  "include": ["**/*"],
+  "references": [{ "path": "../../" }]
+}
+∞/dist/index.d.tsƒöimport { DocumentNode } from "graphql";
+export declare function printWithReducedWhitespace(ast: DocumentNode): string;
+//# sourceMappingURL=index.d.ts.map

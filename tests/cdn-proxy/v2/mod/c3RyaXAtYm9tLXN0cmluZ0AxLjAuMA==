@@ -13,27 +13,6 @@ module.exports = function(str) {
   }
   return str;
 };
-¨/LICENSEÅ@The MIT License (MIT)
-
-Copyright (c) 2015, 2017, Jon Schlinkert
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
 ­/package.jsonÅY{
   "name": "strip-bom-string",
   "description": "Strip a byte order mark (BOM) from a string.",
@@ -94,6 +73,27 @@ THE SOFTWARE.
     }
   }
 }
+¨/LICENSEÅ@The MIT License (MIT)
+
+Copyright (c) 2015, 2017, Jon Schlinkert
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 ª/README.mdÅ^# strip-bom-string [![NPM version](https://img.shields.io/npm/v/strip-bom-string.svg?style=flat)](https://www.npmjs.com/package/strip-bom-string) [![NPM monthly downloads](https://img.shields.io/npm/dm/strip-bom-string.svg?style=flat)](https://npmjs.org/package/strip-bom-string)  [![NPM total downloads](https://img.shields.io/npm/dt/strip-bom-string.svg?style=flat)](https://npmjs.org/package/strip-bom-string) [![Linux Build Status](https://img.shields.io/travis/jonschlinkert/strip-bom-string.svg?style=flat&label=Travis)](https://travis-ci.org/jonschlinkert/strip-bom-string)
 
 > Strip a byte order mark (BOM) from a string.

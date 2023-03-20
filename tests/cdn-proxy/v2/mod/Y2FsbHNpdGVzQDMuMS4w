@@ -7,6 +7,93 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+­/package.jsonÅn{
+	"name": "callsites",
+	"version": "3.1.0",
+	"description": "Get callsites from the V8 stack trace API",
+	"license": "MIT",
+	"repository": "sindresorhus/callsites",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "sindresorhus.com"
+	},
+	"engines": {
+		"node": ">=6"
+	},
+	"scripts": {
+		"test": "xo && ava && tsd"
+	},
+	"files": [
+		"index.js",
+		"index.d.ts"
+	],
+	"keywords": [
+		"stacktrace",
+		"v8",
+		"callsite",
+		"callsites",
+		"stack",
+		"trace",
+		"function",
+		"file",
+		"line",
+		"debug"
+	],
+	"devDependencies": {
+		"ava": "^1.4.1",
+		"tsd": "^0.7.2",
+		"xo": "^0.24.0"
+	}
+}
+ª/readme.mdÅ_# callsites [![Build Status](https://travis-ci.org/sindresorhus/callsites.svg?branch=master)](https://travis-ci.org/sindresorhus/callsites)
+
+> Get callsites from the [V8 stack trace API](https://v8.dev/docs/stack-trace-api)
+
+
+## Install
+
+```
+$ npm install callsites
+```
+
+
+## Usage
+
+```js
+const callsites = require('callsites');
+
+function unicorn() {
+	console.log(callsites()[0].getFileName());
+	//=> '/Users/sindresorhus/dev/callsites/test.js'
+}
+
+unicorn();
+```
+
+
+## API
+
+Returns an array of callsite objects with the following methods:
+
+- `getThis`: returns the value of `this`.
+- `getTypeName`: returns the type of `this` as a string. This is the name of the function stored in the constructor field of `this`, if available, otherwise the object's `[[Class]]` internal property.
+- `getFunction`: returns the current function.
+- `getFunctionName`: returns the name of the current function, typically its `name` property. If a name property is not available an attempt will be made to try to infer a name from the function's context.
+- `getMethodName`: returns the name of the property of `this` or one of its prototypes that holds the current function.
+- `getFileName`: if this function was defined in a script returns the name of the script.
+- `getLineNumber`: if this function was defined in a script returns the current line number.
+- `getColumnNumber`: if this function was defined in a script returns the current column number
+- `getEvalOrigin`: if this function was created using a call to `eval` returns a string representing the location where `eval` was called.
+- `isToplevel`: is this a top-level invocation, that is, is this the global object?
+- `isEval`: does this call take place in code defined by a call to `eval`?
+- `isNative`: is this call in native V8 code?
+- `isConstructor`: is this a constructor call?
+
+
+## License
+
+MIT Â© [Sindre Sorhus](https://sindresorhus.com)
 «/index.d.tsÅ	/declare namespace callsites {
 	interface CallSite {
 		/**
@@ -103,93 +190,6 @@ declare const callsites: {
 };
 
 export = callsites;
-­/package.jsonÅn{
-	"name": "callsites",
-	"version": "3.1.0",
-	"description": "Get callsites from the V8 stack trace API",
-	"license": "MIT",
-	"repository": "sindresorhus/callsites",
-	"author": {
-		"name": "Sindre Sorhus",
-		"email": "sindresorhus@gmail.com",
-		"url": "sindresorhus.com"
-	},
-	"engines": {
-		"node": ">=6"
-	},
-	"scripts": {
-		"test": "xo && ava && tsd"
-	},
-	"files": [
-		"index.js",
-		"index.d.ts"
-	],
-	"keywords": [
-		"stacktrace",
-		"v8",
-		"callsite",
-		"callsites",
-		"stack",
-		"trace",
-		"function",
-		"file",
-		"line",
-		"debug"
-	],
-	"devDependencies": {
-		"ava": "^1.4.1",
-		"tsd": "^0.7.2",
-		"xo": "^0.24.0"
-	}
-}
-ª/readme.mdÅ_# callsites [![Build Status](https://travis-ci.org/sindresorhus/callsites.svg?branch=master)](https://travis-ci.org/sindresorhus/callsites)
-
-> Get callsites from the [V8 stack trace API](https://v8.dev/docs/stack-trace-api)
-
-
-## Install
-
-```
-$ npm install callsites
-```
-
-
-## Usage
-
-```js
-const callsites = require('callsites');
-
-function unicorn() {
-	console.log(callsites()[0].getFileName());
-	//=> '/Users/sindresorhus/dev/callsites/test.js'
-}
-
-unicorn();
-```
-
-
-## API
-
-Returns an array of callsite objects with the following methods:
-
-- `getThis`: returns the value of `this`.
-- `getTypeName`: returns the type of `this` as a string. This is the name of the function stored in the constructor field of `this`, if available, otherwise the object's `[[Class]]` internal property.
-- `getFunction`: returns the current function.
-- `getFunctionName`: returns the name of the current function, typically its `name` property. If a name property is not available an attempt will be made to try to infer a name from the function's context.
-- `getMethodName`: returns the name of the property of `this` or one of its prototypes that holds the current function.
-- `getFileName`: if this function was defined in a script returns the name of the script.
-- `getLineNumber`: if this function was defined in a script returns the current line number.
-- `getColumnNumber`: if this function was defined in a script returns the current column number
-- `getEvalOrigin`: if this function was created using a call to `eval` returns a string representing the location where `eval` was called.
-- `isToplevel`: is this a top-level invocation, that is, is this the global object?
-- `isEval`: does this call take place in code defined by a call to `eval`?
-- `isNative`: is this call in native V8 code?
-- `isConstructor`: is this a constructor call?
-
-
-## License
-
-MIT Â© [Sindre Sorhus](https://sindresorhus.com)
 ©/index.jsÅk'use strict';
 
 const callsites = () => {

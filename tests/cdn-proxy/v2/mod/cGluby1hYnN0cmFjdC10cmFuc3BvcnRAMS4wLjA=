@@ -1,409 +1,81 @@
-ä®/LICENSE≈%MIT License
+ä©/index.js≈¥'use strict'
 
-Copyright (c) 2021 pino
+const metadata = Symbol.for('pino.metadata')
+const split = require('split2')
+const { Duplex } = require('readable-stream')
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+module.exports = function build (fn, opts = {}) {
+  const parseLines = opts.parse === 'lines'
+  const parseLine = typeof opts.parseLine === 'function' ? opts.parseLine : JSON.parse
+  const close = opts.close || defaultClose
+  const stream = split(function (line) {
+    let value
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-≠/package.json≈{
-  "name": "pino-abstract-transport",
-  "version": "1.0.0",
-  "description": "Write Pino transports easily",
-  "main": "index.js",
-  "scripts": {
-    "prepare": "husky install",
-    "test": "standard | snazzy && tap test/*.test.js  && tsd",
-    "test-ci": "standard | snazzy && tap test/*.test.js --coverage-report=lcovonly && tsd"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/pinojs/pino-abstract-transport.git"
-  },
-  "keywords": [
-    "pino",
-    "transport"
-  ],
-  "author": "Matteo Collina <hello@matteocollina.com>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/pinojs/pino-abstract-transport/issues"
-  },
-  "homepage": "https://github.com/pinojs/pino-abstract-transport#readme",
-  "dependencies": {
-    "readable-stream": "^4.0.0",
-    "split2": "^4.0.0"
-  },
-  "devDependencies": {
-    "@types/node": "^18.0.0",
-    "husky": "^8.0.0",
-    "snazzy": "^9.0.0",
-    "standard": "^17.0.0",
-    "tap": "^16.0.0",
-    "tsd": "^0.21.0"
-  },
-  "tsd": {
-    "directory": "./test/types"
-  }
-}
-´/index.d.ts≈	j// Type definitions for pino-abstract-transport 0.4.0
-// Project: https://github.com/pinojs/pino-abstract-transport#readme
-// Definitions by: Diyar Oktay <https://github.com/windupbird144>
-
-/// <reference types="node" />
-
-import { Transform } from "stream";
-
-type BuildOptions = {
-  /**
-   * `parseLine(line)` a function that is used to parse line received from pino.
-   * @default JSON.parse
-   */
-  parseLine?: (line: string) => unknown;
-
-  /**
-   * `parse` an option to change to data format passed to build function.
-   * @default undefined
-   *
-   */
-  parse?: "lines";
-
-  /**
-   * `close(err, cb)` a function that is called to shutdown the transport.
-   * It's called both on error and non-error shutdowns. It can also return
-   * a promise. In this case discard the the cb argument.
-   *
-   * @example
-   * ```typescript
-   * {
-   *   close: function (err, cb) {
-   *     process.nextTick(cb, err)
-   *   }
-   * }
-   * ```
-   * */
-  close?: (err: Error, cb: Function) => void | Promise<void>;
-
-  /**
-   * `metadata` If set to false, do not add metadata properties to the returned stream
-   */
-  metadata?: false;
-};
-
-/**
- * Pass these options to wrap the split2 stream and
- * the returned stream into a Duplex
- */
-type EnablePipelining = BuildOptions & {
-  enablePipelining: true;
-};
-
-interface OnUnknown {
-  /**
-   * `unknown` is the event emitted where an unparsable line is found
-   *
-   * @param event 'unknown'
-   * @param line the unparsable line
-   * @param error the error that was thrown when parsing the line
-   */
-  on(event: "unknown", listener: (line: string, error: unknown) => void): void;
-}
-
-/**
- * Create a split2 instance and returns it. This same instance is also passed
- * to the given function, which is called synchronously.
- *
- * @returns {Transform} the split2 instance
- */
-declare function build(
-  fn: (transform: Transform & OnUnknown) => void | Promise<void>,
-  opts?: BuildOptions
-): Transform & OnUnknown;
-
-/**
- * Creates a split2 instance and passes it to the given function, which is called
- * synchronously. Then wraps the split2 instance and the returned stream into a
- * Duplex, so they can be concatenated into multiple transports.
- *
- * @returns {Transform} the wrapped split2 instance
- */
-declare function build(
-  fn: (transform: Transform & OnUnknown) => Transform & OnUnknown,
-  opts: EnablePipelining
-): Transform;
-
-export { OnUnknown };
-
-export default build;
-∑/.github/dependabot.yml≈version: 2
-updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 10
-
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
-π/.github/workflows/ci.yml≈	ìname: CI
-
-on:
-  push:
-    paths-ignore:
-        - 'docs/**'
-        - '*.md'
-  pull_request:
-    paths-ignore:
-        - 'docs/**'
-        - '*.md'
-
-# This allows a subsequently queued workflow run to interrupt previous runs
-concurrency:
-  group: "${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}"
-  cancel-in-progress: true
-
-jobs:
-  dependency-review:
-    name: Dependency Review
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Check out repo
-        uses: actions/checkout@v3
-        with:
-          persist-credentials: false
-
-      - name: Dependency review
-        uses: actions/dependency-review-action@v1
-
-  test:
-    name: Test
-    runs-on: ${{ matrix.os }}
-    permissions:
-      contents: read
-    strategy:
-      matrix:
-        node-version: [14, 16, 18]
-        os: [macos-latest, ubuntu-latest, windows-latest]
-    steps:
-      - name: Check out repo
-        uses: actions/checkout@v3
-        with:
-          persist-credentials: false
-
-      - name: Setup Node ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: Restore cached dependencies
-        uses: actions/cache@v3
-        with:
-          path: node_modules
-          key: node-modules-${{ hashFiles('package.json') }}
-  
-      - name: Install dependencies
-        run: npm i --ignore-scripts
-
-      - name: Run Tests
-        run: npm run test-ci
-
-      - name: Coveralls Parallel
-        uses: coverallsapp/github-action@1.1.3
-        with:
-          github-token: ${{ secrets.github_token }}
-          parallel: true
-          flag-name: run-${{ matrix.node-version }}-${{ matrix.os }}
-
-  coverage:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Coveralls Finished
-        uses: coverallsapp/github-action@1.1.3
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          parallel-finished: true
-
-  automerge:
-    name: Automerge Dependabot PRs
-    if: >
-        github.event_name == 'pull_request' &&
-        github.event.pull_request.user.login == 'dependabot[bot]'
-    needs: test
-    permissions:
-      pull-requests: write
-      contents: write
-    runs-on: ubuntu-latest
-    steps:
-      - uses: fastify/github-action-merge-dependabot@v3
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-™/README.md≈q# pino-abstract-transport
-[![npm version](https://img.shields.io/npm/v/pino-abstract-transport)](https://www.npmjs.com/package/pino-abstract-transport)
-[![Build Status](https://img.shields.io/github/workflow/status/pinojs/pino-abstract-transport/CI)](https://github.com/pinojs/pino-abstract-transport/actions)
-[![Coverage Status](https://coveralls.io/repos/github/pinojs/pino-abstract-transport/badge.svg?branch=master)](https://coveralls.io/github/pinojs/pino-abstract-transport?branch=master)
-[![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](https://standardjs.com/)
-
-Write Pino transports easily.
-
-## Install
-
-```
-npm i pino-abstract-transport
-```
-
-## Usage
-
-```js
-import build from 'pino-abstract-transport'
-
-export default async function (opts) {
-  return build(async function (source) {
-    for await (let obj of source) {
-      console.log(obj)
+    try {
+      value = parseLine(line)
+    } catch (error) {
+      this.emit('unknown', line, error)
+      return
     }
-  })
-}
-```
 
-or in CommonJS and streams:
+    if (value === null) {
+      this.emit('unknown', line, 'Null value ignored')
+      return
+    }
 
-```js
-'use strict'
-
-const build = require('pino-abstract-transport')
-
-module.exports = function (opts) {
-  return build(function (source) {
-    source.on('data', function (obj) {
-      console.log(obj)
-    })
-  })
-}
-```
-
-## Typescript usage
-Install the type definitions for node. Make sure the major version of the type definitions matches the node version you are using.
-#### Node 16
-```
-npm i -D @types/node@16
-```
-
-## API
-
-### build(fn, opts) => Stream
-
-Create a [`split2`](http://npm.im/split2) instance and returns it.
-This same instance is also passed to the given function, which is called
-synchronously.
-
-If `opts.transform` is `true`, `pino-abstract-transform` will 
-wrap the split2 instance and the returned stream using [`duplexify`](https://www.npmjs.com/package/duplexify),
-so they can be concatenated into multiple transports.
-
-#### Events emitted
-
-In addition to all events emitted by a [`Readable`](https://nodejs.org/api/stream.html#stream_class_stream_readable)
-stream, it emits the following events:
-
-* `unknown` where an unparsable line is found, both the line and optional error is emitted.
-
-#### Options
-
-* `parse` an option to change to data format passed to build function. When this option is set to `lines`,
-  the data is passed as a string, otherwise the data is passed as an object. Default: `undefined`.
-
-* `close(err, cb)` a function that is called to shutdown the transport. It's called both on error and non-error shutdowns.
-  It can also return a promise. In this case discard the the `cb` argument.
-
-* `parseLine(line)` a function that is used to parse line received from `pino`.
-
-## Example
-
-### custom parseLine
-
-You can allow custom `parseLine` from users while providing a simple and safe default parseLine.
-
-```js
-'use strict'
-
-const build = require('pino-abstract-transport')
-
-function defaultParseLine (line) {
-  const obj = JSON.parse(line)
-  // property foo will be added on each line
-  obj.foo = 'bar'
-  return obj
-}
-
-module.exports = function (opts) {
-  const parseLine = typeof opts.parseLine === 'function' ? opts.parseLine : defaultParseLine
-  return build(function (source) {
-    source.on('data', function (obj) {
-      console.log(obj)
-    })
-  }, {
-    parseLine: parseLine
-  })
-}
-```
-
-### Stream concatenation / pipeline
-
-You can pipeline multiple transports:
-
-```js
-const build = require('pino-abstract-transport')
-const { Transform, pipeline } = require('stream')
-
-function buildTransform () {
-  return build(function (source) {
-    return new Transform({
-      objectMode: true,
-      autoDestroy: true,
-      transform (line, enc, cb) {
-        line.service = 'bob'
-        cb(null, JSON.stringify(line))
+    if (typeof value !== 'object') {
+      value = {
+        data: value,
+        time: Date.now()
       }
+    }
+
+    if (stream[metadata]) {
+      stream.lastTime = value.time
+      stream.lastLevel = value.level
+      stream.lastObj = value
+    }
+
+    if (parseLines) {
+      return line
+    }
+
+    return value
+  }, { autoDestroy: true })
+
+  stream._destroy = function (err, cb) {
+    const promise = close(err, cb)
+    if (promise && typeof promise.then === 'function') {
+      promise.then(cb, cb)
+    }
+  }
+
+  if (opts.metadata !== false) {
+    stream[metadata] = true
+    stream.lastTime = 0
+    stream.lastLevel = 0
+    stream.lastObj = null
+  }
+
+  let res = fn(stream)
+
+  if (res && typeof res.catch === 'function') {
+    res.catch((err) => {
+      stream.destroy(err)
     })
-  }, { enablePipelining: true })
+
+    // set it to null to not retain a reference to the promise
+    res = null
+  } else if (opts.enablePipelining && res) {
+    return Duplex.from({ writable: stream, readable: res, objectMode: true })
+  }
+
+  return stream
 }
 
-function buildDestination () {
-  return build(function (source) {
-    source.on('data', function (obj) {
-      console.log(obj)
-    })
-  })
+function defaultClose (err, cb) {
+  process.nextTick(cb, err)
 }
-
-pipeline(process.stdin, buildTransform(), buildDestination(), function (err) {
-  console.log('pipeline completed!', err)
-})
-```
-
-## License
-
-MIT
 ≤/test/base.test.js≈$Û'use strict'
 
 const { once } = require('events')
@@ -841,6 +513,327 @@ test('support Transform streams', ({ same, plan, error }) => {
   stream1.write(lines)
   stream1.end()
 })
+®/LICENSE≈%MIT License
+
+Copyright (c) 2021 pino
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+∑/.github/dependabot.yml≈version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+π/.github/workflows/ci.yml≈	ìname: CI
+
+on:
+  push:
+    paths-ignore:
+        - 'docs/**'
+        - '*.md'
+  pull_request:
+    paths-ignore:
+        - 'docs/**'
+        - '*.md'
+
+# This allows a subsequently queued workflow run to interrupt previous runs
+concurrency:
+  group: "${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  dependency-review:
+    name: Dependency Review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+
+      - name: Dependency review
+        uses: actions/dependency-review-action@v1
+
+  test:
+    name: Test
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        node-version: [14, 16, 18]
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+
+      - name: Setup Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Restore cached dependencies
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('package.json') }}
+  
+      - name: Install dependencies
+        run: npm i --ignore-scripts
+
+      - name: Run Tests
+        run: npm run test-ci
+
+      - name: Coveralls Parallel
+        uses: coverallsapp/github-action@1.1.3
+        with:
+          github-token: ${{ secrets.github_token }}
+          parallel: true
+          flag-name: run-${{ matrix.node-version }}-${{ matrix.os }}
+
+  coverage:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Coveralls Finished
+        uses: coverallsapp/github-action@1.1.3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          parallel-finished: true
+
+  automerge:
+    name: Automerge Dependabot PRs
+    if: >
+        github.event_name == 'pull_request' &&
+        github.event.pull_request.user.login == 'dependabot[bot]'
+    needs: test
+    permissions:
+      pull-requests: write
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: fastify/github-action-merge-dependabot@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+™/README.md≈q# pino-abstract-transport
+[![npm version](https://img.shields.io/npm/v/pino-abstract-transport)](https://www.npmjs.com/package/pino-abstract-transport)
+[![Build Status](https://img.shields.io/github/workflow/status/pinojs/pino-abstract-transport/CI)](https://github.com/pinojs/pino-abstract-transport/actions)
+[![Coverage Status](https://coveralls.io/repos/github/pinojs/pino-abstract-transport/badge.svg?branch=master)](https://coveralls.io/github/pinojs/pino-abstract-transport?branch=master)
+[![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](https://standardjs.com/)
+
+Write Pino transports easily.
+
+## Install
+
+```
+npm i pino-abstract-transport
+```
+
+## Usage
+
+```js
+import build from 'pino-abstract-transport'
+
+export default async function (opts) {
+  return build(async function (source) {
+    for await (let obj of source) {
+      console.log(obj)
+    }
+  })
+}
+```
+
+or in CommonJS and streams:
+
+```js
+'use strict'
+
+const build = require('pino-abstract-transport')
+
+module.exports = function (opts) {
+  return build(function (source) {
+    source.on('data', function (obj) {
+      console.log(obj)
+    })
+  })
+}
+```
+
+## Typescript usage
+Install the type definitions for node. Make sure the major version of the type definitions matches the node version you are using.
+#### Node 16
+```
+npm i -D @types/node@16
+```
+
+## API
+
+### build(fn, opts) => Stream
+
+Create a [`split2`](http://npm.im/split2) instance and returns it.
+This same instance is also passed to the given function, which is called
+synchronously.
+
+If `opts.transform` is `true`, `pino-abstract-transform` will 
+wrap the split2 instance and the returned stream using [`duplexify`](https://www.npmjs.com/package/duplexify),
+so they can be concatenated into multiple transports.
+
+#### Events emitted
+
+In addition to all events emitted by a [`Readable`](https://nodejs.org/api/stream.html#stream_class_stream_readable)
+stream, it emits the following events:
+
+* `unknown` where an unparsable line is found, both the line and optional error is emitted.
+
+#### Options
+
+* `parse` an option to change to data format passed to build function. When this option is set to `lines`,
+  the data is passed as a string, otherwise the data is passed as an object. Default: `undefined`.
+
+* `close(err, cb)` a function that is called to shutdown the transport. It's called both on error and non-error shutdowns.
+  It can also return a promise. In this case discard the the `cb` argument.
+
+* `parseLine(line)` a function that is used to parse line received from `pino`.
+
+## Example
+
+### custom parseLine
+
+You can allow custom `parseLine` from users while providing a simple and safe default parseLine.
+
+```js
+'use strict'
+
+const build = require('pino-abstract-transport')
+
+function defaultParseLine (line) {
+  const obj = JSON.parse(line)
+  // property foo will be added on each line
+  obj.foo = 'bar'
+  return obj
+}
+
+module.exports = function (opts) {
+  const parseLine = typeof opts.parseLine === 'function' ? opts.parseLine : defaultParseLine
+  return build(function (source) {
+    source.on('data', function (obj) {
+      console.log(obj)
+    })
+  }, {
+    parseLine: parseLine
+  })
+}
+```
+
+### Stream concatenation / pipeline
+
+You can pipeline multiple transports:
+
+```js
+const build = require('pino-abstract-transport')
+const { Transform, pipeline } = require('stream')
+
+function buildTransform () {
+  return build(function (source) {
+    return new Transform({
+      objectMode: true,
+      autoDestroy: true,
+      transform (line, enc, cb) {
+        line.service = 'bob'
+        cb(null, JSON.stringify(line))
+      }
+    })
+  }, { enablePipelining: true })
+}
+
+function buildDestination () {
+  return build(function (source) {
+    source.on('data', function (obj) {
+      console.log(obj)
+    })
+  })
+}
+
+pipeline(process.stdin, buildTransform(), buildDestination(), function (err) {
+  console.log('pipeline completed!', err)
+})
+```
+
+## License
+
+MIT
+≤/.husky/pre-commitƒ3#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+npm test
+≠/package.json≈{
+  "name": "pino-abstract-transport",
+  "version": "1.0.0",
+  "description": "Write Pino transports easily",
+  "main": "index.js",
+  "scripts": {
+    "prepare": "husky install",
+    "test": "standard | snazzy && tap test/*.test.js  && tsd",
+    "test-ci": "standard | snazzy && tap test/*.test.js --coverage-report=lcovonly && tsd"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pinojs/pino-abstract-transport.git"
+  },
+  "keywords": [
+    "pino",
+    "transport"
+  ],
+  "author": "Matteo Collina <hello@matteocollina.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pinojs/pino-abstract-transport/issues"
+  },
+  "homepage": "https://github.com/pinojs/pino-abstract-transport#readme",
+  "dependencies": {
+    "readable-stream": "^4.0.0",
+    "split2": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "husky": "^8.0.0",
+    "snazzy": "^9.0.0",
+    "standard": "^17.0.0",
+    "tap": "^16.0.0",
+    "tsd": "^0.21.0"
+  },
+  "tsd": {
+    "directory": "./test/types"
+  }
+}
 ª/test/types/index.test-d.ts≈°import build, { OnUnknown } from "../../index";
 import { expectType } from "tsd";
 import { Transform } from "stream";
@@ -862,85 +855,92 @@ expectType<Transform & OnUnknown>(build((source) => {}));
  * build also accepts an async function
  */
 expectType<Transform  & OnUnknown>(build(async (source) => {}));
-©/index.js≈¥'use strict'
+´/index.d.ts≈	j// Type definitions for pino-abstract-transport 0.4.0
+// Project: https://github.com/pinojs/pino-abstract-transport#readme
+// Definitions by: Diyar Oktay <https://github.com/windupbird144>
 
-const metadata = Symbol.for('pino.metadata')
-const split = require('split2')
-const { Duplex } = require('readable-stream')
+/// <reference types="node" />
 
-module.exports = function build (fn, opts = {}) {
-  const parseLines = opts.parse === 'lines'
-  const parseLine = typeof opts.parseLine === 'function' ? opts.parseLine : JSON.parse
-  const close = opts.close || defaultClose
-  const stream = split(function (line) {
-    let value
+import { Transform } from "stream";
 
-    try {
-      value = parseLine(line)
-    } catch (error) {
-      this.emit('unknown', line, error)
-      return
-    }
+type BuildOptions = {
+  /**
+   * `parseLine(line)` a function that is used to parse line received from pino.
+   * @default JSON.parse
+   */
+  parseLine?: (line: string) => unknown;
 
-    if (value === null) {
-      this.emit('unknown', line, 'Null value ignored')
-      return
-    }
+  /**
+   * `parse` an option to change to data format passed to build function.
+   * @default undefined
+   *
+   */
+  parse?: "lines";
 
-    if (typeof value !== 'object') {
-      value = {
-        data: value,
-        time: Date.now()
-      }
-    }
+  /**
+   * `close(err, cb)` a function that is called to shutdown the transport.
+   * It's called both on error and non-error shutdowns. It can also return
+   * a promise. In this case discard the the cb argument.
+   *
+   * @example
+   * ```typescript
+   * {
+   *   close: function (err, cb) {
+   *     process.nextTick(cb, err)
+   *   }
+   * }
+   * ```
+   * */
+  close?: (err: Error, cb: Function) => void | Promise<void>;
 
-    if (stream[metadata]) {
-      stream.lastTime = value.time
-      stream.lastLevel = value.level
-      stream.lastObj = value
-    }
+  /**
+   * `metadata` If set to false, do not add metadata properties to the returned stream
+   */
+  metadata?: false;
+};
 
-    if (parseLines) {
-      return line
-    }
+/**
+ * Pass these options to wrap the split2 stream and
+ * the returned stream into a Duplex
+ */
+type EnablePipelining = BuildOptions & {
+  enablePipelining: true;
+};
 
-    return value
-  }, { autoDestroy: true })
-
-  stream._destroy = function (err, cb) {
-    const promise = close(err, cb)
-    if (promise && typeof promise.then === 'function') {
-      promise.then(cb, cb)
-    }
-  }
-
-  if (opts.metadata !== false) {
-    stream[metadata] = true
-    stream.lastTime = 0
-    stream.lastLevel = 0
-    stream.lastObj = null
-  }
-
-  let res = fn(stream)
-
-  if (res && typeof res.catch === 'function') {
-    res.catch((err) => {
-      stream.destroy(err)
-    })
-
-    // set it to null to not retain a reference to the promise
-    res = null
-  } else if (opts.enablePipelining && res) {
-    return Duplex.from({ writable: stream, readable: res, objectMode: true })
-  }
-
-  return stream
+interface OnUnknown {
+  /**
+   * `unknown` is the event emitted where an unparsable line is found
+   *
+   * @param event 'unknown'
+   * @param line the unparsable line
+   * @param error the error that was thrown when parsing the line
+   */
+  on(event: "unknown", listener: (line: string, error: unknown) => void): void;
 }
 
-function defaultClose (err, cb) {
-  process.nextTick(cb, err)
-}
-≤/.husky/pre-commitƒ3#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
+/**
+ * Create a split2 instance and returns it. This same instance is also passed
+ * to the given function, which is called synchronously.
+ *
+ * @returns {Transform} the split2 instance
+ */
+declare function build(
+  fn: (transform: Transform & OnUnknown) => void | Promise<void>,
+  opts?: BuildOptions
+): Transform & OnUnknown;
 
-npm test
+/**
+ * Creates a split2 instance and passes it to the given function, which is called
+ * synchronously. Then wraps the split2 instance and the returned stream into a
+ * Duplex, so they can be concatenated into multiple transports.
+ *
+ * @returns {Transform} the wrapped split2 instance
+ */
+declare function build(
+  fn: (transform: Transform & OnUnknown) => Transform & OnUnknown,
+  opts: EnablePipelining
+): Transform;
+
+export { OnUnknown };
+
+export default build;

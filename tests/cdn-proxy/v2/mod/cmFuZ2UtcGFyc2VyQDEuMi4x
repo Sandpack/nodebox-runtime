@@ -1,4 +1,48 @@
-…«/HISTORY.mdÅ•1.2.1 / 2019-05-10
+…­/package.jsonÅ {
+  "name": "range-parser",
+  "author": "TJ Holowaychuk <tj@vision-media.ca> (http://tjholowaychuk.com)",
+  "description": "Range header field string parser",
+  "version": "1.2.1",
+  "contributors": [
+    "Douglas Christopher Wilson <doug@somethingdoug.com>",
+    "James Wyatt Cready <wyatt.cready@lanetix.com>",
+    "Jonathan Ong <me@jongleberry.com> (http://jongleberry.com)"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "range",
+    "parser",
+    "http"
+  ],
+  "repository": "jshttp/range-parser",
+  "devDependencies": {
+    "deep-equal": "1.0.1",
+    "eslint": "5.16.0",
+    "eslint-config-standard": "12.0.0",
+    "eslint-plugin-markdown": "1.0.0",
+    "eslint-plugin-import": "2.17.2",
+    "eslint-plugin-node": "8.0.1",
+    "eslint-plugin-promise": "4.1.1",
+    "eslint-plugin-standard": "4.0.0",
+    "mocha": "6.1.4",
+    "nyc": "14.1.1"
+  },
+  "files": [
+    "HISTORY.md",
+    "LICENSE",
+    "index.js"
+  ],
+  "engines": {
+    "node": ">= 0.6"
+  },
+  "scripts": {
+    "lint": "eslint --plugin markdown --ext js,md .",
+    "test": "mocha --reporter spec",
+    "test-cov": "nyc --reporter=html --reporter=text npm test",
+    "test-travis": "nyc --reporter=text npm test"
+  }
+}
+«/HISTORY.mdÅ•1.2.1 / 2019-05-10
 ==================
 
   * Improve error when `str` is not a string
@@ -54,6 +98,113 @@
 ==================
 
   * Initial release
+ª/README.mdÅæ# range-parser
+
+[![NPM Version][npm-version-image]][npm-url]
+[![NPM Downloads][npm-downloads-image]][npm-url]
+[![Node.js Version][node-image]][node-url]
+[![Build Status][travis-image]][travis-url]
+[![Test Coverage][coveralls-image]][coveralls-url]
+
+Range header field parser.
+
+## Installation
+
+This is a [Node.js](https://nodejs.org/en/) module available through the
+[npm registry](https://www.npmjs.com/). Installation is done using the
+[`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
+
+```sh
+$ npm install range-parser
+```
+
+## API
+
+<!-- eslint-disable no-unused-vars -->
+
+```js
+var parseRange = require('range-parser')
+```
+
+### parseRange(size, header, options)
+
+Parse the given `header` string where `size` is the maximum size of the resource.
+An array of ranges will be returned or negative numbers indicating an error parsing.
+
+  * `-2` signals a malformed header string
+  * `-1` signals an unsatisfiable range
+
+<!-- eslint-disable no-undef -->
+
+```js
+// parse header from request
+var range = parseRange(size, req.headers.range)
+
+// the type of the range
+if (range.type === 'bytes') {
+  // the ranges
+  range.forEach(function (r) {
+    // do something with r.start and r.end
+  })
+}
+```
+
+#### Options
+
+These properties are accepted in the options object.
+
+##### combine
+
+Specifies if overlapping & adjacent ranges should be combined, defaults to `false`.
+When `true`, ranges will be combined and returned as if they were specified that
+way in the header.
+
+<!-- eslint-disable no-undef -->
+
+```js
+parseRange(100, 'bytes=50-55,0-10,5-10,56-60', { combine: true })
+// => [
+//      { start: 0,  end: 10 },
+//      { start: 50, end: 60 }
+//    ]
+```
+
+## License
+
+[MIT](LICENSE)
+
+[coveralls-image]: https://badgen.net/coveralls/c/github/jshttp/range-parser/master
+[coveralls-url]: https://coveralls.io/r/jshttp/range-parser?branch=master
+[node-image]: https://badgen.net/npm/node/range-parser
+[node-url]: https://nodejs.org/en/download
+[npm-downloads-image]: https://badgen.net/npm/dm/range-parser
+[npm-url]: https://npmjs.org/package/range-parser
+[npm-version-image]: https://badgen.net/npm/v/range-parser
+[travis-image]: https://badgen.net/travis/jshttp/range-parser/master
+[travis-url]: https://travis-ci.org/jshttp/range-parser
+¨/LICENSEÅš(The MIT License)
+
+Copyright (c) 2012-2014 TJ Holowaychuk <tj@vision-media.ca>
+Copyright (c) 2015-2016 Douglas Christopher Wilson <doug@somethingdoug.com
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ©/index.jsÅT/*!
  * range-parser
  * Copyright(c) 2012-2014 TJ Holowaychuk
@@ -216,154 +367,3 @@ function sortByRangeIndex (a, b) {
 function sortByRangeStart (a, b) {
   return a.start - b.start
 }
-ª/README.mdÅæ# range-parser
-
-[![NPM Version][npm-version-image]][npm-url]
-[![NPM Downloads][npm-downloads-image]][npm-url]
-[![Node.js Version][node-image]][node-url]
-[![Build Status][travis-image]][travis-url]
-[![Test Coverage][coveralls-image]][coveralls-url]
-
-Range header field parser.
-
-## Installation
-
-This is a [Node.js](https://nodejs.org/en/) module available through the
-[npm registry](https://www.npmjs.com/). Installation is done using the
-[`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
-
-```sh
-$ npm install range-parser
-```
-
-## API
-
-<!-- eslint-disable no-unused-vars -->
-
-```js
-var parseRange = require('range-parser')
-```
-
-### parseRange(size, header, options)
-
-Parse the given `header` string where `size` is the maximum size of the resource.
-An array of ranges will be returned or negative numbers indicating an error parsing.
-
-  * `-2` signals a malformed header string
-  * `-1` signals an unsatisfiable range
-
-<!-- eslint-disable no-undef -->
-
-```js
-// parse header from request
-var range = parseRange(size, req.headers.range)
-
-// the type of the range
-if (range.type === 'bytes') {
-  // the ranges
-  range.forEach(function (r) {
-    // do something with r.start and r.end
-  })
-}
-```
-
-#### Options
-
-These properties are accepted in the options object.
-
-##### combine
-
-Specifies if overlapping & adjacent ranges should be combined, defaults to `false`.
-When `true`, ranges will be combined and returned as if they were specified that
-way in the header.
-
-<!-- eslint-disable no-undef -->
-
-```js
-parseRange(100, 'bytes=50-55,0-10,5-10,56-60', { combine: true })
-// => [
-//      { start: 0,  end: 10 },
-//      { start: 50, end: 60 }
-//    ]
-```
-
-## License
-
-[MIT](LICENSE)
-
-[coveralls-image]: https://badgen.net/coveralls/c/github/jshttp/range-parser/master
-[coveralls-url]: https://coveralls.io/r/jshttp/range-parser?branch=master
-[node-image]: https://badgen.net/npm/node/range-parser
-[node-url]: https://nodejs.org/en/download
-[npm-downloads-image]: https://badgen.net/npm/dm/range-parser
-[npm-url]: https://npmjs.org/package/range-parser
-[npm-version-image]: https://badgen.net/npm/v/range-parser
-[travis-image]: https://badgen.net/travis/jshttp/range-parser/master
-[travis-url]: https://travis-ci.org/jshttp/range-parser
-­/package.jsonÅ {
-  "name": "range-parser",
-  "author": "TJ Holowaychuk <tj@vision-media.ca> (http://tjholowaychuk.com)",
-  "description": "Range header field string parser",
-  "version": "1.2.1",
-  "contributors": [
-    "Douglas Christopher Wilson <doug@somethingdoug.com>",
-    "James Wyatt Cready <wyatt.cready@lanetix.com>",
-    "Jonathan Ong <me@jongleberry.com> (http://jongleberry.com)"
-  ],
-  "license": "MIT",
-  "keywords": [
-    "range",
-    "parser",
-    "http"
-  ],
-  "repository": "jshttp/range-parser",
-  "devDependencies": {
-    "deep-equal": "1.0.1",
-    "eslint": "5.16.0",
-    "eslint-config-standard": "12.0.0",
-    "eslint-plugin-markdown": "1.0.0",
-    "eslint-plugin-import": "2.17.2",
-    "eslint-plugin-node": "8.0.1",
-    "eslint-plugin-promise": "4.1.1",
-    "eslint-plugin-standard": "4.0.0",
-    "mocha": "6.1.4",
-    "nyc": "14.1.1"
-  },
-  "files": [
-    "HISTORY.md",
-    "LICENSE",
-    "index.js"
-  ],
-  "engines": {
-    "node": ">= 0.6"
-  },
-  "scripts": {
-    "lint": "eslint --plugin markdown --ext js,md .",
-    "test": "mocha --reporter spec",
-    "test-cov": "nyc --reporter=html --reporter=text npm test",
-    "test-travis": "nyc --reporter=text npm test"
-  }
-}
-¨/LICENSEÅš(The MIT License)
-
-Copyright (c) 2012-2014 TJ Holowaychuk <tj@vision-media.ca>
-Copyright (c) 2015-2016 Douglas Christopher Wilson <doug@somethingdoug.com
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-'Software'), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

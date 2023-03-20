@@ -1,4 +1,108 @@
-…ª/readme.mdÅC# path-key [![Build Status](https://travis-ci.org/sindresorhus/path-key.svg?branch=master)](https://travis-ci.org/sindresorhus/path-key)
+…­/package.jsonÅŠ{
+	"name": "path-key",
+	"version": "3.1.1",
+	"description": "Get the PATH environment variable key cross-platform",
+	"license": "MIT",
+	"repository": "sindresorhus/path-key",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "sindresorhus.com"
+	},
+	"engines": {
+		"node": ">=8"
+	},
+	"scripts": {
+		"test": "xo && ava && tsd"
+	},
+	"files": [
+		"index.js",
+		"index.d.ts"
+	],
+	"keywords": [
+		"path",
+		"key",
+		"environment",
+		"env",
+		"variable",
+		"var",
+		"get",
+		"cross-platform",
+		"windows"
+	],
+	"devDependencies": {
+		"@types/node": "^11.13.0",
+		"ava": "^1.4.1",
+		"tsd": "^0.7.2",
+		"xo": "^0.24.0"
+	}
+}
+¨/licenseÅUMIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+«/index.d.tsÅ/// <reference types="node" />
+
+declare namespace pathKey {
+	interface Options {
+		/**
+		Use a custom environment variables object. Default: [`process.env`](https://nodejs.org/api/process.html#process_process_env).
+		*/
+		readonly env?: {[key: string]: string | undefined};
+
+		/**
+		Get the PATH key for a specific platform. Default: [`process.platform`](https://nodejs.org/api/process.html#process_process_platform).
+		*/
+		readonly platform?: NodeJS.Platform;
+	}
+}
+
+declare const pathKey: {
+	/**
+	Get the [PATH](https://en.wikipedia.org/wiki/PATH_(variable)) environment variable key cross-platform.
+
+	@example
+	```
+	import pathKey = require('path-key');
+
+	const key = pathKey();
+	//=> 'PATH'
+
+	const PATH = process.env[key];
+	//=> '/usr/local/bin:/usr/bin:/bin'
+	```
+	*/
+	(options?: pathKey.Options): string;
+
+	// TODO: Remove this for the next major release, refactor the whole definition to:
+	// declare function pathKey(options?: pathKey.Options): string;
+	// export = pathKey;
+	default: typeof pathKey;
+};
+
+export = pathKey;
+©/index.jsÅŸ'use strict';
+
+const pathKey = (options = {}) => {
+	const environment = options.env || process.env;
+	const platform = options.platform || process.platform;
+
+	if (platform !== 'win32') {
+		return 'PATH';
+	}
+
+	return Object.keys(environment).reverse().find(key => key.toUpperCase() === 'PATH') || 'Path';
+};
+
+module.exports = pathKey;
+// TODO: Remove this for the next major release
+module.exports.default = pathKey;
+ª/readme.mdÅC# path-key [![Build Status](https://travis-ci.org/sindresorhus/path-key.svg?branch=master)](https://travis-ci.org/sindresorhus/path-key)
 
 > Get the [PATH](https://en.wikipedia.org/wiki/PATH_(variable)) environment variable key cross-platform
 
@@ -59,107 +163,3 @@ Get the PATH key for a specific platform.
 		Tidelift helps make open source sustainable for maintainers while giving companies<br>assurances about security, maintenance, and licensing for their dependencies.
 	</sub>
 </div>
-­/package.jsonÅŠ{
-	"name": "path-key",
-	"version": "3.1.1",
-	"description": "Get the PATH environment variable key cross-platform",
-	"license": "MIT",
-	"repository": "sindresorhus/path-key",
-	"author": {
-		"name": "Sindre Sorhus",
-		"email": "sindresorhus@gmail.com",
-		"url": "sindresorhus.com"
-	},
-	"engines": {
-		"node": ">=8"
-	},
-	"scripts": {
-		"test": "xo && ava && tsd"
-	},
-	"files": [
-		"index.js",
-		"index.d.ts"
-	],
-	"keywords": [
-		"path",
-		"key",
-		"environment",
-		"env",
-		"variable",
-		"var",
-		"get",
-		"cross-platform",
-		"windows"
-	],
-	"devDependencies": {
-		"@types/node": "^11.13.0",
-		"ava": "^1.4.1",
-		"tsd": "^0.7.2",
-		"xo": "^0.24.0"
-	}
-}
-©/index.jsÅŸ'use strict';
-
-const pathKey = (options = {}) => {
-	const environment = options.env || process.env;
-	const platform = options.platform || process.platform;
-
-	if (platform !== 'win32') {
-		return 'PATH';
-	}
-
-	return Object.keys(environment).reverse().find(key => key.toUpperCase() === 'PATH') || 'Path';
-};
-
-module.exports = pathKey;
-// TODO: Remove this for the next major release
-module.exports.default = pathKey;
-¨/licenseÅUMIT License
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-«/index.d.tsÅ/// <reference types="node" />
-
-declare namespace pathKey {
-	interface Options {
-		/**
-		Use a custom environment variables object. Default: [`process.env`](https://nodejs.org/api/process.html#process_process_env).
-		*/
-		readonly env?: {[key: string]: string | undefined};
-
-		/**
-		Get the PATH key for a specific platform. Default: [`process.platform`](https://nodejs.org/api/process.html#process_process_platform).
-		*/
-		readonly platform?: NodeJS.Platform;
-	}
-}
-
-declare const pathKey: {
-	/**
-	Get the [PATH](https://en.wikipedia.org/wiki/PATH_(variable)) environment variable key cross-platform.
-
-	@example
-	```
-	import pathKey = require('path-key');
-
-	const key = pathKey();
-	//=> 'PATH'
-
-	const PATH = process.env[key];
-	//=> '/usr/local/bin:/usr/bin:/bin'
-	```
-	*/
-	(options?: pathKey.Options): string;
-
-	// TODO: Remove this for the next major release, refactor the whole definition to:
-	// declare function pathKey(options?: pathKey.Options): string;
-	// export = pathKey;
-	default: typeof pathKey;
-};
-
-export = pathKey;

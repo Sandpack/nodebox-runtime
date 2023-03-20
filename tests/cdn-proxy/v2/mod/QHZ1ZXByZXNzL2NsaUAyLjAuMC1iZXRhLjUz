@@ -1,209 +1,4 @@
-…­/package.jsonÅw{
-  "name": "@vuepress/cli",
-  "version": "2.0.0-beta.53",
-  "description": "CLI package of VuePress",
-  "keywords": [
-    "vuepress",
-    "cli"
-  ],
-  "homepage": "https://github.com/vuepress",
-  "bugs": {
-    "url": "https://github.com/vuepress/vuepress-next/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/vuepress/vuepress-next.git"
-  },
-  "license": "MIT",
-  "author": "meteorlxy",
-  "type": "module",
-  "exports": {
-    ".": "./dist/index.js",
-    "./bin": "./dist/vuepress.js",
-    "./package.json": "./package.json"
-  },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "bin": {
-    "vuepress-cli": "./bin/vuepress.js"
-  },
-  "files": [
-    "bin",
-    "dist"
-  ],
-  "dependencies": {
-    "@vuepress/core": "2.0.0-beta.53",
-    "@vuepress/shared": "2.0.0-beta.53",
-    "@vuepress/utils": "2.0.0-beta.53",
-    "cac": "^6.7.14",
-    "chokidar": "^3.5.3",
-    "envinfo": "^7.8.1",
-    "esbuild": "^0.15.12"
-  },
-  "devDependencies": {
-    "@types/envinfo": "^7.8.1"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "tsup": {
-    "clean": true,
-    "dts": "./src/index.ts",
-    "entry": [
-      "./src/index.ts"
-    ],
-    "format": [
-      "esm"
-    ],
-    "outDir": "./dist",
-    "sourcemap": false,
-    "target": "es2020",
-    "tsconfig": "../tsconfig.dts.json"
-  },
-  "scripts": {
-    "build": "tsup",
-    "clean": "rimraf dist"
-  }
-}°/bin/vuepress.jsÄC#!/usr/bin/env node
-
-import { cli } from '../dist/index.js'
-
-cli()
-°/dist/index.d.tsÅimport { AppConfig, App, Page, PluginObject } from '@vuepress/core';
-import { FSWatcher } from 'chokidar';
-
-/**
- * Type of `dev` command function
- */
-declare type BuildCommand = (sourceDir?: string, commandOptions?: BuildCommandOptions) => Promise<void>;
-/**
- * CLI options of `build` command
- */
-interface BuildCommandOptions {
-    dest?: string;
-    temp?: string;
-    cache?: string;
-    debug?: boolean;
-    config?: string;
-    cleanTemp?: boolean;
-    cleanCache?: boolean;
-}
-
-declare const createBuild: (defaultAppConfig: Partial<AppConfig>) => BuildCommand;
-
-/**
- * Type of `dev` command function
- */
-declare type DevCommand = (sourceDir?: string, commandOptions?: DevCommandOptions) => Promise<void>;
-/**
- * CLI options of `dev` command
- */
-interface DevCommandOptions {
-    port?: number;
-    host?: string;
-    temp?: string;
-    cache?: string;
-    debug?: boolean;
-    open?: boolean;
-    config?: string;
-    cleanTemp?: boolean;
-    cleanCache?: boolean;
-    watch?: boolean;
-}
-
-declare const createDev: (defaultAppConfig: Partial<AppConfig>) => DevCommand;
-
-/**
- * Event handler for page add event
- *
- * Returns the added page
- */
-declare const handlePageAdd: (app: App, filePath: string) => Promise<Page | null>;
-
-/**
- * Event handler for page change event
- *
- * Returns the old page and the new page tuple
- */
-declare const handlePageChange: (app: App, filePath: string) => Promise<[Page, Page] | null>;
-
-/**
- * Event handler for page unlink event
- *
- * Returns the removed page
- */
-declare const handlePageUnlink: (app: App, filePath: string) => Promise<Page | null>;
-
-/**
- * Watch page files and deps, return file watchers
- */
-declare const watchPageFiles: (app: App) => FSWatcher[];
-
-declare const watchUserConfigFile: ({ userConfigPath, userConfigDependencies, restart, }: {
-    userConfigPath: string;
-    userConfigDependencies: string[];
-    restart: () => Promise<void>;
-}) => FSWatcher[];
-
-declare const info: () => Promise<void>;
-
-/**
- * User config type of vuepress
- *
- * It will be transformed to `AppConfig` by cli
- */
-declare type UserConfig = Partial<AppConfig> & Omit<PluginObject, 'name' | 'multiple'>;
-
-declare const defineUserConfig: (config: UserConfig) => UserConfig;
-
-/**
- * Load user config file
- */
-declare const loadUserConfig: (userConfigPath?: string) => Promise<{
-    userConfig: UserConfig;
-    userConfigDependencies: string[];
-}>;
-
-/**
- * Resolve app config according to:
- *
- * - default options
- * - cli options
- * - user config file
- */
-declare const resolveAppConfig: ({ defaultAppConfig, cliAppConfig, userConfig, }: {
-    defaultAppConfig: Partial<AppConfig>;
-    cliAppConfig: Partial<AppConfig>;
-    userConfig: Partial<AppConfig>;
-}) => AppConfig | null;
-
-/**
- * Resolve app config according to command options of cli
- */
-declare const resolveCliAppConfig: (sourceDir: string, commandOptions: Partial<AppConfig>, cwd?: string) => Partial<AppConfig> & Pick<AppConfig, 'source'>;
-
-/**
- * Resolve conventional user config file path
- */
-declare const resolveUserConfigConventionalPath: (source: string, cwd?: string) => string | undefined;
-
-/**
- * Resolve file path of user config
- */
-declare const resolveUserConfigPath: (config: string, cwd?: string) => string;
-
-/**
- * Transform user config to a vuepress plugin
- */
-declare const transformUserConfigToPlugin: (userConfig: UserConfig, source: string, cwd?: string) => PluginObject;
-
-/**
- * Vuepress cli
- */
-declare const cli: (defaultAppConfig?: Partial<AppConfig>) => void;
-
-export { BuildCommand, BuildCommandOptions, DevCommand, DevCommandOptions, UserConfig, cli, createBuild, createDev, defineUserConfig, handlePageAdd, handlePageChange, handlePageUnlink, info, loadUserConfig, resolveAppConfig, resolveCliAppConfig, resolveUserConfigConventionalPath, resolveUserConfigPath, transformUserConfigToPlugin, watchPageFiles, watchUserConfigFile };
-®/dist/index.jsÅQ4// src/commands/build/createBuild.ts
+…®/dist/index.jsÅQ4// src/commands/build/createBuild.ts
 import process6 from "process";
 import { createBuildApp } from "@vuepress/core";
 import { debug, formatMs, fs as fs5, logger as logger3, withSpinner } from "@vuepress/utils";
@@ -825,7 +620,73 @@ export {
   watchPageFiles,
   watchUserConfigFile
 };
-¨/LICENSEÅCThe MIT License (MIT)
+­/package.jsonÅw{
+  "name": "@vuepress/cli",
+  "version": "2.0.0-beta.53",
+  "description": "CLI package of VuePress",
+  "keywords": [
+    "vuepress",
+    "cli"
+  ],
+  "homepage": "https://github.com/vuepress",
+  "bugs": {
+    "url": "https://github.com/vuepress/vuepress-next/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vuepress/vuepress-next.git"
+  },
+  "license": "MIT",
+  "author": "meteorlxy",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./bin": "./dist/vuepress.js",
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "vuepress-cli": "./bin/vuepress.js"
+  },
+  "files": [
+    "bin",
+    "dist"
+  ],
+  "dependencies": {
+    "@vuepress/core": "2.0.0-beta.53",
+    "@vuepress/shared": "2.0.0-beta.53",
+    "@vuepress/utils": "2.0.0-beta.53",
+    "cac": "^6.7.14",
+    "chokidar": "^3.5.3",
+    "envinfo": "^7.8.1",
+    "esbuild": "^0.15.12"
+  },
+  "devDependencies": {
+    "@types/envinfo": "^7.8.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "tsup": {
+    "clean": true,
+    "dts": "./src/index.ts",
+    "entry": [
+      "./src/index.ts"
+    ],
+    "format": [
+      "esm"
+    ],
+    "outDir": "./dist",
+    "sourcemap": false,
+    "target": "es2020",
+    "tsconfig": "../tsconfig.dts.json"
+  },
+  "scripts": {
+    "build": "tsup",
+    "clean": "rimraf dist"
+  }
+}¨/LICENSEÅCThe MIT License (MIT)
 
 Copyright (c) 2018-present, Yuxi (Evan) You
 
@@ -846,3 +707,142 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+°/bin/vuepress.jsÄC#!/usr/bin/env node
+
+import { cli } from '../dist/index.js'
+
+cli()
+°/dist/index.d.tsÅimport { AppConfig, App, Page, PluginObject } from '@vuepress/core';
+import { FSWatcher } from 'chokidar';
+
+/**
+ * Type of `dev` command function
+ */
+declare type BuildCommand = (sourceDir?: string, commandOptions?: BuildCommandOptions) => Promise<void>;
+/**
+ * CLI options of `build` command
+ */
+interface BuildCommandOptions {
+    dest?: string;
+    temp?: string;
+    cache?: string;
+    debug?: boolean;
+    config?: string;
+    cleanTemp?: boolean;
+    cleanCache?: boolean;
+}
+
+declare const createBuild: (defaultAppConfig: Partial<AppConfig>) => BuildCommand;
+
+/**
+ * Type of `dev` command function
+ */
+declare type DevCommand = (sourceDir?: string, commandOptions?: DevCommandOptions) => Promise<void>;
+/**
+ * CLI options of `dev` command
+ */
+interface DevCommandOptions {
+    port?: number;
+    host?: string;
+    temp?: string;
+    cache?: string;
+    debug?: boolean;
+    open?: boolean;
+    config?: string;
+    cleanTemp?: boolean;
+    cleanCache?: boolean;
+    watch?: boolean;
+}
+
+declare const createDev: (defaultAppConfig: Partial<AppConfig>) => DevCommand;
+
+/**
+ * Event handler for page add event
+ *
+ * Returns the added page
+ */
+declare const handlePageAdd: (app: App, filePath: string) => Promise<Page | null>;
+
+/**
+ * Event handler for page change event
+ *
+ * Returns the old page and the new page tuple
+ */
+declare const handlePageChange: (app: App, filePath: string) => Promise<[Page, Page] | null>;
+
+/**
+ * Event handler for page unlink event
+ *
+ * Returns the removed page
+ */
+declare const handlePageUnlink: (app: App, filePath: string) => Promise<Page | null>;
+
+/**
+ * Watch page files and deps, return file watchers
+ */
+declare const watchPageFiles: (app: App) => FSWatcher[];
+
+declare const watchUserConfigFile: ({ userConfigPath, userConfigDependencies, restart, }: {
+    userConfigPath: string;
+    userConfigDependencies: string[];
+    restart: () => Promise<void>;
+}) => FSWatcher[];
+
+declare const info: () => Promise<void>;
+
+/**
+ * User config type of vuepress
+ *
+ * It will be transformed to `AppConfig` by cli
+ */
+declare type UserConfig = Partial<AppConfig> & Omit<PluginObject, 'name' | 'multiple'>;
+
+declare const defineUserConfig: (config: UserConfig) => UserConfig;
+
+/**
+ * Load user config file
+ */
+declare const loadUserConfig: (userConfigPath?: string) => Promise<{
+    userConfig: UserConfig;
+    userConfigDependencies: string[];
+}>;
+
+/**
+ * Resolve app config according to:
+ *
+ * - default options
+ * - cli options
+ * - user config file
+ */
+declare const resolveAppConfig: ({ defaultAppConfig, cliAppConfig, userConfig, }: {
+    defaultAppConfig: Partial<AppConfig>;
+    cliAppConfig: Partial<AppConfig>;
+    userConfig: Partial<AppConfig>;
+}) => AppConfig | null;
+
+/**
+ * Resolve app config according to command options of cli
+ */
+declare const resolveCliAppConfig: (sourceDir: string, commandOptions: Partial<AppConfig>, cwd?: string) => Partial<AppConfig> & Pick<AppConfig, 'source'>;
+
+/**
+ * Resolve conventional user config file path
+ */
+declare const resolveUserConfigConventionalPath: (source: string, cwd?: string) => string | undefined;
+
+/**
+ * Resolve file path of user config
+ */
+declare const resolveUserConfigPath: (config: string, cwd?: string) => string;
+
+/**
+ * Transform user config to a vuepress plugin
+ */
+declare const transformUserConfigToPlugin: (userConfig: UserConfig, source: string, cwd?: string) => PluginObject;
+
+/**
+ * Vuepress cli
+ */
+declare const cli: (defaultAppConfig?: Partial<AppConfig>) => void;
+
+export { BuildCommand, BuildCommandOptions, DevCommand, DevCommandOptions, UserConfig, cli, createBuild, createDev, defineUserConfig, handlePageAdd, handlePageChange, handlePageUnlink, info, loadUserConfig, resolveAppConfig, resolveCliAppConfig, resolveUserConfigConventionalPath, resolveUserConfigPath, transformUserConfigToPlugin, watchPageFiles, watchUserConfigFile };

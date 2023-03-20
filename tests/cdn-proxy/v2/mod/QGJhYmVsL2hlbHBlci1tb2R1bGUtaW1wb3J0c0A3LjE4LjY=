@@ -20,26 +20,64 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-ª/README.mdÅf# @babel/helper-module-imports
+­/lib/index.jsÅU"use strict";
 
-> Babel helper functions for inserting module loads
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+Object.defineProperty(exports, "ImportInjector", {
+  enumerable: true,
+  get: function () {
+    return _importInjector.default;
+  }
+});
+exports.addDefault = addDefault;
+exports.addNamed = addNamed;
+exports.addNamespace = addNamespace;
+exports.addSideEffect = addSideEffect;
+Object.defineProperty(exports, "isModule", {
+  enumerable: true,
+  get: function () {
+    return _isModule.default;
+  }
+});
 
-See our website [@babel/helper-module-imports](https://babeljs.io/docs/en/babel-helper-module-imports) for more information.
+var _importInjector = require("./import-injector");
 
-## Install
+var _isModule = require("./is-module");
 
-Using npm:
+function addDefault(path, importedSource, opts) {
+  return new _importInjector.default(path).addDefault(importedSource, opts);
+}
 
-```sh
-npm install --save @babel/helper-module-imports
-```
+function addNamed(path, name, importedSource, opts) {
+  return new _importInjector.default(path).addNamed(name, importedSource, opts);
+}
 
-or using yarn:
+function addNamespace(path, importedSource, opts) {
+  return new _importInjector.default(path).addNamespace(importedSource, opts);
+}
 
-```sh
-yarn add @babel/helper-module-imports
-```
-·/lib/import-injector.jsÅ "use strict";
+function addSideEffect(path, importedSource, opts) {
+  return new _importInjector.default(path).addSideEffect(importedSource, opts);
+}±/lib/is-module.jsÅ}"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = isModule;
+
+function isModule(path) {
+  const {
+    sourceType
+  } = path.node;
+
+  if (sourceType !== "module" && sourceType !== "script") {
+    throw path.buildCodeFrameError(`Unknown sourceType "${sourceType}", cannot transform.`);
+  }
+
+  return path.node.sourceType === "module";
+}·/lib/import-injector.jsÅ "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -318,7 +356,53 @@ class ImportInjector {
 
 }
 
-exports.default = ImportInjector;¶/lib/import-builder.jsÅ`"use strict";
+exports.default = ImportInjector;­/package.jsonÅÒ{
+  "name": "@babel/helper-module-imports",
+  "version": "7.18.6",
+  "description": "Babel helper functions for inserting module loads",
+  "author": "The Babel Team (https://babel.dev/team)",
+  "homepage": "https://babel.dev/docs/en/next/babel-helper-module-imports",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/babel/babel.git",
+    "directory": "packages/babel-helper-module-imports"
+  },
+  "main": "./lib/index.js",
+  "dependencies": {
+    "@babel/types": "^7.18.6"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.18.6",
+    "@babel/traverse": "^7.18.6"
+  },
+  "engines": {
+    "node": ">=6.9.0"
+  },
+  "type": "commonjs"
+}ª/README.mdÅf# @babel/helper-module-imports
+
+> Babel helper functions for inserting module loads
+
+See our website [@babel/helper-module-imports](https://babeljs.io/docs/en/babel-helper-module-imports) for more information.
+
+## Install
+
+Using npm:
+
+```sh
+npm install --save @babel/helper-module-imports
+```
+
+or using yarn:
+
+```sh
+yarn add @babel/helper-module-imports
+```
+¶/lib/import-builder.jsÅ`"use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -481,88 +565,4 @@ class ImportBuilder {
 
 }
 
-exports.default = ImportBuilder;­/lib/index.jsÅU"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-Object.defineProperty(exports, "ImportInjector", {
-  enumerable: true,
-  get: function () {
-    return _importInjector.default;
-  }
-});
-exports.addDefault = addDefault;
-exports.addNamed = addNamed;
-exports.addNamespace = addNamespace;
-exports.addSideEffect = addSideEffect;
-Object.defineProperty(exports, "isModule", {
-  enumerable: true,
-  get: function () {
-    return _isModule.default;
-  }
-});
-
-var _importInjector = require("./import-injector");
-
-var _isModule = require("./is-module");
-
-function addDefault(path, importedSource, opts) {
-  return new _importInjector.default(path).addDefault(importedSource, opts);
-}
-
-function addNamed(path, name, importedSource, opts) {
-  return new _importInjector.default(path).addNamed(name, importedSource, opts);
-}
-
-function addNamespace(path, importedSource, opts) {
-  return new _importInjector.default(path).addNamespace(importedSource, opts);
-}
-
-function addSideEffect(path, importedSource, opts) {
-  return new _importInjector.default(path).addSideEffect(importedSource, opts);
-}±/lib/is-module.jsÅ}"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = isModule;
-
-function isModule(path) {
-  const {
-    sourceType
-  } = path.node;
-
-  if (sourceType !== "module" && sourceType !== "script") {
-    throw path.buildCodeFrameError(`Unknown sourceType "${sourceType}", cannot transform.`);
-  }
-
-  return path.node.sourceType === "module";
-}­/package.jsonÅÒ{
-  "name": "@babel/helper-module-imports",
-  "version": "7.18.6",
-  "description": "Babel helper functions for inserting module loads",
-  "author": "The Babel Team (https://babel.dev/team)",
-  "homepage": "https://babel.dev/docs/en/next/babel-helper-module-imports",
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/babel/babel.git",
-    "directory": "packages/babel-helper-module-imports"
-  },
-  "main": "./lib/index.js",
-  "dependencies": {
-    "@babel/types": "^7.18.6"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.18.6",
-    "@babel/traverse": "^7.18.6"
-  },
-  "engines": {
-    "node": ">=6.9.0"
-  },
-  "type": "commonjs"
-}
+exports.default = ImportBuilder;

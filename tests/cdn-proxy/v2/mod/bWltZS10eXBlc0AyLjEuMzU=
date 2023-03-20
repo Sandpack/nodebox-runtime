@@ -1,191 +1,160 @@
-Ö©/index.js≈O/*!
- * mime-types
- * Copyright(c) 2014 Jonathan Ong
- * Copyright(c) 2015 Douglas Christopher Wilson
- * MIT Licensed
- */
-
-'use strict'
-
-/**
- * Module dependencies.
- * @private
- */
-
-var db = require('mime-db')
-var extname = require('path').extname
-
-/**
- * Module variables.
- * @private
- */
-
-var EXTRACT_TYPE_REGEXP = /^\s*([^;\s]*)(?:;|\s|$)/
-var TEXT_TYPE_REGEXP = /^text\//i
-
-/**
- * Module exports.
- * @public
- */
-
-exports.charset = charset
-exports.charsets = { lookup: charset }
-exports.contentType = contentType
-exports.extension = extension
-exports.extensions = Object.create(null)
-exports.lookup = lookup
-exports.types = Object.create(null)
-
-// Populate the extensions/types maps
-populateMaps(exports.extensions, exports.types)
-
-/**
- * Get the default charset for a MIME type.
- *
- * @param {string} type
- * @return {boolean|string}
- */
-
-function charset (type) {
-  if (!type || typeof type !== 'string') {
-    return false
+Ö≠/package.json≈}{
+  "name": "mime-types",
+  "description": "The ultimate javascript content-type utility.",
+  "version": "2.1.35",
+  "contributors": [
+    "Douglas Christopher Wilson <doug@somethingdoug.com>",
+    "Jeremiah Senkpiel <fishrock123@rocketmail.com> (https://searchbeam.jit.su)",
+    "Jonathan Ong <me@jongleberry.com> (http://jongleberry.com)"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "mime",
+    "types"
+  ],
+  "repository": "jshttp/mime-types",
+  "dependencies": {
+    "mime-db": "1.52.0"
+  },
+  "devDependencies": {
+    "eslint": "7.32.0",
+    "eslint-config-standard": "14.1.1",
+    "eslint-plugin-import": "2.25.4",
+    "eslint-plugin-markdown": "2.2.1",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-promise": "5.2.0",
+    "eslint-plugin-standard": "4.1.0",
+    "mocha": "9.2.2",
+    "nyc": "15.1.0"
+  },
+  "files": [
+    "HISTORY.md",
+    "LICENSE",
+    "index.js"
+  ],
+  "engines": {
+    "node": ">= 0.6"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "mocha --reporter spec test/test.js",
+    "test-ci": "nyc --reporter=lcov --reporter=text npm test",
+    "test-cov": "nyc --reporter=html --reporter=text npm test"
   }
-
-  // TODO: use media-typer
-  var match = EXTRACT_TYPE_REGEXP.exec(type)
-  var mime = match && db[match[1].toLowerCase()]
-
-  if (mime && mime.charset) {
-    return mime.charset
-  }
-
-  // default text/* to utf-8
-  if (match && TEXT_TYPE_REGEXP.test(match[1])) {
-    return 'UTF-8'
-  }
-
-  return false
 }
+™/README.md≈ô# mime-types
 
-/**
- * Create a full Content-Type header given a MIME type or extension.
- *
- * @param {string} str
- * @return {boolean|string}
- */
+[![NPM Version][npm-version-image]][npm-url]
+[![NPM Downloads][npm-downloads-image]][npm-url]
+[![Node.js Version][node-version-image]][node-version-url]
+[![Build Status][ci-image]][ci-url]
+[![Test Coverage][coveralls-image]][coveralls-url]
 
-function contentType (str) {
-  // TODO: should this even be in this module?
-  if (!str || typeof str !== 'string') {
-    return false
-  }
+The ultimate javascript content-type utility.
 
-  var mime = str.indexOf('/') === -1
-    ? exports.lookup(str)
-    : str
+Similar to [the `mime@1.x` module](https://www.npmjs.com/package/mime), except:
 
-  if (!mime) {
-    return false
-  }
+- __No fallbacks.__ Instead of naively returning the first available type,
+  `mime-types` simply returns `false`, so do
+  `var type = mime.lookup('unrecognized') || 'application/octet-stream'`.
+- No `new Mime()` business, so you could do `var lookup = require('mime-types').lookup`.
+- No `.define()` functionality
+- Bug fixes for `.lookup(path)`
 
-  // TODO: use content-type or other module
-  if (mime.indexOf('charset') === -1) {
-    var charset = exports.charset(mime)
-    if (charset) mime += '; charset=' + charset.toLowerCase()
-  }
+Otherwise, the API is compatible with `mime` 1.x.
 
-  return mime
-}
+## Install
 
-/**
- * Get the default extension for a MIME type.
- *
- * @param {string} type
- * @return {boolean|string}
- */
+This is a [Node.js](https://nodejs.org/en/) module available through the
+[npm registry](https://www.npmjs.com/). Installation is done using the
+[`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
 
-function extension (type) {
-  if (!type || typeof type !== 'string') {
-    return false
-  }
+```sh
+$ npm install mime-types
+```
 
-  // TODO: use media-typer
-  var match = EXTRACT_TYPE_REGEXP.exec(type)
+## Adding Types
 
-  // get extensions
-  var exts = match && exports.extensions[match[1].toLowerCase()]
+All mime types are based on [mime-db](https://www.npmjs.com/package/mime-db),
+so open a PR there if you'd like to add mime types.
 
-  if (!exts || !exts.length) {
-    return false
-  }
+## API
 
-  return exts[0]
-}
+```js
+var mime = require('mime-types')
+```
 
-/**
- * Lookup the MIME type for a file path/extension.
- *
- * @param {string} path
- * @return {boolean|string}
- */
+All functions return `false` if input is invalid or not found.
 
-function lookup (path) {
-  if (!path || typeof path !== 'string') {
-    return false
-  }
+### mime.lookup(path)
 
-  // get the extension ("ext" or ".ext" or full path)
-  var extension = extname('x.' + path)
-    .toLowerCase()
-    .substr(1)
+Lookup the content-type associated with a file.
 
-  if (!extension) {
-    return false
-  }
+```js
+mime.lookup('json') // 'application/json'
+mime.lookup('.md') // 'text/markdown'
+mime.lookup('file.html') // 'text/html'
+mime.lookup('folder/file.js') // 'application/javascript'
+mime.lookup('folder/.htaccess') // false
 
-  return exports.types[extension] || false
-}
+mime.lookup('cats') // false
+```
 
-/**
- * Populate the extensions and types maps.
- * @private
- */
+### mime.contentType(type)
 
-function populateMaps (extensions, types) {
-  // source preference (least -> most)
-  var preference = ['nginx', 'apache', undefined, 'iana']
+Create a full content-type header given a content-type or extension.
+When given an extension, `mime.lookup` is used to get the matching
+content-type, otherwise the given content-type is used. Then if the
+content-type does not already have a `charset` parameter, `mime.charset`
+is used to get the default charset and add to the returned content-type.
 
-  Object.keys(db).forEach(function forEachMimeType (type) {
-    var mime = db[type]
-    var exts = mime.extensions
+```js
+mime.contentType('markdown') // 'text/x-markdown; charset=utf-8'
+mime.contentType('file.json') // 'application/json; charset=utf-8'
+mime.contentType('text/html') // 'text/html; charset=utf-8'
+mime.contentType('text/html; charset=iso-8859-1') // 'text/html; charset=iso-8859-1'
 
-    if (!exts || !exts.length) {
-      return
-    }
+// from a full path
+mime.contentType(path.extname('/path/to/file.json')) // 'application/json; charset=utf-8'
+```
 
-    // mime -> extensions
-    extensions[type] = exts
+### mime.extension(type)
 
-    // extension -> mime
-    for (var i = 0; i < exts.length; i++) {
-      var extension = exts[i]
+Get the default extension for a content-type.
 
-      if (types[extension]) {
-        var from = preference.indexOf(db[types[extension]].source)
-        var to = preference.indexOf(mime.source)
+```js
+mime.extension('application/octet-stream') // 'bin'
+```
 
-        if (types[extension] !== 'application/octet-stream' &&
-          (from > to || (from === to && types[extension].substr(0, 12) === 'application/'))) {
-          // skip the remapping
-          continue
-        }
-      }
+### mime.charset(type)
 
-      // set the extension -> mime
-      types[extension] = type
-    }
-  })
-}
+Lookup the implied default charset of a content-type.
+
+```js
+mime.charset('text/markdown') // 'UTF-8'
+```
+
+### var type = mime.types[extension]
+
+A map of content-types by extension.
+
+### [extensions...] = mime.extensions[type]
+
+A map of extensions by content-type.
+
+## License
+
+[MIT](LICENSE)
+
+[ci-image]: https://badgen.net/github/checks/jshttp/mime-types/master?label=ci
+[ci-url]: https://github.com/jshttp/mime-types/actions/workflows/ci.yml
+[coveralls-image]: https://badgen.net/coveralls/c/github/jshttp/mime-types/master
+[coveralls-url]: https://coveralls.io/r/jshttp/mime-types?branch=master
+[node-version-image]: https://badgen.net/npm/node/mime-types
+[node-version-url]: https://nodejs.org/en/download
+[npm-downloads-image]: https://badgen.net/npm/dm/mime-types
+[npm-url]: https://npmjs.org/package/mime-types
+[npm-version-image]: https://badgen.net/npm/v/mime-types
 ®/LICENSE≈è(The MIT License)
 
 Copyright (c) 2014 Jonathan Ong <me@jongleberry.com>
@@ -606,160 +575,191 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ==================
 
   * Initial release
-≠/package.json≈}{
-  "name": "mime-types",
-  "description": "The ultimate javascript content-type utility.",
-  "version": "2.1.35",
-  "contributors": [
-    "Douglas Christopher Wilson <doug@somethingdoug.com>",
-    "Jeremiah Senkpiel <fishrock123@rocketmail.com> (https://searchbeam.jit.su)",
-    "Jonathan Ong <me@jongleberry.com> (http://jongleberry.com)"
-  ],
-  "license": "MIT",
-  "keywords": [
-    "mime",
-    "types"
-  ],
-  "repository": "jshttp/mime-types",
-  "dependencies": {
-    "mime-db": "1.52.0"
-  },
-  "devDependencies": {
-    "eslint": "7.32.0",
-    "eslint-config-standard": "14.1.1",
-    "eslint-plugin-import": "2.25.4",
-    "eslint-plugin-markdown": "2.2.1",
-    "eslint-plugin-node": "11.1.0",
-    "eslint-plugin-promise": "5.2.0",
-    "eslint-plugin-standard": "4.1.0",
-    "mocha": "9.2.2",
-    "nyc": "15.1.0"
-  },
-  "files": [
-    "HISTORY.md",
-    "LICENSE",
-    "index.js"
-  ],
-  "engines": {
-    "node": ">= 0.6"
-  },
-  "scripts": {
-    "lint": "eslint .",
-    "test": "mocha --reporter spec test/test.js",
-    "test-ci": "nyc --reporter=lcov --reporter=text npm test",
-    "test-cov": "nyc --reporter=html --reporter=text npm test"
+©/index.js≈O/*!
+ * mime-types
+ * Copyright(c) 2014 Jonathan Ong
+ * Copyright(c) 2015 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+'use strict'
+
+/**
+ * Module dependencies.
+ * @private
+ */
+
+var db = require('mime-db')
+var extname = require('path').extname
+
+/**
+ * Module variables.
+ * @private
+ */
+
+var EXTRACT_TYPE_REGEXP = /^\s*([^;\s]*)(?:;|\s|$)/
+var TEXT_TYPE_REGEXP = /^text\//i
+
+/**
+ * Module exports.
+ * @public
+ */
+
+exports.charset = charset
+exports.charsets = { lookup: charset }
+exports.contentType = contentType
+exports.extension = extension
+exports.extensions = Object.create(null)
+exports.lookup = lookup
+exports.types = Object.create(null)
+
+// Populate the extensions/types maps
+populateMaps(exports.extensions, exports.types)
+
+/**
+ * Get the default charset for a MIME type.
+ *
+ * @param {string} type
+ * @return {boolean|string}
+ */
+
+function charset (type) {
+  if (!type || typeof type !== 'string') {
+    return false
   }
+
+  // TODO: use media-typer
+  var match = EXTRACT_TYPE_REGEXP.exec(type)
+  var mime = match && db[match[1].toLowerCase()]
+
+  if (mime && mime.charset) {
+    return mime.charset
+  }
+
+  // default text/* to utf-8
+  if (match && TEXT_TYPE_REGEXP.test(match[1])) {
+    return 'UTF-8'
+  }
+
+  return false
 }
-™/README.md≈ô# mime-types
 
-[![NPM Version][npm-version-image]][npm-url]
-[![NPM Downloads][npm-downloads-image]][npm-url]
-[![Node.js Version][node-version-image]][node-version-url]
-[![Build Status][ci-image]][ci-url]
-[![Test Coverage][coveralls-image]][coveralls-url]
+/**
+ * Create a full Content-Type header given a MIME type or extension.
+ *
+ * @param {string} str
+ * @return {boolean|string}
+ */
 
-The ultimate javascript content-type utility.
+function contentType (str) {
+  // TODO: should this even be in this module?
+  if (!str || typeof str !== 'string') {
+    return false
+  }
 
-Similar to [the `mime@1.x` module](https://www.npmjs.com/package/mime), except:
+  var mime = str.indexOf('/') === -1
+    ? exports.lookup(str)
+    : str
 
-- __No fallbacks.__ Instead of naively returning the first available type,
-  `mime-types` simply returns `false`, so do
-  `var type = mime.lookup('unrecognized') || 'application/octet-stream'`.
-- No `new Mime()` business, so you could do `var lookup = require('mime-types').lookup`.
-- No `.define()` functionality
-- Bug fixes for `.lookup(path)`
+  if (!mime) {
+    return false
+  }
 
-Otherwise, the API is compatible with `mime` 1.x.
+  // TODO: use content-type or other module
+  if (mime.indexOf('charset') === -1) {
+    var charset = exports.charset(mime)
+    if (charset) mime += '; charset=' + charset.toLowerCase()
+  }
 
-## Install
+  return mime
+}
 
-This is a [Node.js](https://nodejs.org/en/) module available through the
-[npm registry](https://www.npmjs.com/). Installation is done using the
-[`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
+/**
+ * Get the default extension for a MIME type.
+ *
+ * @param {string} type
+ * @return {boolean|string}
+ */
 
-```sh
-$ npm install mime-types
-```
+function extension (type) {
+  if (!type || typeof type !== 'string') {
+    return false
+  }
 
-## Adding Types
+  // TODO: use media-typer
+  var match = EXTRACT_TYPE_REGEXP.exec(type)
 
-All mime types are based on [mime-db](https://www.npmjs.com/package/mime-db),
-so open a PR there if you'd like to add mime types.
+  // get extensions
+  var exts = match && exports.extensions[match[1].toLowerCase()]
 
-## API
+  if (!exts || !exts.length) {
+    return false
+  }
 
-```js
-var mime = require('mime-types')
-```
+  return exts[0]
+}
 
-All functions return `false` if input is invalid or not found.
+/**
+ * Lookup the MIME type for a file path/extension.
+ *
+ * @param {string} path
+ * @return {boolean|string}
+ */
 
-### mime.lookup(path)
+function lookup (path) {
+  if (!path || typeof path !== 'string') {
+    return false
+  }
 
-Lookup the content-type associated with a file.
+  // get the extension ("ext" or ".ext" or full path)
+  var extension = extname('x.' + path)
+    .toLowerCase()
+    .substr(1)
 
-```js
-mime.lookup('json') // 'application/json'
-mime.lookup('.md') // 'text/markdown'
-mime.lookup('file.html') // 'text/html'
-mime.lookup('folder/file.js') // 'application/javascript'
-mime.lookup('folder/.htaccess') // false
+  if (!extension) {
+    return false
+  }
 
-mime.lookup('cats') // false
-```
+  return exports.types[extension] || false
+}
 
-### mime.contentType(type)
+/**
+ * Populate the extensions and types maps.
+ * @private
+ */
 
-Create a full content-type header given a content-type or extension.
-When given an extension, `mime.lookup` is used to get the matching
-content-type, otherwise the given content-type is used. Then if the
-content-type does not already have a `charset` parameter, `mime.charset`
-is used to get the default charset and add to the returned content-type.
+function populateMaps (extensions, types) {
+  // source preference (least -> most)
+  var preference = ['nginx', 'apache', undefined, 'iana']
 
-```js
-mime.contentType('markdown') // 'text/x-markdown; charset=utf-8'
-mime.contentType('file.json') // 'application/json; charset=utf-8'
-mime.contentType('text/html') // 'text/html; charset=utf-8'
-mime.contentType('text/html; charset=iso-8859-1') // 'text/html; charset=iso-8859-1'
+  Object.keys(db).forEach(function forEachMimeType (type) {
+    var mime = db[type]
+    var exts = mime.extensions
 
-// from a full path
-mime.contentType(path.extname('/path/to/file.json')) // 'application/json; charset=utf-8'
-```
+    if (!exts || !exts.length) {
+      return
+    }
 
-### mime.extension(type)
+    // mime -> extensions
+    extensions[type] = exts
 
-Get the default extension for a content-type.
+    // extension -> mime
+    for (var i = 0; i < exts.length; i++) {
+      var extension = exts[i]
 
-```js
-mime.extension('application/octet-stream') // 'bin'
-```
+      if (types[extension]) {
+        var from = preference.indexOf(db[types[extension]].source)
+        var to = preference.indexOf(mime.source)
 
-### mime.charset(type)
+        if (types[extension] !== 'application/octet-stream' &&
+          (from > to || (from === to && types[extension].substr(0, 12) === 'application/'))) {
+          // skip the remapping
+          continue
+        }
+      }
 
-Lookup the implied default charset of a content-type.
-
-```js
-mime.charset('text/markdown') // 'UTF-8'
-```
-
-### var type = mime.types[extension]
-
-A map of content-types by extension.
-
-### [extensions...] = mime.extensions[type]
-
-A map of extensions by content-type.
-
-## License
-
-[MIT](LICENSE)
-
-[ci-image]: https://badgen.net/github/checks/jshttp/mime-types/master?label=ci
-[ci-url]: https://github.com/jshttp/mime-types/actions/workflows/ci.yml
-[coveralls-image]: https://badgen.net/coveralls/c/github/jshttp/mime-types/master
-[coveralls-url]: https://coveralls.io/r/jshttp/mime-types?branch=master
-[node-version-image]: https://badgen.net/npm/node/mime-types
-[node-version-url]: https://nodejs.org/en/download
-[npm-downloads-image]: https://badgen.net/npm/dm/mime-types
-[npm-url]: https://npmjs.org/package/mime-types
-[npm-version-image]: https://badgen.net/npm/v/mime-types
+      // set the extension -> mime
+      types[extension] = type
+    }
+  })
+}

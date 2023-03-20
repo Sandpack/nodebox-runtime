@@ -157,93 +157,134 @@ Changelog entries are classified using the following labels _(from [keep-a-chang
 [0.1.0]: https://github.com/jonschlinkert/kind-of/commit/2fae09b0b19b1aadb558e9be39f0c3ef6034eb87
 
 [Unreleased]: https://github.com/jonschlinkert/kind-of/compare/0.1.2...HEAD
-[keep-a-changelog]: https://github.com/olivierlacan/keep-a-changelog≠/package.json≈&{
-  "name": "kind-of",
-  "description": "Get the native type of a value.",
-  "version": "6.0.3",
-  "homepage": "https://github.com/jonschlinkert/kind-of",
-  "author": "Jon Schlinkert (https://github.com/jonschlinkert)",
-  "contributors": [
-    "David Fox-Powell (https://dtothefp.github.io/me)",
-    "James (https://twitter.com/aretecode)",
-    "Jon Schlinkert (http://twitter.com/jonschlinkert)",
-    "Ken Sheedlo (kensheedlo.com)",
-    "laggingreflex (https://github.com/laggingreflex)",
-    "Miguel Mota (https://miguelmota.com)",
-    "Peter deHaan (http://about.me/peterdehaan)",
-    "tunnckoCore (https://i.am.charlike.online)"
-  ],
-  "repository": "jonschlinkert/kind-of",
-  "bugs": {
-    "url": "https://github.com/jonschlinkert/kind-of/issues"
-  },
-  "license": "MIT",
-  "files": [
-    "index.js"
-  ],
-  "main": "index.js",
-  "engines": {
-    "node": ">=0.10.0"
-  },
-  "scripts": {
-    "test": "mocha",
-    "prepublish": "browserify -o browser.js -e index.js -s index --bare"
-  },
-  "devDependencies": {
-    "benchmarked": "^2.0.0",
-    "browserify": "^14.4.0",
-    "gulp-format-md": "^1.0.0",
-    "mocha": "^4.0.1",
-    "write": "^1.0.3"
-  },
-  "keywords": [
-    "arguments",
-    "array",
-    "boolean",
-    "check",
-    "date",
-    "function",
-    "is",
-    "is-type",
-    "is-type-of",
-    "kind",
-    "kind-of",
-    "number",
-    "object",
-    "of",
-    "regexp",
-    "string",
-    "test",
-    "type",
-    "type-of",
-    "typeof",
-    "types"
-  ],
-  "verb": {
-    "toc": false,
-    "layout": "default",
-    "tasks": [
-      "readme"
-    ],
-    "plugins": [
-      "gulp-format-md"
-    ],
-    "lint": {
-      "reflinks": true
-    },
-    "related": {
-      "list": [
-        "is-glob",
-        "is-number",
-        "is-primitive"
-      ]
-    },
-    "reflinks": [
-      "type-of",
-      "typeof",
-      "verb"
-    ]
+[keep-a-changelog]: https://github.com/olivierlacan/keep-a-changelog©/index.js≈Ívar toString = Object.prototype.toString;
+
+module.exports = function kindOf(val) {
+  if (val === void 0) return 'undefined';
+  if (val === null) return 'null';
+
+  var type = typeof val;
+  if (type === 'boolean') return 'boolean';
+  if (type === 'string') return 'string';
+  if (type === 'number') return 'number';
+  if (type === 'symbol') return 'symbol';
+  if (type === 'function') {
+    return isGeneratorFn(val) ? 'generatorfunction' : 'function';
   }
+
+  if (isArray(val)) return 'array';
+  if (isBuffer(val)) return 'buffer';
+  if (isArguments(val)) return 'arguments';
+  if (isDate(val)) return 'date';
+  if (isError(val)) return 'error';
+  if (isRegexp(val)) return 'regexp';
+
+  switch (ctorName(val)) {
+    case 'Symbol': return 'symbol';
+    case 'Promise': return 'promise';
+
+    // Set, Map, WeakSet, WeakMap
+    case 'WeakMap': return 'weakmap';
+    case 'WeakSet': return 'weakset';
+    case 'Map': return 'map';
+    case 'Set': return 'set';
+
+    // 8-bit typed arrays
+    case 'Int8Array': return 'int8array';
+    case 'Uint8Array': return 'uint8array';
+    case 'Uint8ClampedArray': return 'uint8clampedarray';
+
+    // 16-bit typed arrays
+    case 'Int16Array': return 'int16array';
+    case 'Uint16Array': return 'uint16array';
+
+    // 32-bit typed arrays
+    case 'Int32Array': return 'int32array';
+    case 'Uint32Array': return 'uint32array';
+    case 'Float32Array': return 'float32array';
+    case 'Float64Array': return 'float64array';
+  }
+
+  if (isGeneratorObj(val)) {
+    return 'generator';
+  }
+
+  // Non-plain objects
+  type = toString.call(val);
+  switch (type) {
+    case '[object Object]': return 'object';
+    // iterators
+    case '[object Map Iterator]': return 'mapiterator';
+    case '[object Set Iterator]': return 'setiterator';
+    case '[object String Iterator]': return 'stringiterator';
+    case '[object Array Iterator]': return 'arrayiterator';
+  }
+
+  // other
+  return type.slice(8, -1).toLowerCase().replace(/\s/g, '');
+};
+
+function ctorName(val) {
+  return typeof val.constructor === 'function' ? val.constructor.name : null;
+}
+
+function isArray(val) {
+  if (Array.isArray) return Array.isArray(val);
+  return val instanceof Array;
+}
+
+function isError(val) {
+  return val instanceof Error || (typeof val.message === 'string' && val.constructor && typeof val.constructor.stackTraceLimit === 'number');
+}
+
+function isDate(val) {
+  if (val instanceof Date) return true;
+  return typeof val.toDateString === 'function'
+    && typeof val.getDate === 'function'
+    && typeof val.setDate === 'function';
+}
+
+function isRegexp(val) {
+  if (val instanceof RegExp) return true;
+  return typeof val.flags === 'string'
+    && typeof val.ignoreCase === 'boolean'
+    && typeof val.multiline === 'boolean'
+    && typeof val.global === 'boolean';
+}
+
+function isGeneratorFn(name, val) {
+  return ctorName(name) === 'GeneratorFunction';
+}
+
+function isGeneratorObj(val) {
+  return typeof val.throw === 'function'
+    && typeof val.return === 'function'
+    && typeof val.next === 'function';
+}
+
+function isArguments(val) {
+  try {
+    if (typeof val.length === 'number' && typeof val.callee === 'function') {
+      return true;
+    }
+  } catch (err) {
+    if (err.message.indexOf('callee') !== -1) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * If you need to support Safari 5-7 (8-10 yr-old browser),
+ * take a look at https://github.com/feross/is-buffer
+ */
+
+function isBuffer(val) {
+  if (val.constructor && typeof val.constructor.isBuffer === 'function') {
+    return val.constructor.isBuffer(val);
+  }
+  return false;
 }
 ™/README.md≈-˘# kind-of [![NPM version](https://img.shields.io/npm/v/kind-of.svg?style=flat)](https://www.npmjs.com/package/kind-of) [![NPM monthly downloads](https://img.shields.io/npm/dm/kind-of.svg?style=flat)](https://npmjs.org/package/kind-of) [![NPM total downloads](https://img.shields.io/npm/dt/kind-of.svg?style=flat)](https://npmjs.org/package/kind-of) [![Linux Build Status](https://img.shields.io/travis/jonschlinkert/kind-of.svg?style=flat&label=Travis)](https://travis-ci.org/jonschlinkert/kind-of)
 
@@ -611,7 +652,95 @@ Released under the [MIT License](LICENSE).
 
 ***
 
-_This file was generated by [verb-generate-readme](https://github.com/verbose/verb-generate-readme), v0.8.0, on January 16, 2020._®/LICENSE≈@The MIT License (MIT)
+_This file was generated by [verb-generate-readme](https://github.com/verbose/verb-generate-readme), v0.8.0, on January 16, 2020._≠/package.json≈&{
+  "name": "kind-of",
+  "description": "Get the native type of a value.",
+  "version": "6.0.3",
+  "homepage": "https://github.com/jonschlinkert/kind-of",
+  "author": "Jon Schlinkert (https://github.com/jonschlinkert)",
+  "contributors": [
+    "David Fox-Powell (https://dtothefp.github.io/me)",
+    "James (https://twitter.com/aretecode)",
+    "Jon Schlinkert (http://twitter.com/jonschlinkert)",
+    "Ken Sheedlo (kensheedlo.com)",
+    "laggingreflex (https://github.com/laggingreflex)",
+    "Miguel Mota (https://miguelmota.com)",
+    "Peter deHaan (http://about.me/peterdehaan)",
+    "tunnckoCore (https://i.am.charlike.online)"
+  ],
+  "repository": "jonschlinkert/kind-of",
+  "bugs": {
+    "url": "https://github.com/jonschlinkert/kind-of/issues"
+  },
+  "license": "MIT",
+  "files": [
+    "index.js"
+  ],
+  "main": "index.js",
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "scripts": {
+    "test": "mocha",
+    "prepublish": "browserify -o browser.js -e index.js -s index --bare"
+  },
+  "devDependencies": {
+    "benchmarked": "^2.0.0",
+    "browserify": "^14.4.0",
+    "gulp-format-md": "^1.0.0",
+    "mocha": "^4.0.1",
+    "write": "^1.0.3"
+  },
+  "keywords": [
+    "arguments",
+    "array",
+    "boolean",
+    "check",
+    "date",
+    "function",
+    "is",
+    "is-type",
+    "is-type-of",
+    "kind",
+    "kind-of",
+    "number",
+    "object",
+    "of",
+    "regexp",
+    "string",
+    "test",
+    "type",
+    "type-of",
+    "typeof",
+    "types"
+  ],
+  "verb": {
+    "toc": false,
+    "layout": "default",
+    "tasks": [
+      "readme"
+    ],
+    "plugins": [
+      "gulp-format-md"
+    ],
+    "lint": {
+      "reflinks": true
+    },
+    "related": {
+      "list": [
+        "is-glob",
+        "is-number",
+        "is-primitive"
+      ]
+    },
+    "reflinks": [
+      "type-of",
+      "typeof",
+      "verb"
+    ]
+  }
+}
+®/LICENSE≈@The MIT License (MIT)
 
 Copyright (c) 2014-2017, Jon Schlinkert.
 
@@ -632,132 +761,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-©/index.js≈Ívar toString = Object.prototype.toString;
-
-module.exports = function kindOf(val) {
-  if (val === void 0) return 'undefined';
-  if (val === null) return 'null';
-
-  var type = typeof val;
-  if (type === 'boolean') return 'boolean';
-  if (type === 'string') return 'string';
-  if (type === 'number') return 'number';
-  if (type === 'symbol') return 'symbol';
-  if (type === 'function') {
-    return isGeneratorFn(val) ? 'generatorfunction' : 'function';
-  }
-
-  if (isArray(val)) return 'array';
-  if (isBuffer(val)) return 'buffer';
-  if (isArguments(val)) return 'arguments';
-  if (isDate(val)) return 'date';
-  if (isError(val)) return 'error';
-  if (isRegexp(val)) return 'regexp';
-
-  switch (ctorName(val)) {
-    case 'Symbol': return 'symbol';
-    case 'Promise': return 'promise';
-
-    // Set, Map, WeakSet, WeakMap
-    case 'WeakMap': return 'weakmap';
-    case 'WeakSet': return 'weakset';
-    case 'Map': return 'map';
-    case 'Set': return 'set';
-
-    // 8-bit typed arrays
-    case 'Int8Array': return 'int8array';
-    case 'Uint8Array': return 'uint8array';
-    case 'Uint8ClampedArray': return 'uint8clampedarray';
-
-    // 16-bit typed arrays
-    case 'Int16Array': return 'int16array';
-    case 'Uint16Array': return 'uint16array';
-
-    // 32-bit typed arrays
-    case 'Int32Array': return 'int32array';
-    case 'Uint32Array': return 'uint32array';
-    case 'Float32Array': return 'float32array';
-    case 'Float64Array': return 'float64array';
-  }
-
-  if (isGeneratorObj(val)) {
-    return 'generator';
-  }
-
-  // Non-plain objects
-  type = toString.call(val);
-  switch (type) {
-    case '[object Object]': return 'object';
-    // iterators
-    case '[object Map Iterator]': return 'mapiterator';
-    case '[object Set Iterator]': return 'setiterator';
-    case '[object String Iterator]': return 'stringiterator';
-    case '[object Array Iterator]': return 'arrayiterator';
-  }
-
-  // other
-  return type.slice(8, -1).toLowerCase().replace(/\s/g, '');
-};
-
-function ctorName(val) {
-  return typeof val.constructor === 'function' ? val.constructor.name : null;
-}
-
-function isArray(val) {
-  if (Array.isArray) return Array.isArray(val);
-  return val instanceof Array;
-}
-
-function isError(val) {
-  return val instanceof Error || (typeof val.message === 'string' && val.constructor && typeof val.constructor.stackTraceLimit === 'number');
-}
-
-function isDate(val) {
-  if (val instanceof Date) return true;
-  return typeof val.toDateString === 'function'
-    && typeof val.getDate === 'function'
-    && typeof val.setDate === 'function';
-}
-
-function isRegexp(val) {
-  if (val instanceof RegExp) return true;
-  return typeof val.flags === 'string'
-    && typeof val.ignoreCase === 'boolean'
-    && typeof val.multiline === 'boolean'
-    && typeof val.global === 'boolean';
-}
-
-function isGeneratorFn(name, val) {
-  return ctorName(name) === 'GeneratorFunction';
-}
-
-function isGeneratorObj(val) {
-  return typeof val.throw === 'function'
-    && typeof val.return === 'function'
-    && typeof val.next === 'function';
-}
-
-function isArguments(val) {
-  try {
-    if (typeof val.length === 'number' && typeof val.callee === 'function') {
-      return true;
-    }
-  } catch (err) {
-    if (err.message.indexOf('callee') !== -1) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
- * If you need to support Safari 5-7 (8-10 yr-old browser),
- * take a look at https://github.com/feross/is-buffer
- */
-
-function isBuffer(val) {
-  if (val.constructor && typeof val.constructor.isBuffer === 'function') {
-    return val.constructor.isBuffer(val);
-  }
-  return false;
-}

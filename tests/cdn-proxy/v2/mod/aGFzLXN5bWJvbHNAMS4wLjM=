@@ -1,74 +1,52 @@
-ç¥/.github/FUNDING.yml≈F# These are supported funding model platforms
+ç®/LICENSE≈/MIT License
 
-github: [ljharb]
-patreon: # Replace with a single Patreon username
-open_collective: # Replace with a single Open Collective username
-ko_fi: # Replace with a single Ko-fi username
-tidelift: npm/has-symbols
-community_bridge: # Replace with a single Community Bridge project-name e.g., cloud-foundry
-liberapay: # Replace with a single Liberapay username
-issuehunt: # Replace with a single IssueHunt username
-otechie: # Replace with a single Otechie username
-custom: # Replace with up to 4 custom sponsorship URLs e.g., ['link1', 'link2']
-™/README.md≈¸# has-symbols <sup>[![Version Badge][2]][1]</sup>
+Copyright (c) 2016 Jordan Harband
 
-[![github actions][actions-image]][actions-url]
-[![coverage][codecov-image]][codecov-url]
-[![dependency status][5]][6]
-[![dev dependency status][7]][8]
-[![License][license-image]][license-url]
-[![Downloads][downloads-image]][downloads-url]
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-[![npm badge][11]][1]
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-Determine if the JS environment has Symbol support. Supports spec, or shams.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+∂/test/shams/core-js.js≈”'use strict';
 
-## Example
+var test = require('tape');
 
-```js
-var hasSymbols = require('has-symbols');
+if (typeof Symbol === 'function' && typeof Symbol() === 'symbol') {
+	test('has native Symbol support', function (t) {
+		t.equal(typeof Symbol, 'function');
+		t.equal(typeof Symbol(), 'symbol');
+		t.end();
+	});
+	return;
+}
 
-hasSymbols() === true; // if the environment has native Symbol support. Not polyfillable, not forgeable.
+var hasSymbols = require('../../shams');
 
-var hasSymbolsKinda = require('has-symbols/shams');
-hasSymbolsKinda() === true; // if the environment has a Symbol sham that mostly follows the spec.
-```
+test('polyfilled Symbols', function (t) {
+	/* eslint-disable global-require */
+	t.equal(hasSymbols(), false, 'hasSymbols is false before polyfilling');
+	require('core-js/fn/symbol');
+	require('core-js/fn/symbol/to-string-tag');
 
-## Supported Symbol shams
- - get-own-property-symbols [npm](https://www.npmjs.com/package/get-own-property-symbols) | [github](https://github.com/WebReflection/get-own-property-symbols)
- - core-js [npm](https://www.npmjs.com/package/core-js) | [github](https://github.com/zloirock/core-js)
+	require('../tests')(t);
 
-## Tests
-Simply clone the repo, `npm install`, and run `npm test`
-
-[1]: https://npmjs.org/package/has-symbols
-[2]: https://versionbadg.es/inspect-js/has-symbols.svg
-[5]: https://david-dm.org/inspect-js/has-symbols.svg
-[6]: https://david-dm.org/inspect-js/has-symbols
-[7]: https://david-dm.org/inspect-js/has-symbols/dev-status.svg
-[8]: https://david-dm.org/inspect-js/has-symbols#info=devDependencies
-[11]: https://nodei.co/npm/has-symbols.png?downloads=true&stars=true
-[license-image]: https://img.shields.io/npm/l/has-symbols.svg
-[license-url]: LICENSE
-[downloads-image]: https://img.shields.io/npm/dm/has-symbols.svg
-[downloads-url]: https://npm-stat.com/charts.html?package=has-symbols
-[codecov-image]: https://codecov.io/gh/inspect-js/has-symbols/branch/main/graphs/badge.svg
-[codecov-url]: https://app.codecov.io/gh/inspect-js/has-symbols/
-[actions-image]: https://img.shields.io/endpoint?url=https://github-actions-badge-u3jn4tfpocch.runkit.sh/inspect-js/has-symbols
-[actions-url]: https://github.com/inspect-js/has-symbols/actions
-©/index.js≈§'use strict';
-
-var origSymbol = typeof Symbol !== 'undefined' && Symbol;
-var hasSymbolSham = require('./shams');
-
-module.exports = function hasNativeSymbols() {
-	if (typeof origSymbol !== 'function') { return false; }
-	if (typeof Symbol !== 'function') { return false; }
-	if (typeof origSymbol('foo') !== 'symbol') { return false; }
-	if (typeof Symbol('bar') !== 'symbol') { return false; }
-
-	return hasSymbolSham();
-};
+	var hasSymbolsAfter = hasSymbols();
+	t.equal(hasSymbolsAfter, true, 'hasSymbols is true after polyfilling');
+	/* eslint-enable global-require */
+	t.end();
+});
 Ÿ'/test/shams/get-own-property-symbols.js≈Æ'use strict';
 
 var test = require('tape');
@@ -128,143 +106,18 @@ test('Symbols are not supported', { skip: hasSymbols() }, function (t) {
 	t.equal(typeof Object.getOwnPropertySymbols, 'undefined', 'Object.getOwnPropertySymbols does not exist');
 	t.end();
 });
-©/shams.js≈·'use strict';
+¥/.github/FUNDING.yml≈F# These are supported funding model platforms
 
-/* eslint complexity: [2, 18], max-statements: [2, 33] */
-module.exports = function hasSymbols() {
-	if (typeof Symbol !== 'function' || typeof Object.getOwnPropertySymbols !== 'function') { return false; }
-	if (typeof Symbol.iterator === 'symbol') { return true; }
-
-	var obj = {};
-	var sym = Symbol('test');
-	var symObj = Object(sym);
-	if (typeof sym === 'string') { return false; }
-
-	if (Object.prototype.toString.call(sym) !== '[object Symbol]') { return false; }
-	if (Object.prototype.toString.call(symObj) !== '[object Symbol]') { return false; }
-
-	// temp disabled per https://github.com/ljharb/object.assign/issues/17
-	// if (sym instanceof Symbol) { return false; }
-	// temp disabled per https://github.com/WebReflection/get-own-property-symbols/issues/4
-	// if (!(symObj instanceof Symbol)) { return false; }
-
-	// if (typeof Symbol.prototype.toString !== 'function') { return false; }
-	// if (String(sym) !== Symbol.prototype.toString.call(sym)) { return false; }
-
-	var symVal = 42;
-	obj[sym] = symVal;
-	for (sym in obj) { return false; } // eslint-disable-line no-restricted-syntax, no-unreachable-loop
-	if (typeof Object.keys === 'function' && Object.keys(obj).length !== 0) { return false; }
-
-	if (typeof Object.getOwnPropertyNames === 'function' && Object.getOwnPropertyNames(obj).length !== 0) { return false; }
-
-	var syms = Object.getOwnPropertySymbols(obj);
-	if (syms.length !== 1 || syms[0] !== sym) { return false; }
-
-	if (!Object.prototype.propertyIsEnumerable.call(obj, sym)) { return false; }
-
-	if (typeof Object.getOwnPropertyDescriptor === 'function') {
-		var descriptor = Object.getOwnPropertyDescriptor(obj, sym);
-		if (descriptor.value !== symVal || descriptor.enumerable !== true) { return false; }
-	}
-
-	return true;
-};
-Æ/test/tests.js≈Â'use strict';
-
-// eslint-disable-next-line consistent-return
-module.exports = function runSymbolTests(t) {
-	t.equal(typeof Symbol, 'function', 'global Symbol is a function');
-
-	if (typeof Symbol !== 'function') { return false; }
-
-	t.notEqual(Symbol(), Symbol(), 'two symbols are not equal');
-
-	/*
-	t.equal(
-		Symbol.prototype.toString.call(Symbol('foo')),
-		Symbol.prototype.toString.call(Symbol('foo')),
-		'two symbols with the same description stringify the same'
-	);
-	*/
-
-	/*
-	var foo = Symbol('foo');
-
-	t.notEqual(
-		String(foo),
-		String(Symbol('bar')),
-		'two symbols with different descriptions do not stringify the same'
-	);
-	*/
-
-	t.equal(typeof Symbol.prototype.toString, 'function', 'Symbol#toString is a function');
-	// t.equal(String(foo), Symbol.prototype.toString.call(foo), 'Symbol#toString equals String of the same symbol');
-
-	t.equal(typeof Object.getOwnPropertySymbols, 'function', 'Object.getOwnPropertySymbols is a function');
-
-	var obj = {};
-	var sym = Symbol('test');
-	var symObj = Object(sym);
-	t.notEqual(typeof sym, 'string', 'Symbol is not a string');
-	t.equal(Object.prototype.toString.call(sym), '[object Symbol]', 'symbol primitive Object#toStrings properly');
-	t.equal(Object.prototype.toString.call(symObj), '[object Symbol]', 'symbol primitive Object#toStrings properly');
-
-	var symVal = 42;
-	obj[sym] = symVal;
-	// eslint-disable-next-line no-restricted-syntax
-	for (sym in obj) { t.fail('symbol property key was found in for..in of object'); }
-
-	t.deepEqual(Object.keys(obj), [], 'no enumerable own keys on symbol-valued object');
-	t.deepEqual(Object.getOwnPropertyNames(obj), [], 'no own names on symbol-valued object');
-	t.deepEqual(Object.getOwnPropertySymbols(obj), [sym], 'one own symbol on symbol-valued object');
-	t.equal(Object.prototype.propertyIsEnumerable.call(obj, sym), true, 'symbol is enumerable');
-	t.deepEqual(Object.getOwnPropertyDescriptor(obj, sym), {
-		configurable: true,
-		enumerable: true,
-		value: 42,
-		writable: true
-	}, 'property descriptor is correct');
-};
-™/.eslintrcƒ§{
-	"root": true,
-
-	"extends": "@ljharb",
-
-	"rules": {
-		"max-statements-per-line": [2, { "max": 2 }],
-		"no-magic-numbers": 0,
-		"multiline-comment-style": 0,
-	}
-}
-∂/test/shams/core-js.js≈”'use strict';
-
-var test = require('tape');
-
-if (typeof Symbol === 'function' && typeof Symbol() === 'symbol') {
-	test('has native Symbol support', function (t) {
-		t.equal(typeof Symbol, 'function');
-		t.equal(typeof Symbol(), 'symbol');
-		t.end();
-	});
-	return;
-}
-
-var hasSymbols = require('../../shams');
-
-test('polyfilled Symbols', function (t) {
-	/* eslint-disable global-require */
-	t.equal(hasSymbols(), false, 'hasSymbols is false before polyfilling');
-	require('core-js/fn/symbol');
-	require('core-js/fn/symbol/to-string-tag');
-
-	require('../tests')(t);
-
-	var hasSymbolsAfter = hasSymbols();
-	t.equal(hasSymbolsAfter, true, 'hasSymbols is true after polyfilling');
-	/* eslint-enable global-require */
-	t.end();
-});
+github: [ljharb]
+patreon: # Replace with a single Patreon username
+open_collective: # Replace with a single Open Collective username
+ko_fi: # Replace with a single Ko-fi username
+tidelift: npm/has-symbols
+community_bridge: # Replace with a single Community Bridge project-name e.g., cloud-foundry
+liberapay: # Replace with a single Liberapay username
+issuehunt: # Replace with a single IssueHunt username
+otechie: # Replace with a single Otechie username
+custom: # Replace with up to 4 custom sponsorship URLs e.g., ['link1', 'link2']
 ≠/CHANGELOG.md≈
 # Changelog
 
@@ -341,27 +194,104 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial commit [`42e1e55`](https://github.com/inspect-js/has-symbols/commit/42e1e5502536a2b8ac529c9443984acd14836b1c)
 - Initial implementation. [`33f5cc6`](https://github.com/inspect-js/has-symbols/commit/33f5cc6cdff86e2194b081ee842bfdc63caf43fb)
 - read me [`01f1170`](https://github.com/inspect-js/has-symbols/commit/01f1170188ff7cb1558aa297f6ba5b516c6d7b0c)
-®/LICENSE≈/MIT License
+Æ/test/tests.js≈Â'use strict';
 
-Copyright (c) 2016 Jordan Harband
+// eslint-disable-next-line consistent-return
+module.exports = function runSymbolTests(t) {
+	t.equal(typeof Symbol, 'function', 'global Symbol is a function');
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+	if (typeof Symbol !== 'function') { return false; }
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+	t.notEqual(Symbol(), Symbol(), 'two symbols are not equal');
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+	/*
+	t.equal(
+		Symbol.prototype.toString.call(Symbol('foo')),
+		Symbol.prototype.toString.call(Symbol('foo')),
+		'two symbols with the same description stringify the same'
+	);
+	*/
+
+	/*
+	var foo = Symbol('foo');
+
+	t.notEqual(
+		String(foo),
+		String(Symbol('bar')),
+		'two symbols with different descriptions do not stringify the same'
+	);
+	*/
+
+	t.equal(typeof Symbol.prototype.toString, 'function', 'Symbol#toString is a function');
+	// t.equal(String(foo), Symbol.prototype.toString.call(foo), 'Symbol#toString equals String of the same symbol');
+
+	t.equal(typeof Object.getOwnPropertySymbols, 'function', 'Object.getOwnPropertySymbols is a function');
+
+	var obj = {};
+	var sym = Symbol('test');
+	var symObj = Object(sym);
+	t.notEqual(typeof sym, 'string', 'Symbol is not a string');
+	t.equal(Object.prototype.toString.call(sym), '[object Symbol]', 'symbol primitive Object#toStrings properly');
+	t.equal(Object.prototype.toString.call(symObj), '[object Symbol]', 'symbol primitive Object#toStrings properly');
+
+	var symVal = 42;
+	obj[sym] = symVal;
+	// eslint-disable-next-line no-restricted-syntax
+	for (sym in obj) { t.fail('symbol property key was found in for..in of object'); }
+
+	t.deepEqual(Object.keys(obj), [], 'no enumerable own keys on symbol-valued object');
+	t.deepEqual(Object.getOwnPropertyNames(obj), [], 'no own names on symbol-valued object');
+	t.deepEqual(Object.getOwnPropertySymbols(obj), [sym], 'one own symbol on symbol-valued object');
+	t.equal(Object.prototype.propertyIsEnumerable.call(obj, sym), true, 'symbol is enumerable');
+	t.deepEqual(Object.getOwnPropertyDescriptor(obj, sym), {
+		configurable: true,
+		enumerable: true,
+		value: 42,
+		writable: true
+	}, 'property descriptor is correct');
+};
+©/shams.js≈·'use strict';
+
+/* eslint complexity: [2, 18], max-statements: [2, 33] */
+module.exports = function hasSymbols() {
+	if (typeof Symbol !== 'function' || typeof Object.getOwnPropertySymbols !== 'function') { return false; }
+	if (typeof Symbol.iterator === 'symbol') { return true; }
+
+	var obj = {};
+	var sym = Symbol('test');
+	var symObj = Object(sym);
+	if (typeof sym === 'string') { return false; }
+
+	if (Object.prototype.toString.call(sym) !== '[object Symbol]') { return false; }
+	if (Object.prototype.toString.call(symObj) !== '[object Symbol]') { return false; }
+
+	// temp disabled per https://github.com/ljharb/object.assign/issues/17
+	// if (sym instanceof Symbol) { return false; }
+	// temp disabled per https://github.com/WebReflection/get-own-property-symbols/issues/4
+	// if (!(symObj instanceof Symbol)) { return false; }
+
+	// if (typeof Symbol.prototype.toString !== 'function') { return false; }
+	// if (String(sym) !== Symbol.prototype.toString.call(sym)) { return false; }
+
+	var symVal = 42;
+	obj[sym] = symVal;
+	for (sym in obj) { return false; } // eslint-disable-line no-restricted-syntax, no-unreachable-loop
+	if (typeof Object.keys === 'function' && Object.keys(obj).length !== 0) { return false; }
+
+	if (typeof Object.getOwnPropertyNames === 'function' && Object.getOwnPropertyNames(obj).length !== 0) { return false; }
+
+	var syms = Object.getOwnPropertySymbols(obj);
+	if (syms.length !== 1 || syms[0] !== sym) { return false; }
+
+	if (!Object.prototype.propertyIsEnumerable.call(obj, sym)) { return false; }
+
+	if (typeof Object.getOwnPropertyDescriptor === 'function') {
+		var descriptor = Object.getOwnPropertyDescriptor(obj, sym);
+		if (descriptor.value !== symVal || descriptor.enumerable !== true) { return false; }
+	}
+
+	return true;
+};
 ≠/package.json≈
 X{
 	"name": "has-symbols",
@@ -464,3 +394,73 @@ X{
 		]
 	}
 }
+™/README.md≈¸# has-symbols <sup>[![Version Badge][2]][1]</sup>
+
+[![github actions][actions-image]][actions-url]
+[![coverage][codecov-image]][codecov-url]
+[![dependency status][5]][6]
+[![dev dependency status][7]][8]
+[![License][license-image]][license-url]
+[![Downloads][downloads-image]][downloads-url]
+
+[![npm badge][11]][1]
+
+Determine if the JS environment has Symbol support. Supports spec, or shams.
+
+## Example
+
+```js
+var hasSymbols = require('has-symbols');
+
+hasSymbols() === true; // if the environment has native Symbol support. Not polyfillable, not forgeable.
+
+var hasSymbolsKinda = require('has-symbols/shams');
+hasSymbolsKinda() === true; // if the environment has a Symbol sham that mostly follows the spec.
+```
+
+## Supported Symbol shams
+ - get-own-property-symbols [npm](https://www.npmjs.com/package/get-own-property-symbols) | [github](https://github.com/WebReflection/get-own-property-symbols)
+ - core-js [npm](https://www.npmjs.com/package/core-js) | [github](https://github.com/zloirock/core-js)
+
+## Tests
+Simply clone the repo, `npm install`, and run `npm test`
+
+[1]: https://npmjs.org/package/has-symbols
+[2]: https://versionbadg.es/inspect-js/has-symbols.svg
+[5]: https://david-dm.org/inspect-js/has-symbols.svg
+[6]: https://david-dm.org/inspect-js/has-symbols
+[7]: https://david-dm.org/inspect-js/has-symbols/dev-status.svg
+[8]: https://david-dm.org/inspect-js/has-symbols#info=devDependencies
+[11]: https://nodei.co/npm/has-symbols.png?downloads=true&stars=true
+[license-image]: https://img.shields.io/npm/l/has-symbols.svg
+[license-url]: LICENSE
+[downloads-image]: https://img.shields.io/npm/dm/has-symbols.svg
+[downloads-url]: https://npm-stat.com/charts.html?package=has-symbols
+[codecov-image]: https://codecov.io/gh/inspect-js/has-symbols/branch/main/graphs/badge.svg
+[codecov-url]: https://app.codecov.io/gh/inspect-js/has-symbols/
+[actions-image]: https://img.shields.io/endpoint?url=https://github-actions-badge-u3jn4tfpocch.runkit.sh/inspect-js/has-symbols
+[actions-url]: https://github.com/inspect-js/has-symbols/actions
+™/.eslintrcƒ§{
+	"root": true,
+
+	"extends": "@ljharb",
+
+	"rules": {
+		"max-statements-per-line": [2, { "max": 2 }],
+		"no-magic-numbers": 0,
+		"multiline-comment-style": 0,
+	}
+}
+©/index.js≈§'use strict';
+
+var origSymbol = typeof Symbol !== 'undefined' && Symbol;
+var hasSymbolSham = require('./shams');
+
+module.exports = function hasNativeSymbols() {
+	if (typeof origSymbol !== 'function') { return false; }
+	if (typeof Symbol !== 'function') { return false; }
+	if (typeof origSymbol('foo') !== 'symbol') { return false; }
+	if (typeof Symbol('bar') !== 'symbol') { return false; }
+
+	return hasSymbolSham();
+};

@@ -1,0 +1,543 @@
+ç≠/CHANGELOG.md≈# 3.0.0
+
+Removes default exports for AbortController. You must now import the `AbortController` object explicitly. This is a breaking change for some users relying on default exports. Upgrading to 3.0 is a one line change:
+
+```js
+// ES Modules Users
+// v2
+import AbortController from "node-abort-controller";
+
+// v3
+import { AbortController } from "node-abort-controller";
+
+// Common JS Users
+// v2
+const AbortController = require("node-abort-controller");
+
+// v3
+const { AbortController } = require("node-abort-controller");
+```
+
+Other changes:
+
+- Fix typos in docs
+- Update all dev dependencies to resolve deprecation warnings
+
+# 2.0.0
+
+- Export AbortSignal class. This is a non-breaking change for JavaScript users and almost surely a non-breaking change for TypeScript users but we are doing a major version bump to be safe.
+
+# 1.2.0
+
+- Remove dependency on lib.dom for types that was conflicting with NodeJS types
+
+# 1.1.0
+
+- Add proper EventTarget support to signal and `signal.onabort`
+
+# 1.0.4
+
+- Initial Stable Release
+≠/package.json≈?{
+  "name": "node-abort-controller",
+  "version": "3.1.1",
+  "description": "AbortController for Node based on EventEmitter",
+  "main": "index.js",
+  "browser": "browser.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/southpolesteve/node-abort-controller.git"
+  },
+  "keywords": [
+    "AbortController",
+    "AbortSignal",
+    "fetch",
+    "polyfill"
+  ],
+  "author": "Steve Faulkner <southpolesteve@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/southpolesteve/node-abort-controller/issues"
+  },
+  "homepage": "https://github.com/southpolesteve/node-abort-controller#readme",
+  "devDependencies": {
+    "jest": "^27.2.4",
+    "node-fetch": "^2.6.5",
+    "whatwg-fetch": "^3.6.2"
+  },
+  "jest": {
+    "testEnvironment": "jsdom"
+  }
+}
+∫/__tests__/whatwg-fetch.js≈|const { AbortController } = require("../index.js");
+const { fetch } = require("whatwg-fetch");
+
+describe("node-fetch", function () {
+  it("should throw exception if aborted during the request", async function () {
+    expect.assertions(1);
+    try {
+      const controller = new AbortController();
+      const signal = controller.signal;
+      setTimeout(() => controller.abort(), 5);
+      await fetch("https://www.google.com/", { signal });
+    } catch (err) {
+      expect(err.name).toBe("AbortError");
+    }
+  });
+  it("should throw exception if passed an already aborted signal", async function () {
+    expect.assertions(1);
+    try {
+      const controller = new AbortController();
+      const signal = controller.signal;
+      controller.abort();
+      await fetch("https://www.google.com/", { signal });
+    } catch (err) {
+      expect(err.name).toBe("AbortError");
+    }
+  });
+});
+´/index.d.ts≈é// `AbortSignal`,`AbortController` are defined here to prevent a dependency on the `dom` library which disagrees with node runtime.
+// The definition for `AbortSignal` is taken from @types/node-fetch (https://github.com/DefinitelyTyped/DefinitelyTyped) for
+// maximal compatibility with node-fetch.
+// Original node-fetch definitions are under MIT License.
+
+export class AbortSignal {
+  aborted: boolean;
+  reason?: any;
+
+  addEventListener: (
+    type: "abort",
+    listener: (this: AbortSignal, event: any) => any,
+    options?:
+      | boolean
+      | {
+          capture?: boolean;
+          once?: boolean;
+          passive?: boolean;
+        }
+  ) => void;
+
+  removeEventListener: (
+    type: "abort",
+    listener: (this: AbortSignal, event: any) => any,
+    options?:
+      | boolean
+      | {
+          capture?: boolean;
+        }
+  ) => void;
+
+  dispatchEvent: (event: any) => boolean;
+
+  onabort: null | ((this: AbortSignal, event: any) => void);
+
+  throwIfAborted(): void;
+
+  static abort(reason?: any): AbortSignal;
+
+  static timeout(time: number): AbortSignal;
+}
+
+export class AbortController {
+  signal: AbortSignal;
+
+  abort(reason?: any): void;
+}
+∫/__tests__/abort-signal.js≈	8const { AbortController, AbortSignal } = require("../index.js");
+
+describe("AbortSignal", function () {
+  it("should implement EventTarget", function () {
+    const controller = new AbortController();
+    const signal = controller.signal;
+    const unusedHandler = jest.fn();
+    const handler = jest.fn();
+    const event = { type: "abort", target: signal };
+
+    signal.onabort = jest.fn();
+    signal.addEventListener("abort", handler);
+    signal.addEventListener("abort", unusedHandler);
+    signal.removeEventListener("abort", unusedHandler);
+
+    signal.dispatchEvent("abort", event);
+
+    expect(unusedHandler).not.toBeCalled();
+    expect(handler).toBeCalledTimes(1);
+    expect(handler).toBeCalledWith(event);
+    expect(signal.onabort).toBeCalledTimes(1);
+    expect(signal.onabort).toBeCalledWith(event);
+
+    jest.clearAllMocks();
+    signal.dispatchEvent("abort", event);
+
+    expect(unusedHandler).not.toBeCalled();
+    expect(handler).toBeCalledTimes(1);
+    expect(handler).toBeCalledWith(event);
+    expect(signal.onabort).toBeCalledTimes(1);
+    expect(signal.onabort).toBeCalledWith(event);
+
+    jest.clearAllMocks();
+    signal.dispatchEvent("unknown", event);
+
+    expect(unusedHandler).not.toBeCalled();
+    expect(handler).not.toBeCalled();
+    expect(signal.onabort).not.toBeCalled();
+  });
+
+  it("should implement throwIfAborted", function () {
+    const controller = new AbortController();
+    const signal = controller.signal;
+    expect(() => signal.throwIfAborted()).not.toThrowError();
+    controller.abort();
+    expect(() => signal.throwIfAborted()).toThrowError(new Error("AbortError"));
+  });
+});
+
+describe("Static methods", () => {
+  jest.useFakeTimers();
+  jest.spyOn(global, "setTimeout");
+
+  it("should implement abort", function () {
+    const signal = AbortSignal.abort();
+    expect(signal.aborted).toBe(true);
+    expect(signal.reason).toEqual(new Error("AbortError"));
+  });
+
+  it("should implement timeout", function () {
+    const signal = AbortSignal.timeout(1000);
+    expect(setTimeout).toHaveBeenCalledTimes(1);
+    expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 1000);
+    expect(signal.aborted).toBe(false);
+    expect(signal.reason).toBeUndefined();
+
+    jest.runAllTimers();
+
+    expect(signal.aborted).toBe(true);
+    expect(signal.reason).toEqual(new Error("TimeoutError"));
+  });
+});
+ª/.github/workflows/test.yml≈ename: Test
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js 14.6.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14.6.x
+          cache: "npm"
+      - run: npm ci
+      - run: npm test
+™/README.md≈J# node-abort-controller
+
+AbortController Polyfill for Node.JS based on EventEmitter for Node v14.6.x and below.
+
+Are you using Node 14.7.0 or above? You don't need this! [Node has `AbortController` and `AbortSignal` as builtin globals](https://nodejs.org/dist/latest/docs/api/globals.html#globals_class_abortcontroller). In Node versions >=14.7.0 and <15.4.0 you can access the experimental implementation using `--experimental-abortcontroller`.
+
+## Example Usage
+
+### Timing out `fetch`
+
+```javascript
+import fetch from "node-fetch";
+import { AbortController } from "node-abort-controller";
+
+const controller = new AbortController();
+const signal = controller.signal;
+
+await fetch("https:/www.google.com", { signal });
+
+// Abort fetch after 500ms. Effectively a timeout
+setTimeout(() => controller.abort(), 500);
+```
+
+### Re-usable `fetch` function with a built in timeout
+
+```javascript
+import { AbortController } from "node-abort-controller";
+import fetch from "node-fetch";
+
+const fetchWithTimeout = async (url = "") => {
+  const controller = new AbortController();
+  const { signal } = controller;
+
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, 5000);
+
+  const request = await fetch(url, { signal });
+
+  clearTimeout(timeout);
+
+  const result = await req.json();
+
+  return result;
+};
+```
+
+## Why would I need this?
+
+You might not need to! Generally speaking, there are three environments your JavaScript code can run in:
+
+- Node
+- Modern Browsers (Not Internet Explorer)
+- Legacy Browsers (Mostly Internet Explorer)
+
+For modern JS APIs, each environment would ideally get a polyfill:
+
+- only if it needs one
+- specific to the platform.
+
+In practice, this is hard. Tooling such as webpack and browserify are great at making sure stuff works out of the box in all environments. But it is quite easy to fail on both points above. In all likelyhood, you end up shipping less than ideal polyfills on platforms that don't even need them. So what is a developer to do? In the case of `fetch` and `AbortController` I've done the work for you. This is a guide to that work.
+
+If you are building a ...
+
+#### NodeJS library only supports Node 16 or above
+
+You don't need this library! [`AbortController` is now built into nodeJS ](https://nodejs.org/api/globals.html#globals_class_abortcontroller). Use that instead.
+
+#### Web Application running only in modern browsers
+
+You don't need a library! Close this tab. Uninstall this package.
+
+#### Web Application running in modern browsers AND NodeJS (such as a server side rendered JS app)
+
+Use _this package_ and [node-fetch](https://www.npmjs.com/package/node-fetch). It is minimally what you need.
+
+#### Web Application supporting legacy browsers AND NOT NodeJS
+
+Use [abort-controller](https://www.npmjs.com/package/abort-controller) and [whatwg-fetch](https://www.npmjs.com/package/whatwg-fetch). These are more complete polyfills that will work in all browser environments.
+
+#### Web Application supporting legacy browsers AND NodeJS
+
+Use [abort-controller](https://www.npmjs.com/package/abort-controller) and [cross-fetch](https://www.npmjs.com/package/cross-fetch). Same as above, except cross-fetch will polyfill correctly in both the browser and node.js
+
+#### NodeJS Library being consumed by other applications and using `fetch` internally
+
+Use _this package_ and [node-fetch](https://www.npmjs.com/package/node-fetch). It is the smallest and least opinionated combination for your end users. Application developers targeting Internet Exploer will need to polyfill `AbortController` and `fetch` on their own. But your library won't be forcing unecessary polyfills on developers who only target modern browsers.
+
+## Goals
+
+With the above guide in mind, this library has a very specific set of goals:
+
+1. Provide a minimal polyfill in node.js
+2. Do not provide a polyfill in any browser environment
+
+This is the ideal for _library authors_ who use `fetch` and `AbortController` internally and target _both_ browser and node developers.
+
+## Prior Art
+
+Thank you @mysticatea for https://github.com/mysticatea/abort-controller. It is a fantastic `AbortController` polyfill and ideal for many use cases.
+´/browser.js≈ﬂ'use strict'
+
+const _global =
+  typeof self !== 'undefined'
+    ? self
+    : typeof window !== 'undefined'
+    ? window
+    : /* otherwise */ undefined
+
+if (!_global) {
+  throw new Error(
+    `Unable to find global scope. Are you sure this is running in the browser?`
+  )
+}
+
+if (!_global.AbortController) {
+  throw new Error(
+    `Could not find "AbortController" in the global scope. You need to polyfill it first`
+  )
+}
+
+module.exports.AbortController = _global.AbortController©/index.js≈Kconst { EventEmitter } = require("events");
+
+class AbortSignal {
+  constructor() {
+    this.eventEmitter = new EventEmitter();
+    this.onabort = null;
+    this.aborted = false;
+    this.reason = undefined;
+  }
+  toString() {
+    return "[object AbortSignal]";
+  }
+  get [Symbol.toStringTag]() {
+    return "AbortSignal";
+  }
+  removeEventListener(name, handler) {
+    this.eventEmitter.removeListener(name, handler);
+  }
+  addEventListener(name, handler) {
+    this.eventEmitter.on(name, handler);
+  }
+  dispatchEvent(type) {
+    const event = { type, target: this };
+    const handlerName = `on${type}`;
+
+    if (typeof this[handlerName] === "function") this[handlerName](event);
+
+    this.eventEmitter.emit(type, event);
+  }
+  throwIfAborted() {
+    if (this.aborted) {
+      throw this.reason;
+    }
+  }
+  static abort(reason) {
+    const controller = new AbortController();
+    controller.abort();
+    return controller.signal;
+  }
+  static timeout(time) {
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(new Error("TimeoutError")), time);
+    return controller.signal;
+  }
+}
+class AbortController {
+  constructor() {
+    this.signal = new AbortSignal();
+  }
+  abort(reason) {
+    if (this.signal.aborted) return;
+
+    this.signal.aborted = true;
+
+    if (reason) this.signal.reason = reason;
+    else this.signal.reason = new Error("AbortError");
+
+    this.signal.dispatchEvent("abort");
+  }
+  toString() {
+    return "[object AbortController]";
+  }
+  get [Symbol.toStringTag]() {
+    return "AbortController";
+  }
+}
+
+module.exports = { AbortController, AbortSignal };
+∏/__tests__/node-fetch.js≈vconst { AbortController } = require("../index.js");
+const fetch = require("node-fetch");
+
+describe("node-fetch", function () {
+  it("should throw exception if aborted during the request", async function () {
+    expect.assertions(1);
+    try {
+      const controller = new AbortController();
+      const signal = controller.signal;
+      setTimeout(() => controller.abort(), 5);
+      await fetch("https://www.google.com/", { signal });
+    } catch (err) {
+      expect(err.name).toBe("AbortError");
+    }
+  });
+  it("should throw exception if passed an already aborted signal", async function () {
+    expect.assertions(1);
+    try {
+      const controller = new AbortController();
+      const signal = controller.signal;
+      controller.abort();
+      await fetch("https://www.google.com/", { signal });
+    } catch (err) {
+      expect(err.name).toBe("AbortError");
+    }
+  });
+});
+®/LICENSE≈/MIT License
+
+Copyright (c) 2019 Steve Faulkner
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+æ/__tests__/abort-controller.js≈Ωconst { AbortController } = require("../index.js");
+
+describe("AbortController", function () {
+  it("should call abort handlers once", function () {
+    const controller = new AbortController();
+    const signal = controller.signal;
+    const handler = jest.fn();
+
+    expect(signal.onabort).toBeNull();
+    expect(signal.aborted).toBe(false);
+    expect(signal.reason).toBeUndefined();
+
+    signal.onabort = jest.fn();
+    signal.addEventListener("abort", handler);
+
+    controller.abort();
+
+    expect(signal.aborted).toBe(true);
+    expect(signal.reason).toEqual(new Error("AbortError"));
+    expect(handler).toBeCalledTimes(1);
+    expect(handler).toBeCalledWith({ type: "abort", target: signal });
+    expect(signal.onabort).toBeCalledTimes(1);
+    expect(signal.onabort).toBeCalledWith({ type: "abort", target: signal });
+
+    jest.clearAllMocks();
+    controller.abort();
+
+    expect(signal.aborted).toBe(true);
+    expect(signal.reason).toEqual(new Error("AbortError"));
+    expect(handler).not.toBeCalled();
+    expect(signal.onabort).not.toBeCalled();
+  });
+
+  it("should use custom abort reason", () => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+    expect(signal.aborted).toBe(false);
+    expect(signal.reason).toBeUndefined();
+
+    const customReason = new Error("Custom Reason");
+    controller.abort(customReason);
+
+    expect(signal.aborted).toBe(true);
+    expect(signal.reason).toBe(customReason);
+  });
+});
+µ/__tests__/browser.js≈5describe("AbortController in browser", function () {
+  // Mock AbortController
+  const mockedGlobalAbortController = jest.fn();
+
+  beforeAll(() => {
+    // Attach mocked AbortController to global
+    self.AbortController = mockedGlobalAbortController;
+  });
+
+  it("should call global abort controller", function () {
+    // Require module after global setup
+    const { AbortController } = require("../browser.js");
+
+    const controller = new AbortController();
+
+    expect(controller).toBeTruthy();
+    expect(mockedGlobalAbortController).toBeCalled();
+  });
+});

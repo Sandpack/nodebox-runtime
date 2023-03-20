@@ -1,46 +1,4 @@
-åŸ!/lib/node/preparePaletteFile.d.ts≈Bimport type { App } from '@vuepress/core';
-import type { PalettePluginOptions } from './palettePlugin.js';
-export declare const preparePaletteFile: (app: App, { userPaletteFile, tempPaletteFile, importCode, }: Pick<Required<PalettePluginOptions>, 'userPaletteFile' | 'tempPaletteFile' | 'importCode'>) => Promise<string>;
-∫/lib/node/presetOptions.js≈’/**
- * Default options for different palette preset
- */
-export const presetOptions = {
-    css: {
-        userPaletteFile: '.vuepress/styles/palette.css',
-        tempPaletteFile: 'styles/palette.css',
-        userStyleFile: '.vuepress/styles/index.css',
-        tempStyleFile: 'styles/index.css',
-        importCode: (filePath) => `@import '${filePath}';\n`,
-    },
-    sass: {
-        userPaletteFile: '.vuepress/styles/palette.scss',
-        tempPaletteFile: 'styles/palette.scss',
-        userStyleFile: '.vuepress/styles/index.scss',
-        tempStyleFile: 'styles/index.scss',
-        importCode: (filePath) => `@forward 'file:///${filePath}';\n`,
-    },
-    less: {
-        userPaletteFile: '.vuepress/styles/palette.less',
-        tempPaletteFile: 'styles/palette.less',
-        userStyleFile: '.vuepress/styles/index.less',
-        tempStyleFile: 'styles/index.less',
-        importCode: (filePath) => `@import '${filePath}';\n`,
-    },
-    stylus: {
-        userPaletteFile: '.vuepress/styles/palette.styl',
-        tempPaletteFile: 'styles/palette.styl',
-        userStyleFile: '.vuepress/styles/index.styl',
-        tempStyleFile: 'styles/index.styl',
-        importCode: (filePath) => `@require '${filePath}';\n`,
-    },
-};
-¥/lib/node/index.d.tsƒÍimport { palettePlugin } from './palettePlugin.js';
-export * from './palettePlugin.js';
-export * from './preparePaletteFile.js';
-export * from './prepareStyleFile.js';
-export * from './presetOptions.js';
-export default palettePlugin;
-Ω/lib/node/prepareStyleFile.js≈`import { fs } from '@vuepress/utils';
+åΩ/lib/node/prepareStyleFile.js≈`import { fs } from '@vuepress/utils';
 export const prepareStyleFile = async (app, { userStyleFile, tempStyleFile, importCode, }) => {
     const userStyle = app.dir.source(userStyleFile);
     let content = '';
@@ -49,17 +7,6 @@ export const prepareStyleFile = async (app, { userStyleFile, tempStyleFile, impo
     }
     return app.writeTemp(tempStyleFile, content);
 };
-≤/lib/node/index.jsƒÍimport { palettePlugin } from './palettePlugin.js';
-export * from './palettePlugin.js';
-export * from './preparePaletteFile.js';
-export * from './prepareStyleFile.js';
-export * from './presetOptions.js';
-export default palettePlugin;
-º/lib/node/presetOptions.d.tsƒ˛import type { PalettePluginOptions } from './palettePlugin.js';
-/**
- * Default options for different palette preset
- */
-export declare const presetOptions: Record<Required<PalettePluginOptions>['preset'], Omit<Required<PalettePluginOptions>, 'preset'>>;
 ø/lib/node/preparePaletteFile.js≈pimport { fs } from '@vuepress/utils';
 export const preparePaletteFile = async (app, { userPaletteFile, tempPaletteFile, importCode, }) => {
     const userPalette = app.dir.source(userPaletteFile);
@@ -69,86 +16,6 @@ export const preparePaletteFile = async (app, { userPaletteFile, tempPaletteFile
     }
     return app.writeTemp(tempPaletteFile, content);
 };
-≠/package.json≈{
-  "name": "@vuepress/plugin-palette",
-  "version": "2.0.0-beta.53",
-  "description": "VuePress plugin - palette",
-  "keywords": [
-    "vuepress-plugin",
-    "vuepress",
-    "plugin",
-    "palette",
-    "style",
-    "css",
-    "sass",
-    "less",
-    "stylus"
-  ],
-  "homepage": "https://github.com/vuepress",
-  "bugs": {
-    "url": "https://github.com/vuepress/vuepress-next/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/vuepress/vuepress-next.git"
-  },
-  "license": "MIT",
-  "author": "meteorlxy",
-  "type": "module",
-  "exports": {
-    ".": "./lib/node/index.js",
-    "./package.json": "./package.json"
-  },
-  "main": "./lib/node/index.js",
-  "types": "./lib/node/index.d.ts",
-  "files": [
-    "lib"
-  ],
-  "dependencies": {
-    "@vuepress/core": "2.0.0-beta.53",
-    "@vuepress/utils": "2.0.0-beta.53",
-    "chokidar": "^3.5.3"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "scripts": {
-    "build": "tsc -b tsconfig.build.json",
-    "clean": "rimraf lib *.tsbuildinfo"
-  }
-}º/lib/node/palettePlugin.d.ts≈Èimport type { Plugin } from '@vuepress/core';
-/**
- * Options of @vuepress/plugin-palette
- */
-export interface PalettePluginOptions {
-    /**
-     * Preset of the palette
-     *
-     * @default 'css'
-     */
-    preset?: 'css' | 'sass' | 'less' | 'stylus';
-    /**
-     * File path of the user palette file, relative to source directory
-     */
-    userPaletteFile?: string;
-    /**
-     * File path of the generated palette temp file, relative to temp directory
-     */
-    tempPaletteFile?: string;
-    /**
-     * File path of the user style file, relative to source directory
-     */
-    userStyleFile?: string;
-    /**
-     * File path of the generated style temp file, relative to temp directory
-     */
-    tempStyleFile?: string;
-    /**
-     * Function to generate import code
-     */
-    importCode?: (filePath: string) => string;
-}
-export declare const palettePlugin: ({ preset, userPaletteFile, tempPaletteFile, userStyleFile, tempStyleFile, importCode, }?: PalettePluginOptions) => Plugin;
 ∫/lib/node/palettePlugin.js≈	import chokidar from 'chokidar';
 import { preparePaletteFile } from './preparePaletteFile.js';
 import { prepareStyleFile } from './prepareStyleFile.js';
@@ -214,9 +81,12 @@ export const palettePlugin = ({ preset = 'css', userPaletteFile = presetOptions[
         watchers.push(styleWatcher);
     },
 });
-ø/lib/node/prepareStyleFile.d.ts≈8import type { App } from '@vuepress/core';
-import type { PalettePluginOptions } from './palettePlugin.js';
-export declare const prepareStyleFile: (app: App, { userStyleFile, tempStyleFile, importCode, }: Pick<Required<PalettePluginOptions>, 'userStyleFile' | 'tempStyleFile' | 'importCode'>) => Promise<string>;
+≤/lib/node/index.jsƒÍimport { palettePlugin } from './palettePlugin.js';
+export * from './palettePlugin.js';
+export * from './preparePaletteFile.js';
+export * from './prepareStyleFile.js';
+export * from './presetOptions.js';
+export default palettePlugin;
 ®/LICENSE≈CThe MIT License (MIT)
 
 Copyright (c) 2018-present, Yuxi (Evan) You
@@ -238,3 +108,133 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+Ÿ!/lib/node/preparePaletteFile.d.ts≈Bimport type { App } from '@vuepress/core';
+import type { PalettePluginOptions } from './palettePlugin.js';
+export declare const preparePaletteFile: (app: App, { userPaletteFile, tempPaletteFile, importCode, }: Pick<Required<PalettePluginOptions>, 'userPaletteFile' | 'tempPaletteFile' | 'importCode'>) => Promise<string>;
+∫/lib/node/presetOptions.js≈’/**
+ * Default options for different palette preset
+ */
+export const presetOptions = {
+    css: {
+        userPaletteFile: '.vuepress/styles/palette.css',
+        tempPaletteFile: 'styles/palette.css',
+        userStyleFile: '.vuepress/styles/index.css',
+        tempStyleFile: 'styles/index.css',
+        importCode: (filePath) => `@import '${filePath}';\n`,
+    },
+    sass: {
+        userPaletteFile: '.vuepress/styles/palette.scss',
+        tempPaletteFile: 'styles/palette.scss',
+        userStyleFile: '.vuepress/styles/index.scss',
+        tempStyleFile: 'styles/index.scss',
+        importCode: (filePath) => `@forward 'file:///${filePath}';\n`,
+    },
+    less: {
+        userPaletteFile: '.vuepress/styles/palette.less',
+        tempPaletteFile: 'styles/palette.less',
+        userStyleFile: '.vuepress/styles/index.less',
+        tempStyleFile: 'styles/index.less',
+        importCode: (filePath) => `@import '${filePath}';\n`,
+    },
+    stylus: {
+        userPaletteFile: '.vuepress/styles/palette.styl',
+        tempPaletteFile: 'styles/palette.styl',
+        userStyleFile: '.vuepress/styles/index.styl',
+        tempStyleFile: 'styles/index.styl',
+        importCode: (filePath) => `@require '${filePath}';\n`,
+    },
+};
+≠/package.json≈{
+  "name": "@vuepress/plugin-palette",
+  "version": "2.0.0-beta.53",
+  "description": "VuePress plugin - palette",
+  "keywords": [
+    "vuepress-plugin",
+    "vuepress",
+    "plugin",
+    "palette",
+    "style",
+    "css",
+    "sass",
+    "less",
+    "stylus"
+  ],
+  "homepage": "https://github.com/vuepress",
+  "bugs": {
+    "url": "https://github.com/vuepress/vuepress-next/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vuepress/vuepress-next.git"
+  },
+  "license": "MIT",
+  "author": "meteorlxy",
+  "type": "module",
+  "exports": {
+    ".": "./lib/node/index.js",
+    "./package.json": "./package.json"
+  },
+  "main": "./lib/node/index.js",
+  "types": "./lib/node/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "dependencies": {
+    "@vuepress/core": "2.0.0-beta.53",
+    "@vuepress/utils": "2.0.0-beta.53",
+    "chokidar": "^3.5.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -b tsconfig.build.json",
+    "clean": "rimraf lib *.tsbuildinfo"
+  }
+}ø/lib/node/prepareStyleFile.d.ts≈8import type { App } from '@vuepress/core';
+import type { PalettePluginOptions } from './palettePlugin.js';
+export declare const prepareStyleFile: (app: App, { userStyleFile, tempStyleFile, importCode, }: Pick<Required<PalettePluginOptions>, 'userStyleFile' | 'tempStyleFile' | 'importCode'>) => Promise<string>;
+¥/lib/node/index.d.tsƒÍimport { palettePlugin } from './palettePlugin.js';
+export * from './palettePlugin.js';
+export * from './preparePaletteFile.js';
+export * from './prepareStyleFile.js';
+export * from './presetOptions.js';
+export default palettePlugin;
+º/lib/node/palettePlugin.d.ts≈Èimport type { Plugin } from '@vuepress/core';
+/**
+ * Options of @vuepress/plugin-palette
+ */
+export interface PalettePluginOptions {
+    /**
+     * Preset of the palette
+     *
+     * @default 'css'
+     */
+    preset?: 'css' | 'sass' | 'less' | 'stylus';
+    /**
+     * File path of the user palette file, relative to source directory
+     */
+    userPaletteFile?: string;
+    /**
+     * File path of the generated palette temp file, relative to temp directory
+     */
+    tempPaletteFile?: string;
+    /**
+     * File path of the user style file, relative to source directory
+     */
+    userStyleFile?: string;
+    /**
+     * File path of the generated style temp file, relative to temp directory
+     */
+    tempStyleFile?: string;
+    /**
+     * Function to generate import code
+     */
+    importCode?: (filePath: string) => string;
+}
+export declare const palettePlugin: ({ preset, userPaletteFile, tempPaletteFile, userStyleFile, tempStyleFile, importCode, }?: PalettePluginOptions) => Plugin;
+º/lib/node/presetOptions.d.tsƒ˛import type { PalettePluginOptions } from './palettePlugin.js';
+/**
+ * Default options for different palette preset
+ */
+export declare const presetOptions: Record<Required<PalettePluginOptions>['preset'], Omit<Required<PalettePluginOptions>, 'preset'>>;

@@ -1,4 +1,51 @@
-Ñ™/readme.md≈.# resolve-from [![Build Status](https://travis-ci.org/sindresorhus/resolve-from.svg?branch=master)](https://travis-ci.org/sindresorhus/resolve-from)
+Ñ©/index.js≈e'use strict';
+const path = require('path');
+const Module = require('module');
+const fs = require('fs');
+
+const resolveFrom = (fromDir, moduleId, silent) => {
+	if (typeof fromDir !== 'string') {
+		throw new TypeError(`Expected \`fromDir\` to be of type \`string\`, got \`${typeof fromDir}\``);
+	}
+
+	if (typeof moduleId !== 'string') {
+		throw new TypeError(`Expected \`moduleId\` to be of type \`string\`, got \`${typeof moduleId}\``);
+	}
+
+	try {
+		fromDir = fs.realpathSync(fromDir);
+	} catch (err) {
+		if (err.code === 'ENOENT') {
+			fromDir = path.resolve(fromDir);
+		} else if (silent) {
+			return null;
+		} else {
+			throw err;
+		}
+	}
+
+	const fromFile = path.join(fromDir, 'noop.js');
+
+	const resolveFileName = () => Module._resolveFilename(moduleId, {
+		id: fromFile,
+		filename: fromFile,
+		paths: Module._nodeModulePaths(fromDir)
+	});
+
+	if (silent) {
+		try {
+			return resolveFileName();
+		} catch (err) {
+			return null;
+		}
+	}
+
+	return resolveFileName();
+};
+
+module.exports = (fromDir, moduleId) => resolveFrom(fromDir, moduleId);
+module.exports.silent = (fromDir, moduleId) => resolveFrom(fromDir, moduleId, true);
+™/readme.md≈.# resolve-from [![Build Status](https://travis-ci.org/sindresorhus/resolve-from.svg?branch=master)](https://travis-ci.org/sindresorhus/resolve-from)
 
 > Resolve the path of a module like [`require.resolve()`](https://nodejs.org/api/globals.html#globals_require_resolve) but from a given path
 
@@ -104,53 +151,6 @@ MIT ¬© [Sindre Sorhus](https://sindresorhus.com)
 		"xo": "*"
 	}
 }
-©/index.js≈e'use strict';
-const path = require('path');
-const Module = require('module');
-const fs = require('fs');
-
-const resolveFrom = (fromDir, moduleId, silent) => {
-	if (typeof fromDir !== 'string') {
-		throw new TypeError(`Expected \`fromDir\` to be of type \`string\`, got \`${typeof fromDir}\``);
-	}
-
-	if (typeof moduleId !== 'string') {
-		throw new TypeError(`Expected \`moduleId\` to be of type \`string\`, got \`${typeof moduleId}\``);
-	}
-
-	try {
-		fromDir = fs.realpathSync(fromDir);
-	} catch (err) {
-		if (err.code === 'ENOENT') {
-			fromDir = path.resolve(fromDir);
-		} else if (silent) {
-			return null;
-		} else {
-			throw err;
-		}
-	}
-
-	const fromFile = path.join(fromDir, 'noop.js');
-
-	const resolveFileName = () => Module._resolveFilename(moduleId, {
-		id: fromFile,
-		filename: fromFile,
-		paths: Module._nodeModulePaths(fromDir)
-	});
-
-	if (silent) {
-		try {
-			return resolveFileName();
-		} catch (err) {
-			return null;
-		}
-	}
-
-	return resolveFileName();
-};
-
-module.exports = (fromDir, moduleId) => resolveFrom(fromDir, moduleId);
-module.exports.silent = (fromDir, moduleId) => resolveFrom(fromDir, moduleId, true);
 ®/license≈UMIT License
 
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)

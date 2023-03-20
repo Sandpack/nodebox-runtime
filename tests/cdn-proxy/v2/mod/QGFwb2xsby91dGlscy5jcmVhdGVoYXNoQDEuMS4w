@@ -19,23 +19,23 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-º/src/__tests__/tsconfig.jsonƒq{
+∞/dist/index.d.tsƒlexport declare function createHash(kind: string): import("crypto").Hash;
+//# sourceMappingURL=index.d.ts.map¥/dist/index.d.ts.mapƒ´{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":"AAEA,wBAAgB,UAAU,CAAC,IAAI,EAAE,MAAM,GAAG,OAAO,QAAQ,EAAE,IAAI,CAO9D"}º/src/__tests__/tsconfig.jsonƒq{
   "extends": "../../../../tsconfig.test.base",
   "include": ["**/*"],
   "references": [{ "path": "../../" }]
 }
-Æ/dist/index.js≈ó"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.createHash = void 0;
-const utils_isnodelike_1 = require("@apollo/utils.isnodelike");
-function createHash(kind) {
-    if (utils_isnodelike_1.isNodeLike) {
-        return module.require("crypto").createHash(kind);
-    }
-    return require("sha.js")(kind);
+≤/dist/index.js.map≈9{"version":3,"file":"index.js","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":";;;AAAA,+DAAsD;AAEtD,SAAgB,UAAU,CAAC,IAAY;IACrC,IAAI,6BAAU,EAAE;QAGd,OAAO,MAAM,CAAC,OAAO,CAAC,QAAQ,CAAC,CAAC,UAAU,CAAC,IAAI,CAAC,CAAC;KAClD;IACD,OAAO,OAAO,CAAC,QAAQ,CAAC,CAAC,IAAI,CAAC,CAAC;AACjC,CAAC;AAPD,gCAOC"}≠/src/index.ts≈ximport { isNodeLike } from "@apollo/utils.isnodelike";
+
+export function createHash(kind: string): import("crypto").Hash {
+  if (isNodeLike) {
+    // Use module.require instead of just require to avoid bundling whatever
+    // crypto polyfills a non-Node bundler might fall back to.
+    return module.require("crypto").createHash(kind);
+  }
+  return require("sha.js")(kind);
 }
-exports.createHash = createHash;
-//# sourceMappingURL=index.js.map¥/dist/index.d.ts.mapƒ´{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":"AAEA,wBAAgB,UAAU,CAAC,IAAI,EAAE,MAAM,GAAG,OAAO,QAAQ,EAAE,IAAI,CAO9D"}Ÿ!/src/__tests__/createHash.test.ts≈import { createHash } from "..";
+Ÿ!/src/__tests__/createHash.test.ts≈import { createHash } from "..";
 
 describe("createHash", () => {
   it("creates a hash", () => {
@@ -74,21 +74,20 @@ describe("createHash", () => {
     "sha.js": "^2.4.11"
   }
 }
-æ/src/__tests__/exports.test.tsƒ∫import * as allExports from "..";
+Æ/dist/index.js≈ó"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.createHash = void 0;
+const utils_isnodelike_1 = require("@apollo/utils.isnodelike");
+function createHash(kind) {
+    if (utils_isnodelike_1.isNodeLike) {
+        return module.require("crypto").createHash(kind);
+    }
+    return require("sha.js")(kind);
+}
+exports.createHash = createHash;
+//# sourceMappingURL=index.js.mapæ/src/__tests__/exports.test.tsƒ∫import * as allExports from "..";
 
 it("exports hashing functions", () => {
   expect(Object.keys(allExports).length).toBe(1);
   expect(typeof allExports.createHash).toBe("function");
 });
-≤/dist/index.js.map≈9{"version":3,"file":"index.js","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":";;;AAAA,+DAAsD;AAEtD,SAAgB,UAAU,CAAC,IAAY;IACrC,IAAI,6BAAU,EAAE;QAGd,OAAO,MAAM,CAAC,OAAO,CAAC,QAAQ,CAAC,CAAC,UAAU,CAAC,IAAI,CAAC,CAAC;KAClD;IACD,OAAO,OAAO,CAAC,QAAQ,CAAC,CAAC,IAAI,CAAC,CAAC;AACjC,CAAC;AAPD,gCAOC"}≠/src/index.ts≈ximport { isNodeLike } from "@apollo/utils.isnodelike";
-
-export function createHash(kind: string): import("crypto").Hash {
-  if (isNodeLike) {
-    // Use module.require instead of just require to avoid bundling whatever
-    // crypto polyfills a non-Node bundler might fall back to.
-    return module.require("crypto").createHash(kind);
-  }
-  return require("sha.js")(kind);
-}
-∞/dist/index.d.tsƒlexport declare function createHash(kind: string): import("crypto").Hash;
-//# sourceMappingURL=index.d.ts.map

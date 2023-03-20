@@ -1,4 +1,26 @@
-â≠/lib/index.js≈_var parse = require("./parse");
+â®/LICENSE≈2Copyright (c) Bogdan Chadkin <trysound@yandex.ru>
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+≠/lib/index.js≈_var parse = require("./parse");
 var walk = require("./walk");
 var stringify = require("./stringify");
 
@@ -26,126 +48,6 @@ ValueParser.walk = walk;
 ValueParser.stringify = stringify;
 
 module.exports = ValueParser;
-¨/lib/unit.js≈Îvar minus = "-".charCodeAt(0);
-var plus = "+".charCodeAt(0);
-var dot = ".".charCodeAt(0);
-var exp = "e".charCodeAt(0);
-var EXP = "E".charCodeAt(0);
-
-// Check if three code points would start a number
-// https://www.w3.org/TR/css-syntax-3/#starts-with-a-number
-function likeNumber(value) {
-  var code = value.charCodeAt(0);
-  var nextCode;
-
-  if (code === plus || code === minus) {
-    nextCode = value.charCodeAt(1);
-
-    if (nextCode >= 48 && nextCode <= 57) {
-      return true;
-    }
-
-    var nextNextCode = value.charCodeAt(2);
-
-    if (nextCode === dot && nextNextCode >= 48 && nextNextCode <= 57) {
-      return true;
-    }
-
-    return false;
-  }
-
-  if (code === dot) {
-    nextCode = value.charCodeAt(1);
-
-    if (nextCode >= 48 && nextCode <= 57) {
-      return true;
-    }
-
-    return false;
-  }
-
-  if (code >= 48 && code <= 57) {
-    return true;
-  }
-
-  return false;
-}
-
-// Consume a number
-// https://www.w3.org/TR/css-syntax-3/#consume-number
-module.exports = function(value) {
-  var pos = 0;
-  var length = value.length;
-  var code;
-  var nextCode;
-  var nextNextCode;
-
-  if (length === 0 || !likeNumber(value)) {
-    return false;
-  }
-
-  code = value.charCodeAt(pos);
-
-  if (code === plus || code === minus) {
-    pos++;
-  }
-
-  while (pos < length) {
-    code = value.charCodeAt(pos);
-
-    if (code < 48 || code > 57) {
-      break;
-    }
-
-    pos += 1;
-  }
-
-  code = value.charCodeAt(pos);
-  nextCode = value.charCodeAt(pos + 1);
-
-  if (code === dot && nextCode >= 48 && nextCode <= 57) {
-    pos += 2;
-
-    while (pos < length) {
-      code = value.charCodeAt(pos);
-
-      if (code < 48 || code > 57) {
-        break;
-      }
-
-      pos += 1;
-    }
-  }
-
-  code = value.charCodeAt(pos);
-  nextCode = value.charCodeAt(pos + 1);
-  nextNextCode = value.charCodeAt(pos + 2);
-
-  if (
-    (code === exp || code === EXP) &&
-    ((nextCode >= 48 && nextCode <= 57) ||
-      ((nextCode === plus || nextCode === minus) &&
-        nextNextCode >= 48 &&
-        nextNextCode <= 57))
-  ) {
-    pos += nextCode === plus || nextCode === minus ? 3 : 2;
-
-    while (pos < length) {
-      code = value.charCodeAt(pos);
-
-      if (code < 48 || code > 57) {
-        break;
-      }
-
-      pos += 1;
-    }
-  }
-
-  return {
-    number: value.slice(0, pos),
-    unit: value.slice(pos)
-  };
-};
 ≠/package.json≈{
   "name": "postcss-value-parser",
   "version": "4.2.0",
@@ -204,6 +106,28 @@ module.exports = function(value) {
     "url": "https://github.com/TrySound/postcss-value-parser/issues"
   }
 }
+¨/lib/walk.js≈©module.exports = function walk(nodes, cb, bubble) {
+  var i, max, node, result;
+
+  for (i = 0, max = nodes.length; i < max; i += 1) {
+    node = nodes[i];
+    if (!bubble) {
+      result = cb(node, i, nodes);
+    }
+
+    if (
+      result !== false &&
+      node.type === "function" &&
+      Array.isArray(node.nodes)
+    ) {
+      walk(node.nodes, cb, bubble);
+    }
+
+    if (bubble) {
+      cb(node, i, nodes);
+    }
+  }
+};
 ™/README.md≈# postcss-value-parser
 
 [![Travis CI](https://travis-ci.org/TrySound/postcss-value-parser.svg)](https://travis-ci.org/TrySound/postcss-value-parser)
@@ -788,98 +712,6 @@ module.exports = function(input) {
 
   return stack[0].nodes;
 };
-±/lib/stringify.js≈°function stringifyNode(node, custom) {
-  var type = node.type;
-  var value = node.value;
-  var buf;
-  var customResult;
-
-  if (custom && (customResult = custom(node)) !== undefined) {
-    return customResult;
-  } else if (type === "word" || type === "space") {
-    return value;
-  } else if (type === "string") {
-    buf = node.quote || "";
-    return buf + value + (node.unclosed ? "" : buf);
-  } else if (type === "comment") {
-    return "/*" + value + (node.unclosed ? "" : "*/");
-  } else if (type === "div") {
-    return (node.before || "") + value + (node.after || "");
-  } else if (Array.isArray(node.nodes)) {
-    buf = stringify(node.nodes, custom);
-    if (type !== "function") {
-      return buf;
-    }
-    return (
-      value +
-      "(" +
-      (node.before || "") +
-      buf +
-      (node.after || "") +
-      (node.unclosed ? "" : ")")
-    );
-  }
-  return value;
-}
-
-function stringify(nodes, custom) {
-  var result, i;
-
-  if (Array.isArray(nodes)) {
-    result = "";
-    for (i = nodes.length - 1; ~i; i -= 1) {
-      result = stringifyNode(nodes[i], custom) + result;
-    }
-    return result;
-  }
-  return stringifyNode(nodes, custom);
-}
-
-module.exports = stringify;
-®/LICENSE≈2Copyright (c) Bogdan Chadkin <trysound@yandex.ru>
-
-Permission is hereby granted, free of charge, to any person
-obtaining a copy of this software and associated documentation
-files (the "Software"), to deal in the Software without
-restriction, including without limitation the rights to use,
-copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following
-conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-OTHER DEALINGS IN THE SOFTWARE.
-¨/lib/walk.js≈©module.exports = function walk(nodes, cb, bubble) {
-  var i, max, node, result;
-
-  for (i = 0, max = nodes.length; i < max; i += 1) {
-    node = nodes[i];
-    if (!bubble) {
-      result = cb(node, i, nodes);
-    }
-
-    if (
-      result !== false &&
-      node.type === "function" &&
-      Array.isArray(node.nodes)
-    ) {
-      walk(node.nodes, cb, bubble);
-    }
-
-    if (bubble) {
-      cb(node, i, nodes);
-    }
-  }
-};
 Ø/lib/index.d.ts≈¬declare namespace postcssValueParser {
   interface BaseNode {
     /**
@@ -1057,3 +889,171 @@ OTHER DEALINGS IN THE SOFTWARE.
 declare const postcssValueParser: postcssValueParser.ValueParser;
 
 export = postcssValueParser;
+¨/lib/unit.js≈Îvar minus = "-".charCodeAt(0);
+var plus = "+".charCodeAt(0);
+var dot = ".".charCodeAt(0);
+var exp = "e".charCodeAt(0);
+var EXP = "E".charCodeAt(0);
+
+// Check if three code points would start a number
+// https://www.w3.org/TR/css-syntax-3/#starts-with-a-number
+function likeNumber(value) {
+  var code = value.charCodeAt(0);
+  var nextCode;
+
+  if (code === plus || code === minus) {
+    nextCode = value.charCodeAt(1);
+
+    if (nextCode >= 48 && nextCode <= 57) {
+      return true;
+    }
+
+    var nextNextCode = value.charCodeAt(2);
+
+    if (nextCode === dot && nextNextCode >= 48 && nextNextCode <= 57) {
+      return true;
+    }
+
+    return false;
+  }
+
+  if (code === dot) {
+    nextCode = value.charCodeAt(1);
+
+    if (nextCode >= 48 && nextCode <= 57) {
+      return true;
+    }
+
+    return false;
+  }
+
+  if (code >= 48 && code <= 57) {
+    return true;
+  }
+
+  return false;
+}
+
+// Consume a number
+// https://www.w3.org/TR/css-syntax-3/#consume-number
+module.exports = function(value) {
+  var pos = 0;
+  var length = value.length;
+  var code;
+  var nextCode;
+  var nextNextCode;
+
+  if (length === 0 || !likeNumber(value)) {
+    return false;
+  }
+
+  code = value.charCodeAt(pos);
+
+  if (code === plus || code === minus) {
+    pos++;
+  }
+
+  while (pos < length) {
+    code = value.charCodeAt(pos);
+
+    if (code < 48 || code > 57) {
+      break;
+    }
+
+    pos += 1;
+  }
+
+  code = value.charCodeAt(pos);
+  nextCode = value.charCodeAt(pos + 1);
+
+  if (code === dot && nextCode >= 48 && nextCode <= 57) {
+    pos += 2;
+
+    while (pos < length) {
+      code = value.charCodeAt(pos);
+
+      if (code < 48 || code > 57) {
+        break;
+      }
+
+      pos += 1;
+    }
+  }
+
+  code = value.charCodeAt(pos);
+  nextCode = value.charCodeAt(pos + 1);
+  nextNextCode = value.charCodeAt(pos + 2);
+
+  if (
+    (code === exp || code === EXP) &&
+    ((nextCode >= 48 && nextCode <= 57) ||
+      ((nextCode === plus || nextCode === minus) &&
+        nextNextCode >= 48 &&
+        nextNextCode <= 57))
+  ) {
+    pos += nextCode === plus || nextCode === minus ? 3 : 2;
+
+    while (pos < length) {
+      code = value.charCodeAt(pos);
+
+      if (code < 48 || code > 57) {
+        break;
+      }
+
+      pos += 1;
+    }
+  }
+
+  return {
+    number: value.slice(0, pos),
+    unit: value.slice(pos)
+  };
+};
+±/lib/stringify.js≈°function stringifyNode(node, custom) {
+  var type = node.type;
+  var value = node.value;
+  var buf;
+  var customResult;
+
+  if (custom && (customResult = custom(node)) !== undefined) {
+    return customResult;
+  } else if (type === "word" || type === "space") {
+    return value;
+  } else if (type === "string") {
+    buf = node.quote || "";
+    return buf + value + (node.unclosed ? "" : buf);
+  } else if (type === "comment") {
+    return "/*" + value + (node.unclosed ? "" : "*/");
+  } else if (type === "div") {
+    return (node.before || "") + value + (node.after || "");
+  } else if (Array.isArray(node.nodes)) {
+    buf = stringify(node.nodes, custom);
+    if (type !== "function") {
+      return buf;
+    }
+    return (
+      value +
+      "(" +
+      (node.before || "") +
+      buf +
+      (node.after || "") +
+      (node.unclosed ? "" : ")")
+    );
+  }
+  return value;
+}
+
+function stringify(nodes, custom) {
+  var result, i;
+
+  if (Array.isArray(nodes)) {
+    result = "";
+    for (i = nodes.length - 1; ~i; i -= 1) {
+      result = stringifyNode(nodes[i], custom) + result;
+    }
+    return result;
+  }
+  return stringifyNode(nodes, custom);
+}
+
+module.exports = stringify;

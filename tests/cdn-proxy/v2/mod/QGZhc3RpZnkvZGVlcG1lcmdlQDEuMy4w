@@ -1,27 +1,126 @@
-…¨/LICENSEÅ“MIT License
+…±/types/index.d.tsÅŠtype DeepMergeFn = <T1, T2>(target: T1, source: T2) => DeepMerge<T1, T2>;
+type DeepMergeAllFn = <T extends Array<any>>(...targets: T) => DeepMergeAll<{}, T>;
 
-Copyright (c) The Fastify Team
+type Primitive =
+  | null
+  | undefined
+  | string
+  | number
+  | boolean
+  | symbol
+  | bigint;
 
-The Fastify team members are listed at https://github.com/fastify/fastify#team
-and in the README file.
+type BuiltIns = Primitive | Date | RegExp;
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+type MergeTypes<T, U> = T extends Array<infer A1>
+  ? U extends Array<infer A2>
+  ? Array<A1 | A2>
+  : T
+  : U
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+type DifferenceKeys<
+  T,
+  U,
+  T0 = Omit<T, keyof U> & Omit<U, keyof T>,
+  T1 = { [K in keyof T0]: T0[K] }
+  > = T1
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.ª/README.mdÅñ# @fastify/deepmerge
+type IntersectionKeys<T, U> = Omit<T | U, keyof DifferenceKeys<T, U>>
+
+type DeepMergeHelper<
+  T,
+  U,
+  T0 = DifferenceKeys<T, U>
+  & { [K in keyof IntersectionKeys<T, U>]: DeepMerge<T[K], U[K]> },
+  T1 = { [K in keyof T0]: T0[K] }
+  > = T1
+
+type DeepMerge<T, U> =
+  U extends BuiltIns
+  ? U
+  : [T, U] extends [any[], any[]]
+  ? MergeTypes<T, U>
+  : [T, U] extends [{ [key: string]: unknown }, { [key: string]: unknown }]
+  ? DeepMergeHelper<T, U>
+  : U
+
+type First<T> = T extends [infer _I, ...infer _Rest] ? _I : never;
+type Rest<T> = T extends [infer _I, ...infer _Rest] ? _Rest : never
+
+type DeepMergeAll<R, T> = First<T> extends never
+  ? R
+  : DeepMergeAll<DeepMerge<R, First<T>>, Rest<T>>;
+
+type MergeArrayFnOptions = {
+  clone: (value: any) => any;
+  isMergeableObject: (value: any) => boolean;
+  deepmerge: DeepMergeFn;
+  getKeys: (value: object) => string[];
+}
+
+type MergeArrayFn = (options: MergeArrayFnOptions) => (target: any[], source: any[]) => any[]
+
+interface Options {
+  mergeArray?: MergeArrayFn;
+  symbols?: boolean;
+  all?: boolean;
+}
+
+type DeepmergeConstructor = typeof deepmerge
+
+declare namespace deepmerge {
+  export { Options }
+  export const deepmerge: DeepmergeConstructor
+  export { deepmerge as default }
+}
+
+declare function deepmerge(options: Options & { all: true }): DeepMergeAllFn;
+declare function deepmerge(options?: Options): DeepMergeFn;
+
+export = deepmerge
+­/package.jsonÅ­{
+  "name": "@fastify/deepmerge",
+  "version": "1.3.0",
+  "description": "Merges the enumerable properties of two or more objects deeply.",
+  "main": "index.js",
+  "types": "types/index.d.ts",
+  "scripts": {
+    "lint": "standard",
+    "lint:fix": "standard --fix",
+    "test": "npm run test:unit && npm run test:typescript",
+    "test:unit": "tap",
+    "test:typescript": "tsd"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fastify/deepmerge.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fastify/deepmerge/issues"
+  },
+  "homepage": "https://github.com/fastify/deepmerge#readme",
+  "devDependencies": {
+    "standard": "^17.0.0",
+    "tap": "^16.3.0",
+    "tape": "^5.6.1",
+    "tsd": "^0.24.1"
+  },
+  "files": [
+    "LICENSE",
+    "README.md",
+    "index.js",
+    "types/index.d.ts"
+  ],
+  "keywords": [
+    "merge",
+    "deep",
+    "recursive",
+    "object"
+  ]
+}
+ª/README.mdÅñ# @fastify/deepmerge
 
 ![CI](https://github.com/fastify/deepmerge/workflows/CI/badge.svg)
 [![NPM version](https://img.shields.io/npm/v/@fastify/deepmerge.svg?style=flat)](https://www.npmjs.com/package/@fastify/deepmerge)
@@ -180,129 +279,7 @@ lodash.merge x 89,213 ops/sec Â±0.70% (98 runs sampled)
 
 ## License
 
-Licensed under [MIT](./LICENSE).­/package.jsonÅ­{
-  "name": "@fastify/deepmerge",
-  "version": "1.3.0",
-  "description": "Merges the enumerable properties of two or more objects deeply.",
-  "main": "index.js",
-  "types": "types/index.d.ts",
-  "scripts": {
-    "lint": "standard",
-    "lint:fix": "standard --fix",
-    "test": "npm run test:unit && npm run test:typescript",
-    "test:unit": "tap",
-    "test:typescript": "tsd"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/fastify/deepmerge.git"
-  },
-  "author": "",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/fastify/deepmerge/issues"
-  },
-  "homepage": "https://github.com/fastify/deepmerge#readme",
-  "devDependencies": {
-    "standard": "^17.0.0",
-    "tap": "^16.3.0",
-    "tape": "^5.6.1",
-    "tsd": "^0.24.1"
-  },
-  "files": [
-    "LICENSE",
-    "README.md",
-    "index.js",
-    "types/index.d.ts"
-  ],
-  "keywords": [
-    "merge",
-    "deep",
-    "recursive",
-    "object"
-  ]
-}
-±/types/index.d.tsÅŠtype DeepMergeFn = <T1, T2>(target: T1, source: T2) => DeepMerge<T1, T2>;
-type DeepMergeAllFn = <T extends Array<any>>(...targets: T) => DeepMergeAll<{}, T>;
-
-type Primitive =
-  | null
-  | undefined
-  | string
-  | number
-  | boolean
-  | symbol
-  | bigint;
-
-type BuiltIns = Primitive | Date | RegExp;
-
-type MergeTypes<T, U> = T extends Array<infer A1>
-  ? U extends Array<infer A2>
-  ? Array<A1 | A2>
-  : T
-  : U
-
-type DifferenceKeys<
-  T,
-  U,
-  T0 = Omit<T, keyof U> & Omit<U, keyof T>,
-  T1 = { [K in keyof T0]: T0[K] }
-  > = T1
-
-type IntersectionKeys<T, U> = Omit<T | U, keyof DifferenceKeys<T, U>>
-
-type DeepMergeHelper<
-  T,
-  U,
-  T0 = DifferenceKeys<T, U>
-  & { [K in keyof IntersectionKeys<T, U>]: DeepMerge<T[K], U[K]> },
-  T1 = { [K in keyof T0]: T0[K] }
-  > = T1
-
-type DeepMerge<T, U> =
-  U extends BuiltIns
-  ? U
-  : [T, U] extends [any[], any[]]
-  ? MergeTypes<T, U>
-  : [T, U] extends [{ [key: string]: unknown }, { [key: string]: unknown }]
-  ? DeepMergeHelper<T, U>
-  : U
-
-type First<T> = T extends [infer _I, ...infer _Rest] ? _I : never;
-type Rest<T> = T extends [infer _I, ...infer _Rest] ? _Rest : never
-
-type DeepMergeAll<R, T> = First<T> extends never
-  ? R
-  : DeepMergeAll<DeepMerge<R, First<T>>, Rest<T>>;
-
-type MergeArrayFnOptions = {
-  clone: (value: any) => any;
-  isMergeableObject: (value: any) => boolean;
-  deepmerge: DeepMergeFn;
-  getKeys: (value: object) => string[];
-}
-
-type MergeArrayFn = (options: MergeArrayFnOptions) => (target: any[], source: any[]) => any[]
-
-interface Options {
-  mergeArray?: MergeArrayFn;
-  symbols?: boolean;
-  all?: boolean;
-}
-
-type DeepmergeConstructor = typeof deepmerge
-
-declare namespace deepmerge {
-  export { Options }
-  export const deepmerge: DeepmergeConstructor
-  export { deepmerge as default }
-}
-
-declare function deepmerge(options: Options & { all: true }): DeepMergeAllFn;
-declare function deepmerge(options?: Options): DeepMergeFn;
-
-export = deepmerge
-©/index.jsÅý'use strict'
+Licensed under [MIT](./LICENSE).©/index.jsÅý'use strict'
 
 // based on https://github.com/TehShrike/deepmerge
 // MIT License
@@ -463,3 +440,27 @@ function deepmergeConstructor (options) {
 module.exports = deepmergeConstructor
 module.exports.default = deepmergeConstructor
 module.exports.deepmerge = deepmergeConstructor
+¨/LICENSEÅ“MIT License
+
+Copyright (c) The Fastify Team
+
+The Fastify team members are listed at https://github.com/fastify/fastify#team
+and in the README file.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

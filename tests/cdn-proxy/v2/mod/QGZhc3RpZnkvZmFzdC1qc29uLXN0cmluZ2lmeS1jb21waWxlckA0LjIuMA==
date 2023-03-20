@@ -1,4 +1,166 @@
-ç∂/types/index.test-d.ts≈*import { expectAssignable, expectError, expectType } from "tsd";
+ç≠/package.json≈o{
+  "name": "@fastify/fast-json-stringify-compiler",
+  "description": "Build and manage the fast-json-stringify instances for the fastify framework",
+  "version": "4.2.0",
+  "main": "index.js",
+  "types": "types/index.d.ts",
+  "scripts": {
+    "lint": "standard",
+    "lint:fix": "standard --fix",
+    "unit": "tap test/**/*.test.js",
+    "test": "npm run unit && npm run test:typescript",
+    "posttest": "rimraf test/fjs-generated*.js",
+    "test:typescript": "tsd"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fastify/fast-json-stringify-compiler.git"
+  },
+  "keywords": [],
+  "author": "Manuel Spigolon <manuel.spigolon@nearform.com> (https://github.com/Eomm)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fastify/fast-json-stringify-compiler/issues"
+  },
+  "homepage": "https://github.com/fastify/fast-json-stringify-compiler#readme",
+  "devDependencies": {
+    "fastify": "^4.0.0",
+    "rimraf": "^3.0.2",
+    "sanitize-filename": "^1.6.3",
+    "standard": "^17.0.0",
+    "tap": "^16.0.0",
+    "tsd": "^0.25.0"
+  },
+  "dependencies": {
+    "fast-json-stringify": "^5.0.0"
+  }
+}
+æ/test/duplicate-schema.test.js≈'use strict'
+
+const t = require('tap')
+const FjsCompiler = require('../index')
+
+t.test('Use input schema duplicate in the externalSchemas', async t => {
+  t.plan(1)
+  const externalSchemas = {
+    schema1: {
+      $id: 'schema1',
+      type: 'number'
+    },
+    schema2: {
+      $id: 'schema2',
+      type: 'string'
+    }
+  }
+
+  const factory = FjsCompiler()
+  const compiler = factory(externalSchemas)
+
+  compiler({ schema: externalSchemas.schema1 })
+  compiler({ schema: externalSchemas.schema2 })
+
+  t.pass()
+})
+¥/test/plugin.test.js≈ı'use strict'
+
+const t = require('tap')
+const fastify = require('fastify')
+const FjsCompiler = require('../index')
+
+const echo = async (req, reply) => { return req.body }
+
+const sampleSchema = Object.freeze({
+  $id: 'example1',
+  type: 'object',
+  properties: {
+    name: { type: 'string' }
+  }
+})
+
+const externalSchemas1 = Object.freeze({})
+const externalSchemas2 = Object.freeze({
+  foo: {
+    $id: 'foo',
+    type: 'object',
+    properties: {
+      name: { type: 'string' }
+    }
+  }
+})
+
+const fastifyFjsOptionsDefault = Object.freeze({})
+
+t.test('basic usage', t => {
+  t.plan(1)
+  const factory = FjsCompiler()
+  const compiler = factory(externalSchemas1, fastifyFjsOptionsDefault)
+  const serializeFunc = compiler({ schema: sampleSchema })
+  const result = serializeFunc({ name: 'hello' })
+  t.equal(result, '{"name":"hello"}')
+})
+
+t.test('fastify integration', async t => {
+  const factory = FjsCompiler()
+
+  const app = fastify({
+    serializerOpts: {
+      rounding: 'ceil'
+    },
+    schemaController: {
+      compilersFactory: {
+        buildSerializer: factory
+      }
+    }
+  })
+
+  app.addSchema(externalSchemas2.foo)
+
+  app.post('/', {
+    handler: echo,
+    schema: {
+      response: {
+        200: {
+          $ref: 'foo#'
+        }
+      }
+    }
+  })
+
+  const res = await app.inject({
+    url: '/',
+    method: 'POST',
+    payload: {
+      version: '1',
+      foo: 'this is not a number',
+      name: 'serialize me'
+    }
+  })
+
+  t.equal(res.statusCode, 200)
+  t.same(res.json(), { name: 'serialize me' })
+})
+®/LICENSE≈(MIT License
+
+Copyright (c) 2022 Fastify
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+∂/types/index.test-d.ts≈*import { expectAssignable, expectError, expectType } from "tsd";
 import SerializerSelector, {
   RouteDefinition,
   Serializer,
@@ -139,89 +301,19 @@ expectType<SerializerFactory>(writer);
   expectType<SerializerCompiler>(compiler)
   expectType<Serializer>(compiler(endpointSchema))
 }
-±/types/index.d.ts≈*import { Options } from 'fast-json-stringify'
+∑/.github/dependabot.yml≈version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 10
 
-type FastJsonStringifyFactory = () => SerializerSelector.SerializerFactory
-
-declare namespace SerializerSelector {
-  export type SerializerFactory = (
-    externalSchemas?: unknown,
-    options?: Options
-  ) => SerializerCompiler;
-
-  export type SerializerCompiler = (
-    externalSchemas?: unknown,
-    options?: Options
-  ) => Serializer;
-
-  export type Serializer = (doc: any) => string
-
-  export type RouteDefinition = {
-    method: string;
-    url: string;
-    httpStatus: string;
-    schema?: unknown;
-  }
-
-  export type StandaloneOptions = StandaloneOptionsReadModeOn | StandaloneOptionsReadModeOff
-
-  export type StandaloneOptionsReadModeOn = {
-    readMode: true;
-    restoreFunction?(opts: RouteDefinition): Serializer;
-  }
-
-  export type StandaloneOptionsReadModeOff = {
-    readMode?: false | undefined;
-    storeFunction?(opts: RouteDefinition, schemaSerializationCode: string): void;
-  }
-
-  export type { Options }
-  export const SerializerSelector: FastJsonStringifyFactory;
-  export function StandaloneSerializer(options: StandaloneOptions): SerializerFactory;
-
-  export { SerializerSelector as default }
-}
-
-declare function SerializerSelector(...params: Parameters<FastJsonStringifyFactory>): ReturnType<FastJsonStringifyFactory>
-export = SerializerSelector
-™/.eslintrcƒ{"extends": "standard"}
-≠/package.json≈o{
-  "name": "@fastify/fast-json-stringify-compiler",
-  "description": "Build and manage the fast-json-stringify instances for the fastify framework",
-  "version": "4.2.0",
-  "main": "index.js",
-  "types": "types/index.d.ts",
-  "scripts": {
-    "lint": "standard",
-    "lint:fix": "standard --fix",
-    "unit": "tap test/**/*.test.js",
-    "test": "npm run unit && npm run test:typescript",
-    "posttest": "rimraf test/fjs-generated*.js",
-    "test:typescript": "tsd"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/fastify/fast-json-stringify-compiler.git"
-  },
-  "keywords": [],
-  "author": "Manuel Spigolon <manuel.spigolon@nearform.com> (https://github.com/Eomm)",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/fastify/fast-json-stringify-compiler/issues"
-  },
-  "homepage": "https://github.com/fastify/fast-json-stringify-compiler#readme",
-  "devDependencies": {
-    "fastify": "^4.0.0",
-    "rimraf": "^3.0.2",
-    "sanitize-filename": "^1.6.3",
-    "standard": "^17.0.0",
-    "tap": "^16.0.0",
-    "tsd": "^0.25.0"
-  },
-  "dependencies": {
-    "fast-json-stringify": "^5.0.0"
-  }
-}
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
 ©/index.js≈)'use strict'
 
 const fastJsonStringify = require('fast-json-stringify')
@@ -245,105 +337,6 @@ module.exports = SerializerSelector
 module.exports.default = SerializerSelector
 module.exports.SerializerSelector = SerializerSelector
 module.exports.StandaloneSerializer = require('./standalone')
-¥/test/plugin.test.js≈ı'use strict'
-
-const t = require('tap')
-const fastify = require('fastify')
-const FjsCompiler = require('../index')
-
-const echo = async (req, reply) => { return req.body }
-
-const sampleSchema = Object.freeze({
-  $id: 'example1',
-  type: 'object',
-  properties: {
-    name: { type: 'string' }
-  }
-})
-
-const externalSchemas1 = Object.freeze({})
-const externalSchemas2 = Object.freeze({
-  foo: {
-    $id: 'foo',
-    type: 'object',
-    properties: {
-      name: { type: 'string' }
-    }
-  }
-})
-
-const fastifyFjsOptionsDefault = Object.freeze({})
-
-t.test('basic usage', t => {
-  t.plan(1)
-  const factory = FjsCompiler()
-  const compiler = factory(externalSchemas1, fastifyFjsOptionsDefault)
-  const serializeFunc = compiler({ schema: sampleSchema })
-  const result = serializeFunc({ name: 'hello' })
-  t.equal(result, '{"name":"hello"}')
-})
-
-t.test('fastify integration', async t => {
-  const factory = FjsCompiler()
-
-  const app = fastify({
-    serializerOpts: {
-      rounding: 'ceil'
-    },
-    schemaController: {
-      compilersFactory: {
-        buildSerializer: factory
-      }
-    }
-  })
-
-  app.addSchema(externalSchemas2.foo)
-
-  app.post('/', {
-    handler: echo,
-    schema: {
-      response: {
-        200: {
-          $ref: 'foo#'
-        }
-      }
-    }
-  })
-
-  const res = await app.inject({
-    url: '/',
-    method: 'POST',
-    payload: {
-      version: '1',
-      foo: 'this is not a number',
-      name: 'serialize me'
-    }
-  })
-
-  t.equal(res.statusCode, 200)
-  t.same(res.json(), { name: 'serialize me' })
-})
-®/LICENSE≈(MIT License
-
-Copyright (c) 2022 Fastify
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
 ™/README.md≈d# @fastify/fast-json-stringify-compiler
 Build and manage the [`fast-json-stringify`](https://www.npmjs.com/package/fast-json-stringify) instances for the fastify framework.
 This package is responsible for compiling the application's `response` JSON schemas into optimized functions to speed up the response time.
@@ -471,19 +464,7 @@ This module provide a factory function to produce [Serializer Compilers](https:/
 ## License
 
 Licensed under [MIT](./LICENSE).
-∑/.github/dependabot.yml≈version: 2
-updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 10
-
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
+™/.eslintrcƒ{"extends": "standard"}
 ∏/test/standalone.test.js≈x'use strict'
 
 const fs = require('fs')
@@ -697,32 +678,51 @@ function buildApp (factory, serializerOpts) {
 
   return app
 }
-æ/test/duplicate-schema.test.js≈'use strict'
+±/types/index.d.ts≈*import { Options } from 'fast-json-stringify'
 
-const t = require('tap')
-const FjsCompiler = require('../index')
+type FastJsonStringifyFactory = () => SerializerSelector.SerializerFactory
 
-t.test('Use input schema duplicate in the externalSchemas', async t => {
-  t.plan(1)
-  const externalSchemas = {
-    schema1: {
-      $id: 'schema1',
-      type: 'number'
-    },
-    schema2: {
-      $id: 'schema2',
-      type: 'string'
-    }
+declare namespace SerializerSelector {
+  export type SerializerFactory = (
+    externalSchemas?: unknown,
+    options?: Options
+  ) => SerializerCompiler;
+
+  export type SerializerCompiler = (
+    externalSchemas?: unknown,
+    options?: Options
+  ) => Serializer;
+
+  export type Serializer = (doc: any) => string
+
+  export type RouteDefinition = {
+    method: string;
+    url: string;
+    httpStatus: string;
+    schema?: unknown;
   }
 
-  const factory = FjsCompiler()
-  const compiler = factory(externalSchemas)
+  export type StandaloneOptions = StandaloneOptionsReadModeOn | StandaloneOptionsReadModeOff
 
-  compiler({ schema: externalSchemas.schema1 })
-  compiler({ schema: externalSchemas.schema2 })
+  export type StandaloneOptionsReadModeOn = {
+    readMode: true;
+    restoreFunction?(opts: RouteDefinition): Serializer;
+  }
 
-  t.pass()
-})
+  export type StandaloneOptionsReadModeOff = {
+    readMode?: false | undefined;
+    storeFunction?(opts: RouteDefinition, schemaSerializationCode: string): void;
+  }
+
+  export type { Options }
+  export const SerializerSelector: FastJsonStringifyFactory;
+  export function StandaloneSerializer(options: StandaloneOptions): SerializerFactory;
+
+  export { SerializerSelector as default }
+}
+
+declare function SerializerSelector(...params: Parameters<FastJsonStringifyFactory>): ReturnType<FastJsonStringifyFactory>
+export = SerializerSelector
 π/.github/workflows/ci.yml≈name: CI
 
 on:

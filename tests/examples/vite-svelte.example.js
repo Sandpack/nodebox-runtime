@@ -83,10 +83,10 @@ export default {
       type: 'module',
       scripts: { dev: 'vite' },
       devDependencies: {
-        '@sveltejs/vite-plugin-svelte': '^2.0.2',
-        svelte: '^3.55.1',
-        vite: '^4.0.0',
-        'esbuild-wasm': '0.15.12',
+        '@sveltejs/vite-plugin-svelte': '2.0.3',
+        svelte: '3.57.0',
+        vite: '4.2.0',
+        'esbuild-wasm': '0.17.12',
       },
     }),
   });

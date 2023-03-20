@@ -1,117 +1,38 @@
-èµ/out/adapters/fs.d.ts≈ô/// <reference types="node" />
-import * as fs from 'fs';
-import type { ErrnoException } from '../types';
-export declare type StatAsynchronousMethod = (path: string, callback: (error: ErrnoException | null, stats: fs.Stats) => void) => void;
-export declare type StatSynchronousMethod = (path: string) => fs.Stats;
-export interface FileSystemAdapter {
-    lstat: StatAsynchronousMethod;
-    stat: StatAsynchronousMethod;
-    lstatSync: StatSynchronousMethod;
-    statSync: StatSynchronousMethod;
-}
-export declare const FILE_SYSTEM_ADAPTER: FileSystemAdapter;
-export declare function createFileSystemAdapter(fsMethods?: Partial<FileSystemAdapter>): FileSystemAdapter;
-π/out/providers/async.d.ts≈import type Settings from '../settings';
-import type { ErrnoException, Stats } from '../types';
-export declare type AsyncCallback = (error: ErrnoException, stats: Stats) => void;
-export declare function read(path: string, settings: Settings, callback: AsyncCallback): void;
-≤/out/settings.d.ts≈import * as fs from './adapters/fs';
-export interface Options {
-    followSymbolicLink?: boolean;
-    fs?: Partial<fs.FileSystemAdapter>;
-    markSymbolicLink?: boolean;
-    throwErrorOnBrokenSymbolicLink?: boolean;
-}
-export default class Settings {
-    private readonly _options;
-    readonly followSymbolicLink: boolean;
-    readonly fs: fs.FileSystemAdapter;
-    readonly markSymbolicLink: boolean;
-    readonly throwErrorOnBrokenSymbolicLink: boolean;
-    constructor(_options?: Options);
-    private _getValue;
-}
-≥/out/adapters/fs.js≈F"use strict";
+è∑/out/providers/async.js≈î"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createFileSystemAdapter = exports.FILE_SYSTEM_ADAPTER = void 0;
-const fs = require("fs");
-exports.FILE_SYSTEM_ADAPTER = {
-    lstat: fs.lstat,
-    stat: fs.stat,
-    lstatSync: fs.lstatSync,
-    statSync: fs.statSync
-};
-function createFileSystemAdapter(fsMethods) {
-    if (fsMethods === undefined) {
-        return exports.FILE_SYSTEM_ADAPTER;
-    }
-    return Object.assign(Object.assign({}, exports.FILE_SYSTEM_ADAPTER), fsMethods);
+exports.read = void 0;
+function read(path, settings, callback) {
+    settings.fs.lstat(path, (lstatError, lstat) => {
+        if (lstatError !== null) {
+            callFailureCallback(callback, lstatError);
+            return;
+        }
+        if (!lstat.isSymbolicLink() || !settings.followSymbolicLink) {
+            callSuccessCallback(callback, lstat);
+            return;
+        }
+        settings.fs.stat(path, (statError, stat) => {
+            if (statError !== null) {
+                if (settings.throwErrorOnBrokenSymbolicLink) {
+                    callFailureCallback(callback, statError);
+                    return;
+                }
+                callSuccessCallback(callback, lstat);
+                return;
+            }
+            if (settings.markSymbolicLink) {
+                stat.isSymbolicLink = () => true;
+            }
+            callSuccessCallback(callback, stat);
+        });
+    });
 }
-exports.createFileSystemAdapter = createFileSystemAdapter;
-≥/out/types/index.jsƒM"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-≠/out/index.js≈Ÿ"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.statSync = exports.stat = exports.Settings = void 0;
-const async = require("./providers/async");
-const sync = require("./providers/sync");
-const settings_1 = require("./settings");
-exports.Settings = settings_1.default;
-function stat(path, optionsOrSettingsOrCallback, callback) {
-    if (typeof optionsOrSettingsOrCallback === 'function') {
-        async.read(path, getSettings(), optionsOrSettingsOrCallback);
-        return;
-    }
-    async.read(path, getSettings(optionsOrSettingsOrCallback), callback);
+exports.read = read;
+function callFailureCallback(callback, error) {
+    callback(error);
 }
-exports.stat = stat;
-function statSync(path, optionsOrSettings) {
-    const settings = getSettings(optionsOrSettings);
-    return sync.read(path, settings);
-}
-exports.statSync = statSync;
-function getSettings(settingsOrOptions = {}) {
-    if (settingsOrOptions instanceof settings_1.default) {
-        return settingsOrOptions;
-    }
-    return new settings_1.default(settingsOrOptions);
-}
-≠/package.json≈€{
-  "name": "@nodelib/fs.stat",
-  "version": "2.0.5",
-  "description": "Get the status of a file with some features",
-  "license": "MIT",
-  "repository": "https://github.com/nodelib/nodelib/tree/master/packages/fs/fs.stat",
-  "keywords": [
-    "NodeLib",
-    "fs",
-    "FileSystem",
-    "file system",
-    "stat"
-  ],
-  "engines": {
-    "node": ">= 8"
-  },
-  "files": [
-    "out/**",
-    "!out/**/*.map",
-    "!out/**/*.spec.*"
-  ],
-  "main": "out/index.js",
-  "typings": "out/index.d.ts",
-  "scripts": {
-    "clean": "rimraf {tsconfig.tsbuildinfo,out}",
-    "lint": "eslint \"src/**/*.ts\" --cache",
-    "compile": "tsc -b .",
-    "compile:watch": "tsc -p . --watch --sourceMap",
-    "test": "mocha \"out/**/*.spec.js\" -s 0",
-    "build": "npm run clean && npm run compile && npm run lint && npm test",
-    "watch": "npm run clean && npm run compile:watch"
-  },
-  "devDependencies": {
-    "@nodelib/fs.macchiato": "1.0.4"
-  },
-  "gitHead": "d6a7960d5281d3dd5f8e2efba49bb552d090f562"
+function callSuccessCallback(callback, result) {
+    callback(null, result);
 }
 ∂/out/providers/sync.js≈k"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -136,27 +57,21 @@ function read(path, settings) {
     }
 }
 exports.read = read;
-®/LICENSE≈7The MIT License (MIT)
-
-Copyright (c) Denis Malinochkin
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+∏/out/providers/sync.d.tsƒóimport type Settings from '../settings';
+import type { Stats } from '../types';
+export declare function read(path: string, settings: Settings): Stats;
+Ø/out/index.d.ts≈%import type { FileSystemAdapter, StatAsynchronousMethod, StatSynchronousMethod } from './adapters/fs';
+import * as async from './providers/async';
+import Settings, { Options } from './settings';
+import type { Stats } from './types';
+declare type AsyncCallback = async.AsyncCallback;
+declare function stat(path: string, callback: AsyncCallback): void;
+declare function stat(path: string, optionsOrSettings: Options | Settings, callback: AsyncCallback): void;
+declare namespace stat {
+    function __promisify__(path: string, optionsOrSettings?: Options | Settings): Promise<Stats>;
+}
+declare function statSync(path: string, optionsOrSettings?: Options | Settings): Stats;
+export { Settings, stat, statSync, AsyncCallback, FileSystemAdapter, StatAsynchronousMethod, StatSynchronousMethod, Options, Stats };
 ™/README.md≈# @nodelib/fs.stat
 
 > Get the status of a file with some features.
@@ -283,21 +198,8 @@ See the [Releases section of our GitHub project](https://github.com/nodelib/node
 ## License
 
 This software is released under the terms of the MIT license.
-Ø/out/index.d.ts≈%import type { FileSystemAdapter, StatAsynchronousMethod, StatSynchronousMethod } from './adapters/fs';
-import * as async from './providers/async';
-import Settings, { Options } from './settings';
-import type { Stats } from './types';
-declare type AsyncCallback = async.AsyncCallback;
-declare function stat(path: string, callback: AsyncCallback): void;
-declare function stat(path: string, optionsOrSettings: Options | Settings, callback: AsyncCallback): void;
-declare namespace stat {
-    function __promisify__(path: string, optionsOrSettings?: Options | Settings): Promise<Stats>;
-}
-declare function statSync(path: string, optionsOrSettings?: Options | Settings): Stats;
-export { Settings, stat, statSync, AsyncCallback, FileSystemAdapter, StatAsynchronousMethod, StatSynchronousMethod, Options, Stats };
-∏/out/providers/sync.d.tsƒóimport type Settings from '../settings';
-import type { Stats } from '../types';
-export declare function read(path: string, settings: Settings): Stats;
+≥/out/types/index.jsƒM"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 ∞/out/settings.js≈∏"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require("./adapters/fs");
@@ -314,43 +216,141 @@ class Settings {
     }
 }
 exports.default = Settings;
+®/LICENSE≈7The MIT License (MIT)
+
+Copyright (c) Denis Malinochkin
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 µ/out/types/index.d.tsƒ†/// <reference types="node" />
 import type * as fs from 'fs';
 export declare type Stats = fs.Stats;
 export declare type ErrnoException = NodeJS.ErrnoException;
-∑/out/providers/async.js≈î"use strict";
+µ/out/adapters/fs.d.ts≈ô/// <reference types="node" />
+import * as fs from 'fs';
+import type { ErrnoException } from '../types';
+export declare type StatAsynchronousMethod = (path: string, callback: (error: ErrnoException | null, stats: fs.Stats) => void) => void;
+export declare type StatSynchronousMethod = (path: string) => fs.Stats;
+export interface FileSystemAdapter {
+    lstat: StatAsynchronousMethod;
+    stat: StatAsynchronousMethod;
+    lstatSync: StatSynchronousMethod;
+    statSync: StatSynchronousMethod;
+}
+export declare const FILE_SYSTEM_ADAPTER: FileSystemAdapter;
+export declare function createFileSystemAdapter(fsMethods?: Partial<FileSystemAdapter>): FileSystemAdapter;
+π/out/providers/async.d.ts≈import type Settings from '../settings';
+import type { ErrnoException, Stats } from '../types';
+export declare type AsyncCallback = (error: ErrnoException, stats: Stats) => void;
+export declare function read(path: string, settings: Settings, callback: AsyncCallback): void;
+≠/out/index.js≈Ÿ"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.read = void 0;
-function read(path, settings, callback) {
-    settings.fs.lstat(path, (lstatError, lstat) => {
-        if (lstatError !== null) {
-            callFailureCallback(callback, lstatError);
-            return;
-        }
-        if (!lstat.isSymbolicLink() || !settings.followSymbolicLink) {
-            callSuccessCallback(callback, lstat);
-            return;
-        }
-        settings.fs.stat(path, (statError, stat) => {
-            if (statError !== null) {
-                if (settings.throwErrorOnBrokenSymbolicLink) {
-                    callFailureCallback(callback, statError);
-                    return;
-                }
-                callSuccessCallback(callback, lstat);
-                return;
-            }
-            if (settings.markSymbolicLink) {
-                stat.isSymbolicLink = () => true;
-            }
-            callSuccessCallback(callback, stat);
-        });
-    });
+exports.statSync = exports.stat = exports.Settings = void 0;
+const async = require("./providers/async");
+const sync = require("./providers/sync");
+const settings_1 = require("./settings");
+exports.Settings = settings_1.default;
+function stat(path, optionsOrSettingsOrCallback, callback) {
+    if (typeof optionsOrSettingsOrCallback === 'function') {
+        async.read(path, getSettings(), optionsOrSettingsOrCallback);
+        return;
+    }
+    async.read(path, getSettings(optionsOrSettingsOrCallback), callback);
 }
-exports.read = read;
-function callFailureCallback(callback, error) {
-    callback(error);
+exports.stat = stat;
+function statSync(path, optionsOrSettings) {
+    const settings = getSettings(optionsOrSettings);
+    return sync.read(path, settings);
 }
-function callSuccessCallback(callback, result) {
-    callback(null, result);
+exports.statSync = statSync;
+function getSettings(settingsOrOptions = {}) {
+    if (settingsOrOptions instanceof settings_1.default) {
+        return settingsOrOptions;
+    }
+    return new settings_1.default(settingsOrOptions);
+}
+≥/out/adapters/fs.js≈F"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.createFileSystemAdapter = exports.FILE_SYSTEM_ADAPTER = void 0;
+const fs = require("fs");
+exports.FILE_SYSTEM_ADAPTER = {
+    lstat: fs.lstat,
+    stat: fs.stat,
+    lstatSync: fs.lstatSync,
+    statSync: fs.statSync
+};
+function createFileSystemAdapter(fsMethods) {
+    if (fsMethods === undefined) {
+        return exports.FILE_SYSTEM_ADAPTER;
+    }
+    return Object.assign(Object.assign({}, exports.FILE_SYSTEM_ADAPTER), fsMethods);
+}
+exports.createFileSystemAdapter = createFileSystemAdapter;
+≠/package.json≈€{
+  "name": "@nodelib/fs.stat",
+  "version": "2.0.5",
+  "description": "Get the status of a file with some features",
+  "license": "MIT",
+  "repository": "https://github.com/nodelib/nodelib/tree/master/packages/fs/fs.stat",
+  "keywords": [
+    "NodeLib",
+    "fs",
+    "FileSystem",
+    "file system",
+    "stat"
+  ],
+  "engines": {
+    "node": ">= 8"
+  },
+  "files": [
+    "out/**",
+    "!out/**/*.map",
+    "!out/**/*.spec.*"
+  ],
+  "main": "out/index.js",
+  "typings": "out/index.d.ts",
+  "scripts": {
+    "clean": "rimraf {tsconfig.tsbuildinfo,out}",
+    "lint": "eslint \"src/**/*.ts\" --cache",
+    "compile": "tsc -b .",
+    "compile:watch": "tsc -p . --watch --sourceMap",
+    "test": "mocha \"out/**/*.spec.js\" -s 0",
+    "build": "npm run clean && npm run compile && npm run lint && npm test",
+    "watch": "npm run clean && npm run compile:watch"
+  },
+  "devDependencies": {
+    "@nodelib/fs.macchiato": "1.0.4"
+  },
+  "gitHead": "d6a7960d5281d3dd5f8e2efba49bb552d090f562"
+}
+≤/out/settings.d.ts≈import * as fs from './adapters/fs';
+export interface Options {
+    followSymbolicLink?: boolean;
+    fs?: Partial<fs.FileSystemAdapter>;
+    markSymbolicLink?: boolean;
+    throwErrorOnBrokenSymbolicLink?: boolean;
+}
+export default class Settings {
+    private readonly _options;
+    readonly followSymbolicLink: boolean;
+    readonly fs: fs.FileSystemAdapter;
+    readonly markSymbolicLink: boolean;
+    readonly throwErrorOnBrokenSymbolicLink: boolean;
+    constructor(_options?: Options);
+    private _getValue;
 }

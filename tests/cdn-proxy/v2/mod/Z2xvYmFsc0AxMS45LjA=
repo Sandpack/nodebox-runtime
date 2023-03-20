@@ -1,95 +1,4 @@
-…¨/licenseÅUMIT License
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-­/package.jsonÅ“{
-	"name": "globals",
-	"version": "11.9.0",
-	"description": "Global identifiers from different JavaScript environments",
-	"license": "MIT",
-	"repository": "sindresorhus/globals",
-	"author": {
-		"name": "Sindre Sorhus",
-		"email": "sindresorhus@gmail.com",
-		"url": "sindresorhus.com"
-	},
-	"engines": {
-		"node": ">=4"
-	},
-	"scripts": {
-		"test": "xo && ava"
-	},
-	"files": [
-		"index.js",
-		"globals.json"
-	],
-	"keywords": [
-		"globals",
-		"global",
-		"identifiers",
-		"variables",
-		"vars",
-		"jshint",
-		"eslint",
-		"environments"
-	],
-	"devDependencies": {
-		"ava": "0.21.0",
-		"xo": "0.18.0"
-	},
-	"xo": {
-		"ignores": [
-			"get-browser-globals.js"
-		]
-	}
-}
-ª/readme.mdÅ# globals [![Build Status](https://travis-ci.org/sindresorhus/globals.svg?branch=master)](https://travis-ci.org/sindresorhus/globals)
-
-> Global identifiers from different JavaScript environments
-
-Extracted from [JSHint](https://github.com/jshint/jshint/blob/3a8efa979dbb157bfb5c10b5826603a55a33b9ad/src/vars.js) and [ESLint](https://github.com/eslint/eslint/blob/b648406218f8a2d7302b98f5565e23199f44eb31/conf/environments.json) and merged.
-
-It's just a [JSON file](globals.json), so use it in whatever environment you like.
-
-**This module [no longer accepts](https://github.com/sindresorhus/globals/issues/82) new environments. If you need it for ESLint, just [create a plugin](http://eslint.org/docs/developer-guide/working-with-plugins#environments-in-plugins).**
-
-
-## Install
-
-```
-$ npm install globals
-```
-
-
-## Usage
-
-```js
-const globals = require('globals');
-
-console.log(globals.browser);
-/*
-{
-	addEventListener: false,
-	applicationCache: false,
-	ArrayBuffer: false,
-	atob: false,
-	...
-}
-*/
-```
-
-Each global is given a value of `true` or `false`. A value of `true` indicates that the variable may be overwritten. A value of `false` indicates that the variable should be considered read-only. This information is used by static analysis tools to flag incorrect behavior. We assume all variables should be `false` unless we hear otherwise.
-
-
-## License
-
-MIT Â© [Sindre Sorhus](https://sindresorhus.com)
-­/globals.jsonÅ‡{
+…­/globals.jsonÅ‡{
 	"builtin": {
 		"Array": false,
 		"ArrayBuffer": false,
@@ -1574,3 +1483,94 @@ MIT Â© [Sindre Sorhus](https://sindresorhus.com)
 }
 ©/index.jsÄ:'use strict';
 module.exports = require('./globals.json');
+­/package.jsonÅ“{
+	"name": "globals",
+	"version": "11.9.0",
+	"description": "Global identifiers from different JavaScript environments",
+	"license": "MIT",
+	"repository": "sindresorhus/globals",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "sindresorhus.com"
+	},
+	"engines": {
+		"node": ">=4"
+	},
+	"scripts": {
+		"test": "xo && ava"
+	},
+	"files": [
+		"index.js",
+		"globals.json"
+	],
+	"keywords": [
+		"globals",
+		"global",
+		"identifiers",
+		"variables",
+		"vars",
+		"jshint",
+		"eslint",
+		"environments"
+	],
+	"devDependencies": {
+		"ava": "0.21.0",
+		"xo": "0.18.0"
+	},
+	"xo": {
+		"ignores": [
+			"get-browser-globals.js"
+		]
+	}
+}
+ª/readme.mdÅ# globals [![Build Status](https://travis-ci.org/sindresorhus/globals.svg?branch=master)](https://travis-ci.org/sindresorhus/globals)
+
+> Global identifiers from different JavaScript environments
+
+Extracted from [JSHint](https://github.com/jshint/jshint/blob/3a8efa979dbb157bfb5c10b5826603a55a33b9ad/src/vars.js) and [ESLint](https://github.com/eslint/eslint/blob/b648406218f8a2d7302b98f5565e23199f44eb31/conf/environments.json) and merged.
+
+It's just a [JSON file](globals.json), so use it in whatever environment you like.
+
+**This module [no longer accepts](https://github.com/sindresorhus/globals/issues/82) new environments. If you need it for ESLint, just [create a plugin](http://eslint.org/docs/developer-guide/working-with-plugins#environments-in-plugins).**
+
+
+## Install
+
+```
+$ npm install globals
+```
+
+
+## Usage
+
+```js
+const globals = require('globals');
+
+console.log(globals.browser);
+/*
+{
+	addEventListener: false,
+	applicationCache: false,
+	ArrayBuffer: false,
+	atob: false,
+	...
+}
+*/
+```
+
+Each global is given a value of `true` or `false`. A value of `true` indicates that the variable may be overwritten. A value of `false` indicates that the variable should be considered read-only. This information is used by static analysis tools to flag incorrect behavior. We assume all variables should be `false` unless we hear otherwise.
+
+
+## License
+
+MIT Â© [Sindre Sorhus](https://sindresorhus.com)
+¨/licenseÅUMIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

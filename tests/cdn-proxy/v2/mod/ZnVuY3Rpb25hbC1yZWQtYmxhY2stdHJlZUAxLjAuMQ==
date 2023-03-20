@@ -1,44 +1,4 @@
-‡­/package.jsonÅ {
-  "name": "functional-red-black-tree",
-  "version": "1.0.1",
-  "description": "A fully persistent balanced binary search tree",
-  "main": "rbtree.js",
-  "directories": {
-    "test": "test"
-  },
-  "dependencies": {},
-  "devDependencies": {
-    "iota-array": "^0.0.1",
-    "tape": "^2.12.0"
-  },
-  "scripts": {
-    "test": "tape test/*.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/mikolalysenko/functional-red-black-tree.git"
-  },
-  "keywords": [
-    "functional",
-    "red",
-    "black",
-    "tree",
-    "binary",
-    "search",
-    "balance",
-    "persistent",
-    "fully",
-    "dynamic",
-    "data",
-    "structure"
-  ],
-  "author": "Mikola Lysenko",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/mikolalysenko/functional-red-black-tree/issues"
-  }
-}
-«/.npmignoreÄmlib-cov
+‡«/.npmignoreÄmlib-cov
 *.seed
 *.log
 *.csv
@@ -53,29 +13,17 @@ results
 
 npm-debug.log
 node_modules/*
-*.DS_Store¨/LICENSEÅ:
-The MIT License (MIT)
+*.DS_Store®/bench/test.jsÄÉ"use strict"
 
-Copyright (c) 2013 Mikola Lysenko
+var createTree = require("../rbtree.js")
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+var t = createTree()
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-ª/rbtree.jsÅW4"use strict"
+var s = Date.now()
+for(var i=0; i<100000; ++i) {
+  t = t.insert(Math.random(), Math.random())
+}
+console.log(Date.now() - s)ª/rbtree.jsÅW4"use strict"
 
 module.exports = createRBTree
 
@@ -1070,17 +1018,7 @@ function defaultCompare(a, b) {
 //Build a tree
 function createRBTree(compare) {
   return new RedBlackTree(compare || defaultCompare, null)
-}®/bench/test.jsÄÉ"use strict"
-
-var createTree = require("../rbtree.js")
-
-var t = createTree()
-
-var s = Date.now()
-for(var i=0; i<100000; ++i) {
-  t = t.insert(Math.random(), Math.random())
-}
-console.log(Date.now() - s)­/test/test.jsÅ."use strict"
+}­/test/test.jsÅ."use strict"
 
 var makeTree = require("../rbtree.js")
 var tape = require("tape")
@@ -1559,6 +1497,46 @@ tape("slab-sequence-2", function(t) {
 
   t.end()
 })
+­/package.jsonÅ {
+  "name": "functional-red-black-tree",
+  "version": "1.0.1",
+  "description": "A fully persistent balanced binary search tree",
+  "main": "rbtree.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "iota-array": "^0.0.1",
+    "tape": "^2.12.0"
+  },
+  "scripts": {
+    "test": "tape test/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mikolalysenko/functional-red-black-tree.git"
+  },
+  "keywords": [
+    "functional",
+    "red",
+    "black",
+    "tree",
+    "binary",
+    "search",
+    "balance",
+    "persistent",
+    "fully",
+    "dynamic",
+    "data",
+    "structure"
+  ],
+  "author": "Mikola Lysenko",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mikolalysenko/functional-red-black-tree/issues"
+  }
+}
 ª/README.mdÅ÷functional-red-black-tree
 =========================
 A [fully persistent](http://en.wikipedia.org/wiki/Persistent_data_structure) [red-black tree](http://en.wikipedia.org/wiki/Red%E2%80%93black_tree) written 100% in JavaScript.  Works both in node.js and in the browser via [browserify](http://browserify.org/).
@@ -1795,4 +1773,25 @@ If true, then the iterator is not at the end of the sequence
 If true, then the iterator is not at the beginning of the sequence
 
 # Credits
-(c) 2013 Mikola Lysenko. MIT License
+(c) 2013 Mikola Lysenko. MIT License¨/LICENSEÅ:
+The MIT License (MIT)
+
+Copyright (c) 2013 Mikola Lysenko
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.

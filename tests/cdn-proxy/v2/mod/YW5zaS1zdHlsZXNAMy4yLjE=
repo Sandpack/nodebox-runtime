@@ -1,4 +1,60 @@
-„ª/readme.mdÅ# ansi-styles [![Build Status](https://travis-ci.org/chalk/ansi-styles.svg?branch=master)](https://travis-ci.org/chalk/ansi-styles)
+„­/package.jsonÅÑ{
+	"name": "ansi-styles",
+	"version": "3.2.1",
+	"description": "ANSI escape codes for styling strings in the terminal",
+	"license": "MIT",
+	"repository": "chalk/ansi-styles",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "sindresorhus.com"
+	},
+	"engines": {
+		"node": ">=4"
+	},
+	"scripts": {
+		"test": "xo && ava",
+		"screenshot": "svg-term --command='node screenshot' --out=screenshot.svg --padding=3 --width=55 --height=3 --at=1000 --no-cursor"
+	},
+	"files": [
+		"index.js"
+	],
+	"keywords": [
+		"ansi",
+		"styles",
+		"color",
+		"colour",
+		"colors",
+		"terminal",
+		"console",
+		"cli",
+		"string",
+		"tty",
+		"escape",
+		"formatting",
+		"rgb",
+		"256",
+		"shell",
+		"xterm",
+		"log",
+		"logging",
+		"command-line",
+		"text"
+	],
+	"dependencies": {
+		"color-convert": "^1.9.0"
+	},
+	"devDependencies": {
+		"ava": "*",
+		"babel-polyfill": "^6.23.0",
+		"svg-term-cli": "^2.1.1",
+		"xo": "*"
+	},
+	"ava": {
+		"require": "babel-polyfill"
+	}
+}
+ª/readme.mdÅ# ansi-styles [![Build Status](https://travis-ci.org/chalk/ansi-styles.svg?branch=master)](https://travis-ci.org/chalk/ansi-styles)
 
 > [ANSI escape codes](http://en.wikipedia.org/wiki/ANSI_escape_code#Colors_and_Styles) for styling strings in the terminal
 
@@ -154,62 +210,6 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-­/package.jsonÅÑ{
-	"name": "ansi-styles",
-	"version": "3.2.1",
-	"description": "ANSI escape codes for styling strings in the terminal",
-	"license": "MIT",
-	"repository": "chalk/ansi-styles",
-	"author": {
-		"name": "Sindre Sorhus",
-		"email": "sindresorhus@gmail.com",
-		"url": "sindresorhus.com"
-	},
-	"engines": {
-		"node": ">=4"
-	},
-	"scripts": {
-		"test": "xo && ava",
-		"screenshot": "svg-term --command='node screenshot' --out=screenshot.svg --padding=3 --width=55 --height=3 --at=1000 --no-cursor"
-	},
-	"files": [
-		"index.js"
-	],
-	"keywords": [
-		"ansi",
-		"styles",
-		"color",
-		"colour",
-		"colors",
-		"terminal",
-		"console",
-		"cli",
-		"string",
-		"tty",
-		"escape",
-		"formatting",
-		"rgb",
-		"256",
-		"shell",
-		"xterm",
-		"log",
-		"logging",
-		"command-line",
-		"text"
-	],
-	"dependencies": {
-		"color-convert": "^1.9.0"
-	},
-	"devDependencies": {
-		"ava": "*",
-		"babel-polyfill": "^6.23.0",
-		"svg-term-cli": "^2.1.1",
-		"xo": "*"
-	},
-	"ava": {
-		"require": "babel-polyfill"
-	}
-}
 ©/index.jsÅö'use strict';
 const colorConvert = require('color-convert');
 

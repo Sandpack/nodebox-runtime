@@ -1,46 +1,4 @@
-Ñ≠/package.json≈¸{
-  "name": "object-assign",
-  "version": "4.1.1",
-  "description": "ES2015 `Object.assign()` ponyfill",
-  "license": "MIT",
-  "repository": "sindresorhus/object-assign",
-  "author": {
-    "name": "Sindre Sorhus",
-    "email": "sindresorhus@gmail.com",
-    "url": "sindresorhus.com"
-  },
-  "engines": {
-    "node": ">=0.10.0"
-  },
-  "scripts": {
-    "test": "xo && ava",
-    "bench": "matcha bench.js"
-  },
-  "files": [
-    "index.js"
-  ],
-  "keywords": [
-    "object",
-    "assign",
-    "extend",
-    "properties",
-    "es2015",
-    "ecmascript",
-    "harmony",
-    "ponyfill",
-    "prollyfill",
-    "polyfill",
-    "shim",
-    "browser"
-  ],
-  "devDependencies": {
-    "ava": "^0.16.0",
-    "lodash": "^4.16.4",
-    "matcha": "^0.7.0",
-    "xo": "^0.16.0"
-  }
-}
-™/readme.md≈ﬁ# object-assign [![Build Status](https://travis-ci.org/sindresorhus/object-assign.svg?branch=master)](https://travis-ci.org/sindresorhus/object-assign)
+Ñ™/readme.md≈ﬁ# object-assign [![Build Status](https://travis-ci.org/sindresorhus/object-assign.svg?branch=master)](https://travis-ci.org/sindresorhus/object-assign)
 
 > ES2015 [`Object.assign()`](http://www.2ality.com/2014/01/object-assign.html) [ponyfill](https://ponyfill.com)
 
@@ -122,6 +80,48 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+≠/package.json≈¸{
+  "name": "object-assign",
+  "version": "4.1.1",
+  "description": "ES2015 `Object.assign()` ponyfill",
+  "license": "MIT",
+  "repository": "sindresorhus/object-assign",
+  "author": {
+    "name": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "scripts": {
+    "test": "xo && ava",
+    "bench": "matcha bench.js"
+  },
+  "files": [
+    "index.js"
+  ],
+  "keywords": [
+    "object",
+    "assign",
+    "extend",
+    "properties",
+    "es2015",
+    "ecmascript",
+    "harmony",
+    "ponyfill",
+    "prollyfill",
+    "polyfill",
+    "shim",
+    "browser"
+  ],
+  "devDependencies": {
+    "ava": "^0.16.0",
+    "lodash": "^4.16.4",
+    "matcha": "^0.7.0",
+    "xo": "^0.16.0"
+  }
+}
 ©/index.js≈</*
 object-assign
 (c) Sindre Sorhus

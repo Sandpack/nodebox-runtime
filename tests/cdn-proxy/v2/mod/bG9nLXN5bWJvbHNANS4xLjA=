@@ -1,4 +1,24 @@
-Ü™/readme.md≈z# log-symbols
+Ü©/index.js≈≥import chalk from 'chalk';
+import isUnicodeSupported from 'is-unicode-supported';
+
+const main = {
+	info: chalk.blue('‚Ñπ'),
+	success: chalk.green('‚úî'),
+	warning: chalk.yellow('‚ö†'),
+	error: chalk.red('‚úñ'),
+};
+
+const fallback = {
+	info: chalk.blue('i'),
+	success: chalk.green('‚àö'),
+	warning: chalk.yellow('‚Äº'),
+	error: chalk.red('√ó'),
+};
+
+const logSymbols = isUnicodeSupported() ? main : fallback;
+
+export default logSymbols;
+™/readme.md≈z# log-symbols
 
 <img src="screenshot.png" width="226" height="192" align="right">
 
@@ -49,14 +69,6 @@ console.log(logSymbols.success, 'Finished successfully!');
 		Tidelift helps make open source sustainable for maintainers while giving companies<br>assurances about security, maintenance, and licensing for their dependencies.
 	</sub>
 </div>
-´/browser.jsƒ|const logSymbols = {
-	info: '‚ÑπÔ∏è',
-	success: '‚úÖ',
-	warning: '‚ö†Ô∏è',
-	error: '‚ùåÔ∏è',
-};
-
-export default logSymbols;
 ≠/package.json≈Â{
 	"name": "log-symbols",
 	"version": "5.1.0",
@@ -113,15 +125,6 @@ export default logSymbols;
 		"xo": "^0.47.0"
 	}
 }
-®/license≈]MIT License
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ´/index.d.ts≈I/**
 Colored symbols for various log levels.
 
@@ -144,23 +147,20 @@ declare const logSymbols: {
 };
 
 export default logSymbols;
-©/index.js≈≥import chalk from 'chalk';
-import isUnicodeSupported from 'is-unicode-supported';
+®/license≈]MIT License
 
-const main = {
-	info: chalk.blue('‚Ñπ'),
-	success: chalk.green('‚úî'),
-	warning: chalk.yellow('‚ö†'),
-	error: chalk.red('‚úñ'),
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+´/browser.jsƒ|const logSymbols = {
+	info: '‚ÑπÔ∏è',
+	success: '‚úÖ',
+	warning: '‚ö†Ô∏è',
+	error: '‚ùåÔ∏è',
 };
-
-const fallback = {
-	info: chalk.blue('i'),
-	success: chalk.green('‚àö'),
-	warning: chalk.yellow('‚Äº'),
-	error: chalk.red('√ó'),
-};
-
-const logSymbols = isUnicodeSupported() ? main : fallback;
 
 export default logSymbols;

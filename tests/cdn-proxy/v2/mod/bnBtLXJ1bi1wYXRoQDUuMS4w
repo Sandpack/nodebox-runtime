@@ -1,12 +1,41 @@
-Ö®/license≈]MIT License
+Ö©/index.js≈™import process from 'node:process';
+import path from 'node:path';
+import url from 'node:url';
+import pathKey from 'path-key';
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+export function npmRunPath(options = {}) {
+	const {
+		cwd = process.cwd(),
+		path: path_ = process.env[pathKey()],
+		execPath = process.execPath,
+	} = options;
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+	let previous;
+	const cwdString = cwd instanceof URL ? url.fileURLToPath(cwd) : cwd;
+	let cwdPath = path.resolve(cwdString);
+	const result = [];
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+	while (previous !== cwdPath) {
+		result.push(path.join(cwdPath, 'node_modules/.bin'));
+		previous = cwdPath;
+		cwdPath = path.resolve(cwdPath, '..');
+	}
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+	// Ensure the running `node` binary is used.
+	result.push(path.resolve(cwdString, execPath, '..'));
+
+	return [...result, path_].join(path.delimiter);
+}
+
+export function npmRunPathEnv({env = process.env, ...options} = {}) {
+	env = {...env};
+
+	const path = pathKey({env});
+	options.path = env[path];
+	env[path] = npmRunPath(options);
+
+	return env;
+}
 ™/readme.md≈"# npm-run-path
 
 > Get your [PATH](https://en.wikipedia.org/wiki/PATH_(variable)) prepended with locally installed binaries
@@ -202,44 +231,6 @@ childProcess.execFileSync('foo', {
 ```
 */
 export function npmRunPathEnv(options?: EnvOptions): ProcessEnv;
-©/index.js≈™import process from 'node:process';
-import path from 'node:path';
-import url from 'node:url';
-import pathKey from 'path-key';
-
-export function npmRunPath(options = {}) {
-	const {
-		cwd = process.cwd(),
-		path: path_ = process.env[pathKey()],
-		execPath = process.execPath,
-	} = options;
-
-	let previous;
-	const cwdString = cwd instanceof URL ? url.fileURLToPath(cwd) : cwd;
-	let cwdPath = path.resolve(cwdString);
-	const result = [];
-
-	while (previous !== cwdPath) {
-		result.push(path.join(cwdPath, 'node_modules/.bin'));
-		previous = cwdPath;
-		cwdPath = path.resolve(cwdPath, '..');
-	}
-
-	// Ensure the running `node` binary is used.
-	result.push(path.resolve(cwdString, execPath, '..'));
-
-	return [...result, path_].join(path.delimiter);
-}
-
-export function npmRunPathEnv({env = process.env, ...options} = {}) {
-	env = {...env};
-
-	const path = pathKey({env});
-	options.path = env[path];
-	env[path] = npmRunPath(options);
-
-	return env;
-}
 ≠/package.json≈T{
 	"name": "npm-run-path",
 	"version": "5.1.0",
@@ -287,3 +278,12 @@ export function npmRunPathEnv({env = process.env, ...options} = {}) {
 		"xo": "^0.45.0"
 	}
 }
+®/license≈]MIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

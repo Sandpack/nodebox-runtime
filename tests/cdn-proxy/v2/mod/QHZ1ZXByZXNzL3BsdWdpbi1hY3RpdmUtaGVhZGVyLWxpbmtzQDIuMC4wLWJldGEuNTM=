@@ -1,6 +1,62 @@
-Ž²/lib/node/index.jsÄžimport { activeHeaderLinksPlugin } from './activeHeaderLinksPlugin.js';
+Ž´/lib/node/index.d.tsÄžimport { activeHeaderLinksPlugin } from './activeHeaderLinksPlugin.js';
 export * from './activeHeaderLinksPlugin.js';
 export default activeHeaderLinksPlugin;
+Ù /lib/client/composables/index.jsÄ+export * from './useActiveHeaderLinks.js';
+Ù"/lib/client/composables/index.d.tsÄ+export * from './useActiveHeaderLinks.js';
+­/package.jsonÅr{
+  "name": "@vuepress/plugin-active-header-links",
+  "version": "2.0.0-beta.53",
+  "description": "VuePress plugin - active header links",
+  "keywords": [
+    "vuepress-plugin",
+    "vuepress",
+    "plugin",
+    "active",
+    "links"
+  ],
+  "homepage": "https://github.com/vuepress",
+  "bugs": {
+    "url": "https://github.com/vuepress/vuepress-next/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vuepress/vuepress-next.git"
+  },
+  "license": "MIT",
+  "author": "meteorlxy",
+  "type": "module",
+  "exports": {
+    ".": "./lib/node/index.js",
+    "./client": "./lib/client/index.js",
+    "./package.json": "./package.json"
+  },
+  "main": "./lib/node/index.js",
+  "types": "./lib/node/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "dependencies": {
+    "@vuepress/client": "2.0.0-beta.53",
+    "@vuepress/core": "2.0.0-beta.53",
+    "@vuepress/utils": "2.0.0-beta.53",
+    "ts-debounce": "^4.0.0",
+    "vue": "^3.2.41",
+    "vue-router": "^4.1.6"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -b tsconfig.build.json",
+    "clean": "rimraf lib *.tsbuildinfo"
+  }
+}Ù1/lib/client/composables/useActiveHeaderLinks.d.tsÅ+export interface UseActiveHeaderLinksOptions {
+    headerLinkSelector: string;
+    headerAnchorSelector: string;
+    delay: number;
+    offset?: number;
+}
+export declare const useActiveHeaderLinks: ({ headerLinkSelector, headerAnchorSelector, delay, offset, }: UseActiveHeaderLinksOptions) => void;
 Ù&/lib/node/activeHeaderLinksPlugin.d.tsÅÜimport type { Plugin } from '@vuepress/core';
 /**
  * Options for @vuepress/plugin-active-header-links
@@ -36,7 +92,24 @@ export interface ActiveHeaderLinksPluginOptions {
     offset?: number;
 }
 export declare const activeHeaderLinksPlugin: ({ headerLinkSelector, headerAnchorSelector, delay, offset, }?: ActiveHeaderLinksPluginOptions) => Plugin;
-¶/lib/client/index.d.tsÄ(export * from './composables/index.js';
+µ/lib/client/config.jsÅ+import { defineClientConfig } from '@vuepress/client';
+import { useActiveHeaderLinks } from './composables/index.js';
+const headerLinkSelector = __AHL_HEADER_LINK_SELECTOR__;
+const headerAnchorSelector = __AHL_HEADER_ANCHOR_SELECTOR__;
+const delay = __AHL_DELAY__;
+const offset = __AHL_OFFSET__;
+export default defineClientConfig({
+    setup() {
+        if (__VUEPRESS_SSR__)
+            return;
+        useActiveHeaderLinks({
+            headerLinkSelector,
+            headerAnchorSelector,
+            delay,
+            offset,
+        });
+    },
+});
 ¨/LICENSEÅCThe MIT License (MIT)
 
 Copyright (c) 2018-present, Yuxi (Evan) You
@@ -58,36 +131,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-Ù$/lib/node/activeHeaderLinksPlugin.jsÅKimport { getDirname, path } from '@vuepress/utils';
-const __dirname = getDirname(import.meta.url);
-export const activeHeaderLinksPlugin = ({ headerLinkSelector = 'a.sidebar-item', headerAnchorSelector = '.header-anchor', delay = 200, offset = 5, } = {}) => ({
-    name: '@vuepress/plugin-active-header-links',
-    clientConfigFile: path.resolve(__dirname, '../client/config.js'),
-    define: {
-        __AHL_HEADER_LINK_SELECTOR__: headerLinkSelector,
-        __AHL_HEADER_ANCHOR_SELECTOR__: headerAnchorSelector,
-        __AHL_DELAY__: delay,
-        __AHL_OFFSET__: offset,
-    },
-});
-µ/lib/client/config.jsÅ+import { defineClientConfig } from '@vuepress/client';
-import { useActiveHeaderLinks } from './composables/index.js';
-const headerLinkSelector = __AHL_HEADER_LINK_SELECTOR__;
-const headerAnchorSelector = __AHL_HEADER_ANCHOR_SELECTOR__;
-const delay = __AHL_DELAY__;
-const offset = __AHL_OFFSET__;
-export default defineClientConfig({
-    setup() {
-        if (__VUEPRESS_SSR__)
-            return;
-        useActiveHeaderLinks({
-            headerLinkSelector,
-            headerAnchorSelector,
-            delay,
-            offset,
-        });
-    },
-});
+´/lib/client/index.jsÄ(export * from './composables/index.js';
 Ù//lib/client/composables/useActiveHeaderLinks.jsÅDimport { debounce } from 'ts-debounce';
 import { onBeforeUnmount, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
@@ -174,65 +218,21 @@ const updateHash = async (router, hash) => {
     })
         .finally(() => (router.options.scrollBehavior = scrollBehavior));
 };
-·/lib/client/config.d.tsÄZdeclare const _default: import("@vuepress/client").ClientConfig;
-export default _default;
-Ù /lib/client/composables/index.jsÄ+export * from './useActiveHeaderLinks.js';
-´/lib/client/index.jsÄ(export * from './composables/index.js';
-Ù"/lib/client/composables/index.d.tsÄ+export * from './useActiveHeaderLinks.js';
-´/lib/node/index.d.tsÄžimport { activeHeaderLinksPlugin } from './activeHeaderLinksPlugin.js';
+¶/lib/client/index.d.tsÄ(export * from './composables/index.js';
+²/lib/node/index.jsÄžimport { activeHeaderLinksPlugin } from './activeHeaderLinksPlugin.js';
 export * from './activeHeaderLinksPlugin.js';
 export default activeHeaderLinksPlugin;
-­/package.jsonÅr{
-  "name": "@vuepress/plugin-active-header-links",
-  "version": "2.0.0-beta.53",
-  "description": "VuePress plugin - active header links",
-  "keywords": [
-    "vuepress-plugin",
-    "vuepress",
-    "plugin",
-    "active",
-    "links"
-  ],
-  "homepage": "https://github.com/vuepress",
-  "bugs": {
-    "url": "https://github.com/vuepress/vuepress-next/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/vuepress/vuepress-next.git"
-  },
-  "license": "MIT",
-  "author": "meteorlxy",
-  "type": "module",
-  "exports": {
-    ".": "./lib/node/index.js",
-    "./client": "./lib/client/index.js",
-    "./package.json": "./package.json"
-  },
-  "main": "./lib/node/index.js",
-  "types": "./lib/node/index.d.ts",
-  "files": [
-    "lib"
-  ],
-  "dependencies": {
-    "@vuepress/client": "2.0.0-beta.53",
-    "@vuepress/core": "2.0.0-beta.53",
-    "@vuepress/utils": "2.0.0-beta.53",
-    "ts-debounce": "^4.0.0",
-    "vue": "^3.2.41",
-    "vue-router": "^4.1.6"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "scripts": {
-    "build": "tsc -b tsconfig.build.json",
-    "clean": "rimraf lib *.tsbuildinfo"
-  }
-}Ù1/lib/client/composables/useActiveHeaderLinks.d.tsÅ+export interface UseActiveHeaderLinksOptions {
-    headerLinkSelector: string;
-    headerAnchorSelector: string;
-    delay: number;
-    offset?: number;
-}
-export declare const useActiveHeaderLinks: ({ headerLinkSelector, headerAnchorSelector, delay, offset, }: UseActiveHeaderLinksOptions) => void;
+Ù$/lib/node/activeHeaderLinksPlugin.jsÅKimport { getDirname, path } from '@vuepress/utils';
+const __dirname = getDirname(import.meta.url);
+export const activeHeaderLinksPlugin = ({ headerLinkSelector = 'a.sidebar-item', headerAnchorSelector = '.header-anchor', delay = 200, offset = 5, } = {}) => ({
+    name: '@vuepress/plugin-active-header-links',
+    clientConfigFile: path.resolve(__dirname, '../client/config.js'),
+    define: {
+        __AHL_HEADER_LINK_SELECTOR__: headerLinkSelector,
+        __AHL_HEADER_ANCHOR_SELECTOR__: headerAnchorSelector,
+        __AHL_DELAY__: delay,
+        __AHL_OFFSET__: offset,
+    },
+});
+·/lib/client/config.d.tsÄZdeclare const _default: import("@vuepress/client").ClientConfig;
+export default _default;

@@ -1,49 +1,4 @@
-áπ/.github/workflows/ci.yml≈rname: CI Tests
-
-on:
-  - pull_request
-
-jobs:
-  build:
-
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [10.x, 12.x, 13.x]
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-    - run: npm i && npm test
-≠/benchmark.js≈rvar bench = require('fastbench')
-var utilFormat = require('util').format
-var quickFormat = require('./')
-
-var run = bench([
-  function util(cb) {
-    utilFormat('%s %j %d', 'a', {a: {x: 1}}, 1)
-    setImmediate(cb)
-  },
-  function quick(cb) {
-    quickFormat('%s %j %d', 'a', [{a: {x: 1}}, 1], null)
-    setImmediate(cb)
-  },
-  function utilWithTailObj(cb) {
-    utilFormat('hello %s %j %d', 'world', {obj: true}, 4, {another: 'obj'})
-    setImmediate(cb)
-  },
-  function quickWithTailObj(cb) {
-    quickFormat('hello %s %j %d', 'world', [{obj: true}, 4, {another: 'obj'}], null)
-    setImmediate(cb)
-  }
-], 100000)
-
-run(run)
-®/LICENSE≈CThe MIT License (MIT)
+á®/LICENSE≈CThe MIT License (MIT)
 
 Copyright (c) 2016-2019 David Mark Clements
 
@@ -174,6 +129,27 @@ function format(f, args, opts) {
 
   return str
 }
+π/.github/workflows/ci.yml≈rname: CI Tests
+
+on:
+  - pull_request
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [10.x, 12.x, 13.x]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: npm i && npm test
 Æ/test/index.js≈'use strict';
 const assert = require('assert');
 const format = require('../');
@@ -376,6 +352,30 @@ quickWithTailObj*100000: 226.036ms
 ## Acknowledgements
 
 Sponsored by [nearForm](http://www.nearform.com)
+≠/benchmark.js≈rvar bench = require('fastbench')
+var utilFormat = require('util').format
+var quickFormat = require('./')
+
+var run = bench([
+  function util(cb) {
+    utilFormat('%s %j %d', 'a', {a: {x: 1}}, 1)
+    setImmediate(cb)
+  },
+  function quick(cb) {
+    quickFormat('%s %j %d', 'a', [{a: {x: 1}}, 1], null)
+    setImmediate(cb)
+  },
+  function utilWithTailObj(cb) {
+    utilFormat('hello %s %j %d', 'world', {obj: true}, 4, {another: 'obj'})
+    setImmediate(cb)
+  },
+  function quickWithTailObj(cb) {
+    quickFormat('hello %s %j %d', 'world', [{obj: true}, 4, {another: 'obj'}], null)
+    setImmediate(cb)
+  }
+], 100000)
+
+run(run)
 ≠/package.json≈Ÿ{
   "name": "quick-format-unescaped",
   "version": "4.0.4",

@@ -1,4 +1,176 @@
-Ö™/README.md≈U# word-wrap [![NPM version](https://img.shields.io/npm/v/word-wrap.svg?style=flat)](https://www.npmjs.com/package/word-wrap) [![NPM monthly downloads](https://img.shields.io/npm/dm/word-wrap.svg?style=flat)](https://npmjs.org/package/word-wrap) [![NPM total downloads](https://img.shields.io/npm/dt/word-wrap.svg?style=flat)](https://npmjs.org/package/word-wrap) [![Linux Build Status](https://img.shields.io/travis/jonschlinkert/word-wrap.svg?style=flat&label=Travis)](https://travis-ci.org/jonschlinkert/word-wrap)
+Ö©/index.js≈./*!
+ * word-wrap <https://github.com/jonschlinkert/word-wrap>
+ *
+ * Copyright (c) 2014-2017, Jon Schlinkert.
+ * Released under the MIT License.
+ */
+
+module.exports = function(str, options) {
+  options = options || {};
+  if (str == null) {
+    return str;
+  }
+
+  var width = options.width || 50;
+  var indent = (typeof options.indent === 'string')
+    ? options.indent
+    : '  ';
+
+  var newline = options.newline || '\n' + indent;
+  var escape = typeof options.escape === 'function'
+    ? options.escape
+    : identity;
+
+  var regexString = '.{1,' + width + '}';
+  if (options.cut !== true) {
+    regexString += '([\\s\u200B]+|$)|[^\\s\u200B]+?([\\s\u200B]+|$)';
+  }
+
+  var re = new RegExp(regexString, 'g');
+  var lines = str.match(re) || [];
+  var result = indent + lines.map(function(line) {
+    if (line.slice(-1) === '\n') {
+      line = line.slice(0, line.length - 1);
+    }
+    return escape(line);
+  }).join(newline);
+
+  if (options.trim === true) {
+    result = result.replace(/[ \t]*$/gm, '');
+  }
+  return result;
+};
+
+function identity(str) {
+  return str;
+}
+≠/package.json≈º{
+  "name": "word-wrap",
+  "description": "Wrap words to a specified length.",
+  "version": "1.2.3",
+  "homepage": "https://github.com/jonschlinkert/word-wrap",
+  "author": "Jon Schlinkert (https://github.com/jonschlinkert)",
+  "contributors": [
+    "Danilo Sampaio <danilo.sampaio@gmail.com> (localhost:8080)",
+    "Fede Ramirez <i@2fd.me> (https://2fd.github.io)",
+    "Joe Hildebrand <joe-github@cursive.net> (https://twitter.com/hildjj)",
+    "Jon Schlinkert <jon.schlinkert@sellside.com> (http://twitter.com/jonschlinkert)",
+    "Todd Kennedy (https://tck.io)",
+    "Waldemar Reusch (https://github.com/lordvlad)",
+    "Wolfgang Faust (http://www.linestarve.com)",
+    "Zach Hale <zachhale@gmail.com> (http://zachhale.com)"
+  ],
+  "repository": "jonschlinkert/word-wrap",
+  "bugs": {
+    "url": "https://github.com/jonschlinkert/word-wrap/issues"
+  },
+  "license": "MIT",
+  "files": [
+    "index.js",
+    "index.d.ts"
+  ],
+  "main": "index.js",
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "devDependencies": {
+    "gulp-format-md": "^0.1.11",
+    "mocha": "^3.2.0"
+  },
+  "keywords": [
+    "break",
+    "carriage",
+    "line",
+    "new-line",
+    "newline",
+    "return",
+    "soft",
+    "text",
+    "word",
+    "word-wrap",
+    "words",
+    "wrap"
+  ],
+  "typings": "index.d.ts",
+  "verb": {
+    "toc": false,
+    "layout": "default",
+    "tasks": [
+      "readme"
+    ],
+    "plugins": [
+      "gulp-format-md"
+    ],
+    "lint": {
+      "reflinks": true
+    },
+    "related": {
+      "list": [
+        "common-words",
+        "shuffle-words",
+        "unique-words",
+        "wordcount"
+      ]
+    },
+    "reflinks": [
+      "verb",
+      "verb-generate-readme"
+    ]
+  }
+}
+´/index.d.ts≈⁄/**
+ * Wrap words to a specified length.
+ */
+export = wrap;
+
+declare function wrap(str: string, options?: wrap.IOptions): string;
+
+declare namespace wrap {
+    export interface IOptions {
+
+        /**
+         * The width of the text before wrapping to a new line.
+         * @default ¬¥50¬¥
+         */
+        width?: number;
+
+        /**
+         * The string to use at the beginning of each line.
+         * @default ¬¥  ¬¥ (two spaces)
+         */
+        indent?: string;
+
+        /**
+         * The string to use at the end of each line.
+         * @default ¬¥\n¬¥
+         */
+        newline?: string;
+
+        /**
+         * An escape function to run on each line after splitting them.
+         * @default (str: string) => string;
+         */
+        escape?: (str: string) => string;
+
+        /**
+         * Trim trailing whitespace from the returned string.
+         * This option is included since .trim() would also strip
+         * the leading indentation from the first line.
+         * @default true
+         */
+        trim?: boolean;
+
+        /**
+         * Break a word between any two letters when the word is longer
+         * than the specified width.
+         * @default false
+         */
+        cut?: boolean;
+    }
+}™/README.md≈U# word-wrap [![NPM version](https://img.shields.io/npm/v/word-wrap.svg?style=flat)](https://www.npmjs.com/package/word-wrap) [![NPM monthly downloads](https://img.shields.io/npm/dm/word-wrap.svg?style=flat)](https://npmjs.org/package/word-wrap) [![NPM total downloads](https://img.shields.io/npm/dt/word-wrap.svg?style=flat)](https://npmjs.org/package/word-wrap) [![Linux Build Status](https://img.shields.io/travis/jonschlinkert/word-wrap.svg?style=flat&label=Travis)](https://travis-ci.org/jonschlinkert/word-wrap)
 
 > Wrap words to a specified length.
 
@@ -179,179 +351,7 @@ Released under the [MIT License](LICENSE).
 
 ***
 
-_This file was generated by [verb-generate-readme](https://github.com/verbose/verb-generate-readme), v0.6.0, on June 02, 2017._©/index.js≈./*!
- * word-wrap <https://github.com/jonschlinkert/word-wrap>
- *
- * Copyright (c) 2014-2017, Jon Schlinkert.
- * Released under the MIT License.
- */
-
-module.exports = function(str, options) {
-  options = options || {};
-  if (str == null) {
-    return str;
-  }
-
-  var width = options.width || 50;
-  var indent = (typeof options.indent === 'string')
-    ? options.indent
-    : '  ';
-
-  var newline = options.newline || '\n' + indent;
-  var escape = typeof options.escape === 'function'
-    ? options.escape
-    : identity;
-
-  var regexString = '.{1,' + width + '}';
-  if (options.cut !== true) {
-    regexString += '([\\s\u200B]+|$)|[^\\s\u200B]+?([\\s\u200B]+|$)';
-  }
-
-  var re = new RegExp(regexString, 'g');
-  var lines = str.match(re) || [];
-  var result = indent + lines.map(function(line) {
-    if (line.slice(-1) === '\n') {
-      line = line.slice(0, line.length - 1);
-    }
-    return escape(line);
-  }).join(newline);
-
-  if (options.trim === true) {
-    result = result.replace(/[ \t]*$/gm, '');
-  }
-  return result;
-};
-
-function identity(str) {
-  return str;
-}
-´/index.d.ts≈⁄/**
- * Wrap words to a specified length.
- */
-export = wrap;
-
-declare function wrap(str: string, options?: wrap.IOptions): string;
-
-declare namespace wrap {
-    export interface IOptions {
-
-        /**
-         * The width of the text before wrapping to a new line.
-         * @default ¬¥50¬¥
-         */
-        width?: number;
-
-        /**
-         * The string to use at the beginning of each line.
-         * @default ¬¥  ¬¥ (two spaces)
-         */
-        indent?: string;
-
-        /**
-         * The string to use at the end of each line.
-         * @default ¬¥\n¬¥
-         */
-        newline?: string;
-
-        /**
-         * An escape function to run on each line after splitting them.
-         * @default (str: string) => string;
-         */
-        escape?: (str: string) => string;
-
-        /**
-         * Trim trailing whitespace from the returned string.
-         * This option is included since .trim() would also strip
-         * the leading indentation from the first line.
-         * @default true
-         */
-        trim?: boolean;
-
-        /**
-         * Break a word between any two letters when the word is longer
-         * than the specified width.
-         * @default false
-         */
-        cut?: boolean;
-    }
-}≠/package.json≈º{
-  "name": "word-wrap",
-  "description": "Wrap words to a specified length.",
-  "version": "1.2.3",
-  "homepage": "https://github.com/jonschlinkert/word-wrap",
-  "author": "Jon Schlinkert (https://github.com/jonschlinkert)",
-  "contributors": [
-    "Danilo Sampaio <danilo.sampaio@gmail.com> (localhost:8080)",
-    "Fede Ramirez <i@2fd.me> (https://2fd.github.io)",
-    "Joe Hildebrand <joe-github@cursive.net> (https://twitter.com/hildjj)",
-    "Jon Schlinkert <jon.schlinkert@sellside.com> (http://twitter.com/jonschlinkert)",
-    "Todd Kennedy (https://tck.io)",
-    "Waldemar Reusch (https://github.com/lordvlad)",
-    "Wolfgang Faust (http://www.linestarve.com)",
-    "Zach Hale <zachhale@gmail.com> (http://zachhale.com)"
-  ],
-  "repository": "jonschlinkert/word-wrap",
-  "bugs": {
-    "url": "https://github.com/jonschlinkert/word-wrap/issues"
-  },
-  "license": "MIT",
-  "files": [
-    "index.js",
-    "index.d.ts"
-  ],
-  "main": "index.js",
-  "engines": {
-    "node": ">=0.10.0"
-  },
-  "scripts": {
-    "test": "mocha"
-  },
-  "devDependencies": {
-    "gulp-format-md": "^0.1.11",
-    "mocha": "^3.2.0"
-  },
-  "keywords": [
-    "break",
-    "carriage",
-    "line",
-    "new-line",
-    "newline",
-    "return",
-    "soft",
-    "text",
-    "word",
-    "word-wrap",
-    "words",
-    "wrap"
-  ],
-  "typings": "index.d.ts",
-  "verb": {
-    "toc": false,
-    "layout": "default",
-    "tasks": [
-      "readme"
-    ],
-    "plugins": [
-      "gulp-format-md"
-    ],
-    "lint": {
-      "reflinks": true
-    },
-    "related": {
-      "list": [
-        "common-words",
-        "shuffle-words",
-        "unique-words",
-        "wordcount"
-      ]
-    },
-    "reflinks": [
-      "verb",
-      "verb-generate-readme"
-    ]
-  }
-}
-®/LICENSE≈?The MIT License (MIT)
+_This file was generated by [verb-generate-readme](https://github.com/verbose/verb-generate-readme), v0.6.0, on June 02, 2017._®/LICENSE≈?The MIT License (MIT)
 
 Copyright (c) 2014-2017, Jon Schlinkert
 

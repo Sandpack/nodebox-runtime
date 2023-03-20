@@ -1,4 +1,443 @@
-ç≥/src/gen-mapping.ts≈0Ëimport { SetArray, put } from '@jridgewell/set-array';
+ç®/LICENSE≈8Copyright 2022 Justin Ridgewell <jridgewell@google.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+∏/dist/gen-mapping.umd.js≈*H(function (global, factory) {
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@jridgewell/set-array'), require('@jridgewell/sourcemap-codec'), require('@jridgewell/trace-mapping')) :
+    typeof define === 'function' && define.amd ? define(['exports', '@jridgewell/set-array', '@jridgewell/sourcemap-codec', '@jridgewell/trace-mapping'], factory) :
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.genMapping = {}, global.setArray, global.sourcemapCodec, global.traceMapping));
+})(this, (function (exports, setArray, sourcemapCodec, traceMapping) { 'use strict';
+
+    const COLUMN = 0;
+    const SOURCES_INDEX = 1;
+    const SOURCE_LINE = 2;
+    const SOURCE_COLUMN = 3;
+    const NAMES_INDEX = 4;
+
+    const NO_NAME = -1;
+    /**
+     * A low-level API to associate a generated position with an original source position. Line and
+     * column here are 0-based, unlike `addMapping`.
+     */
+    exports.addSegment = void 0;
+    /**
+     * A high-level API to associate a generated position with an original source position. Line is
+     * 1-based, but column is 0-based, due to legacy behavior in `source-map` library.
+     */
+    exports.addMapping = void 0;
+    /**
+     * Same as `addSegment`, but will only add the segment if it generates useful information in the
+     * resulting map. This only works correctly if segments are added **in order**, meaning you should
+     * not add a segment with a lower generated line/column than one that came before.
+     */
+    exports.maybeAddSegment = void 0;
+    /**
+     * Same as `addMapping`, but will only add the mapping if it generates useful information in the
+     * resulting map. This only works correctly if mappings are added **in order**, meaning you should
+     * not add a mapping with a lower generated line/column than one that came before.
+     */
+    exports.maybeAddMapping = void 0;
+    /**
+     * Adds/removes the content of the source file to the source map.
+     */
+    exports.setSourceContent = void 0;
+    /**
+     * Returns a sourcemap object (with decoded mappings) suitable for passing to a library that expects
+     * a sourcemap, or to JSON.stringify.
+     */
+    exports.toDecodedMap = void 0;
+    /**
+     * Returns a sourcemap object (with encoded mappings) suitable for passing to a library that expects
+     * a sourcemap, or to JSON.stringify.
+     */
+    exports.toEncodedMap = void 0;
+    /**
+     * Constructs a new GenMapping, using the already present mappings of the input.
+     */
+    exports.fromMap = void 0;
+    /**
+     * Returns an array of high-level mapping objects for every recorded segment, which could then be
+     * passed to the `source-map` library.
+     */
+    exports.allMappings = void 0;
+    // This split declaration is only so that terser can elminiate the static initialization block.
+    let addSegmentInternal;
+    /**
+     * Provides the state to generate a sourcemap.
+     */
+    class GenMapping {
+        constructor({ file, sourceRoot } = {}) {
+            this._names = new setArray.SetArray();
+            this._sources = new setArray.SetArray();
+            this._sourcesContent = [];
+            this._mappings = [];
+            this.file = file;
+            this.sourceRoot = sourceRoot;
+        }
+    }
+    (() => {
+        exports.addSegment = (map, genLine, genColumn, source, sourceLine, sourceColumn, name, content) => {
+            return addSegmentInternal(false, map, genLine, genColumn, source, sourceLine, sourceColumn, name, content);
+        };
+        exports.maybeAddSegment = (map, genLine, genColumn, source, sourceLine, sourceColumn, name, content) => {
+            return addSegmentInternal(true, map, genLine, genColumn, source, sourceLine, sourceColumn, name, content);
+        };
+        exports.addMapping = (map, mapping) => {
+            return addMappingInternal(false, map, mapping);
+        };
+        exports.maybeAddMapping = (map, mapping) => {
+            return addMappingInternal(true, map, mapping);
+        };
+        exports.setSourceContent = (map, source, content) => {
+            const { _sources: sources, _sourcesContent: sourcesContent } = map;
+            sourcesContent[setArray.put(sources, source)] = content;
+        };
+        exports.toDecodedMap = (map) => {
+            const { file, sourceRoot, _mappings: mappings, _sources: sources, _sourcesContent: sourcesContent, _names: names, } = map;
+            removeEmptyFinalLines(mappings);
+            return {
+                version: 3,
+                file: file || undefined,
+                names: names.array,
+                sourceRoot: sourceRoot || undefined,
+                sources: sources.array,
+                sourcesContent,
+                mappings,
+            };
+        };
+        exports.toEncodedMap = (map) => {
+            const decoded = exports.toDecodedMap(map);
+            return Object.assign(Object.assign({}, decoded), { mappings: sourcemapCodec.encode(decoded.mappings) });
+        };
+        exports.allMappings = (map) => {
+            const out = [];
+            const { _mappings: mappings, _sources: sources, _names: names } = map;
+            for (let i = 0; i < mappings.length; i++) {
+                const line = mappings[i];
+                for (let j = 0; j < line.length; j++) {
+                    const seg = line[j];
+                    const generated = { line: i + 1, column: seg[COLUMN] };
+                    let source = undefined;
+                    let original = undefined;
+                    let name = undefined;
+                    if (seg.length !== 1) {
+                        source = sources.array[seg[SOURCES_INDEX]];
+                        original = { line: seg[SOURCE_LINE] + 1, column: seg[SOURCE_COLUMN] };
+                        if (seg.length === 5)
+                            name = names.array[seg[NAMES_INDEX]];
+                    }
+                    out.push({ generated, source, original, name });
+                }
+            }
+            return out;
+        };
+        exports.fromMap = (input) => {
+            const map = new traceMapping.TraceMap(input);
+            const gen = new GenMapping({ file: map.file, sourceRoot: map.sourceRoot });
+            putAll(gen._names, map.names);
+            putAll(gen._sources, map.sources);
+            gen._sourcesContent = map.sourcesContent || map.sources.map(() => null);
+            gen._mappings = traceMapping.decodedMappings(map);
+            return gen;
+        };
+        // Internal helpers
+        addSegmentInternal = (skipable, map, genLine, genColumn, source, sourceLine, sourceColumn, name, content) => {
+            const { _mappings: mappings, _sources: sources, _sourcesContent: sourcesContent, _names: names, } = map;
+            const line = getLine(mappings, genLine);
+            const index = getColumnIndex(line, genColumn);
+            if (!source) {
+                if (skipable && skipSourceless(line, index))
+                    return;
+                return insert(line, index, [genColumn]);
+            }
+            const sourcesIndex = setArray.put(sources, source);
+            const namesIndex = name ? setArray.put(names, name) : NO_NAME;
+            if (sourcesIndex === sourcesContent.length)
+                sourcesContent[sourcesIndex] = content !== null && content !== void 0 ? content : null;
+            if (skipable && skipSource(line, index, sourcesIndex, sourceLine, sourceColumn, namesIndex)) {
+                return;
+            }
+            return insert(line, index, name
+                ? [genColumn, sourcesIndex, sourceLine, sourceColumn, namesIndex]
+                : [genColumn, sourcesIndex, sourceLine, sourceColumn]);
+        };
+    })();
+    function getLine(mappings, index) {
+        for (let i = mappings.length; i <= index; i++) {
+            mappings[i] = [];
+        }
+        return mappings[index];
+    }
+    function getColumnIndex(line, genColumn) {
+        let index = line.length;
+        for (let i = index - 1; i >= 0; index = i--) {
+            const current = line[i];
+            if (genColumn >= current[COLUMN])
+                break;
+        }
+        return index;
+    }
+    function insert(array, index, value) {
+        for (let i = array.length; i > index; i--) {
+            array[i] = array[i - 1];
+        }
+        array[index] = value;
+    }
+    function removeEmptyFinalLines(mappings) {
+        const { length } = mappings;
+        let len = length;
+        for (let i = len - 1; i >= 0; len = i, i--) {
+            if (mappings[i].length > 0)
+                break;
+        }
+        if (len < length)
+            mappings.length = len;
+    }
+    function putAll(strarr, array) {
+        for (let i = 0; i < array.length; i++)
+            setArray.put(strarr, array[i]);
+    }
+    function skipSourceless(line, index) {
+        // The start of a line is already sourceless, so adding a sourceless segment to the beginning
+        // doesn't generate any useful information.
+        if (index === 0)
+            return true;
+        const prev = line[index - 1];
+        // If the previous segment is also sourceless, then adding another sourceless segment doesn't
+        // genrate any new information. Else, this segment will end the source/named segment and point to
+        // a sourceless position, which is useful.
+        return prev.length === 1;
+    }
+    function skipSource(line, index, sourcesIndex, sourceLine, sourceColumn, namesIndex) {
+        // A source/named segment at the start of a line gives position at that genColumn
+        if (index === 0)
+            return false;
+        const prev = line[index - 1];
+        // If the previous segment is sourceless, then we're transitioning to a source.
+        if (prev.length === 1)
+            return false;
+        // If the previous segment maps to the exact same source position, then this segment doesn't
+        // provide any new position information.
+        return (sourcesIndex === prev[SOURCES_INDEX] &&
+            sourceLine === prev[SOURCE_LINE] &&
+            sourceColumn === prev[SOURCE_COLUMN] &&
+            namesIndex === (prev.length === 5 ? prev[NAMES_INDEX] : NO_NAME));
+    }
+    function addMappingInternal(skipable, map, mapping) {
+        const { generated, source, original, name, content } = mapping;
+        if (!source) {
+            return addSegmentInternal(skipable, map, generated.line - 1, generated.column, null, null, null, null, null);
+        }
+        const s = source;
+        return addSegmentInternal(skipable, map, generated.line - 1, generated.column, s, original.line - 1, original.column, name, content);
+    }
+
+    exports.GenMapping = GenMapping;
+
+    Object.defineProperty(exports, '__esModule', { value: true });
+
+}));
+//# sourceMappingURL=gen-mapping.umd.js.map
+º/dist/gen-mapping.umd.js.map≈T∑{"version":3,"file":"gen-mapping.umd.js","sources":["../src/sourcemap-segment.ts","../src/gen-mapping.ts"],"sourcesContent":["type GeneratedColumn = number;\ntype SourcesIndex = number;\ntype SourceLine = number;\ntype SourceColumn = number;\ntype NamesIndex = number;\n\nexport type SourceMapSegment =\n  | [GeneratedColumn]\n  | [GeneratedColumn, SourcesIndex, SourceLine, SourceColumn]\n  | [GeneratedColumn, SourcesIndex, SourceLine, SourceColumn, NamesIndex];\n\nexport const COLUMN = 0;\nexport const SOURCES_INDEX = 1;\nexport const SOURCE_LINE = 2;\nexport const SOURCE_COLUMN = 3;\nexport const NAMES_INDEX = 4;\n","import { SetArray, put } from '@jridgewell/set-array';\nimport { encode } from '@jridgewell/sourcemap-codec';\nimport { TraceMap, decodedMappings } from '@jridgewell/trace-mapping';\n\nimport {\n  COLUMN,\n  SOURCES_INDEX,\n  SOURCE_LINE,\n  SOURCE_COLUMN,\n  NAMES_INDEX,\n} from './sourcemap-segment';\n\nimport type { SourceMapInput } from '@jridgewell/trace-mapping';\nimport type { SourceMapSegment } from './sourcemap-segment';\nimport type { DecodedSourceMap, EncodedSourceMap, Pos, Mapping } from './types';\n\nexport type { DecodedSourceMap, EncodedSourceMap, Mapping };\n\nexport type Options = {\n  file?: string | null;\n  sourceRoot?: string | null;\n};\n\nconst NO_NAME = -1;\n\n/**\n * A low-level API to associate a generated position with an original source position. Line and\n * column here are 0-based, unlike `addMapping`.\n */\nexport let addSegment: {\n  (\n    map: GenMapping,\n    genLine: number,\n    genColumn: number,\n    source?: null,\n    sourceLine?: null,\n    sourceColumn?: null,\n    name?: null,\n    content?: null,\n  ): void;\n  (\n    map: GenMapping,\n    genLine: number,\n    genColumn: number,\n    source: string,\n    sourceLine: number,\n    sourceColumn: number,\n    name?: null,\n    content?: string | null,\n  ): void;\n  (\n    map: GenMapping,\n    genLine: number,\n    genColumn: number,\n    source: string,\n    sourceLine: number,\n    sourceColumn: number,\n    name: string,\n    content?: string | null,\n  ): void;\n};\n\n/**\n * A high-level API to associate a generated position with an original source position. Line is\n * 1-based, but column is 0-based, due to legacy behavior in `source-map` library.\n */\nexport let addMapping: {\n  (\n    map: GenMapping,\n    mapping: {\n      generated: Pos;\n      source?: null;\n      original?: null;\n      name?: null;\n      content?: null;\n    },\n  ): void;\n  (\n    map: GenMapping,\n    mapping: {\n      generated: Pos;\n      source: string;\n      original: Pos;\n      name?: null;\n      content?: string | null;\n    },\n  ): void;\n  (\n    map: GenMapping,\n    mapping: {\n      generated: Pos;\n      source: string;\n      original: Pos;\n      name: string;\n      content?: string | null;\n    },\n  ): void;\n};\n\n/**\n * Same as `addSegment`, but will only add the segment if it generates useful information in the\n * resulting map. This only works correctly if segments are added **in order**, meaning you should\n * not add a segment with a lower generated line/column than one that came before.\n */\nexport let maybeAddSegment: typeof addSegment;\n\n/**\n * Same as `addMapping`, but will only add the mapping if it generates useful information in the\n * resulting map. This only works correctly if mappings are added **in order**, meaning you should\n * not add a mapping with a lower generated line/column than one that came before.\n */\nexport let maybeAddMapping: typeof addMapping;\n\n/**\n * Adds/removes the content of the source file to the source map.\n */\nexport let setSourceContent: (map: GenMapping, source: string, content: string | null) => void;\n\n/**\n * Returns a sourcemap object (with decoded mappings) suitable for passing to a library that expects\n * a sourcemap, or to JSON.stringify.\n */\nexport let toDecodedMap: (map: GenMapping) => DecodedSourceMap;\n\n/**\n * Returns a sourcemap object (with encoded mappings) suitable for passing to a library that expects\n * a sourcemap, or to JSON.stringify.\n */\nexport let toEncodedMap: (map: GenMapping) => EncodedSourceMap;\n\n/**\n * Constructs a new GenMapping, using the already present mappings of the input.\n */\nexport let fromMap: (input: SourceMapInput) => GenMapping;\n\n/**\n * Returns an array of high-level mapping objects for every recorded segment, which could then be\n * passed to the `source-map` library.\n */\nexport let allMappings: (map: GenMapping) => Mapping[];\n\n// This split declaration is only so that terser can elminiate the static initialization block.\nlet addSegmentInternal: <S extends string | null | undefined>(\n  skipable: boolean,\n  map: GenMapping,\n  genLine: number,\n  genColumn: number,\n  source: S,\n  sourceLine: S extends string ? number : null | undefined,\n  sourceColumn: S extends string ? number : null | undefined,\n  name: S extends string ? string | null | undefined : null | undefined,\n  content: S extends string ? string | null | undefined : null | undefined,\n) => void;\n\n/**\n * Provides the state to generate a sourcemap.\n */\nexport class GenMapping {\n  private _names = new SetArray();\n  private _sources = new SetArray();\n  private _sourcesContent: (string | null)[] = [];\n  private _mappings: SourceMapSegment[][] = [];\n  declare file: string | null | undefined;\n  declare sourceRoot: string | null | undefined;\n\n  constructor({ file, sourceRoot }: Options = {}) {\n    this.file = file;\n    this.sourceRoot = sourceRoot;\n  }\n\n  static {\n    addSegment = (map, genLine, genColumn, source, sourceLine, sourceColumn, name, content) => {\n      return addSegmentInternal(\n        false,\n        map,\n        genLine,\n        genColumn,\n        source,\n        sourceLine,\n        sourceColumn,\n        name,\n        content,\n      );\n    };\n\n    maybeAddSegment = (\n      map,\n      genLine,\n      genColumn,\n      source,\n      sourceLine,\n      sourceColumn,\n      name,\n      content,\n    ) => {\n      return addSegmentInternal(\n        true,\n        map,\n        genLine,\n        genColumn,\n        source,\n        sourceLine,\n        sourceColumn,\n        name,\n        content,\n      );\n    };\n\n    addMapping = (map, mapping) => {\n      return addMappingInternal(false, map, mapping as Parameters<typeof addMappingInternal>[2]);\n    };\n\n    maybeAddMapping = (map, mapping) => {\n      return addMappingInternal(true, map, mapping as Parameters<typeof addMappingInternal>[2]);\n    };\n\n    setSourceContent = (map, source, content) => {\n      const { _sources: sources, _sourcesContent: sourcesContent } = map;\n      sourcesContent[put(sources, source)] = content;\n    };\n\n    toDecodedMap = (map) => {\n      const {\n        file,\n        sourceRoot,\n        _mappings: mappings,\n        _sources: sources,\n        _sourcesContent: sourcesContent,\n        _names: names,\n      } = map;\n      removeEmptyFinalLines(mappings);\n\n      return {\n        version: 3,\n        file: file || undefined,\n        names: names.array,\n        sourceRoot: sourceRoot || undefined,\n        sources: sources.array,\n        sourcesContent,\n        mappings,\n      };\n    };\n\n    toEncodedMap = (map) => {\n      const decoded = toDecodedMap(map);\n      return {\n        ...decoded,\n        mappings: encode(decoded.mappings as SourceMapSegment[][]),\n      };\n    };\n\n    allMappings = (map) => {\n      const out: Mapping[] = [];\n      const { _mappings: mappings, _sources: sources, _names: names } = map;\n\n      for (let i = 0; i < mappings.length; i++) {\n        const line = mappings[i];\n        for (let j = 0; j < line.length; j++) {\n          const seg = line[j];\n\n          const generated = { line: i + 1, column: seg[COLUMN] };\n          let source: string | undefined = undefined;\n          let original: Pos | undefined = undefined;\n          let name: string | undefined = undefined;\n\n          if (seg.length !== 1) {\n            source = sources.array[seg[SOURCES_INDEX]];\n            original = { line: seg[SOURCE_LINE] + 1, column: seg[SOURCE_COLUMN] };\n\n            if (seg.length === 5) name = names.array[seg[NAMES_INDEX]];\n          }\n\n          out.push({ generated, source, original, name } as Mapping);\n        }\n      }\n\n      return out;\n    };\n\n    fromMap = (input) => {\n      const map = new TraceMap(input);\n      const gen = new GenMapping({ file: map.file, sourceRoot: map.sourceRoot });\n\n      putAll(gen._names, map.names);\n      putAll(gen._sources, map.sources as string[]);\n      gen._sourcesContent = map.sourcesContent || map.sources.map(() => null);\n      gen._mappings = decodedMappings(map) as GenMapping['_mappings'];\n\n      return gen;\n    };\n\n    // Internal helpers\n    addSegmentInternal = (\n      skipable,\n      map,\n      genLine,\n      genColumn,\n      source,\n      sourceLine,\n      sourceColumn,\n      name,\n      content,\n    ) => {\n      const {\n        _mappings: mappings,\n        _sources: sources,\n        _sourcesContent: sourcesContent,\n        _names: names,\n      } = map;\n      const line = getLine(mappings, genLine);\n      const index = getColumnIndex(line, genColumn);\n\n      if (!source) {\n        if (skipable && skipSourceless(line, index)) return;\n        return insert(line, index, [genColumn]);\n      }\n\n      // Sigh, TypeScript can't figure out sourceLine and sourceColumn aren't nullish if source\n      // isn't nullish.\n      assert<number>(sourceLine);\n      assert<number>(sourceColumn);\n\n      const sourcesIndex = put(sources, source);\n      const namesIndex = name ? put(names, name) : NO_NAME;\n      if (sourcesIndex === sourcesContent.length) sourcesContent[sourcesIndex] = content ?? null;\n\n      if (skipable && skipSource(line, index, sourcesIndex, sourceLine, sourceColumn, namesIndex)) {\n        return;\n      }\n\n      return insert(\n        line,\n        index,\n        name\n          ? [genColumn, sourcesIndex, sourceLine, sourceColumn, namesIndex]\n          : [genColumn, sourcesIndex, sourceLine, sourceColumn],\n      );\n    };\n  }\n}\n\nfunction assert<T>(_val: unknown): asserts _val is T {\n  // noop.\n}\n\nfunction getLine(mappings: SourceMapSegment[][], index: number): SourceMapSegment[] {\n  for (let i = mappings.length; i <= index; i++) {\n    mappings[i] = [];\n  }\n  return mappings[index];\n}\n\nfunction getColumnIndex(line: SourceMapSegment[], genColumn: number): number {\n  let index = line.length;\n  for (let i = index - 1; i >= 0; index = i--) {\n    const current = line[i];\n    if (genColumn >= current[COLUMN]) break;\n  }\n  return index;\n}\n\nfunction insert<T>(array: T[], index: number, value: T) {\n  for (let i = array.length; i > index; i--) {\n    array[i] = array[i - 1];\n  }\n  array[index] = value;\n}\n\nfunction removeEmptyFinalLines(mappings: SourceMapSegment[][]) {\n  const { length } = mappings;\n  let len = length;\n  for (let i = len - 1; i >= 0; len = i, i--) {\n    if (mappings[i].length > 0) break;\n  }\n  if (len < length) mappings.length = len;\n}\n\nfunction putAll(strarr: SetArray, array: string[]) {\n  for (let i = 0; i < array.length; i++) put(strarr, array[i]);\n}\n\nfunction skipSourceless(line: SourceMapSegment[], index: number): boolean {\n  // The start of a line is already sourceless, so adding a sourceless segment to the beginning\n  // doesn't generate any useful information.\n  if (index === 0) return true;\n\n  const prev = line[index - 1];\n  // If the previous segment is also sourceless, then adding another sourceless segment doesn't\n  // genrate any new information. Else, this segment will end the source/named segment and point to\n  // a sourceless position, which is useful.\n  return prev.length === 1;\n}\n\nfunction skipSource(\n  line: SourceMapSegment[],\n  index: number,\n  sourcesIndex: number,\n  sourceLine: number,\n  sourceColumn: number,\n  namesIndex: number,\n): boolean {\n  // A source/named segment at the start of a line gives position at that genColumn\n  if (index === 0) return false;\n\n  const prev = line[index - 1];\n\n  // If the previous segment is sourceless, then we're transitioning to a source.\n  if (prev.length === 1) return false;\n\n  // If the previous segment maps to the exact same source position, then this segment doesn't\n  // provide any new position information.\n  return (\n    sourcesIndex === prev[SOURCES_INDEX] &&\n    sourceLine === prev[SOURCE_LINE] &&\n    sourceColumn === prev[SOURCE_COLUMN] &&\n    namesIndex === (prev.length === 5 ? prev[NAMES_INDEX] : NO_NAME)\n  );\n}\n\nfunction addMappingInternal<S extends string | null | undefined>(\n  skipable: boolean,\n  map: GenMapping,\n  mapping: {\n    generated: Pos;\n    source: S;\n    original: S extends string ? Pos : null | undefined;\n    name: S extends string ? string | null | undefined : null | undefined;\n    content: S extends string ? string | null | undefined : null | undefined;\n  },\n) {\n  const { generated, source, original, name, content } = mapping;\n  if (!source) {\n    return addSegmentInternal(\n      skipable,\n      map,\n      generated.line - 1,\n      generated.column,\n      null,\n      null,\n      null,\n      null,\n      null,\n    );\n  }\n  const s: string = source;\n  assert<Pos>(original);\n  return addSegmentInternal(\n    skipable,\n    map,\n    generated.line - 1,\n    generated.column,\n    s,\n    original.line - 1,\n    original.column,\n    name,\n    content,\n  );\n}\n"],"names":["addSegment","addMapping","maybeAddSegment","maybeAddMapping","setSourceContent","toDecodedMap","toEncodedMap","fromMap","allMappings","SetArray","put","encode","TraceMap","decodedMappings"],"mappings":"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"}≠/src/types.ts≈Iimport type { SourceMapSegment } from './sourcemap-segment';
+
+export interface SourceMapV3 {
+  file?: string | null;
+  names: readonly string[];
+  sourceRoot?: string;
+  sources: readonly (string | null)[];
+  sourcesContent?: readonly (string | null)[];
+  version: 3;
+}
+
+export interface EncodedSourceMap extends SourceMapV3 {
+  mappings: string;
+}
+
+export interface DecodedSourceMap extends SourceMapV3 {
+  mappings: readonly SourceMapSegment[][];
+}
+
+export interface Pos {
+  line: number;
+  column: number;
+}
+
+export type Mapping =
+  | {
+      generated: Pos;
+      source: undefined;
+      original: undefined;
+      name: undefined;
+    }
+  | {
+      generated: Pos;
+      source: string;
+      original: Pos;
+      name: string;
+    }
+  | {
+      generated: Pos;
+      source: string;
+      original: Pos;
+      name: undefined;
+    };
+∂/dist/types/types.d.ts≈4import type { SourceMapSegment } from './sourcemap-segment';
+export interface SourceMapV3 {
+    file?: string | null;
+    names: readonly string[];
+    sourceRoot?: string;
+    sources: readonly (string | null)[];
+    sourcesContent?: readonly (string | null)[];
+    version: 3;
+}
+export interface EncodedSourceMap extends SourceMapV3 {
+    mappings: string;
+}
+export interface DecodedSourceMap extends SourceMapV3 {
+    mappings: readonly SourceMapSegment[][];
+}
+export interface Pos {
+    line: number;
+    column: number;
+}
+export declare type Mapping = {
+    generated: Pos;
+    source: undefined;
+    original: undefined;
+    name: undefined;
+} | {
+    generated: Pos;
+    source: string;
+    original: Pos;
+    name: string;
+} | {
+    generated: Pos;
+    source: string;
+    original: Pos;
+    name: undefined;
+};
+º/dist/types/gen-mapping.d.ts≈Ximport type { SourceMapInput } from '@jridgewell/trace-mapping';
+import type { DecodedSourceMap, EncodedSourceMap, Pos, Mapping } from './types';
+export type { DecodedSourceMap, EncodedSourceMap, Mapping };
+export declare type Options = {
+    file?: string | null;
+    sourceRoot?: string | null;
+};
+/**
+ * A low-level API to associate a generated position with an original source position. Line and
+ * column here are 0-based, unlike `addMapping`.
+ */
+export declare let addSegment: {
+    (map: GenMapping, genLine: number, genColumn: number, source?: null, sourceLine?: null, sourceColumn?: null, name?: null, content?: null): void;
+    (map: GenMapping, genLine: number, genColumn: number, source: string, sourceLine: number, sourceColumn: number, name?: null, content?: string | null): void;
+    (map: GenMapping, genLine: number, genColumn: number, source: string, sourceLine: number, sourceColumn: number, name: string, content?: string | null): void;
+};
+/**
+ * A high-level API to associate a generated position with an original source position. Line is
+ * 1-based, but column is 0-based, due to legacy behavior in `source-map` library.
+ */
+export declare let addMapping: {
+    (map: GenMapping, mapping: {
+        generated: Pos;
+        source?: null;
+        original?: null;
+        name?: null;
+        content?: null;
+    }): void;
+    (map: GenMapping, mapping: {
+        generated: Pos;
+        source: string;
+        original: Pos;
+        name?: null;
+        content?: string | null;
+    }): void;
+    (map: GenMapping, mapping: {
+        generated: Pos;
+        source: string;
+        original: Pos;
+        name: string;
+        content?: string | null;
+    }): void;
+};
+/**
+ * Same as `addSegment`, but will only add the segment if it generates useful information in the
+ * resulting map. This only works correctly if segments are added **in order**, meaning you should
+ * not add a segment with a lower generated line/column than one that came before.
+ */
+export declare let maybeAddSegment: typeof addSegment;
+/**
+ * Same as `addMapping`, but will only add the mapping if it generates useful information in the
+ * resulting map. This only works correctly if mappings are added **in order**, meaning you should
+ * not add a mapping with a lower generated line/column than one that came before.
+ */
+export declare let maybeAddMapping: typeof addMapping;
+/**
+ * Adds/removes the content of the source file to the source map.
+ */
+export declare let setSourceContent: (map: GenMapping, source: string, content: string | null) => void;
+/**
+ * Returns a sourcemap object (with decoded mappings) suitable for passing to a library that expects
+ * a sourcemap, or to JSON.stringify.
+ */
+export declare let toDecodedMap: (map: GenMapping) => DecodedSourceMap;
+/**
+ * Returns a sourcemap object (with encoded mappings) suitable for passing to a library that expects
+ * a sourcemap, or to JSON.stringify.
+ */
+export declare let toEncodedMap: (map: GenMapping) => EncodedSourceMap;
+/**
+ * Constructs a new GenMapping, using the already present mappings of the input.
+ */
+export declare let fromMap: (input: SourceMapInput) => GenMapping;
+/**
+ * Returns an array of high-level mapping objects for every recorded segment, which could then be
+ * passed to the `source-map` library.
+ */
+export declare let allMappings: (map: GenMapping) => Mapping[];
+/**
+ * Provides the state to generate a sourcemap.
+ */
+export declare class GenMapping {
+    private _names;
+    private _sources;
+    private _sourcesContent;
+    private _mappings;
+    file: string | null | undefined;
+    sourceRoot: string | null | undefined;
+    constructor({ file, sourceRoot }?: Options);
+}
+π/src/sourcemap-segment.ts≈‡type GeneratedColumn = number;
+type SourcesIndex = number;
+type SourceLine = number;
+type SourceColumn = number;
+type NamesIndex = number;
+
+export type SourceMapSegment =
+  | [GeneratedColumn]
+  | [GeneratedColumn, SourcesIndex, SourceLine, SourceColumn]
+  | [GeneratedColumn, SourcesIndex, SourceLine, SourceColumn, NamesIndex];
+
+export const COLUMN = 0;
+export const SOURCES_INDEX = 1;
+export const SOURCE_LINE = 2;
+export const SOURCE_COLUMN = 3;
+export const NAMES_INDEX = 4;
+≥/src/gen-mapping.ts≈0Ëimport { SetArray, put } from '@jridgewell/set-array';
 import { encode } from '@jridgewell/sourcemap-codec';
 import { TraceMap, decodedMappings } from '@jridgewell/trace-mapping';
 
@@ -456,384 +895,324 @@ function addMappingInternal<S extends string | null | undefined>(
     content,
   );
 }
-∂/dist/types/types.d.ts≈4import type { SourceMapSegment } from './sourcemap-segment';
-export interface SourceMapV3 {
-    file?: string | null;
-    names: readonly string[];
-    sourceRoot?: string;
-    sources: readonly (string | null)[];
-    sourcesContent?: readonly (string | null)[];
-    version: 3;
+™/README.md≈4# @jridgewell/gen-mapping
+
+> Generate source maps
+
+`gen-mapping` allows you to generate a source map during transpilation or minification.
+With a source map, you're able to trace the original location in the source file, either in Chrome's
+DevTools or using a library like [`@jridgewell/trace-mapping`][trace-mapping].
+
+You may already be familiar with the [`source-map`][source-map] package's `SourceMapGenerator`. This
+provides the same `addMapping` and `setSourceContent` API.
+
+## Installation
+
+```sh
+npm install @jridgewell/gen-mapping
+```
+
+## Usage
+
+```typescript
+import { GenMapping, addMapping, setSourceContent, toEncodedMap, toDecodedMap } from '@jridgewell/gen-mapping';
+
+const map = new GenMapping({
+  file: 'output.js',
+  sourceRoot: 'https://example.com/',
+});
+
+setSourceContent(map, 'input.js', `function foo() {}`);
+
+addMapping(map, {
+  // Lines start at line 1, columns at column 0.
+  generated: { line: 1, column: 0 },
+  source: 'input.js',
+  original: { line: 1, column: 0 },
+});
+
+addMapping(map, {
+  generated: { line: 1, column: 9 },
+  source: 'input.js',
+  original: { line: 1, column: 9 },
+  name: 'foo',
+});
+
+assert.deepEqual(toDecodedMap(map), {
+  version: 3,
+  file: 'output.js',
+  names: ['foo'],
+  sourceRoot: 'https://example.com/',
+  sources: ['input.js'],
+  sourcesContent: ['function foo() {}'],
+  mappings: [
+    [ [0, 0, 0, 0], [9, 0, 0, 9, 0] ]
+  ],
+});
+
+assert.deepEqual(toEncodedMap(map), {
+  version: 3,
+  file: 'output.js',
+  names: ['foo'],
+  sourceRoot: 'https://example.com/',
+  sources: ['input.js'],
+  sourcesContent: ['function foo() {}'],
+  mappings: 'AAAA,SAASA',
+});
+```
+
+### Smaller Sourcemaps
+
+Not everything needs to be added to a sourcemap, and needless markings can cause signficantly
+larger file sizes. `gen-mapping` exposes `maybeAddSegment`/`maybeAddMapping` APIs that will
+intelligently determine if this marking adds useful information. If not, the marking will be
+skipped.
+
+```typescript
+import { maybeAddMapping } from '@jridgewell/gen-mapping';
+
+const map = new GenMapping();
+
+// Adding a sourceless marking at the beginning of a line isn't useful.
+maybeAddMapping(map, {
+  generated: { line: 1, column: 0 },
+});
+
+// Adding a new source marking is useful.
+maybeAddMapping(map, {
+  generated: { line: 1, column: 0 },
+  source: 'input.js',
+  original: { line: 1, column: 0 },
+});
+
+// But adding another marking pointing to the exact same original location isn't, even if the
+// generated column changed.
+maybeAddMapping(map, {
+  generated: { line: 1, column: 9 },
+  source: 'input.js',
+  original: { line: 1, column: 0 },
+});
+
+assert.deepEqual(toEncodedMap(map), {
+  version: 3,
+  names: [],
+  sources: ['input.js'],
+  sourcesContent: [null],
+  mappings: 'AAAA',
+});
+```
+
+## Benchmarks
+
+```
+node v18.0.0
+
+amp.js.map
+Memory Usage:
+gen-mapping: addSegment      5852872 bytes
+gen-mapping: addMapping      7716042 bytes
+source-map-js                6143250 bytes
+source-map-0.6.1             6124102 bytes
+source-map-0.8.0             6121173 bytes
+Smallest memory usage is gen-mapping: addSegment
+
+Adding speed:
+gen-mapping:      addSegment x 441 ops/sec ¬±2.07% (90 runs sampled)
+gen-mapping:      addMapping x 350 ops/sec ¬±2.40% (86 runs sampled)
+source-map-js:    addMapping x 169 ops/sec ¬±2.42% (80 runs sampled)
+source-map-0.6.1: addMapping x 167 ops/sec ¬±2.56% (80 runs sampled)
+source-map-0.8.0: addMapping x 168 ops/sec ¬±2.52% (80 runs sampled)
+Fastest is gen-mapping:      addSegment
+
+Generate speed:
+gen-mapping:      decoded output x 150,824,370 ops/sec ¬±0.07% (102 runs sampled)
+gen-mapping:      encoded output x 663 ops/sec ¬±0.22% (98 runs sampled)
+source-map-js:    encoded output x 197 ops/sec ¬±0.45% (84 runs sampled)
+source-map-0.6.1: encoded output x 198 ops/sec ¬±0.33% (85 runs sampled)
+source-map-0.8.0: encoded output x 197 ops/sec ¬±0.06% (93 runs sampled)
+Fastest is gen-mapping:      decoded output
+
+
+***
+
+
+babel.min.js.map
+Memory Usage:
+gen-mapping: addSegment     37578063 bytes
+gen-mapping: addMapping     37212897 bytes
+source-map-js               47638527 bytes
+source-map-0.6.1            47690503 bytes
+source-map-0.8.0            47470188 bytes
+Smallest memory usage is gen-mapping: addMapping
+
+Adding speed:
+gen-mapping:      addSegment x 31.05 ops/sec ¬±8.31% (43 runs sampled)
+gen-mapping:      addMapping x 29.83 ops/sec ¬±7.36% (51 runs sampled)
+source-map-js:    addMapping x 20.73 ops/sec ¬±6.22% (38 runs sampled)
+source-map-0.6.1: addMapping x 20.03 ops/sec ¬±10.51% (38 runs sampled)
+source-map-0.8.0: addMapping x 19.30 ops/sec ¬±8.27% (37 runs sampled)
+Fastest is gen-mapping:      addSegment
+
+Generate speed:
+gen-mapping:      decoded output x 381,379,234 ops/sec ¬±0.29% (96 runs sampled)
+gen-mapping:      encoded output x 95.15 ops/sec ¬±2.98% (72 runs sampled)
+source-map-js:    encoded output x 15.20 ops/sec ¬±7.41% (33 runs sampled)
+source-map-0.6.1: encoded output x 16.36 ops/sec ¬±10.46% (31 runs sampled)
+source-map-0.8.0: encoded output x 16.06 ops/sec ¬±6.45% (31 runs sampled)
+Fastest is gen-mapping:      decoded output
+
+
+***
+
+
+preact.js.map
+Memory Usage:
+gen-mapping: addSegment       416247 bytes
+gen-mapping: addMapping       419824 bytes
+source-map-js                1024619 bytes
+source-map-0.6.1             1146004 bytes
+source-map-0.8.0             1113250 bytes
+Smallest memory usage is gen-mapping: addSegment
+
+Adding speed:
+gen-mapping:      addSegment x 13,755 ops/sec ¬±0.15% (98 runs sampled)
+gen-mapping:      addMapping x 13,013 ops/sec ¬±0.11% (101 runs sampled)
+source-map-js:    addMapping x 4,564 ops/sec ¬±0.21% (98 runs sampled)
+source-map-0.6.1: addMapping x 4,562 ops/sec ¬±0.11% (99 runs sampled)
+source-map-0.8.0: addMapping x 4,593 ops/sec ¬±0.11% (100 runs sampled)
+Fastest is gen-mapping:      addSegment
+
+Generate speed:
+gen-mapping:      decoded output x 379,864,020 ops/sec ¬±0.23% (93 runs sampled)
+gen-mapping:      encoded output x 14,368 ops/sec ¬±4.07% (82 runs sampled)
+source-map-js:    encoded output x 5,261 ops/sec ¬±0.21% (99 runs sampled)
+source-map-0.6.1: encoded output x 5,124 ops/sec ¬±0.58% (99 runs sampled)
+source-map-0.8.0: encoded output x 5,434 ops/sec ¬±0.33% (96 runs sampled)
+Fastest is gen-mapping:      decoded output
+
+
+***
+
+
+react.js.map
+Memory Usage:
+gen-mapping: addSegment       975096 bytes
+gen-mapping: addMapping      1102981 bytes
+source-map-js                2918836 bytes
+source-map-0.6.1             2885435 bytes
+source-map-0.8.0             2874336 bytes
+Smallest memory usage is gen-mapping: addSegment
+
+Adding speed:
+gen-mapping:      addSegment x 4,772 ops/sec ¬±0.15% (100 runs sampled)
+gen-mapping:      addMapping x 4,456 ops/sec ¬±0.13% (97 runs sampled)
+source-map-js:    addMapping x 1,618 ops/sec ¬±0.24% (97 runs sampled)
+source-map-0.6.1: addMapping x 1,622 ops/sec ¬±0.12% (99 runs sampled)
+source-map-0.8.0: addMapping x 1,631 ops/sec ¬±0.12% (100 runs sampled)
+Fastest is gen-mapping:      addSegment
+
+Generate speed:
+gen-mapping:      decoded output x 379,107,695 ops/sec ¬±0.07% (99 runs sampled)
+gen-mapping:      encoded output x 5,421 ops/sec ¬±1.60% (89 runs sampled)
+source-map-js:    encoded output x 2,113 ops/sec ¬±1.81% (98 runs sampled)
+source-map-0.6.1: encoded output x 2,126 ops/sec ¬±0.10% (100 runs sampled)
+source-map-0.8.0: encoded output x 2,176 ops/sec ¬±0.39% (98 runs sampled)
+Fastest is gen-mapping:      decoded output
+```
+
+[source-map]: https://www.npmjs.com/package/source-map
+[trace-mapping]: https://github.com/jridgewell/trace-mapping
+Ÿ"/dist/types/sourcemap-segment.d.ts≈9declare type GeneratedColumn = number;
+declare type SourcesIndex = number;
+declare type SourceLine = number;
+declare type SourceColumn = number;
+declare type NamesIndex = number;
+export declare type SourceMapSegment = [GeneratedColumn] | [GeneratedColumn, SourcesIndex, SourceLine, SourceColumn] | [GeneratedColumn, SourcesIndex, SourceLine, SourceColumn, NamesIndex];
+export declare const COLUMN = 0;
+export declare const SOURCES_INDEX = 1;
+export declare const SOURCE_LINE = 2;
+export declare const SOURCE_COLUMN = 3;
+export declare const NAMES_INDEX = 4;
+export {};
+π/dist/gen-mapping.mjs.map≈S‡{"version":3,"file":"gen-mapping.mjs","sources":["../src/sourcemap-segment.ts","../src/gen-mapping.ts"],"sourcesContent":["type GeneratedColumn = number;\ntype SourcesIndex = number;\ntype SourceLine = number;\ntype SourceColumn = number;\ntype NamesIndex = number;\n\nexport type SourceMapSegment =\n  | [GeneratedColumn]\n  | [GeneratedColumn, SourcesIndex, SourceLine, SourceColumn]\n  | [GeneratedColumn, SourcesIndex, SourceLine, SourceColumn, NamesIndex];\n\nexport const COLUMN = 0;\nexport const SOURCES_INDEX = 1;\nexport const SOURCE_LINE = 2;\nexport const SOURCE_COLUMN = 3;\nexport const NAMES_INDEX = 4;\n","import { SetArray, put } from '@jridgewell/set-array';\nimport { encode } from '@jridgewell/sourcemap-codec';\nimport { TraceMap, decodedMappings } from '@jridgewell/trace-mapping';\n\nimport {\n  COLUMN,\n  SOURCES_INDEX,\n  SOURCE_LINE,\n  SOURCE_COLUMN,\n  NAMES_INDEX,\n} from './sourcemap-segment';\n\nimport type { SourceMapInput } from '@jridgewell/trace-mapping';\nimport type { SourceMapSegment } from './sourcemap-segment';\nimport type { DecodedSourceMap, EncodedSourceMap, Pos, Mapping } from './types';\n\nexport type { DecodedSourceMap, EncodedSourceMap, Mapping };\n\nexport type Options = {\n  file?: string | null;\n  sourceRoot?: string | null;\n};\n\nconst NO_NAME = -1;\n\n/**\n * A low-level API to associate a generated position with an original source position. Line and\n * column here are 0-based, unlike `addMapping`.\n */\nexport let addSegment: {\n  (\n    map: GenMapping,\n    genLine: number,\n    genColumn: number,\n    source?: null,\n    sourceLine?: null,\n    sourceColumn?: null,\n    name?: null,\n    content?: null,\n  ): void;\n  (\n    map: GenMapping,\n    genLine: number,\n    genColumn: number,\n    source: string,\n    sourceLine: number,\n    sourceColumn: number,\n    name?: null,\n    content?: string | null,\n  ): void;\n  (\n    map: GenMapping,\n    genLine: number,\n    genColumn: number,\n    source: string,\n    sourceLine: number,\n    sourceColumn: number,\n    name: string,\n    content?: string | null,\n  ): void;\n};\n\n/**\n * A high-level API to associate a generated position with an original source position. Line is\n * 1-based, but column is 0-based, due to legacy behavior in `source-map` library.\n */\nexport let addMapping: {\n  (\n    map: GenMapping,\n    mapping: {\n      generated: Pos;\n      source?: null;\n      original?: null;\n      name?: null;\n      content?: null;\n    },\n  ): void;\n  (\n    map: GenMapping,\n    mapping: {\n      generated: Pos;\n      source: string;\n      original: Pos;\n      name?: null;\n      content?: string | null;\n    },\n  ): void;\n  (\n    map: GenMapping,\n    mapping: {\n      generated: Pos;\n      source: string;\n      original: Pos;\n      name: string;\n      content?: string | null;\n    },\n  ): void;\n};\n\n/**\n * Same as `addSegment`, but will only add the segment if it generates useful information in the\n * resulting map. This only works correctly if segments are added **in order**, meaning you should\n * not add a segment with a lower generated line/column than one that came before.\n */\nexport let maybeAddSegment: typeof addSegment;\n\n/**\n * Same as `addMapping`, but will only add the mapping if it generates useful information in the\n * resulting map. This only works correctly if mappings are added **in order**, meaning you should\n * not add a mapping with a lower generated line/column than one that came before.\n */\nexport let maybeAddMapping: typeof addMapping;\n\n/**\n * Adds/removes the content of the source file to the source map.\n */\nexport let setSourceContent: (map: GenMapping, source: string, content: string | null) => void;\n\n/**\n * Returns a sourcemap object (with decoded mappings) suitable for passing to a library that expects\n * a sourcemap, or to JSON.stringify.\n */\nexport let toDecodedMap: (map: GenMapping) => DecodedSourceMap;\n\n/**\n * Returns a sourcemap object (with encoded mappings) suitable for passing to a library that expects\n * a sourcemap, or to JSON.stringify.\n */\nexport let toEncodedMap: (map: GenMapping) => EncodedSourceMap;\n\n/**\n * Constructs a new GenMapping, using the already present mappings of the input.\n */\nexport let fromMap: (input: SourceMapInput) => GenMapping;\n\n/**\n * Returns an array of high-level mapping objects for every recorded segment, which could then be\n * passed to the `source-map` library.\n */\nexport let allMappings: (map: GenMapping) => Mapping[];\n\n// This split declaration is only so that terser can elminiate the static initialization block.\nlet addSegmentInternal: <S extends string | null | undefined>(\n  skipable: boolean,\n  map: GenMapping,\n  genLine: number,\n  genColumn: number,\n  source: S,\n  sourceLine: S extends string ? number : null | undefined,\n  sourceColumn: S extends string ? number : null | undefined,\n  name: S extends string ? string | null | undefined : null | undefined,\n  content: S extends string ? string | null | undefined : null | undefined,\n) => void;\n\n/**\n * Provides the state to generate a sourcemap.\n */\nexport class GenMapping {\n  private _names = new SetArray();\n  private _sources = new SetArray();\n  private _sourcesContent: (string | null)[] = [];\n  private _mappings: SourceMapSegment[][] = [];\n  declare file: string | null | undefined;\n  declare sourceRoot: string | null | undefined;\n\n  constructor({ file, sourceRoot }: Options = {}) {\n    this.file = file;\n    this.sourceRoot = sourceRoot;\n  }\n\n  static {\n    addSegment = (map, genLine, genColumn, source, sourceLine, sourceColumn, name, content) => {\n      return addSegmentInternal(\n        false,\n        map,\n        genLine,\n        genColumn,\n        source,\n        sourceLine,\n        sourceColumn,\n        name,\n        content,\n      );\n    };\n\n    maybeAddSegment = (\n      map,\n      genLine,\n      genColumn,\n      source,\n      sourceLine,\n      sourceColumn,\n      name,\n      content,\n    ) => {\n      return addSegmentInternal(\n        true,\n        map,\n        genLine,\n        genColumn,\n        source,\n        sourceLine,\n        sourceColumn,\n        name,\n        content,\n      );\n    };\n\n    addMapping = (map, mapping) => {\n      return addMappingInternal(false, map, mapping as Parameters<typeof addMappingInternal>[2]);\n    };\n\n    maybeAddMapping = (map, mapping) => {\n      return addMappingInternal(true, map, mapping as Parameters<typeof addMappingInternal>[2]);\n    };\n\n    setSourceContent = (map, source, content) => {\n      const { _sources: sources, _sourcesContent: sourcesContent } = map;\n      sourcesContent[put(sources, source)] = content;\n    };\n\n    toDecodedMap = (map) => {\n      const {\n        file,\n        sourceRoot,\n        _mappings: mappings,\n        _sources: sources,\n        _sourcesContent: sourcesContent,\n        _names: names,\n      } = map;\n      removeEmptyFinalLines(mappings);\n\n      return {\n        version: 3,\n        file: file || undefined,\n        names: names.array,\n        sourceRoot: sourceRoot || undefined,\n        sources: sources.array,\n        sourcesContent,\n        mappings,\n      };\n    };\n\n    toEncodedMap = (map) => {\n      const decoded = toDecodedMap(map);\n      return {\n        ...decoded,\n        mappings: encode(decoded.mappings as SourceMapSegment[][]),\n      };\n    };\n\n    allMappings = (map) => {\n      const out: Mapping[] = [];\n      const { _mappings: mappings, _sources: sources, _names: names } = map;\n\n      for (let i = 0; i < mappings.length; i++) {\n        const line = mappings[i];\n        for (let j = 0; j < line.length; j++) {\n          const seg = line[j];\n\n          const generated = { line: i + 1, column: seg[COLUMN] };\n          let source: string | undefined = undefined;\n          let original: Pos | undefined = undefined;\n          let name: string | undefined = undefined;\n\n          if (seg.length !== 1) {\n            source = sources.array[seg[SOURCES_INDEX]];\n            original = { line: seg[SOURCE_LINE] + 1, column: seg[SOURCE_COLUMN] };\n\n            if (seg.length === 5) name = names.array[seg[NAMES_INDEX]];\n          }\n\n          out.push({ generated, source, original, name } as Mapping);\n        }\n      }\n\n      return out;\n    };\n\n    fromMap = (input) => {\n      const map = new TraceMap(input);\n      const gen = new GenMapping({ file: map.file, sourceRoot: map.sourceRoot });\n\n      putAll(gen._names, map.names);\n      putAll(gen._sources, map.sources as string[]);\n      gen._sourcesContent = map.sourcesContent || map.sources.map(() => null);\n      gen._mappings = decodedMappings(map) as GenMapping['_mappings'];\n\n      return gen;\n    };\n\n    // Internal helpers\n    addSegmentInternal = (\n      skipable,\n      map,\n      genLine,\n      genColumn,\n      source,\n      sourceLine,\n      sourceColumn,\n      name,\n      content,\n    ) => {\n      const {\n        _mappings: mappings,\n        _sources: sources,\n        _sourcesContent: sourcesContent,\n        _names: names,\n      } = map;\n      const line = getLine(mappings, genLine);\n      const index = getColumnIndex(line, genColumn);\n\n      if (!source) {\n        if (skipable && skipSourceless(line, index)) return;\n        return insert(line, index, [genColumn]);\n      }\n\n      // Sigh, TypeScript can't figure out sourceLine and sourceColumn aren't nullish if source\n      // isn't nullish.\n      assert<number>(sourceLine);\n      assert<number>(sourceColumn);\n\n      const sourcesIndex = put(sources, source);\n      const namesIndex = name ? put(names, name) : NO_NAME;\n      if (sourcesIndex === sourcesContent.length) sourcesContent[sourcesIndex] = content ?? null;\n\n      if (skipable && skipSource(line, index, sourcesIndex, sourceLine, sourceColumn, namesIndex)) {\n        return;\n      }\n\n      return insert(\n        line,\n        index,\n        name\n          ? [genColumn, sourcesIndex, sourceLine, sourceColumn, namesIndex]\n          : [genColumn, sourcesIndex, sourceLine, sourceColumn],\n      );\n    };\n  }\n}\n\nfunction assert<T>(_val: unknown): asserts _val is T {\n  // noop.\n}\n\nfunction getLine(mappings: SourceMapSegment[][], index: number): SourceMapSegment[] {\n  for (let i = mappings.length; i <= index; i++) {\n    mappings[i] = [];\n  }\n  return mappings[index];\n}\n\nfunction getColumnIndex(line: SourceMapSegment[], genColumn: number): number {\n  let index = line.length;\n  for (let i = index - 1; i >= 0; index = i--) {\n    const current = line[i];\n    if (genColumn >= current[COLUMN]) break;\n  }\n  return index;\n}\n\nfunction insert<T>(array: T[], index: number, value: T) {\n  for (let i = array.length; i > index; i--) {\n    array[i] = array[i - 1];\n  }\n  array[index] = value;\n}\n\nfunction removeEmptyFinalLines(mappings: SourceMapSegment[][]) {\n  const { length } = mappings;\n  let len = length;\n  for (let i = len - 1; i >= 0; len = i, i--) {\n    if (mappings[i].length > 0) break;\n  }\n  if (len < length) mappings.length = len;\n}\n\nfunction putAll(strarr: SetArray, array: string[]) {\n  for (let i = 0; i < array.length; i++) put(strarr, array[i]);\n}\n\nfunction skipSourceless(line: SourceMapSegment[], index: number): boolean {\n  // The start of a line is already sourceless, so adding a sourceless segment to the beginning\n  // doesn't generate any useful information.\n  if (index === 0) return true;\n\n  const prev = line[index - 1];\n  // If the previous segment is also sourceless, then adding another sourceless segment doesn't\n  // genrate any new information. Else, this segment will end the source/named segment and point to\n  // a sourceless position, which is useful.\n  return prev.length === 1;\n}\n\nfunction skipSource(\n  line: SourceMapSegment[],\n  index: number,\n  sourcesIndex: number,\n  sourceLine: number,\n  sourceColumn: number,\n  namesIndex: number,\n): boolean {\n  // A source/named segment at the start of a line gives position at that genColumn\n  if (index === 0) return false;\n\n  const prev = line[index - 1];\n\n  // If the previous segment is sourceless, then we're transitioning to a source.\n  if (prev.length === 1) return false;\n\n  // If the previous segment maps to the exact same source position, then this segment doesn't\n  // provide any new position information.\n  return (\n    sourcesIndex === prev[SOURCES_INDEX] &&\n    sourceLine === prev[SOURCE_LINE] &&\n    sourceColumn === prev[SOURCE_COLUMN] &&\n    namesIndex === (prev.length === 5 ? prev[NAMES_INDEX] : NO_NAME)\n  );\n}\n\nfunction addMappingInternal<S extends string | null | undefined>(\n  skipable: boolean,\n  map: GenMapping,\n  mapping: {\n    generated: Pos;\n    source: S;\n    original: S extends string ? Pos : null | undefined;\n    name: S extends string ? string | null | undefined : null | undefined;\n    content: S extends string ? string | null | undefined : null | undefined;\n  },\n) {\n  const { generated, source, original, name, content } = mapping;\n  if (!source) {\n    return addSegmentInternal(\n      skipable,\n      map,\n      generated.line - 1,\n      generated.column,\n      null,\n      null,\n      null,\n      null,\n      null,\n    );\n  }\n  const s: string = source;\n  assert<Pos>(original);\n  return addSegmentInternal(\n    skipable,\n    map,\n    generated.line - 1,\n    generated.column,\n    s,\n    original.line - 1,\n    original.column,\n    name,\n    content,\n  );\n}\n"],"names":[],"mappings":"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"}≠/package.json≈	[{
+  "name": "@jridgewell/gen-mapping",
+  "version": "0.3.2",
+  "description": "Generate source maps",
+  "keywords": [
+    "source",
+    "map"
+  ],
+  "author": "Justin Ridgewell <justin@ridgewell.name>",
+  "license": "MIT",
+  "repository": "https://github.com/jridgewell/gen-mapping",
+  "main": "dist/gen-mapping.umd.js",
+  "module": "dist/gen-mapping.mjs",
+  "typings": "dist/types/gen-mapping.d.ts",
+  "exports": {
+    ".": [
+      {
+        "types": "./dist/types/gen-mapping.d.ts",
+        "browser": "./dist/gen-mapping.umd.js",
+        "require": "./dist/gen-mapping.umd.js",
+        "import": "./dist/gen-mapping.mjs"
+      },
+      "./dist/gen-mapping.umd.js"
+    ],
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "engines": {
+    "node": ">=6.0.0"
+  },
+  "scripts": {
+    "benchmark": "run-s build:rollup benchmark:*",
+    "benchmark:install": "cd benchmark && npm install",
+    "benchmark:only": "node benchmark/index.mjs",
+    "prebuild": "rm -rf dist",
+    "build": "run-s -n build:*",
+    "build:rollup": "rollup -c rollup.config.js",
+    "build:ts": "tsc --project tsconfig.build.json",
+    "lint": "run-s -n lint:*",
+    "lint:prettier": "npm run test:lint:prettier -- --write",
+    "lint:ts": "npm run test:lint:ts -- --fix",
+    "pretest": "run-s build:rollup",
+    "test": "run-s -n test:lint test:coverage",
+    "test:debug": "mocha --inspect-brk",
+    "test:lint": "run-s -n test:lint:*",
+    "test:lint:prettier": "prettier --check '{src,test}/**/*.ts'",
+    "test:lint:ts": "eslint '{src,test}/**/*.ts'",
+    "test:only": "mocha",
+    "test:coverage": "c8 mocha",
+    "test:watch": "run-p 'build:rollup -- --watch' 'test:only -- --watch'",
+    "prepublishOnly": "npm run preversion",
+    "preversion": "run-s test build"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "8.3.2",
+    "@types/mocha": "9.1.1",
+    "@types/node": "17.0.29",
+    "@typescript-eslint/eslint-plugin": "5.21.0",
+    "@typescript-eslint/parser": "5.21.0",
+    "benchmark": "2.1.4",
+    "c8": "7.11.2",
+    "eslint": "8.14.0",
+    "eslint-config-prettier": "8.5.0",
+    "mocha": "9.2.2",
+    "npm-run-all": "4.1.5",
+    "prettier": "2.6.2",
+    "rollup": "2.70.2",
+    "typescript": "4.6.3"
+  },
+  "dependencies": {
+    "@jridgewell/set-array": "^1.0.1",
+    "@jridgewell/sourcemap-codec": "^1.4.10",
+    "@jridgewell/trace-mapping": "^0.3.9"
+  }
 }
-export interface EncodedSourceMap extends SourceMapV3 {
-    mappings: string;
-}
-export interface DecodedSourceMap extends SourceMapV3 {
-    mappings: readonly SourceMapSegment[][];
-}
-export interface Pos {
-    line: number;
-    column: number;
-}
-export declare type Mapping = {
-    generated: Pos;
-    source: undefined;
-    original: undefined;
-    name: undefined;
-} | {
-    generated: Pos;
-    source: string;
-    original: Pos;
-    name: string;
-} | {
-    generated: Pos;
-    source: string;
-    original: Pos;
-    name: undefined;
-};
-∏/dist/gen-mapping.umd.js≈*H(function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@jridgewell/set-array'), require('@jridgewell/sourcemap-codec'), require('@jridgewell/trace-mapping')) :
-    typeof define === 'function' && define.amd ? define(['exports', '@jridgewell/set-array', '@jridgewell/sourcemap-codec', '@jridgewell/trace-mapping'], factory) :
-    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.genMapping = {}, global.setArray, global.sourcemapCodec, global.traceMapping));
-})(this, (function (exports, setArray, sourcemapCodec, traceMapping) { 'use strict';
-
-    const COLUMN = 0;
-    const SOURCES_INDEX = 1;
-    const SOURCE_LINE = 2;
-    const SOURCE_COLUMN = 3;
-    const NAMES_INDEX = 4;
-
-    const NO_NAME = -1;
-    /**
-     * A low-level API to associate a generated position with an original source position. Line and
-     * column here are 0-based, unlike `addMapping`.
-     */
-    exports.addSegment = void 0;
-    /**
-     * A high-level API to associate a generated position with an original source position. Line is
-     * 1-based, but column is 0-based, due to legacy behavior in `source-map` library.
-     */
-    exports.addMapping = void 0;
-    /**
-     * Same as `addSegment`, but will only add the segment if it generates useful information in the
-     * resulting map. This only works correctly if segments are added **in order**, meaning you should
-     * not add a segment with a lower generated line/column than one that came before.
-     */
-    exports.maybeAddSegment = void 0;
-    /**
-     * Same as `addMapping`, but will only add the mapping if it generates useful information in the
-     * resulting map. This only works correctly if mappings are added **in order**, meaning you should
-     * not add a mapping with a lower generated line/column than one that came before.
-     */
-    exports.maybeAddMapping = void 0;
-    /**
-     * Adds/removes the content of the source file to the source map.
-     */
-    exports.setSourceContent = void 0;
-    /**
-     * Returns a sourcemap object (with decoded mappings) suitable for passing to a library that expects
-     * a sourcemap, or to JSON.stringify.
-     */
-    exports.toDecodedMap = void 0;
-    /**
-     * Returns a sourcemap object (with encoded mappings) suitable for passing to a library that expects
-     * a sourcemap, or to JSON.stringify.
-     */
-    exports.toEncodedMap = void 0;
-    /**
-     * Constructs a new GenMapping, using the already present mappings of the input.
-     */
-    exports.fromMap = void 0;
-    /**
-     * Returns an array of high-level mapping objects for every recorded segment, which could then be
-     * passed to the `source-map` library.
-     */
-    exports.allMappings = void 0;
-    // This split declaration is only so that terser can elminiate the static initialization block.
-    let addSegmentInternal;
-    /**
-     * Provides the state to generate a sourcemap.
-     */
-    class GenMapping {
-        constructor({ file, sourceRoot } = {}) {
-            this._names = new setArray.SetArray();
-            this._sources = new setArray.SetArray();
-            this._sourcesContent = [];
-            this._mappings = [];
-            this.file = file;
-            this.sourceRoot = sourceRoot;
-        }
-    }
-    (() => {
-        exports.addSegment = (map, genLine, genColumn, source, sourceLine, sourceColumn, name, content) => {
-            return addSegmentInternal(false, map, genLine, genColumn, source, sourceLine, sourceColumn, name, content);
-        };
-        exports.maybeAddSegment = (map, genLine, genColumn, source, sourceLine, sourceColumn, name, content) => {
-            return addSegmentInternal(true, map, genLine, genColumn, source, sourceLine, sourceColumn, name, content);
-        };
-        exports.addMapping = (map, mapping) => {
-            return addMappingInternal(false, map, mapping);
-        };
-        exports.maybeAddMapping = (map, mapping) => {
-            return addMappingInternal(true, map, mapping);
-        };
-        exports.setSourceContent = (map, source, content) => {
-            const { _sources: sources, _sourcesContent: sourcesContent } = map;
-            sourcesContent[setArray.put(sources, source)] = content;
-        };
-        exports.toDecodedMap = (map) => {
-            const { file, sourceRoot, _mappings: mappings, _sources: sources, _sourcesContent: sourcesContent, _names: names, } = map;
-            removeEmptyFinalLines(mappings);
-            return {
-                version: 3,
-                file: file || undefined,
-                names: names.array,
-                sourceRoot: sourceRoot || undefined,
-                sources: sources.array,
-                sourcesContent,
-                mappings,
-            };
-        };
-        exports.toEncodedMap = (map) => {
-            const decoded = exports.toDecodedMap(map);
-            return Object.assign(Object.assign({}, decoded), { mappings: sourcemapCodec.encode(decoded.mappings) });
-        };
-        exports.allMappings = (map) => {
-            const out = [];
-            const { _mappings: mappings, _sources: sources, _names: names } = map;
-            for (let i = 0; i < mappings.length; i++) {
-                const line = mappings[i];
-                for (let j = 0; j < line.length; j++) {
-                    const seg = line[j];
-                    const generated = { line: i + 1, column: seg[COLUMN] };
-                    let source = undefined;
-                    let original = undefined;
-                    let name = undefined;
-                    if (seg.length !== 1) {
-                        source = sources.array[seg[SOURCES_INDEX]];
-                        original = { line: seg[SOURCE_LINE] + 1, column: seg[SOURCE_COLUMN] };
-                        if (seg.length === 5)
-                            name = names.array[seg[NAMES_INDEX]];
-                    }
-                    out.push({ generated, source, original, name });
-                }
-            }
-            return out;
-        };
-        exports.fromMap = (input) => {
-            const map = new traceMapping.TraceMap(input);
-            const gen = new GenMapping({ file: map.file, sourceRoot: map.sourceRoot });
-            putAll(gen._names, map.names);
-            putAll(gen._sources, map.sources);
-            gen._sourcesContent = map.sourcesContent || map.sources.map(() => null);
-            gen._mappings = traceMapping.decodedMappings(map);
-            return gen;
-        };
-        // Internal helpers
-        addSegmentInternal = (skipable, map, genLine, genColumn, source, sourceLine, sourceColumn, name, content) => {
-            const { _mappings: mappings, _sources: sources, _sourcesContent: sourcesContent, _names: names, } = map;
-            const line = getLine(mappings, genLine);
-            const index = getColumnIndex(line, genColumn);
-            if (!source) {
-                if (skipable && skipSourceless(line, index))
-                    return;
-                return insert(line, index, [genColumn]);
-            }
-            const sourcesIndex = setArray.put(sources, source);
-            const namesIndex = name ? setArray.put(names, name) : NO_NAME;
-            if (sourcesIndex === sourcesContent.length)
-                sourcesContent[sourcesIndex] = content !== null && content !== void 0 ? content : null;
-            if (skipable && skipSource(line, index, sourcesIndex, sourceLine, sourceColumn, namesIndex)) {
-                return;
-            }
-            return insert(line, index, name
-                ? [genColumn, sourcesIndex, sourceLine, sourceColumn, namesIndex]
-                : [genColumn, sourcesIndex, sourceLine, sourceColumn]);
-        };
-    })();
-    function getLine(mappings, index) {
-        for (let i = mappings.length; i <= index; i++) {
-            mappings[i] = [];
-        }
-        return mappings[index];
-    }
-    function getColumnIndex(line, genColumn) {
-        let index = line.length;
-        for (let i = index - 1; i >= 0; index = i--) {
-            const current = line[i];
-            if (genColumn >= current[COLUMN])
-                break;
-        }
-        return index;
-    }
-    function insert(array, index, value) {
-        for (let i = array.length; i > index; i--) {
-            array[i] = array[i - 1];
-        }
-        array[index] = value;
-    }
-    function removeEmptyFinalLines(mappings) {
-        const { length } = mappings;
-        let len = length;
-        for (let i = len - 1; i >= 0; len = i, i--) {
-            if (mappings[i].length > 0)
-                break;
-        }
-        if (len < length)
-            mappings.length = len;
-    }
-    function putAll(strarr, array) {
-        for (let i = 0; i < array.length; i++)
-            setArray.put(strarr, array[i]);
-    }
-    function skipSourceless(line, index) {
-        // The start of a line is already sourceless, so adding a sourceless segment to the beginning
-        // doesn't generate any useful information.
-        if (index === 0)
-            return true;
-        const prev = line[index - 1];
-        // If the previous segment is also sourceless, then adding another sourceless segment doesn't
-        // genrate any new information. Else, this segment will end the source/named segment and point to
-        // a sourceless position, which is useful.
-        return prev.length === 1;
-    }
-    function skipSource(line, index, sourcesIndex, sourceLine, sourceColumn, namesIndex) {
-        // A source/named segment at the start of a line gives position at that genColumn
-        if (index === 0)
-            return false;
-        const prev = line[index - 1];
-        // If the previous segment is sourceless, then we're transitioning to a source.
-        if (prev.length === 1)
-            return false;
-        // If the previous segment maps to the exact same source position, then this segment doesn't
-        // provide any new position information.
-        return (sourcesIndex === prev[SOURCES_INDEX] &&
-            sourceLine === prev[SOURCE_LINE] &&
-            sourceColumn === prev[SOURCE_COLUMN] &&
-            namesIndex === (prev.length === 5 ? prev[NAMES_INDEX] : NO_NAME));
-    }
-    function addMappingInternal(skipable, map, mapping) {
-        const { generated, source, original, name, content } = mapping;
-        if (!source) {
-            return addSegmentInternal(skipable, map, generated.line - 1, generated.column, null, null, null, null, null);
-        }
-        const s = source;
-        return addSegmentInternal(skipable, map, generated.line - 1, generated.column, s, original.line - 1, original.column, name, content);
-    }
-
-    exports.GenMapping = GenMapping;
-
-    Object.defineProperty(exports, '__esModule', { value: true });
-
-}));
-//# sourceMappingURL=gen-mapping.umd.js.map
-º/dist/types/gen-mapping.d.ts≈Ximport type { SourceMapInput } from '@jridgewell/trace-mapping';
-import type { DecodedSourceMap, EncodedSourceMap, Pos, Mapping } from './types';
-export type { DecodedSourceMap, EncodedSourceMap, Mapping };
-export declare type Options = {
-    file?: string | null;
-    sourceRoot?: string | null;
-};
-/**
- * A low-level API to associate a generated position with an original source position. Line and
- * column here are 0-based, unlike `addMapping`.
- */
-export declare let addSegment: {
-    (map: GenMapping, genLine: number, genColumn: number, source?: null, sourceLine?: null, sourceColumn?: null, name?: null, content?: null): void;
-    (map: GenMapping, genLine: number, genColumn: number, source: string, sourceLine: number, sourceColumn: number, name?: null, content?: string | null): void;
-    (map: GenMapping, genLine: number, genColumn: number, source: string, sourceLine: number, sourceColumn: number, name: string, content?: string | null): void;
-};
-/**
- * A high-level API to associate a generated position with an original source position. Line is
- * 1-based, but column is 0-based, due to legacy behavior in `source-map` library.
- */
-export declare let addMapping: {
-    (map: GenMapping, mapping: {
-        generated: Pos;
-        source?: null;
-        original?: null;
-        name?: null;
-        content?: null;
-    }): void;
-    (map: GenMapping, mapping: {
-        generated: Pos;
-        source: string;
-        original: Pos;
-        name?: null;
-        content?: string | null;
-    }): void;
-    (map: GenMapping, mapping: {
-        generated: Pos;
-        source: string;
-        original: Pos;
-        name: string;
-        content?: string | null;
-    }): void;
-};
-/**
- * Same as `addSegment`, but will only add the segment if it generates useful information in the
- * resulting map. This only works correctly if segments are added **in order**, meaning you should
- * not add a segment with a lower generated line/column than one that came before.
- */
-export declare let maybeAddSegment: typeof addSegment;
-/**
- * Same as `addMapping`, but will only add the mapping if it generates useful information in the
- * resulting map. This only works correctly if mappings are added **in order**, meaning you should
- * not add a mapping with a lower generated line/column than one that came before.
- */
-export declare let maybeAddMapping: typeof addMapping;
-/**
- * Adds/removes the content of the source file to the source map.
- */
-export declare let setSourceContent: (map: GenMapping, source: string, content: string | null) => void;
-/**
- * Returns a sourcemap object (with decoded mappings) suitable for passing to a library that expects
- * a sourcemap, or to JSON.stringify.
- */
-export declare let toDecodedMap: (map: GenMapping) => DecodedSourceMap;
-/**
- * Returns a sourcemap object (with encoded mappings) suitable for passing to a library that expects
- * a sourcemap, or to JSON.stringify.
- */
-export declare let toEncodedMap: (map: GenMapping) => EncodedSourceMap;
-/**
- * Constructs a new GenMapping, using the already present mappings of the input.
- */
-export declare let fromMap: (input: SourceMapInput) => GenMapping;
-/**
- * Returns an array of high-level mapping objects for every recorded segment, which could then be
- * passed to the `source-map` library.
- */
-export declare let allMappings: (map: GenMapping) => Mapping[];
-/**
- * Provides the state to generate a sourcemap.
- */
-export declare class GenMapping {
-    private _names;
-    private _sources;
-    private _sourcesContent;
-    private _mappings;
-    file: string | null | undefined;
-    sourceRoot: string | null | undefined;
-    constructor({ file, sourceRoot }?: Options);
-}
-π/src/sourcemap-segment.ts≈‡type GeneratedColumn = number;
-type SourcesIndex = number;
-type SourceLine = number;
-type SourceColumn = number;
-type NamesIndex = number;
-
-export type SourceMapSegment =
-  | [GeneratedColumn]
-  | [GeneratedColumn, SourcesIndex, SourceLine, SourceColumn]
-  | [GeneratedColumn, SourcesIndex, SourceLine, SourceColumn, NamesIndex];
-
-export const COLUMN = 0;
-export const SOURCES_INDEX = 1;
-export const SOURCE_LINE = 2;
-export const SOURCE_COLUMN = 3;
-export const NAMES_INDEX = 4;
-º/dist/gen-mapping.umd.js.map≈T∑{"version":3,"file":"gen-mapping.umd.js","sources":["../src/sourcemap-segment.ts","../src/gen-mapping.ts"],"sourcesContent":["type GeneratedColumn = number;\ntype SourcesIndex = number;\ntype SourceLine = number;\ntype SourceColumn = number;\ntype NamesIndex = number;\n\nexport type SourceMapSegment =\n  | [GeneratedColumn]\n  | [GeneratedColumn, SourcesIndex, SourceLine, SourceColumn]\n  | [GeneratedColumn, SourcesIndex, SourceLine, SourceColumn, NamesIndex];\n\nexport const COLUMN = 0;\nexport const SOURCES_INDEX = 1;\nexport const SOURCE_LINE = 2;\nexport const SOURCE_COLUMN = 3;\nexport const NAMES_INDEX = 4;\n","import { SetArray, put } from '@jridgewell/set-array';\nimport { encode } from '@jridgewell/sourcemap-codec';\nimport { TraceMap, decodedMappings } from '@jridgewell/trace-mapping';\n\nimport {\n  COLUMN,\n  SOURCES_INDEX,\n  SOURCE_LINE,\n  SOURCE_COLUMN,\n  NAMES_INDEX,\n} from './sourcemap-segment';\n\nimport type { SourceMapInput } from '@jridgewell/trace-mapping';\nimport type { SourceMapSegment } from './sourcemap-segment';\nimport type { DecodedSourceMap, EncodedSourceMap, Pos, Mapping } from './types';\n\nexport type { DecodedSourceMap, EncodedSourceMap, Mapping };\n\nexport type Options = {\n  file?: string | null;\n  sourceRoot?: string | null;\n};\n\nconst NO_NAME = -1;\n\n/**\n * A low-level API to associate a generated position with an original source position. Line and\n * column here are 0-based, unlike `addMapping`.\n */\nexport let addSegment: {\n  (\n    map: GenMapping,\n    genLine: number,\n    genColumn: number,\n    source?: null,\n    sourceLine?: null,\n    sourceColumn?: null,\n    name?: null,\n    content?: null,\n  ): void;\n  (\n    map: GenMapping,\n    genLine: number,\n    genColumn: number,\n    source: string,\n    sourceLine: number,\n    sourceColumn: number,\n    name?: null,\n    content?: string | null,\n  ): void;\n  (\n    map: GenMapping,\n    genLine: number,\n    genColumn: number,\n    source: string,\n    sourceLine: number,\n    sourceColumn: number,\n    name: string,\n    content?: string | null,\n  ): void;\n};\n\n/**\n * A high-level API to associate a generated position with an original source position. Line is\n * 1-based, but column is 0-based, due to legacy behavior in `source-map` library.\n */\nexport let addMapping: {\n  (\n    map: GenMapping,\n    mapping: {\n      generated: Pos;\n      source?: null;\n      original?: null;\n      name?: null;\n      content?: null;\n    },\n  ): void;\n  (\n    map: GenMapping,\n    mapping: {\n      generated: Pos;\n      source: string;\n      original: Pos;\n      name?: null;\n      content?: string | null;\n    },\n  ): void;\n  (\n    map: GenMapping,\n    mapping: {\n      generated: Pos;\n      source: string;\n      original: Pos;\n      name: string;\n      content?: string | null;\n    },\n  ): void;\n};\n\n/**\n * Same as `addSegment`, but will only add the segment if it generates useful information in the\n * resulting map. This only works correctly if segments are added **in order**, meaning you should\n * not add a segment with a lower generated line/column than one that came before.\n */\nexport let maybeAddSegment: typeof addSegment;\n\n/**\n * Same as `addMapping`, but will only add the mapping if it generates useful information in the\n * resulting map. This only works correctly if mappings are added **in order**, meaning you should\n * not add a mapping with a lower generated line/column than one that came before.\n */\nexport let maybeAddMapping: typeof addMapping;\n\n/**\n * Adds/removes the content of the source file to the source map.\n */\nexport let setSourceContent: (map: GenMapping, source: string, content: string | null) => void;\n\n/**\n * Returns a sourcemap object (with decoded mappings) suitable for passing to a library that expects\n * a sourcemap, or to JSON.stringify.\n */\nexport let toDecodedMap: (map: GenMapping) => DecodedSourceMap;\n\n/**\n * Returns a sourcemap object (with encoded mappings) suitable for passing to a library that expects\n * a sourcemap, or to JSON.stringify.\n */\nexport let toEncodedMap: (map: GenMapping) => EncodedSourceMap;\n\n/**\n * Constructs a new GenMapping, using the already present mappings of the input.\n */\nexport let fromMap: (input: SourceMapInput) => GenMapping;\n\n/**\n * Returns an array of high-level mapping objects for every recorded segment, which could then be\n * passed to the `source-map` library.\n */\nexport let allMappings: (map: GenMapping) => Mapping[];\n\n// This split declaration is only so that terser can elminiate the static initialization block.\nlet addSegmentInternal: <S extends string | null | undefined>(\n  skipable: boolean,\n  map: GenMapping,\n  genLine: number,\n  genColumn: number,\n  source: S,\n  sourceLine: S extends string ? number : null | undefined,\n  sourceColumn: S extends string ? number : null | undefined,\n  name: S extends string ? string | null | undefined : null | undefined,\n  content: S extends string ? string | null | undefined : null | undefined,\n) => void;\n\n/**\n * Provides the state to generate a sourcemap.\n */\nexport class GenMapping {\n  private _names = new SetArray();\n  private _sources = new SetArray();\n  private _sourcesContent: (string | null)[] = [];\n  private _mappings: SourceMapSegment[][] = [];\n  declare file: string | null | undefined;\n  declare sourceRoot: string | null | undefined;\n\n  constructor({ file, sourceRoot }: Options = {}) {\n    this.file = file;\n    this.sourceRoot = sourceRoot;\n  }\n\n  static {\n    addSegment = (map, genLine, genColumn, source, sourceLine, sourceColumn, name, content) => {\n      return addSegmentInternal(\n        false,\n        map,\n        genLine,\n        genColumn,\n        source,\n        sourceLine,\n        sourceColumn,\n        name,\n        content,\n      );\n    };\n\n    maybeAddSegment = (\n      map,\n      genLine,\n      genColumn,\n      source,\n      sourceLine,\n      sourceColumn,\n      name,\n      content,\n    ) => {\n      return addSegmentInternal(\n        true,\n        map,\n        genLine,\n        genColumn,\n        source,\n        sourceLine,\n        sourceColumn,\n        name,\n        content,\n      );\n    };\n\n    addMapping = (map, mapping) => {\n      return addMappingInternal(false, map, mapping as Parameters<typeof addMappingInternal>[2]);\n    };\n\n    maybeAddMapping = (map, mapping) => {\n      return addMappingInternal(true, map, mapping as Parameters<typeof addMappingInternal>[2]);\n    };\n\n    setSourceContent = (map, source, content) => {\n      const { _sources: sources, _sourcesContent: sourcesContent } = map;\n      sourcesContent[put(sources, source)] = content;\n    };\n\n    toDecodedMap = (map) => {\n      const {\n        file,\n        sourceRoot,\n        _mappings: mappings,\n        _sources: sources,\n        _sourcesContent: sourcesContent,\n        _names: names,\n      } = map;\n      removeEmptyFinalLines(mappings);\n\n      return {\n        version: 3,\n        file: file || undefined,\n        names: names.array,\n        sourceRoot: sourceRoot || undefined,\n        sources: sources.array,\n        sourcesContent,\n        mappings,\n      };\n    };\n\n    toEncodedMap = (map) => {\n      const decoded = toDecodedMap(map);\n      return {\n        ...decoded,\n        mappings: encode(decoded.mappings as SourceMapSegment[][]),\n      };\n    };\n\n    allMappings = (map) => {\n      const out: Mapping[] = [];\n      const { _mappings: mappings, _sources: sources, _names: names } = map;\n\n      for (let i = 0; i < mappings.length; i++) {\n        const line = mappings[i];\n        for (let j = 0; j < line.length; j++) {\n          const seg = line[j];\n\n          const generated = { line: i + 1, column: seg[COLUMN] };\n          let source: string | undefined = undefined;\n          let original: Pos | undefined = undefined;\n          let name: string | undefined = undefined;\n\n          if (seg.length !== 1) {\n            source = sources.array[seg[SOURCES_INDEX]];\n            original = { line: seg[SOURCE_LINE] + 1, column: seg[SOURCE_COLUMN] };\n\n            if (seg.length === 5) name = names.array[seg[NAMES_INDEX]];\n          }\n\n          out.push({ generated, source, original, name } as Mapping);\n        }\n      }\n\n      return out;\n    };\n\n    fromMap = (input) => {\n      const map = new TraceMap(input);\n      const gen = new GenMapping({ file: map.file, sourceRoot: map.sourceRoot });\n\n      putAll(gen._names, map.names);\n      putAll(gen._sources, map.sources as string[]);\n      gen._sourcesContent = map.sourcesContent || map.sources.map(() => null);\n      gen._mappings = decodedMappings(map) as GenMapping['_mappings'];\n\n      return gen;\n    };\n\n    // Internal helpers\n    addSegmentInternal = (\n      skipable,\n      map,\n      genLine,\n      genColumn,\n      source,\n      sourceLine,\n      sourceColumn,\n      name,\n      content,\n    ) => {\n      const {\n        _mappings: mappings,\n        _sources: sources,\n        _sourcesContent: sourcesContent,\n        _names: names,\n      } = map;\n      const line = getLine(mappings, genLine);\n      const index = getColumnIndex(line, genColumn);\n\n      if (!source) {\n        if (skipable && skipSourceless(line, index)) return;\n        return insert(line, index, [genColumn]);\n      }\n\n      // Sigh, TypeScript can't figure out sourceLine and sourceColumn aren't nullish if source\n      // isn't nullish.\n      assert<number>(sourceLine);\n      assert<number>(sourceColumn);\n\n      const sourcesIndex = put(sources, source);\n      const namesIndex = name ? put(names, name) : NO_NAME;\n      if (sourcesIndex === sourcesContent.length) sourcesContent[sourcesIndex] = content ?? null;\n\n      if (skipable && skipSource(line, index, sourcesIndex, sourceLine, sourceColumn, namesIndex)) {\n        return;\n      }\n\n      return insert(\n        line,\n        index,\n        name\n          ? [genColumn, sourcesIndex, sourceLine, sourceColumn, namesIndex]\n          : [genColumn, sourcesIndex, sourceLine, sourceColumn],\n      );\n    };\n  }\n}\n\nfunction assert<T>(_val: unknown): asserts _val is T {\n  // noop.\n}\n\nfunction getLine(mappings: SourceMapSegment[][], index: number): SourceMapSegment[] {\n  for (let i = mappings.length; i <= index; i++) {\n    mappings[i] = [];\n  }\n  return mappings[index];\n}\n\nfunction getColumnIndex(line: SourceMapSegment[], genColumn: number): number {\n  let index = line.length;\n  for (let i = index - 1; i >= 0; index = i--) {\n    const current = line[i];\n    if (genColumn >= current[COLUMN]) break;\n  }\n  return index;\n}\n\nfunction insert<T>(array: T[], index: number, value: T) {\n  for (let i = array.length; i > index; i--) {\n    array[i] = array[i - 1];\n  }\n  array[index] = value;\n}\n\nfunction removeEmptyFinalLines(mappings: SourceMapSegment[][]) {\n  const { length } = mappings;\n  let len = length;\n  for (let i = len - 1; i >= 0; len = i, i--) {\n    if (mappings[i].length > 0) break;\n  }\n  if (len < length) mappings.length = len;\n}\n\nfunction putAll(strarr: SetArray, array: string[]) {\n  for (let i = 0; i < array.length; i++) put(strarr, array[i]);\n}\n\nfunction skipSourceless(line: SourceMapSegment[], index: number): boolean {\n  // The start of a line is already sourceless, so adding a sourceless segment to the beginning\n  // doesn't generate any useful information.\n  if (index === 0) return true;\n\n  const prev = line[index - 1];\n  // If the previous segment is also sourceless, then adding another sourceless segment doesn't\n  // genrate any new information. Else, this segment will end the source/named segment and point to\n  // a sourceless position, which is useful.\n  return prev.length === 1;\n}\n\nfunction skipSource(\n  line: SourceMapSegment[],\n  index: number,\n  sourcesIndex: number,\n  sourceLine: number,\n  sourceColumn: number,\n  namesIndex: number,\n): boolean {\n  // A source/named segment at the start of a line gives position at that genColumn\n  if (index === 0) return false;\n\n  const prev = line[index - 1];\n\n  // If the previous segment is sourceless, then we're transitioning to a source.\n  if (prev.length === 1) return false;\n\n  // If the previous segment maps to the exact same source position, then this segment doesn't\n  // provide any new position information.\n  return (\n    sourcesIndex === prev[SOURCES_INDEX] &&\n    sourceLine === prev[SOURCE_LINE] &&\n    sourceColumn === prev[SOURCE_COLUMN] &&\n    namesIndex === (prev.length === 5 ? prev[NAMES_INDEX] : NO_NAME)\n  );\n}\n\nfunction addMappingInternal<S extends string | null | undefined>(\n  skipable: boolean,\n  map: GenMapping,\n  mapping: {\n    generated: Pos;\n    source: S;\n    original: S extends string ? Pos : null | undefined;\n    name: S extends string ? string | null | undefined : null | undefined;\n    content: S extends string ? string | null | undefined : null | undefined;\n  },\n) {\n  const { generated, source, original, name, content } = mapping;\n  if (!source) {\n    return addSegmentInternal(\n      skipable,\n      map,\n      generated.line - 1,\n      generated.column,\n      null,\n      null,\n      null,\n      null,\n      null,\n    );\n  }\n  const s: string = source;\n  assert<Pos>(original);\n  return addSegmentInternal(\n    skipable,\n    map,\n    generated.line - 1,\n    generated.column,\n    s,\n    original.line - 1,\n    original.column,\n    name,\n    content,\n  );\n}\n"],"names":["addSegment","addMapping","maybeAddSegment","maybeAddMapping","setSourceContent","toDecodedMap","toEncodedMap","fromMap","allMappings","SetArray","put","encode","TraceMap","decodedMappings"],"mappings":"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"}µ/dist/gen-mapping.mjs≈#˜import { SetArray, put } from '@jridgewell/set-array';
+µ/dist/gen-mapping.mjs≈#˜import { SetArray, put } from '@jridgewell/set-array';
 import { encode } from '@jridgewell/sourcemap-codec';
 import { TraceMap, decodedMappings } from '@jridgewell/trace-mapping';
 
@@ -1063,382 +1442,3 @@ function addMappingInternal(skipable, map, mapping) {
 
 export { GenMapping, addMapping, addSegment, allMappings, fromMap, maybeAddMapping, maybeAddSegment, setSourceContent, toDecodedMap, toEncodedMap };
 //# sourceMappingURL=gen-mapping.mjs.map
-™/README.md≈4# @jridgewell/gen-mapping
-
-> Generate source maps
-
-`gen-mapping` allows you to generate a source map during transpilation or minification.
-With a source map, you're able to trace the original location in the source file, either in Chrome's
-DevTools or using a library like [`@jridgewell/trace-mapping`][trace-mapping].
-
-You may already be familiar with the [`source-map`][source-map] package's `SourceMapGenerator`. This
-provides the same `addMapping` and `setSourceContent` API.
-
-## Installation
-
-```sh
-npm install @jridgewell/gen-mapping
-```
-
-## Usage
-
-```typescript
-import { GenMapping, addMapping, setSourceContent, toEncodedMap, toDecodedMap } from '@jridgewell/gen-mapping';
-
-const map = new GenMapping({
-  file: 'output.js',
-  sourceRoot: 'https://example.com/',
-});
-
-setSourceContent(map, 'input.js', `function foo() {}`);
-
-addMapping(map, {
-  // Lines start at line 1, columns at column 0.
-  generated: { line: 1, column: 0 },
-  source: 'input.js',
-  original: { line: 1, column: 0 },
-});
-
-addMapping(map, {
-  generated: { line: 1, column: 9 },
-  source: 'input.js',
-  original: { line: 1, column: 9 },
-  name: 'foo',
-});
-
-assert.deepEqual(toDecodedMap(map), {
-  version: 3,
-  file: 'output.js',
-  names: ['foo'],
-  sourceRoot: 'https://example.com/',
-  sources: ['input.js'],
-  sourcesContent: ['function foo() {}'],
-  mappings: [
-    [ [0, 0, 0, 0], [9, 0, 0, 9, 0] ]
-  ],
-});
-
-assert.deepEqual(toEncodedMap(map), {
-  version: 3,
-  file: 'output.js',
-  names: ['foo'],
-  sourceRoot: 'https://example.com/',
-  sources: ['input.js'],
-  sourcesContent: ['function foo() {}'],
-  mappings: 'AAAA,SAASA',
-});
-```
-
-### Smaller Sourcemaps
-
-Not everything needs to be added to a sourcemap, and needless markings can cause signficantly
-larger file sizes. `gen-mapping` exposes `maybeAddSegment`/`maybeAddMapping` APIs that will
-intelligently determine if this marking adds useful information. If not, the marking will be
-skipped.
-
-```typescript
-import { maybeAddMapping } from '@jridgewell/gen-mapping';
-
-const map = new GenMapping();
-
-// Adding a sourceless marking at the beginning of a line isn't useful.
-maybeAddMapping(map, {
-  generated: { line: 1, column: 0 },
-});
-
-// Adding a new source marking is useful.
-maybeAddMapping(map, {
-  generated: { line: 1, column: 0 },
-  source: 'input.js',
-  original: { line: 1, column: 0 },
-});
-
-// But adding another marking pointing to the exact same original location isn't, even if the
-// generated column changed.
-maybeAddMapping(map, {
-  generated: { line: 1, column: 9 },
-  source: 'input.js',
-  original: { line: 1, column: 0 },
-});
-
-assert.deepEqual(toEncodedMap(map), {
-  version: 3,
-  names: [],
-  sources: ['input.js'],
-  sourcesContent: [null],
-  mappings: 'AAAA',
-});
-```
-
-## Benchmarks
-
-```
-node v18.0.0
-
-amp.js.map
-Memory Usage:
-gen-mapping: addSegment      5852872 bytes
-gen-mapping: addMapping      7716042 bytes
-source-map-js                6143250 bytes
-source-map-0.6.1             6124102 bytes
-source-map-0.8.0             6121173 bytes
-Smallest memory usage is gen-mapping: addSegment
-
-Adding speed:
-gen-mapping:      addSegment x 441 ops/sec ¬±2.07% (90 runs sampled)
-gen-mapping:      addMapping x 350 ops/sec ¬±2.40% (86 runs sampled)
-source-map-js:    addMapping x 169 ops/sec ¬±2.42% (80 runs sampled)
-source-map-0.6.1: addMapping x 167 ops/sec ¬±2.56% (80 runs sampled)
-source-map-0.8.0: addMapping x 168 ops/sec ¬±2.52% (80 runs sampled)
-Fastest is gen-mapping:      addSegment
-
-Generate speed:
-gen-mapping:      decoded output x 150,824,370 ops/sec ¬±0.07% (102 runs sampled)
-gen-mapping:      encoded output x 663 ops/sec ¬±0.22% (98 runs sampled)
-source-map-js:    encoded output x 197 ops/sec ¬±0.45% (84 runs sampled)
-source-map-0.6.1: encoded output x 198 ops/sec ¬±0.33% (85 runs sampled)
-source-map-0.8.0: encoded output x 197 ops/sec ¬±0.06% (93 runs sampled)
-Fastest is gen-mapping:      decoded output
-
-
-***
-
-
-babel.min.js.map
-Memory Usage:
-gen-mapping: addSegment     37578063 bytes
-gen-mapping: addMapping     37212897 bytes
-source-map-js               47638527 bytes
-source-map-0.6.1            47690503 bytes
-source-map-0.8.0            47470188 bytes
-Smallest memory usage is gen-mapping: addMapping
-
-Adding speed:
-gen-mapping:      addSegment x 31.05 ops/sec ¬±8.31% (43 runs sampled)
-gen-mapping:      addMapping x 29.83 ops/sec ¬±7.36% (51 runs sampled)
-source-map-js:    addMapping x 20.73 ops/sec ¬±6.22% (38 runs sampled)
-source-map-0.6.1: addMapping x 20.03 ops/sec ¬±10.51% (38 runs sampled)
-source-map-0.8.0: addMapping x 19.30 ops/sec ¬±8.27% (37 runs sampled)
-Fastest is gen-mapping:      addSegment
-
-Generate speed:
-gen-mapping:      decoded output x 381,379,234 ops/sec ¬±0.29% (96 runs sampled)
-gen-mapping:      encoded output x 95.15 ops/sec ¬±2.98% (72 runs sampled)
-source-map-js:    encoded output x 15.20 ops/sec ¬±7.41% (33 runs sampled)
-source-map-0.6.1: encoded output x 16.36 ops/sec ¬±10.46% (31 runs sampled)
-source-map-0.8.0: encoded output x 16.06 ops/sec ¬±6.45% (31 runs sampled)
-Fastest is gen-mapping:      decoded output
-
-
-***
-
-
-preact.js.map
-Memory Usage:
-gen-mapping: addSegment       416247 bytes
-gen-mapping: addMapping       419824 bytes
-source-map-js                1024619 bytes
-source-map-0.6.1             1146004 bytes
-source-map-0.8.0             1113250 bytes
-Smallest memory usage is gen-mapping: addSegment
-
-Adding speed:
-gen-mapping:      addSegment x 13,755 ops/sec ¬±0.15% (98 runs sampled)
-gen-mapping:      addMapping x 13,013 ops/sec ¬±0.11% (101 runs sampled)
-source-map-js:    addMapping x 4,564 ops/sec ¬±0.21% (98 runs sampled)
-source-map-0.6.1: addMapping x 4,562 ops/sec ¬±0.11% (99 runs sampled)
-source-map-0.8.0: addMapping x 4,593 ops/sec ¬±0.11% (100 runs sampled)
-Fastest is gen-mapping:      addSegment
-
-Generate speed:
-gen-mapping:      decoded output x 379,864,020 ops/sec ¬±0.23% (93 runs sampled)
-gen-mapping:      encoded output x 14,368 ops/sec ¬±4.07% (82 runs sampled)
-source-map-js:    encoded output x 5,261 ops/sec ¬±0.21% (99 runs sampled)
-source-map-0.6.1: encoded output x 5,124 ops/sec ¬±0.58% (99 runs sampled)
-source-map-0.8.0: encoded output x 5,434 ops/sec ¬±0.33% (96 runs sampled)
-Fastest is gen-mapping:      decoded output
-
-
-***
-
-
-react.js.map
-Memory Usage:
-gen-mapping: addSegment       975096 bytes
-gen-mapping: addMapping      1102981 bytes
-source-map-js                2918836 bytes
-source-map-0.6.1             2885435 bytes
-source-map-0.8.0             2874336 bytes
-Smallest memory usage is gen-mapping: addSegment
-
-Adding speed:
-gen-mapping:      addSegment x 4,772 ops/sec ¬±0.15% (100 runs sampled)
-gen-mapping:      addMapping x 4,456 ops/sec ¬±0.13% (97 runs sampled)
-source-map-js:    addMapping x 1,618 ops/sec ¬±0.24% (97 runs sampled)
-source-map-0.6.1: addMapping x 1,622 ops/sec ¬±0.12% (99 runs sampled)
-source-map-0.8.0: addMapping x 1,631 ops/sec ¬±0.12% (100 runs sampled)
-Fastest is gen-mapping:      addSegment
-
-Generate speed:
-gen-mapping:      decoded output x 379,107,695 ops/sec ¬±0.07% (99 runs sampled)
-gen-mapping:      encoded output x 5,421 ops/sec ¬±1.60% (89 runs sampled)
-source-map-js:    encoded output x 2,113 ops/sec ¬±1.81% (98 runs sampled)
-source-map-0.6.1: encoded output x 2,126 ops/sec ¬±0.10% (100 runs sampled)
-source-map-0.8.0: encoded output x 2,176 ops/sec ¬±0.39% (98 runs sampled)
-Fastest is gen-mapping:      decoded output
-```
-
-[source-map]: https://www.npmjs.com/package/source-map
-[trace-mapping]: https://github.com/jridgewell/trace-mapping
-≠/package.json≈	[{
-  "name": "@jridgewell/gen-mapping",
-  "version": "0.3.2",
-  "description": "Generate source maps",
-  "keywords": [
-    "source",
-    "map"
-  ],
-  "author": "Justin Ridgewell <justin@ridgewell.name>",
-  "license": "MIT",
-  "repository": "https://github.com/jridgewell/gen-mapping",
-  "main": "dist/gen-mapping.umd.js",
-  "module": "dist/gen-mapping.mjs",
-  "typings": "dist/types/gen-mapping.d.ts",
-  "exports": {
-    ".": [
-      {
-        "types": "./dist/types/gen-mapping.d.ts",
-        "browser": "./dist/gen-mapping.umd.js",
-        "require": "./dist/gen-mapping.umd.js",
-        "import": "./dist/gen-mapping.mjs"
-      },
-      "./dist/gen-mapping.umd.js"
-    ],
-    "./package.json": "./package.json"
-  },
-  "files": [
-    "dist",
-    "src"
-  ],
-  "engines": {
-    "node": ">=6.0.0"
-  },
-  "scripts": {
-    "benchmark": "run-s build:rollup benchmark:*",
-    "benchmark:install": "cd benchmark && npm install",
-    "benchmark:only": "node benchmark/index.mjs",
-    "prebuild": "rm -rf dist",
-    "build": "run-s -n build:*",
-    "build:rollup": "rollup -c rollup.config.js",
-    "build:ts": "tsc --project tsconfig.build.json",
-    "lint": "run-s -n lint:*",
-    "lint:prettier": "npm run test:lint:prettier -- --write",
-    "lint:ts": "npm run test:lint:ts -- --fix",
-    "pretest": "run-s build:rollup",
-    "test": "run-s -n test:lint test:coverage",
-    "test:debug": "mocha --inspect-brk",
-    "test:lint": "run-s -n test:lint:*",
-    "test:lint:prettier": "prettier --check '{src,test}/**/*.ts'",
-    "test:lint:ts": "eslint '{src,test}/**/*.ts'",
-    "test:only": "mocha",
-    "test:coverage": "c8 mocha",
-    "test:watch": "run-p 'build:rollup -- --watch' 'test:only -- --watch'",
-    "prepublishOnly": "npm run preversion",
-    "preversion": "run-s test build"
-  },
-  "devDependencies": {
-    "@rollup/plugin-typescript": "8.3.2",
-    "@types/mocha": "9.1.1",
-    "@types/node": "17.0.29",
-    "@typescript-eslint/eslint-plugin": "5.21.0",
-    "@typescript-eslint/parser": "5.21.0",
-    "benchmark": "2.1.4",
-    "c8": "7.11.2",
-    "eslint": "8.14.0",
-    "eslint-config-prettier": "8.5.0",
-    "mocha": "9.2.2",
-    "npm-run-all": "4.1.5",
-    "prettier": "2.6.2",
-    "rollup": "2.70.2",
-    "typescript": "4.6.3"
-  },
-  "dependencies": {
-    "@jridgewell/set-array": "^1.0.1",
-    "@jridgewell/sourcemap-codec": "^1.4.10",
-    "@jridgewell/trace-mapping": "^0.3.9"
-  }
-}
-π/dist/gen-mapping.mjs.map≈S‡{"version":3,"file":"gen-mapping.mjs","sources":["../src/sourcemap-segment.ts","../src/gen-mapping.ts"],"sourcesContent":["type GeneratedColumn = number;\ntype SourcesIndex = number;\ntype SourceLine = number;\ntype SourceColumn = number;\ntype NamesIndex = number;\n\nexport type SourceMapSegment =\n  | [GeneratedColumn]\n  | [GeneratedColumn, SourcesIndex, SourceLine, SourceColumn]\n  | [GeneratedColumn, SourcesIndex, SourceLine, SourceColumn, NamesIndex];\n\nexport const COLUMN = 0;\nexport const SOURCES_INDEX = 1;\nexport const SOURCE_LINE = 2;\nexport const SOURCE_COLUMN = 3;\nexport const NAMES_INDEX = 4;\n","import { SetArray, put } from '@jridgewell/set-array';\nimport { encode } from '@jridgewell/sourcemap-codec';\nimport { TraceMap, decodedMappings } from '@jridgewell/trace-mapping';\n\nimport {\n  COLUMN,\n  SOURCES_INDEX,\n  SOURCE_LINE,\n  SOURCE_COLUMN,\n  NAMES_INDEX,\n} from './sourcemap-segment';\n\nimport type { SourceMapInput } from '@jridgewell/trace-mapping';\nimport type { SourceMapSegment } from './sourcemap-segment';\nimport type { DecodedSourceMap, EncodedSourceMap, Pos, Mapping } from './types';\n\nexport type { DecodedSourceMap, EncodedSourceMap, Mapping };\n\nexport type Options = {\n  file?: string | null;\n  sourceRoot?: string | null;\n};\n\nconst NO_NAME = -1;\n\n/**\n * A low-level API to associate a generated position with an original source position. Line and\n * column here are 0-based, unlike `addMapping`.\n */\nexport let addSegment: {\n  (\n    map: GenMapping,\n    genLine: number,\n    genColumn: number,\n    source?: null,\n    sourceLine?: null,\n    sourceColumn?: null,\n    name?: null,\n    content?: null,\n  ): void;\n  (\n    map: GenMapping,\n    genLine: number,\n    genColumn: number,\n    source: string,\n    sourceLine: number,\n    sourceColumn: number,\n    name?: null,\n    content?: string | null,\n  ): void;\n  (\n    map: GenMapping,\n    genLine: number,\n    genColumn: number,\n    source: string,\n    sourceLine: number,\n    sourceColumn: number,\n    name: string,\n    content?: string | null,\n  ): void;\n};\n\n/**\n * A high-level API to associate a generated position with an original source position. Line is\n * 1-based, but column is 0-based, due to legacy behavior in `source-map` library.\n */\nexport let addMapping: {\n  (\n    map: GenMapping,\n    mapping: {\n      generated: Pos;\n      source?: null;\n      original?: null;\n      name?: null;\n      content?: null;\n    },\n  ): void;\n  (\n    map: GenMapping,\n    mapping: {\n      generated: Pos;\n      source: string;\n      original: Pos;\n      name?: null;\n      content?: string | null;\n    },\n  ): void;\n  (\n    map: GenMapping,\n    mapping: {\n      generated: Pos;\n      source: string;\n      original: Pos;\n      name: string;\n      content?: string | null;\n    },\n  ): void;\n};\n\n/**\n * Same as `addSegment`, but will only add the segment if it generates useful information in the\n * resulting map. This only works correctly if segments are added **in order**, meaning you should\n * not add a segment with a lower generated line/column than one that came before.\n */\nexport let maybeAddSegment: typeof addSegment;\n\n/**\n * Same as `addMapping`, but will only add the mapping if it generates useful information in the\n * resulting map. This only works correctly if mappings are added **in order**, meaning you should\n * not add a mapping with a lower generated line/column than one that came before.\n */\nexport let maybeAddMapping: typeof addMapping;\n\n/**\n * Adds/removes the content of the source file to the source map.\n */\nexport let setSourceContent: (map: GenMapping, source: string, content: string | null) => void;\n\n/**\n * Returns a sourcemap object (with decoded mappings) suitable for passing to a library that expects\n * a sourcemap, or to JSON.stringify.\n */\nexport let toDecodedMap: (map: GenMapping) => DecodedSourceMap;\n\n/**\n * Returns a sourcemap object (with encoded mappings) suitable for passing to a library that expects\n * a sourcemap, or to JSON.stringify.\n */\nexport let toEncodedMap: (map: GenMapping) => EncodedSourceMap;\n\n/**\n * Constructs a new GenMapping, using the already present mappings of the input.\n */\nexport let fromMap: (input: SourceMapInput) => GenMapping;\n\n/**\n * Returns an array of high-level mapping objects for every recorded segment, which could then be\n * passed to the `source-map` library.\n */\nexport let allMappings: (map: GenMapping) => Mapping[];\n\n// This split declaration is only so that terser can elminiate the static initialization block.\nlet addSegmentInternal: <S extends string | null | undefined>(\n  skipable: boolean,\n  map: GenMapping,\n  genLine: number,\n  genColumn: number,\n  source: S,\n  sourceLine: S extends string ? number : null | undefined,\n  sourceColumn: S extends string ? number : null | undefined,\n  name: S extends string ? string | null | undefined : null | undefined,\n  content: S extends string ? string | null | undefined : null | undefined,\n) => void;\n\n/**\n * Provides the state to generate a sourcemap.\n */\nexport class GenMapping {\n  private _names = new SetArray();\n  private _sources = new SetArray();\n  private _sourcesContent: (string | null)[] = [];\n  private _mappings: SourceMapSegment[][] = [];\n  declare file: string | null | undefined;\n  declare sourceRoot: string | null | undefined;\n\n  constructor({ file, sourceRoot }: Options = {}) {\n    this.file = file;\n    this.sourceRoot = sourceRoot;\n  }\n\n  static {\n    addSegment = (map, genLine, genColumn, source, sourceLine, sourceColumn, name, content) => {\n      return addSegmentInternal(\n        false,\n        map,\n        genLine,\n        genColumn,\n        source,\n        sourceLine,\n        sourceColumn,\n        name,\n        content,\n      );\n    };\n\n    maybeAddSegment = (\n      map,\n      genLine,\n      genColumn,\n      source,\n      sourceLine,\n      sourceColumn,\n      name,\n      content,\n    ) => {\n      return addSegmentInternal(\n        true,\n        map,\n        genLine,\n        genColumn,\n        source,\n        sourceLine,\n        sourceColumn,\n        name,\n        content,\n      );\n    };\n\n    addMapping = (map, mapping) => {\n      return addMappingInternal(false, map, mapping as Parameters<typeof addMappingInternal>[2]);\n    };\n\n    maybeAddMapping = (map, mapping) => {\n      return addMappingInternal(true, map, mapping as Parameters<typeof addMappingInternal>[2]);\n    };\n\n    setSourceContent = (map, source, content) => {\n      const { _sources: sources, _sourcesContent: sourcesContent } = map;\n      sourcesContent[put(sources, source)] = content;\n    };\n\n    toDecodedMap = (map) => {\n      const {\n        file,\n        sourceRoot,\n        _mappings: mappings,\n        _sources: sources,\n        _sourcesContent: sourcesContent,\n        _names: names,\n      } = map;\n      removeEmptyFinalLines(mappings);\n\n      return {\n        version: 3,\n        file: file || undefined,\n        names: names.array,\n        sourceRoot: sourceRoot || undefined,\n        sources: sources.array,\n        sourcesContent,\n        mappings,\n      };\n    };\n\n    toEncodedMap = (map) => {\n      const decoded = toDecodedMap(map);\n      return {\n        ...decoded,\n        mappings: encode(decoded.mappings as SourceMapSegment[][]),\n      };\n    };\n\n    allMappings = (map) => {\n      const out: Mapping[] = [];\n      const { _mappings: mappings, _sources: sources, _names: names } = map;\n\n      for (let i = 0; i < mappings.length; i++) {\n        const line = mappings[i];\n        for (let j = 0; j < line.length; j++) {\n          const seg = line[j];\n\n          const generated = { line: i + 1, column: seg[COLUMN] };\n          let source: string | undefined = undefined;\n          let original: Pos | undefined = undefined;\n          let name: string | undefined = undefined;\n\n          if (seg.length !== 1) {\n            source = sources.array[seg[SOURCES_INDEX]];\n            original = { line: seg[SOURCE_LINE] + 1, column: seg[SOURCE_COLUMN] };\n\n            if (seg.length === 5) name = names.array[seg[NAMES_INDEX]];\n          }\n\n          out.push({ generated, source, original, name } as Mapping);\n        }\n      }\n\n      return out;\n    };\n\n    fromMap = (input) => {\n      const map = new TraceMap(input);\n      const gen = new GenMapping({ file: map.file, sourceRoot: map.sourceRoot });\n\n      putAll(gen._names, map.names);\n      putAll(gen._sources, map.sources as string[]);\n      gen._sourcesContent = map.sourcesContent || map.sources.map(() => null);\n      gen._mappings = decodedMappings(map) as GenMapping['_mappings'];\n\n      return gen;\n    };\n\n    // Internal helpers\n    addSegmentInternal = (\n      skipable,\n      map,\n      genLine,\n      genColumn,\n      source,\n      sourceLine,\n      sourceColumn,\n      name,\n      content,\n    ) => {\n      const {\n        _mappings: mappings,\n        _sources: sources,\n        _sourcesContent: sourcesContent,\n        _names: names,\n      } = map;\n      const line = getLine(mappings, genLine);\n      const index = getColumnIndex(line, genColumn);\n\n      if (!source) {\n        if (skipable && skipSourceless(line, index)) return;\n        return insert(line, index, [genColumn]);\n      }\n\n      // Sigh, TypeScript can't figure out sourceLine and sourceColumn aren't nullish if source\n      // isn't nullish.\n      assert<number>(sourceLine);\n      assert<number>(sourceColumn);\n\n      const sourcesIndex = put(sources, source);\n      const namesIndex = name ? put(names, name) : NO_NAME;\n      if (sourcesIndex === sourcesContent.length) sourcesContent[sourcesIndex] = content ?? null;\n\n      if (skipable && skipSource(line, index, sourcesIndex, sourceLine, sourceColumn, namesIndex)) {\n        return;\n      }\n\n      return insert(\n        line,\n        index,\n        name\n          ? [genColumn, sourcesIndex, sourceLine, sourceColumn, namesIndex]\n          : [genColumn, sourcesIndex, sourceLine, sourceColumn],\n      );\n    };\n  }\n}\n\nfunction assert<T>(_val: unknown): asserts _val is T {\n  // noop.\n}\n\nfunction getLine(mappings: SourceMapSegment[][], index: number): SourceMapSegment[] {\n  for (let i = mappings.length; i <= index; i++) {\n    mappings[i] = [];\n  }\n  return mappings[index];\n}\n\nfunction getColumnIndex(line: SourceMapSegment[], genColumn: number): number {\n  let index = line.length;\n  for (let i = index - 1; i >= 0; index = i--) {\n    const current = line[i];\n    if (genColumn >= current[COLUMN]) break;\n  }\n  return index;\n}\n\nfunction insert<T>(array: T[], index: number, value: T) {\n  for (let i = array.length; i > index; i--) {\n    array[i] = array[i - 1];\n  }\n  array[index] = value;\n}\n\nfunction removeEmptyFinalLines(mappings: SourceMapSegment[][]) {\n  const { length } = mappings;\n  let len = length;\n  for (let i = len - 1; i >= 0; len = i, i--) {\n    if (mappings[i].length > 0) break;\n  }\n  if (len < length) mappings.length = len;\n}\n\nfunction putAll(strarr: SetArray, array: string[]) {\n  for (let i = 0; i < array.length; i++) put(strarr, array[i]);\n}\n\nfunction skipSourceless(line: SourceMapSegment[], index: number): boolean {\n  // The start of a line is already sourceless, so adding a sourceless segment to the beginning\n  // doesn't generate any useful information.\n  if (index === 0) return true;\n\n  const prev = line[index - 1];\n  // If the previous segment is also sourceless, then adding another sourceless segment doesn't\n  // genrate any new information. Else, this segment will end the source/named segment and point to\n  // a sourceless position, which is useful.\n  return prev.length === 1;\n}\n\nfunction skipSource(\n  line: SourceMapSegment[],\n  index: number,\n  sourcesIndex: number,\n  sourceLine: number,\n  sourceColumn: number,\n  namesIndex: number,\n): boolean {\n  // A source/named segment at the start of a line gives position at that genColumn\n  if (index === 0) return false;\n\n  const prev = line[index - 1];\n\n  // If the previous segment is sourceless, then we're transitioning to a source.\n  if (prev.length === 1) return false;\n\n  // If the previous segment maps to the exact same source position, then this segment doesn't\n  // provide any new position information.\n  return (\n    sourcesIndex === prev[SOURCES_INDEX] &&\n    sourceLine === prev[SOURCE_LINE] &&\n    sourceColumn === prev[SOURCE_COLUMN] &&\n    namesIndex === (prev.length === 5 ? prev[NAMES_INDEX] : NO_NAME)\n  );\n}\n\nfunction addMappingInternal<S extends string | null | undefined>(\n  skipable: boolean,\n  map: GenMapping,\n  mapping: {\n    generated: Pos;\n    source: S;\n    original: S extends string ? Pos : null | undefined;\n    name: S extends string ? string | null | undefined : null | undefined;\n    content: S extends string ? string | null | undefined : null | undefined;\n  },\n) {\n  const { generated, source, original, name, content } = mapping;\n  if (!source) {\n    return addSegmentInternal(\n      skipable,\n      map,\n      generated.line - 1,\n      generated.column,\n      null,\n      null,\n      null,\n      null,\n      null,\n    );\n  }\n  const s: string = source;\n  assert<Pos>(original);\n  return addSegmentInternal(\n    skipable,\n    map,\n    generated.line - 1,\n    generated.column,\n    s,\n    original.line - 1,\n    original.column,\n    name,\n    content,\n  );\n}\n"],"names":[],"mappings":"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"}≠/src/types.ts≈Iimport type { SourceMapSegment } from './sourcemap-segment';
-
-export interface SourceMapV3 {
-  file?: string | null;
-  names: readonly string[];
-  sourceRoot?: string;
-  sources: readonly (string | null)[];
-  sourcesContent?: readonly (string | null)[];
-  version: 3;
-}
-
-export interface EncodedSourceMap extends SourceMapV3 {
-  mappings: string;
-}
-
-export interface DecodedSourceMap extends SourceMapV3 {
-  mappings: readonly SourceMapSegment[][];
-}
-
-export interface Pos {
-  line: number;
-  column: number;
-}
-
-export type Mapping =
-  | {
-      generated: Pos;
-      source: undefined;
-      original: undefined;
-      name: undefined;
-    }
-  | {
-      generated: Pos;
-      source: string;
-      original: Pos;
-      name: string;
-    }
-  | {
-      generated: Pos;
-      source: string;
-      original: Pos;
-      name: undefined;
-    };
-®/LICENSE≈8Copyright 2022 Justin Ridgewell <jridgewell@google.com>
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-Ÿ"/dist/types/sourcemap-segment.d.ts≈9declare type GeneratedColumn = number;
-declare type SourcesIndex = number;
-declare type SourceLine = number;
-declare type SourceColumn = number;
-declare type NamesIndex = number;
-export declare type SourceMapSegment = [GeneratedColumn] | [GeneratedColumn, SourcesIndex, SourceLine, SourceColumn] | [GeneratedColumn, SourcesIndex, SourceLine, SourceColumn, NamesIndex];
-export declare const COLUMN = 0;
-export declare const SOURCES_INDEX = 1;
-export declare const SOURCE_LINE = 2;
-export declare const SOURCE_COLUMN = 3;
-export declare const NAMES_INDEX = 4;
-export {};

@@ -50,8 +50,13 @@ document.getElementById("app").innerHTML = \`
 `,
 
     '/package.json': JSON.stringify({
-      scripts: { dev: 'vite' },
-      devDependencies: { vite: '^4.0.0', 'esbuild-wasm': '0.15.12' },
+      scripts: {
+        dev: 'vite',
+      },
+      devDependencies: {
+        vite: '4.2.0',
+        'esbuild-wasm': '0.17.12',
+      },
     }),
   });
 

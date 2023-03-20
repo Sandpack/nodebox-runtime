@@ -1,4 +1,29 @@
-‰ª/README.mdÅo# mdurl
+‰ª/format.jsÅ
+'use strict';
+
+
+module.exports = function format(url) {
+  var result = '';
+
+  result += url.protocol || '';
+  result += url.slashes ? '//' : '';
+  result += url.auth ? url.auth + '@' : '';
+
+  if (url.hostname && url.hostname.indexOf(':') !== -1) {
+    // ipv6 address
+    result += '[' + url.hostname + ']';
+  } else {
+    result += url.hostname || '';
+  }
+
+  result += url.port ? ':' + url.port : '';
+  result += url.pathname || '';
+  result += url.search || '';
+  result += url.hash || '';
+
+  return result;
+};
+ª/README.mdÅo# mdurl
 
 [![Build Status](https://img.shields.io/travis/markdown-it/mdurl/master.svg?style=flat)](https://travis-ci.org/markdown-it/mdurl)
 [![NPM version](https://img.shields.io/npm/v/mdurl.svg?style=flat)](https://www.npmjs.org/package/mdurl)
@@ -100,319 +125,22 @@ Format an object previously obtained with `.parse()` function. Similar to node's
 ## License
 
 [MIT](https://github.com/markdown-it/mdurl/blob/master/LICENSE)
-ª/decode.jsÅ9
-'use strict';
-
-
-/* eslint-disable no-bitwise */
-
-var decodeCache = {};
-
-function getDecodeCache(exclude) {
-  var i, ch, cache = decodeCache[exclude];
-  if (cache) { return cache; }
-
-  cache = decodeCache[exclude] = [];
-
-  for (i = 0; i < 128; i++) {
-    ch = String.fromCharCode(i);
-    cache.push(ch);
+­/package.jsonÅC{
+  "name": "mdurl",
+  "version": "1.0.1",
+  "description": "URL utilities for markdown-it",
+  "repository": "markdown-it/mdurl",
+  "license": "MIT",
+  "scripts": {
+    "test": "make test"
+  },
+  "devDependencies": {
+    "mocha": "*",
+    "eslint": "0.13.0",
+    "eslint-plugin-nodeca": "^1.0.0",
+    "istanbul": "*"
   }
-
-  for (i = 0; i < exclude.length; i++) {
-    ch = exclude.charCodeAt(i);
-    cache[ch] = '%' + ('0' + ch.toString(16).toUpperCase()).slice(-2);
-  }
-
-  return cache;
 }
-
-
-// Decode percent-encoded string.
-//
-function decode(string, exclude) {
-  var cache;
-
-  if (typeof exclude !== 'string') {
-    exclude = decode.defaultChars;
-  }
-
-  cache = getDecodeCache(exclude);
-
-  return string.replace(/(%[a-f0-9]{2})+/gi, function(seq) {
-    var i, l, b1, b2, b3, b4, chr,
-        result = '';
-
-    for (i = 0, l = seq.length; i < l; i += 3) {
-      b1 = parseInt(seq.slice(i + 1, i + 3), 16);
-
-      if (b1 < 0x80) {
-        result += cache[b1];
-        continue;
-      }
-
-      if ((b1 & 0xE0) === 0xC0 && (i + 3 < l)) {
-        // 110xxxxx 10xxxxxx
-        b2 = parseInt(seq.slice(i + 4, i + 6), 16);
-
-        if ((b2 & 0xC0) === 0x80) {
-          chr = ((b1 << 6) & 0x7C0) | (b2 & 0x3F);
-
-          if (chr < 0x80) {
-            result += '\ufffd\ufffd';
-          } else {
-            result += String.fromCharCode(chr);
-          }
-
-          i += 3;
-          continue;
-        }
-      }
-
-      if ((b1 & 0xF0) === 0xE0 && (i + 6 < l)) {
-        // 1110xxxx 10xxxxxx 10xxxxxx
-        b2 = parseInt(seq.slice(i + 4, i + 6), 16);
-        b3 = parseInt(seq.slice(i + 7, i + 9), 16);
-
-        if ((b2 & 0xC0) === 0x80 && (b3 & 0xC0) === 0x80) {
-          chr = ((b1 << 12) & 0xF000) | ((b2 << 6) & 0xFC0) | (b3 & 0x3F);
-
-          if (chr < 0x800 || (chr >= 0xD800 && chr <= 0xDFFF)) {
-            result += '\ufffd\ufffd\ufffd';
-          } else {
-            result += String.fromCharCode(chr);
-          }
-
-          i += 6;
-          continue;
-        }
-      }
-
-      if ((b1 & 0xF8) === 0xF0 && (i + 9 < l)) {
-        // 111110xx 10xxxxxx 10xxxxxx 10xxxxxx
-        b2 = parseInt(seq.slice(i + 4, i + 6), 16);
-        b3 = parseInt(seq.slice(i + 7, i + 9), 16);
-        b4 = parseInt(seq.slice(i + 10, i + 12), 16);
-
-        if ((b2 & 0xC0) === 0x80 && (b3 & 0xC0) === 0x80 && (b4 & 0xC0) === 0x80) {
-          chr = ((b1 << 18) & 0x1C0000) | ((b2 << 12) & 0x3F000) | ((b3 << 6) & 0xFC0) | (b4 & 0x3F);
-
-          if (chr < 0x10000 || chr > 0x10FFFF) {
-            result += '\ufffd\ufffd\ufffd\ufffd';
-          } else {
-            chr -= 0x10000;
-            result += String.fromCharCode(0xD800 + (chr >> 10), 0xDC00 + (chr & 0x3FF));
-          }
-
-          i += 9;
-          continue;
-        }
-      }
-
-      result += '\ufffd';
-    }
-
-    return result;
-  });
-}
-
-
-decode.defaultChars   = ';/?:@&=+$,#';
-decode.componentChars = '';
-
-
-module.exports = decode;
-ª/format.jsÅ
-'use strict';
-
-
-module.exports = function format(url) {
-  var result = '';
-
-  result += url.protocol || '';
-  result += url.slashes ? '//' : '';
-  result += url.auth ? url.auth + '@' : '';
-
-  if (url.hostname && url.hostname.indexOf(':') !== -1) {
-    // ipv6 address
-    result += '[' + url.hostname + ']';
-  } else {
-    result += url.hostname || '';
-  }
-
-  result += url.port ? ':' + url.port : '';
-  result += url.pathname || '';
-  result += url.search || '';
-  result += url.hash || '';
-
-  return result;
-};
-¨/LICENSEÅÿCopyright (c) 2015 Vitaly Puzrin, Alex Kocharin.
-
-Permission is hereby granted, free of charge, to any person
-obtaining a copy of this software and associated documentation
-files (the "Software"), to deal in the Software without
-restriction, including without limitation the rights to use,
-copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following
-conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-OTHER DEALINGS IN THE SOFTWARE.
-
---------------------------------------------------------------------------------
-
-.parse() is based on Joyent's node.js `url` code:
-
-Copyright Joyent, Inc. and other Node contributors. All rights reserved.
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to
-deal in the Software without restriction, including without limitation the
-rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-sell copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-IN THE SOFTWARE.
-©/index.jsÄÃ'use strict';
-
-
-module.exports.encode = require('./encode');
-module.exports.decode = require('./decode');
-module.exports.format = require('./format');
-module.exports.parse  = require('./parse');
-­/CHANGELOG.mdÄå1.0.1 / 2015-09-15
-------------------
-
-- Fixed closure compiler compatibility (#1).
-
-
-1.0.0 / 2015-03-04
-------------------
-
-- Added `.decode()`, `.parse()`, `.format()`.
-
-
-0.0.1 / 2015-03-02
-------------------
-
-- First release.
-ª/encode.jsÅÞ
-'use strict';
-
-
-var encodeCache = {};
-
-
-// Create a lookup array where anything but characters in `chars` string
-// and alphanumeric chars is percent-encoded.
-//
-function getEncodeCache(exclude) {
-  var i, ch, cache = encodeCache[exclude];
-  if (cache) { return cache; }
-
-  cache = encodeCache[exclude] = [];
-
-  for (i = 0; i < 128; i++) {
-    ch = String.fromCharCode(i);
-
-    if (/^[0-9a-z]$/i.test(ch)) {
-      // always allow unencoded alphanumeric characters
-      cache.push(ch);
-    } else {
-      cache.push('%' + ('0' + i.toString(16).toUpperCase()).slice(-2));
-    }
-  }
-
-  for (i = 0; i < exclude.length; i++) {
-    cache[exclude.charCodeAt(i)] = exclude[i];
-  }
-
-  return cache;
-}
-
-
-// Encode unsafe characters with percent-encoding, skipping already
-// encoded sequences.
-//
-//  - string       - string to encode
-//  - exclude      - list of characters to ignore (in addition to a-zA-Z0-9)
-//  - keepEscaped  - don't encode '%' in a correct escape sequence (default: true)
-//
-function encode(string, exclude, keepEscaped) {
-  var i, l, code, nextCode, cache,
-      result = '';
-
-  if (typeof exclude !== 'string') {
-    // encode(string, keepEscaped)
-    keepEscaped  = exclude;
-    exclude = encode.defaultChars;
-  }
-
-  if (typeof keepEscaped === 'undefined') {
-    keepEscaped = true;
-  }
-
-  cache = getEncodeCache(exclude);
-
-  for (i = 0, l = string.length; i < l; i++) {
-    code = string.charCodeAt(i);
-
-    if (keepEscaped && code === 0x25 /* % */ && i + 2 < l) {
-      if (/^[0-9a-f]{2}$/i.test(string.slice(i + 1, i + 3))) {
-        result += string.slice(i, i + 3);
-        i += 2;
-        continue;
-      }
-    }
-
-    if (code < 128) {
-      result += cache[code];
-      continue;
-    }
-
-    if (code >= 0xD800 && code <= 0xDFFF) {
-      if (code >= 0xD800 && code <= 0xDBFF && i + 1 < l) {
-        nextCode = string.charCodeAt(i + 1);
-        if (nextCode >= 0xDC00 && nextCode <= 0xDFFF) {
-          result += encodeURIComponent(string[i] + string[i + 1]);
-          i++;
-          continue;
-        }
-      }
-      result += '%EF%BF%BD';
-      continue;
-    }
-
-    result += encodeURIComponent(string[i]);
-  }
-
-  return result;
-}
-
-encode.defaultChars   = ";/?:@&=+$,-_.!~*'()#";
-encode.componentChars = "-_.!~*'()";
-
-
-module.exports = encode;
 ©/parse.jsÅ&¥// Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -725,19 +453,291 @@ Url.prototype.parseHost = function(host) {
 };
 
 module.exports = urlParse;
-­/package.jsonÅC{
-  "name": "mdurl",
-  "version": "1.0.1",
-  "description": "URL utilities for markdown-it",
-  "repository": "markdown-it/mdurl",
-  "license": "MIT",
-  "scripts": {
-    "test": "make test"
-  },
-  "devDependencies": {
-    "mocha": "*",
-    "eslint": "0.13.0",
-    "eslint-plugin-nodeca": "^1.0.0",
-    "istanbul": "*"
+©/index.jsÄÃ'use strict';
+
+
+module.exports.encode = require('./encode');
+module.exports.decode = require('./decode');
+module.exports.format = require('./format');
+module.exports.parse  = require('./parse');
+­/CHANGELOG.mdÄå1.0.1 / 2015-09-15
+------------------
+
+- Fixed closure compiler compatibility (#1).
+
+
+1.0.0 / 2015-03-04
+------------------
+
+- Added `.decode()`, `.parse()`, `.format()`.
+
+
+0.0.1 / 2015-03-02
+------------------
+
+- First release.
+ª/encode.jsÅÞ
+'use strict';
+
+
+var encodeCache = {};
+
+
+// Create a lookup array where anything but characters in `chars` string
+// and alphanumeric chars is percent-encoded.
+//
+function getEncodeCache(exclude) {
+  var i, ch, cache = encodeCache[exclude];
+  if (cache) { return cache; }
+
+  cache = encodeCache[exclude] = [];
+
+  for (i = 0; i < 128; i++) {
+    ch = String.fromCharCode(i);
+
+    if (/^[0-9a-z]$/i.test(ch)) {
+      // always allow unencoded alphanumeric characters
+      cache.push(ch);
+    } else {
+      cache.push('%' + ('0' + i.toString(16).toUpperCase()).slice(-2));
+    }
   }
+
+  for (i = 0; i < exclude.length; i++) {
+    cache[exclude.charCodeAt(i)] = exclude[i];
+  }
+
+  return cache;
 }
+
+
+// Encode unsafe characters with percent-encoding, skipping already
+// encoded sequences.
+//
+//  - string       - string to encode
+//  - exclude      - list of characters to ignore (in addition to a-zA-Z0-9)
+//  - keepEscaped  - don't encode '%' in a correct escape sequence (default: true)
+//
+function encode(string, exclude, keepEscaped) {
+  var i, l, code, nextCode, cache,
+      result = '';
+
+  if (typeof exclude !== 'string') {
+    // encode(string, keepEscaped)
+    keepEscaped  = exclude;
+    exclude = encode.defaultChars;
+  }
+
+  if (typeof keepEscaped === 'undefined') {
+    keepEscaped = true;
+  }
+
+  cache = getEncodeCache(exclude);
+
+  for (i = 0, l = string.length; i < l; i++) {
+    code = string.charCodeAt(i);
+
+    if (keepEscaped && code === 0x25 /* % */ && i + 2 < l) {
+      if (/^[0-9a-f]{2}$/i.test(string.slice(i + 1, i + 3))) {
+        result += string.slice(i, i + 3);
+        i += 2;
+        continue;
+      }
+    }
+
+    if (code < 128) {
+      result += cache[code];
+      continue;
+    }
+
+    if (code >= 0xD800 && code <= 0xDFFF) {
+      if (code >= 0xD800 && code <= 0xDBFF && i + 1 < l) {
+        nextCode = string.charCodeAt(i + 1);
+        if (nextCode >= 0xDC00 && nextCode <= 0xDFFF) {
+          result += encodeURIComponent(string[i] + string[i + 1]);
+          i++;
+          continue;
+        }
+      }
+      result += '%EF%BF%BD';
+      continue;
+    }
+
+    result += encodeURIComponent(string[i]);
+  }
+
+  return result;
+}
+
+encode.defaultChars   = ";/?:@&=+$,-_.!~*'()#";
+encode.componentChars = "-_.!~*'()";
+
+
+module.exports = encode;
+¨/LICENSEÅÿCopyright (c) 2015 Vitaly Puzrin, Alex Kocharin.
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+--------------------------------------------------------------------------------
+
+.parse() is based on Joyent's node.js `url` code:
+
+Copyright Joyent, Inc. and other Node contributors. All rights reserved.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to
+deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+IN THE SOFTWARE.
+ª/decode.jsÅ9
+'use strict';
+
+
+/* eslint-disable no-bitwise */
+
+var decodeCache = {};
+
+function getDecodeCache(exclude) {
+  var i, ch, cache = decodeCache[exclude];
+  if (cache) { return cache; }
+
+  cache = decodeCache[exclude] = [];
+
+  for (i = 0; i < 128; i++) {
+    ch = String.fromCharCode(i);
+    cache.push(ch);
+  }
+
+  for (i = 0; i < exclude.length; i++) {
+    ch = exclude.charCodeAt(i);
+    cache[ch] = '%' + ('0' + ch.toString(16).toUpperCase()).slice(-2);
+  }
+
+  return cache;
+}
+
+
+// Decode percent-encoded string.
+//
+function decode(string, exclude) {
+  var cache;
+
+  if (typeof exclude !== 'string') {
+    exclude = decode.defaultChars;
+  }
+
+  cache = getDecodeCache(exclude);
+
+  return string.replace(/(%[a-f0-9]{2})+/gi, function(seq) {
+    var i, l, b1, b2, b3, b4, chr,
+        result = '';
+
+    for (i = 0, l = seq.length; i < l; i += 3) {
+      b1 = parseInt(seq.slice(i + 1, i + 3), 16);
+
+      if (b1 < 0x80) {
+        result += cache[b1];
+        continue;
+      }
+
+      if ((b1 & 0xE0) === 0xC0 && (i + 3 < l)) {
+        // 110xxxxx 10xxxxxx
+        b2 = parseInt(seq.slice(i + 4, i + 6), 16);
+
+        if ((b2 & 0xC0) === 0x80) {
+          chr = ((b1 << 6) & 0x7C0) | (b2 & 0x3F);
+
+          if (chr < 0x80) {
+            result += '\ufffd\ufffd';
+          } else {
+            result += String.fromCharCode(chr);
+          }
+
+          i += 3;
+          continue;
+        }
+      }
+
+      if ((b1 & 0xF0) === 0xE0 && (i + 6 < l)) {
+        // 1110xxxx 10xxxxxx 10xxxxxx
+        b2 = parseInt(seq.slice(i + 4, i + 6), 16);
+        b3 = parseInt(seq.slice(i + 7, i + 9), 16);
+
+        if ((b2 & 0xC0) === 0x80 && (b3 & 0xC0) === 0x80) {
+          chr = ((b1 << 12) & 0xF000) | ((b2 << 6) & 0xFC0) | (b3 & 0x3F);
+
+          if (chr < 0x800 || (chr >= 0xD800 && chr <= 0xDFFF)) {
+            result += '\ufffd\ufffd\ufffd';
+          } else {
+            result += String.fromCharCode(chr);
+          }
+
+          i += 6;
+          continue;
+        }
+      }
+
+      if ((b1 & 0xF8) === 0xF0 && (i + 9 < l)) {
+        // 111110xx 10xxxxxx 10xxxxxx 10xxxxxx
+        b2 = parseInt(seq.slice(i + 4, i + 6), 16);
+        b3 = parseInt(seq.slice(i + 7, i + 9), 16);
+        b4 = parseInt(seq.slice(i + 10, i + 12), 16);
+
+        if ((b2 & 0xC0) === 0x80 && (b3 & 0xC0) === 0x80 && (b4 & 0xC0) === 0x80) {
+          chr = ((b1 << 18) & 0x1C0000) | ((b2 << 12) & 0x3F000) | ((b3 << 6) & 0xFC0) | (b4 & 0x3F);
+
+          if (chr < 0x10000 || chr > 0x10FFFF) {
+            result += '\ufffd\ufffd\ufffd\ufffd';
+          } else {
+            chr -= 0x10000;
+            result += String.fromCharCode(0xD800 + (chr >> 10), 0xDC00 + (chr & 0x3FF));
+          }
+
+          i += 9;
+          continue;
+        }
+      }
+
+      result += '\ufffd';
+    }
+
+    return result;
+  });
+}
+
+
+decode.defaultChars   = ';/?:@&=+$,#';
+decode.componentChars = '';
+
+
+module.exports = decode;

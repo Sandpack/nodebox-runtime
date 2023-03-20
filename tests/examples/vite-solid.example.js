@@ -36,9 +36,9 @@ window.runExample = async function (emulatorUrl) {
         'solid-js': '1.6.11',
       },
       devDependencies: {
-        vite: '^4.0.4',
-        'esbuild-wasm': '0.15.12',
-        'vite-plugin-solid': '^2.5.0',
+        vite: '4.2.0',
+        'esbuild-wasm': '0.17.12',
+        'vite-plugin-solid': '2.6.1',
       },
     }),
     'src/main.tsx': `import { render } from "solid-js/web";

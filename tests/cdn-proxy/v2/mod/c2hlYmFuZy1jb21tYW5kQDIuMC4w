@@ -1,12 +1,37 @@
-Ñ®/license≈\MIT License
+Ñ™/readme.md≈Ô# shebang-command [![Build Status](https://travis-ci.org/kevva/shebang-command.svg?branch=master)](https://travis-ci.org/kevva/shebang-command)
 
-Copyright (c) Kevin M√•rtensson <kevinmartensson@gmail.com> (github.com/kevva)
+> Get the command from a shebang
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+## Install
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+```
+$ npm install shebang-command
+```
+
+
+## Usage
+
+```js
+const shebangCommand = require('shebang-command');
+
+shebangCommand('#!/usr/bin/env node');
+//=> 'node'
+
+shebangCommand('#!/bin/bash');
+//=> 'bash'
+```
+
+
+## API
+
+### shebangCommand(string)
+
+#### string
+
+Type: `string`
+
+String containing a shebang.
 ©/index.js≈É'use strict';
 const shebangRegex = require('shebang-regex');
 
@@ -26,6 +51,15 @@ module.exports = (string = '') => {
 
 	return argument ? `${binary} ${argument}` : binary;
 };
+®/license≈\MIT License
+
+Copyright (c) Kevin M√•rtensson <kevinmartensson@gmail.com> (github.com/kevva)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ≠/package.json≈.{
 	"name": "shebang-command",
 	"version": "2.0.0",
@@ -60,37 +94,3 @@ module.exports = (string = '') => {
 		"xo": "^0.24.0"
 	}
 }
-™/readme.md≈Ô# shebang-command [![Build Status](https://travis-ci.org/kevva/shebang-command.svg?branch=master)](https://travis-ci.org/kevva/shebang-command)
-
-> Get the command from a shebang
-
-
-## Install
-
-```
-$ npm install shebang-command
-```
-
-
-## Usage
-
-```js
-const shebangCommand = require('shebang-command');
-
-shebangCommand('#!/usr/bin/env node');
-//=> 'node'
-
-shebangCommand('#!/bin/bash');
-//=> 'bash'
-```
-
-
-## API
-
-### shebangCommand(string)
-
-#### string
-
-Type: `string`
-
-String containing a shebang.

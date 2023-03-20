@@ -1,153 +1,4 @@
-é≠/package.json≈À{
-  "name": "process-warning",
-  "version": "2.1.0",
-  "description": "A small utility for creating warnings and emitting them.",
-  "main": "index.js",
-  "types": "types/index.d.ts",
-  "scripts": {
-    "lint": "standard",
-    "test": "npm run test:unit && npm run test:jest && npm run test:typescript",
-    "test:jest": "jest jest.test.js",
-    "test:unit": "tap",
-    "test:typescript": "tsd"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/fastify/process-warning.git"
-  },
-  "keywords": [
-    "fastify",
-    "error",
-    "warning",
-    "utility",
-    "plugin",
-    "emit",
-    "once"
-  ],
-  "author": "Tomas Della Vedova",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/fastify/fastify-warning/issues"
-  },
-  "homepage": "https://github.com/fastify/fastify-warning#readme",
-  "devDependencies": {
-    "benchmark": "^2.1.4",
-    "jest": "^29.0.1",
-    "standard": "^17.0.0",
-    "tap": "^16.3.0",
-    "tsd": "^0.24.1"
-  }
-}
-π/.github/workflows/ci.yml≈name: CI
-
-on:
-  push:
-    paths-ignore:
-      - 'docs/**'
-      - '*.md'
-  pull_request:
-    paths-ignore:
-      - 'docs/**'
-      - '*.md'
-
-jobs:
-  test:
-    uses: fastify/workflows/.github/workflows/plugins-ci.yml@v3
-    with:
-      license-check: true
-      lint: true
-™/README.md≈
-ß# process-warning
-
-![CI](https://github.com/fastify/process-warning/workflows/CI/badge.svg)
-[![NPM version](https://img.shields.io/npm/v/process-warning.svg?style=flat)](https://www.npmjs.com/package/process-warning)
-[![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](https://standardjs.com/)
-
-A small utility for generating consistent warning objects across your codebase.
-It also exposes a utility for emitting those warnings, guaranteeing that they are issued only once.
-
-This module is used by the [Fastify](https://fastify.io) framework and it was called `fastify-warning` prior to version 1.0.0.
-
-### Install
-
-```
-npm i process-warning
-```
-
-### Usage
-
-The module exports a builder function that returns a utility for creating warnings and emitting them.
-
-```js
-const warning = require('process-warning')()
-```
-
-#### Methods
-
-```
-warning.create(name, code, message)
-```
-
-- `name` (`string`, required) - The error name, you can access it later with `error.name`. For consistency, we recommend prefixing module error names with `{YourModule}Warning`
-- `code` (`string`, required) - The warning code, you can access it later with `error.code`. For consistency, we recommend prefixing plugin error codes with `{ThreeLetterModuleName}_`, e.g. `FST_`. NOTE: codes should be all uppercase.
-- `message` (`string`, required) - The warning message. You can also use interpolated strings for formatting the message.
-
-The utility also contains an `emit` function that you can use for emitting the warnings you have previously created by passing their respective code. A warning is guaranteed to be emitted only once.
-
-```
-warning.emit(code [, a [, b [, c]]])
-```
-
-- `code` (`string`, required) - The warning code you intend to emit.
-- `[, a [, b [, c]]]` (`any`, optional) - Parameters for string interpolation.
-
-```js
-const warning = require('process-warning')()
-warning.create('FastifyWarning', 'FST_ERROR_CODE', 'message')
-warning.emit('FST_ERROR_CODE')
-```
-
-How to use an interpolated string:
-```js
-const warning = require('process-warning')()
-warning.create('FastifyWarning', 'FST_ERROR_CODE', 'Hello %s')
-warning.emit('FST_ERROR_CODE', 'world')
-```
-
-The module also exports an `warning.emitted` [Map](https://developer.mozilla.org/it/docs/Web/JavaScript/Reference/Global_Objects/Map), which contains all the warnings already emitted. Useful for testing.
-```js
-const warning = require('process-warning')()
-warning.create('FastifyWarning', 'FST_ERROR_CODE', 'Hello %s')
-console.log(warning.emitted.get('FST_ERROR_CODE')) // false
-warning.emit('FST_ERROR_CODE', 'world')
-console.log(warning.emitted.get('FST_ERROR_CODE')) // true
-```
-
-## License
-
-Licensed under [MIT](./LICENSE).
-®/LICENSE≈#MIT License
-
-Copyright (c) Fastify
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-≥/test/index.test.js≈	û'use strict'
+é≥/test/index.test.js≈	û'use strict'
 
 const test = require('tap').test
 const build = require('..')
@@ -238,6 +89,24 @@ test('Cannot reuse the same code more than once', t => {
 
   t.throws(() => create('FastifyWarning', 'CODE', 'Not available'), new Error("The code 'CODE' already exist"))
 })
+π/.github/workflows/ci.yml≈name: CI
+
+on:
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+
+jobs:
+  test:
+    uses: fastify/workflows/.github/workflows/plugins-ci.yml@v3
+    with:
+      license-check: true
+      lint: true
 ±/types/index.d.ts≈ïtype ProcessWarning = () => processWarning.Warning
 
 declare namespace processWarning {
@@ -281,23 +150,78 @@ test('works with jest', done => {
     done()
   })
 })
-≥/benchmarks/warn.js≈‰'use strict'
+™/README.md≈
+ß# process-warning
 
-const { Suite } = require('benchmark')
-const warning = require('..')()
+![CI](https://github.com/fastify/process-warning/workflows/CI/badge.svg)
+[![NPM version](https://img.shields.io/npm/v/process-warning.svg?style=flat)](https://www.npmjs.com/package/process-warning)
+[![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](https://standardjs.com/)
 
-warning.create('FastifyWarning', 'FST_ERROR_CODE_1', 'message')
-warning.create('FastifyWarning', 'FST_ERROR_CODE_2', 'message')
-warning.create('FastifyWarning', 'FST_ERROR_CODE_3', 'message')
-new Suite()
-  .add('warn', function () {
-    warning.emit('FST_ERROR_CODE_1')
-    warning.emit('FST_ERROR_CODE_3')
-  })
-  .on('cycle', function (event) {
-    console.log(String(event.target))
-  })
-  .run()
+A small utility for generating consistent warning objects across your codebase.
+It also exposes a utility for emitting those warnings, guaranteeing that they are issued only once.
+
+This module is used by the [Fastify](https://fastify.io) framework and it was called `fastify-warning` prior to version 1.0.0.
+
+### Install
+
+```
+npm i process-warning
+```
+
+### Usage
+
+The module exports a builder function that returns a utility for creating warnings and emitting them.
+
+```js
+const warning = require('process-warning')()
+```
+
+#### Methods
+
+```
+warning.create(name, code, message)
+```
+
+- `name` (`string`, required) - The error name, you can access it later with `error.name`. For consistency, we recommend prefixing module error names with `{YourModule}Warning`
+- `code` (`string`, required) - The warning code, you can access it later with `error.code`. For consistency, we recommend prefixing plugin error codes with `{ThreeLetterModuleName}_`, e.g. `FST_`. NOTE: codes should be all uppercase.
+- `message` (`string`, required) - The warning message. You can also use interpolated strings for formatting the message.
+
+The utility also contains an `emit` function that you can use for emitting the warnings you have previously created by passing their respective code. A warning is guaranteed to be emitted only once.
+
+```
+warning.emit(code [, a [, b [, c]]])
+```
+
+- `code` (`string`, required) - The warning code you intend to emit.
+- `[, a [, b [, c]]]` (`any`, optional) - Parameters for string interpolation.
+
+```js
+const warning = require('process-warning')()
+warning.create('FastifyWarning', 'FST_ERROR_CODE', 'message')
+warning.emit('FST_ERROR_CODE')
+```
+
+How to use an interpolated string:
+```js
+const warning = require('process-warning')()
+warning.create('FastifyWarning', 'FST_ERROR_CODE', 'Hello %s')
+warning.emit('FST_ERROR_CODE', 'world')
+```
+
+The module also exports an `warning.emitted` [Map](https://developer.mozilla.org/it/docs/Web/JavaScript/Reference/Global_Objects/Map), which contains all the warnings already emitted. Useful for testing.
+```js
+const warning = require('process-warning')()
+warning.create('FastifyWarning', 'FST_ERROR_CODE', 'Hello %s')
+console.log(warning.emitted.get('FST_ERROR_CODE')) // false
+warning.emit('FST_ERROR_CODE', 'world')
+console.log(warning.emitted.get('FST_ERROR_CODE')) // true
+```
+
+## License
+
+Licensed under [MIT](./LICENSE).
+ß/.taprcƒ$files:
+  - test/**/*[!jest].test.js
 ∂/types/index.test-d.ts≈ÿimport { expectType } from 'tsd'
 import Warinig, { BuildWarnOptsFn, WarnOpts } from '..'
 
@@ -312,73 +236,27 @@ expectType<string>(opts.name)
 
 expectType<void>(warning.emit('CODE'))
 expectType<Map<string, boolean>>(warning.emitted)
-Ÿ&/test/emit-interpolated-string.test.js≈W'use strict'
+®/LICENSE≈#MIT License
 
-const test = require('tap').test
-const build = require('..')
+Copyright (c) Fastify
 
-test('emit with interpolated string', t => {
-  t.plan(4)
-  const { create, emit, emitted } = build()
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-  process.on('warning', onWarning)
-  function onWarning (warning) {
-    t.equal(warning.name, 'FastifyDeprecation')
-    t.equal(warning.code, 'CODE')
-    t.equal(warning.message, 'Hello world')
-    t.ok(emitted.get('CODE'))
-  }
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-  create('FastifyDeprecation', 'CODE', 'Hello %s')
-  emit('CODE', 'world')
-  emit('CODE', 'world')
-
-  setImmediate(() => {
-    process.removeListener('warning', onWarning)
-    t.end()
-  })
-})
-ß/.taprcƒ$files:
-  - test/**/*[!jest].test.js
-∑/.github/dependabot.yml≈version: 2
-updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 10
-
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
-º/test/emit-once-only.test.js≈R'use strict'
-
-const test = require('tap').test
-const build = require('..')
-
-test('emit should emit a given code only once', t => {
-  t.plan(4)
-
-  const { create, emit, emitted } = build()
-
-  process.on('warning', onWarning)
-  function onWarning (warning) {
-    t.equal(warning.name, 'FastifyDeprecation')
-    t.equal(warning.code, 'CODE')
-    t.equal(warning.message, 'Hello world')
-    t.ok(emitted.get('CODE'))
-  }
-
-  create('FastifyDeprecation', 'CODE', 'Hello world')
-  emit('CODE')
-  emit('CODE')
-  setImmediate(() => {
-    process.removeListener('warning', onWarning)
-    t.end()
-  })
-})
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ©/index.js≈Ú'use strict'
 
 const { format } = require('util')
@@ -443,3 +321,125 @@ function processWarning () {
 module.exports = processWarning
 module.exports.default = processWarning
 module.exports.processWarning = processWarning
+≠/package.json≈À{
+  "name": "process-warning",
+  "version": "2.1.0",
+  "description": "A small utility for creating warnings and emitting them.",
+  "main": "index.js",
+  "types": "types/index.d.ts",
+  "scripts": {
+    "lint": "standard",
+    "test": "npm run test:unit && npm run test:jest && npm run test:typescript",
+    "test:jest": "jest jest.test.js",
+    "test:unit": "tap",
+    "test:typescript": "tsd"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fastify/process-warning.git"
+  },
+  "keywords": [
+    "fastify",
+    "error",
+    "warning",
+    "utility",
+    "plugin",
+    "emit",
+    "once"
+  ],
+  "author": "Tomas Della Vedova",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fastify/fastify-warning/issues"
+  },
+  "homepage": "https://github.com/fastify/fastify-warning#readme",
+  "devDependencies": {
+    "benchmark": "^2.1.4",
+    "jest": "^29.0.1",
+    "standard": "^17.0.0",
+    "tap": "^16.3.0",
+    "tsd": "^0.24.1"
+  }
+}
+º/test/emit-once-only.test.js≈R'use strict'
+
+const test = require('tap').test
+const build = require('..')
+
+test('emit should emit a given code only once', t => {
+  t.plan(4)
+
+  const { create, emit, emitted } = build()
+
+  process.on('warning', onWarning)
+  function onWarning (warning) {
+    t.equal(warning.name, 'FastifyDeprecation')
+    t.equal(warning.code, 'CODE')
+    t.equal(warning.message, 'Hello world')
+    t.ok(emitted.get('CODE'))
+  }
+
+  create('FastifyDeprecation', 'CODE', 'Hello world')
+  emit('CODE')
+  emit('CODE')
+  setImmediate(() => {
+    process.removeListener('warning', onWarning)
+    t.end()
+  })
+})
+Ÿ&/test/emit-interpolated-string.test.js≈W'use strict'
+
+const test = require('tap').test
+const build = require('..')
+
+test('emit with interpolated string', t => {
+  t.plan(4)
+  const { create, emit, emitted } = build()
+
+  process.on('warning', onWarning)
+  function onWarning (warning) {
+    t.equal(warning.name, 'FastifyDeprecation')
+    t.equal(warning.code, 'CODE')
+    t.equal(warning.message, 'Hello world')
+    t.ok(emitted.get('CODE'))
+  }
+
+  create('FastifyDeprecation', 'CODE', 'Hello %s')
+  emit('CODE', 'world')
+  emit('CODE', 'world')
+
+  setImmediate(() => {
+    process.removeListener('warning', onWarning)
+    t.end()
+  })
+})
+∑/.github/dependabot.yml≈version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+≥/benchmarks/warn.js≈‰'use strict'
+
+const { Suite } = require('benchmark')
+const warning = require('..')()
+
+warning.create('FastifyWarning', 'FST_ERROR_CODE_1', 'message')
+warning.create('FastifyWarning', 'FST_ERROR_CODE_2', 'message')
+warning.create('FastifyWarning', 'FST_ERROR_CODE_3', 'message')
+new Suite()
+  .add('warn', function () {
+    warning.emit('FST_ERROR_CODE_1')
+    warning.emit('FST_ERROR_CODE_3')
+  })
+  .on('cycle', function (event) {
+    console.log(String(event.target))
+  })
+  .run()

@@ -332,38 +332,21 @@ const forEachStep = (self, fn, node, thisp) => {
 }
 
 module.exports = LRUCache
-­/package.jsonÅ{
-  "name": "lru-cache",
-  "description": "A cache object that deletes the least-recently-used items.",
-  "version": "5.1.1",
-  "author": "Isaac Z. Schlueter <i@izs.me>",
-  "keywords": [
-    "mru",
-    "lru",
-    "cache"
-  ],
-  "scripts": {
-    "test": "tap test/*.js --100 -J",
-    "snap": "TAP_SNAPSHOT=1 tap test/*.js -J",
-    "coveragerport": "tap --coverage-report=html",
-    "preversion": "npm test",
-    "postversion": "npm publish",
-    "postpublish": "git push origin --all; git push origin --tags"
-  },
-  "main": "index.js",
-  "repository": "git://github.com/isaacs/node-lru-cache.git",
-  "devDependencies": {
-    "benchmark": "^2.1.4",
-    "tap": "^12.1.0"
-  },
-  "license": "ISC",
-  "dependencies": {
-    "yallist": "^3.0.2"
-  },
-  "files": [
-    "index.js"
-  ]
-}
+¨/LICENSEÅýThe ISC License
+
+Copyright (c) Isaac Z. Schlueter and Contributors
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ª/README.mdÅc# lru cache
 
 A cache object that deletes the least-recently-used items.
@@ -530,18 +513,35 @@ away.
 * `prune()`
 
     Manually iterates over the entire cache proactively pruning old entries
-¨/LICENSEÅýThe ISC License
-
-Copyright (c) Isaac Z. Schlueter and Contributors
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted, provided that the above
-copyright notice and this permission notice appear in all copies.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
-IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+­/package.jsonÅ{
+  "name": "lru-cache",
+  "description": "A cache object that deletes the least-recently-used items.",
+  "version": "5.1.1",
+  "author": "Isaac Z. Schlueter <i@izs.me>",
+  "keywords": [
+    "mru",
+    "lru",
+    "cache"
+  ],
+  "scripts": {
+    "test": "tap test/*.js --100 -J",
+    "snap": "TAP_SNAPSHOT=1 tap test/*.js -J",
+    "coveragerport": "tap --coverage-report=html",
+    "preversion": "npm test",
+    "postversion": "npm publish",
+    "postpublish": "git push origin --all; git push origin --tags"
+  },
+  "main": "index.js",
+  "repository": "git://github.com/isaacs/node-lru-cache.git",
+  "devDependencies": {
+    "benchmark": "^2.1.4",
+    "tap": "^12.1.0"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "yallist": "^3.0.2"
+  },
+  "files": [
+    "index.js"
+  ]
+}

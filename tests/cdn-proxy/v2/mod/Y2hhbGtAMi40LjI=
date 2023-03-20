@@ -1,131 +1,83 @@
-á≠/templates.js≈='use strict';
-const TEMPLATE_REGEX = /(?:\\(u[a-f\d]{4}|x[a-f\d]{2}|.))|(?:\{(~)?(\w+(?:\([^)]*\))?(?:\.\w+(?:\([^)]*\))?)*)(?:[ \t]|(?=\r?\n)))|(\})|((?:.|[\r\n\f])+?)/gi;
-const STYLE_REGEX = /(?:^|\.)(\w+)(?:\(([^)]*)\))?/g;
-const STRING_REGEX = /^(['"])((?:\\.|(?!\1)[^\\])*)\1$/;
-const ESCAPE_REGEX = /\\(u[a-f\d]{4}|x[a-f\d]{2}|.)|([^\\])/gi;
-
-const ESCAPES = new Map([
-	['n', '\n'],
-	['r', '\r'],
-	['t', '\t'],
-	['b', '\b'],
-	['f', '\f'],
-	['v', '\v'],
-	['0', '\0'],
-	['\\', '\\'],
-	['e', '\u001B'],
-	['a', '\u0007']
-]);
-
-function unescape(c) {
-	if ((c[0] === 'u' && c.length === 5) || (c[0] === 'x' && c.length === 3)) {
-		return String.fromCharCode(parseInt(c.slice(1), 16));
+á≠/package.json≈´{
+	"name": "chalk",
+	"version": "2.4.2",
+	"description": "Terminal string styling done right",
+	"license": "MIT",
+	"repository": "chalk/chalk",
+	"engines": {
+		"node": ">=4"
+	},
+	"scripts": {
+		"test": "xo && tsc --project types && flow --max-warnings=0 && nyc ava",
+		"bench": "matcha benchmark.js",
+		"coveralls": "nyc report --reporter=text-lcov | coveralls"
+	},
+	"files": [
+		"index.js",
+		"templates.js",
+		"types/index.d.ts",
+		"index.js.flow"
+	],
+	"keywords": [
+		"color",
+		"colour",
+		"colors",
+		"terminal",
+		"console",
+		"cli",
+		"string",
+		"str",
+		"ansi",
+		"style",
+		"styles",
+		"tty",
+		"formatting",
+		"rgb",
+		"256",
+		"shell",
+		"xterm",
+		"log",
+		"logging",
+		"command-line",
+		"text"
+	],
+	"dependencies": {
+		"ansi-styles": "^3.2.1",
+		"escape-string-regexp": "^1.0.5",
+		"supports-color": "^5.3.0"
+	},
+	"devDependencies": {
+		"ava": "*",
+		"coveralls": "^3.0.0",
+		"execa": "^0.9.0",
+		"flow-bin": "^0.68.0",
+		"import-fresh": "^2.0.0",
+		"matcha": "^0.7.0",
+		"nyc": "^11.0.2",
+		"resolve-from": "^4.0.0",
+		"typescript": "^2.5.3",
+		"xo": "*"
+	},
+	"types": "types/index.d.ts",
+	"xo": {
+		"envs": [
+			"node",
+			"mocha"
+		],
+		"ignores": [
+			"test/_flow.js"
+		]
 	}
-
-	return ESCAPES.get(c) || c;
 }
+®/license≈UMIT License
 
-function parseArguments(name, args) {
-	const results = [];
-	const chunks = args.trim().split(/\s*,\s*/g);
-	let matches;
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
-	for (const chunk of chunks) {
-		if (!isNaN(chunk)) {
-			results.push(Number(chunk));
-		} else if ((matches = chunk.match(STRING_REGEX))) {
-			results.push(matches[2].replace(ESCAPE_REGEX, (m, escape, chr) => escape ? unescape(escape) : chr));
-		} else {
-			throw new Error(`Invalid Chalk template style argument: ${chunk} (in style '${name}')`);
-		}
-	}
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
-	return results;
-}
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
-function parseStyle(style) {
-	STYLE_REGEX.lastIndex = 0;
-
-	const results = [];
-	let matches;
-
-	while ((matches = STYLE_REGEX.exec(style)) !== null) {
-		const name = matches[1];
-
-		if (matches[2]) {
-			const args = parseArguments(name, matches[2]);
-			results.push([name].concat(args));
-		} else {
-			results.push([name]);
-		}
-	}
-
-	return results;
-}
-
-function buildStyle(chalk, styles) {
-	const enabled = {};
-
-	for (const layer of styles) {
-		for (const style of layer.styles) {
-			enabled[style[0]] = layer.inverse ? null : style.slice(1);
-		}
-	}
-
-	let current = chalk;
-	for (const styleName of Object.keys(enabled)) {
-		if (Array.isArray(enabled[styleName])) {
-			if (!(styleName in current)) {
-				throw new Error(`Unknown Chalk style: ${styleName}`);
-			}
-
-			if (enabled[styleName].length > 0) {
-				current = current[styleName].apply(current, enabled[styleName]);
-			} else {
-				current = current[styleName];
-			}
-		}
-	}
-
-	return current;
-}
-
-module.exports = (chalk, tmp) => {
-	const styles = [];
-	const chunks = [];
-	let chunk = [];
-
-	// eslint-disable-next-line max-params
-	tmp.replace(TEMPLATE_REGEX, (m, escapeChar, inverse, style, close, chr) => {
-		if (escapeChar) {
-			chunk.push(unescape(escapeChar));
-		} else if (style) {
-			const str = chunk.join('');
-			chunk = [];
-			chunks.push(styles.length === 0 ? str : buildStyle(chalk, styles)(str));
-			styles.push({inverse, styles: parseStyle(style)});
-		} else if (close) {
-			if (styles.length === 0) {
-				throw new Error('Found extraneous } in Chalk template literal');
-			}
-
-			chunks.push(buildStyle(chalk, styles)(chunk.join('')));
-			chunk = [];
-			styles.pop();
-		} else {
-			chunk.push(chr);
-		}
-	});
-
-	chunks.push(chunk.join(''));
-
-	if (styles.length > 0) {
-		const errMsg = `Chalk template literal is missing ${styles.length} closing bracket${styles.length === 1 ? '' : 's'} (\`}\`)`;
-		throw new Error(errMsg);
-	}
-
-	return chunks.join('');
-};
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ™/readme.md≈*<h1 align="center">
 	<br>
 	<br>
@@ -440,108 +392,134 @@ If you're on Windows, do yourself a favor and use [`cmder`](http://cmder.net/) i
 ## License
 
 MIT
-Æ/index.js.flow≈Å// @flow strict
+≠/templates.js≈='use strict';
+const TEMPLATE_REGEX = /(?:\\(u[a-f\d]{4}|x[a-f\d]{2}|.))|(?:\{(~)?(\w+(?:\([^)]*\))?(?:\.\w+(?:\([^)]*\))?)*)(?:[ \t]|(?=\r?\n)))|(\})|((?:.|[\r\n\f])+?)/gi;
+const STYLE_REGEX = /(?:^|\.)(\w+)(?:\(([^)]*)\))?/g;
+const STRING_REGEX = /^(['"])((?:\\.|(?!\1)[^\\])*)\1$/;
+const ESCAPE_REGEX = /\\(u[a-f\d]{4}|x[a-f\d]{2}|.)|([^\\])/gi;
 
-type TemplateStringsArray = $ReadOnlyArray<string>;
+const ESCAPES = new Map([
+	['n', '\n'],
+	['r', '\r'],
+	['t', '\t'],
+	['b', '\b'],
+	['f', '\f'],
+	['v', '\v'],
+	['0', '\0'],
+	['\\', '\\'],
+	['e', '\u001B'],
+	['a', '\u0007']
+]);
 
-export type Level = $Values<{
-	None: 0,
-	Basic: 1,
-	Ansi256: 2,
-	TrueColor: 3
-}>;
+function unescape(c) {
+	if ((c[0] === 'u' && c.length === 5) || (c[0] === 'x' && c.length === 3)) {
+		return String.fromCharCode(parseInt(c.slice(1), 16));
+	}
 
-export type ChalkOptions = {|
-	enabled?: boolean,
-	level?: Level
-|};
+	return ESCAPES.get(c) || c;
+}
 
-export type ColorSupport = {|
-	level: Level,
-	hasBasic: boolean,
-	has256: boolean,
-	has16m: boolean
-|};
+function parseArguments(name, args) {
+	const results = [];
+	const chunks = args.trim().split(/\s*,\s*/g);
+	let matches;
 
-export interface Chalk {
-	(...text: string[]): string,
-	(text: TemplateStringsArray, ...placeholders: string[]): string,
-	constructor(options?: ChalkOptions): Chalk,
-	enabled: boolean,
-	level: Level,
-	rgb(r: number, g: number, b: number): Chalk,
-	hsl(h: number, s: number, l: number): Chalk,
-	hsv(h: number, s: number, v: number): Chalk,
-	hwb(h: number, w: number, b: number): Chalk,
-	bgHex(color: string): Chalk,
-	bgKeyword(color: string): Chalk,
-	bgRgb(r: number, g: number, b: number): Chalk,
-	bgHsl(h: number, s: number, l: number): Chalk,
-	bgHsv(h: number, s: number, v: number): Chalk,
-	bgHwb(h: number, w: number, b: number): Chalk,
-	hex(color: string): Chalk,
-	keyword(color: string): Chalk,
+	for (const chunk of chunks) {
+		if (!isNaN(chunk)) {
+			results.push(Number(chunk));
+		} else if ((matches = chunk.match(STRING_REGEX))) {
+			results.push(matches[2].replace(ESCAPE_REGEX, (m, escape, chr) => escape ? unescape(escape) : chr));
+		} else {
+			throw new Error(`Invalid Chalk template style argument: ${chunk} (in style '${name}')`);
+		}
+	}
 
-	+reset: Chalk,
-	+bold: Chalk,
-	+dim: Chalk,
-	+italic: Chalk,
-	+underline: Chalk,
-	+inverse: Chalk,
-	+hidden: Chalk,
-	+strikethrough: Chalk,
+	return results;
+}
 
-	+visible: Chalk,
+function parseStyle(style) {
+	STYLE_REGEX.lastIndex = 0;
 
-	+black: Chalk,
-	+red: Chalk,
-	+green: Chalk,
-	+yellow: Chalk,
-	+blue: Chalk,
-	+magenta: Chalk,
-	+cyan: Chalk,
-	+white: Chalk,
-	+gray: Chalk,
-	+grey: Chalk,
-	+blackBright: Chalk,
-	+redBright: Chalk,
-	+greenBright: Chalk,
-	+yellowBright: Chalk,
-	+blueBright: Chalk,
-	+magentaBright: Chalk,
-	+cyanBright: Chalk,
-	+whiteBright: Chalk,
+	const results = [];
+	let matches;
 
-	+bgBlack: Chalk,
-	+bgRed: Chalk,
-	+bgGreen: Chalk,
-	+bgYellow: Chalk,
-	+bgBlue: Chalk,
-	+bgMagenta: Chalk,
-	+bgCyan: Chalk,
-	+bgWhite: Chalk,
-	+bgBlackBright: Chalk,
-	+bgRedBright: Chalk,
-	+bgGreenBright: Chalk,
-	+bgYellowBright: Chalk,
-	+bgBlueBright: Chalk,
-	+bgMagentaBright: Chalk,
-	+bgCyanBright: Chalk,
-	+bgWhiteBrigh: Chalk,
+	while ((matches = STYLE_REGEX.exec(style)) !== null) {
+		const name = matches[1];
 
-	supportsColor: ColorSupport
+		if (matches[2]) {
+			const args = parseArguments(name, matches[2]);
+			results.push([name].concat(args));
+		} else {
+			results.push([name]);
+		}
+	}
+
+	return results;
+}
+
+function buildStyle(chalk, styles) {
+	const enabled = {};
+
+	for (const layer of styles) {
+		for (const style of layer.styles) {
+			enabled[style[0]] = layer.inverse ? null : style.slice(1);
+		}
+	}
+
+	let current = chalk;
+	for (const styleName of Object.keys(enabled)) {
+		if (Array.isArray(enabled[styleName])) {
+			if (!(styleName in current)) {
+				throw new Error(`Unknown Chalk style: ${styleName}`);
+			}
+
+			if (enabled[styleName].length > 0) {
+				current = current[styleName].apply(current, enabled[styleName]);
+			} else {
+				current = current[styleName];
+			}
+		}
+	}
+
+	return current;
+}
+
+module.exports = (chalk, tmp) => {
+	const styles = [];
+	const chunks = [];
+	let chunk = [];
+
+	// eslint-disable-next-line max-params
+	tmp.replace(TEMPLATE_REGEX, (m, escapeChar, inverse, style, close, chr) => {
+		if (escapeChar) {
+			chunk.push(unescape(escapeChar));
+		} else if (style) {
+			const str = chunk.join('');
+			chunk = [];
+			chunks.push(styles.length === 0 ? str : buildStyle(chalk, styles)(str));
+			styles.push({inverse, styles: parseStyle(style)});
+		} else if (close) {
+			if (styles.length === 0) {
+				throw new Error('Found extraneous } in Chalk template literal');
+			}
+
+			chunks.push(buildStyle(chalk, styles)(chunk.join('')));
+			chunk = [];
+			styles.pop();
+		} else {
+			chunk.push(chr);
+		}
+	});
+
+	chunks.push(chunk.join(''));
+
+	if (styles.length > 0) {
+		const errMsg = `Chalk template literal is missing ${styles.length} closing bracket${styles.length === 1 ? '' : 's'} (\`}\`)`;
+		throw new Error(errMsg);
+	}
+
+	return chunks.join('');
 };
-
-declare module.exports: Chalk;
-®/license≈UMIT License
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ±/types/index.d.ts≈	1// Type definitions for Chalk
 // Definitions by: Thomas Sauer <https://github.com/t-sauer>
 
@@ -867,74 +845,96 @@ Object.defineProperties(Chalk.prototype, styles);
 module.exports = Chalk(); // eslint-disable-line new-cap
 module.exports.supportsColor = stdoutColor;
 module.exports.default = module.exports; // For TypeScript
-≠/package.json≈´{
-	"name": "chalk",
-	"version": "2.4.2",
-	"description": "Terminal string styling done right",
-	"license": "MIT",
-	"repository": "chalk/chalk",
-	"engines": {
-		"node": ">=4"
-	},
-	"scripts": {
-		"test": "xo && tsc --project types && flow --max-warnings=0 && nyc ava",
-		"bench": "matcha benchmark.js",
-		"coveralls": "nyc report --reporter=text-lcov | coveralls"
-	},
-	"files": [
-		"index.js",
-		"templates.js",
-		"types/index.d.ts",
-		"index.js.flow"
-	],
-	"keywords": [
-		"color",
-		"colour",
-		"colors",
-		"terminal",
-		"console",
-		"cli",
-		"string",
-		"str",
-		"ansi",
-		"style",
-		"styles",
-		"tty",
-		"formatting",
-		"rgb",
-		"256",
-		"shell",
-		"xterm",
-		"log",
-		"logging",
-		"command-line",
-		"text"
-	],
-	"dependencies": {
-		"ansi-styles": "^3.2.1",
-		"escape-string-regexp": "^1.0.5",
-		"supports-color": "^5.3.0"
-	},
-	"devDependencies": {
-		"ava": "*",
-		"coveralls": "^3.0.0",
-		"execa": "^0.9.0",
-		"flow-bin": "^0.68.0",
-		"import-fresh": "^2.0.0",
-		"matcha": "^0.7.0",
-		"nyc": "^11.0.2",
-		"resolve-from": "^4.0.0",
-		"typescript": "^2.5.3",
-		"xo": "*"
-	},
-	"types": "types/index.d.ts",
-	"xo": {
-		"envs": [
-			"node",
-			"mocha"
-		],
-		"ignores": [
-			"test/_flow.js"
-		]
-	}
-}
+Æ/index.js.flow≈Å// @flow strict
+
+type TemplateStringsArray = $ReadOnlyArray<string>;
+
+export type Level = $Values<{
+	None: 0,
+	Basic: 1,
+	Ansi256: 2,
+	TrueColor: 3
+}>;
+
+export type ChalkOptions = {|
+	enabled?: boolean,
+	level?: Level
+|};
+
+export type ColorSupport = {|
+	level: Level,
+	hasBasic: boolean,
+	has256: boolean,
+	has16m: boolean
+|};
+
+export interface Chalk {
+	(...text: string[]): string,
+	(text: TemplateStringsArray, ...placeholders: string[]): string,
+	constructor(options?: ChalkOptions): Chalk,
+	enabled: boolean,
+	level: Level,
+	rgb(r: number, g: number, b: number): Chalk,
+	hsl(h: number, s: number, l: number): Chalk,
+	hsv(h: number, s: number, v: number): Chalk,
+	hwb(h: number, w: number, b: number): Chalk,
+	bgHex(color: string): Chalk,
+	bgKeyword(color: string): Chalk,
+	bgRgb(r: number, g: number, b: number): Chalk,
+	bgHsl(h: number, s: number, l: number): Chalk,
+	bgHsv(h: number, s: number, v: number): Chalk,
+	bgHwb(h: number, w: number, b: number): Chalk,
+	hex(color: string): Chalk,
+	keyword(color: string): Chalk,
+
+	+reset: Chalk,
+	+bold: Chalk,
+	+dim: Chalk,
+	+italic: Chalk,
+	+underline: Chalk,
+	+inverse: Chalk,
+	+hidden: Chalk,
+	+strikethrough: Chalk,
+
+	+visible: Chalk,
+
+	+black: Chalk,
+	+red: Chalk,
+	+green: Chalk,
+	+yellow: Chalk,
+	+blue: Chalk,
+	+magenta: Chalk,
+	+cyan: Chalk,
+	+white: Chalk,
+	+gray: Chalk,
+	+grey: Chalk,
+	+blackBright: Chalk,
+	+redBright: Chalk,
+	+greenBright: Chalk,
+	+yellowBright: Chalk,
+	+blueBright: Chalk,
+	+magentaBright: Chalk,
+	+cyanBright: Chalk,
+	+whiteBright: Chalk,
+
+	+bgBlack: Chalk,
+	+bgRed: Chalk,
+	+bgGreen: Chalk,
+	+bgYellow: Chalk,
+	+bgBlue: Chalk,
+	+bgMagenta: Chalk,
+	+bgCyan: Chalk,
+	+bgWhite: Chalk,
+	+bgBlackBright: Chalk,
+	+bgRedBright: Chalk,
+	+bgGreenBright: Chalk,
+	+bgYellowBright: Chalk,
+	+bgBlueBright: Chalk,
+	+bgMagentaBright: Chalk,
+	+bgCyanBright: Chalk,
+	+bgWhiteBrigh: Chalk,
+
+	supportsColor: ColorSupport
+};
+
+declare module.exports: Chalk;

@@ -1,23 +1,4 @@
-Ñ≠/package.json≈È{
-  "name": "merge-stream",
-  "version": "2.0.0",
-  "description": "Create a stream that emits events from multiple other streams",
-  "files": [
-    "index.js"
-  ],
-  "scripts": {
-    "test": "istanbul cover test.js && istanbul check-cover --statements 100 --branches 100"
-  },
-  "repository": "grncdr/merge-stream",
-  "author": "Stephen Sugden <me@stephensugden.com>",
-  "license": "MIT",
-  "dependencies": {},
-  "devDependencies": {
-    "from2": "^2.0.3",
-    "istanbul": "^0.4.5"
-  }
-}
-®/LICENSE≈_The MIT License (MIT)
+Ñ®/LICENSE≈_The MIT License (MIT)
 
 Copyright (c) Stephen Sugden <me@stephensugden.com> (stephensugden.com)
 
@@ -38,6 +19,66 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+©/index.js≈u'use strict';
+
+const { PassThrough } = require('stream');
+
+module.exports = function (/*streams...*/) {
+  var sources = []
+  var output  = new PassThrough({objectMode: true})
+
+  output.setMaxListeners(0)
+
+  output.add = add
+  output.isEmpty = isEmpty
+
+  output.on('unpipe', remove)
+
+  Array.prototype.slice.call(arguments).forEach(add)
+
+  return output
+
+  function add (source) {
+    if (Array.isArray(source)) {
+      source.forEach(add)
+      return this
+    }
+
+    sources.push(source);
+    source.once('end', remove.bind(null, source))
+    source.once('error', output.emit.bind(output, 'error'))
+    source.pipe(output, {end: false})
+    return this
+  }
+
+  function isEmpty () {
+    return sources.length == 0;
+  }
+
+  function remove (source) {
+    sources = sources.filter(function (it) { return it !== source })
+    if (!sources.length && output.readable) { output.end() }
+  }
+}
+≠/package.json≈È{
+  "name": "merge-stream",
+  "version": "2.0.0",
+  "description": "Create a stream that emits events from multiple other streams",
+  "files": [
+    "index.js"
+  ],
+  "scripts": {
+    "test": "istanbul cover test.js && istanbul check-cover --statements 100 --branches 100"
+  },
+  "repository": "grncdr/merge-stream",
+  "author": "Stephen Sugden <me@stephensugden.com>",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "from2": "^2.0.3",
+    "istanbul": "^0.4.5"
+  }
+}
 ™/README.md≈# merge-stream
 
 Merge (interleave) a bunch of streams.
@@ -116,44 +157,3 @@ gulp.task('lint', lint);
 ## License
 
 MIT
-©/index.js≈u'use strict';
-
-const { PassThrough } = require('stream');
-
-module.exports = function (/*streams...*/) {
-  var sources = []
-  var output  = new PassThrough({objectMode: true})
-
-  output.setMaxListeners(0)
-
-  output.add = add
-  output.isEmpty = isEmpty
-
-  output.on('unpipe', remove)
-
-  Array.prototype.slice.call(arguments).forEach(add)
-
-  return output
-
-  function add (source) {
-    if (Array.isArray(source)) {
-      source.forEach(add)
-      return this
-    }
-
-    sources.push(source);
-    source.once('end', remove.bind(null, source))
-    source.once('error', output.emit.bind(output, 'error'))
-    source.pipe(output, {end: false})
-    return this
-  }
-
-  function isEmpty () {
-    return sources.length == 0;
-  }
-
-  function remove (source) {
-    sources = sources.filter(function (it) { return it !== source })
-    if (!sources.length && output.readable) { output.end() }
-  }
-}

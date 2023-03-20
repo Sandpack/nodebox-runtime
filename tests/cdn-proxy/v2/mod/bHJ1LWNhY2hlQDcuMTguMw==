@@ -1,0 +1,4551 @@
+†«/index.d.tsÅgu// Project: https://github.com/isaacs/node-lru-cache
+// Based initially on @types/lru-cache
+// https://github.com/DefinitelyTyped/DefinitelyTyped
+// used under the terms of the MIT License, shown below.
+//
+// DefinitelyTyped license:
+// ------
+// MIT License
+//
+// Copyright (c) Microsoft Corporation.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+// IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+// CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+// TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+// SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
+// ------
+//
+// Changes by Isaac Z. Schlueter released under the terms found in the
+// LICENSE file within this project.
+
+/**
+ * Integer greater than 0, representing some number of milliseconds, or the
+ * time at which a TTL started counting from.
+ */
+declare type LRUMilliseconds = number
+
+/**
+ * An integer greater than 0, reflecting the calculated size of items
+ */
+declare type LRUSize = number
+
+/**
+ * An integer greater than 0, reflecting a number of items
+ */
+declare type LRUCount = number
+
+declare class LRUCache<K, V> implements Iterable<[K, V]> {
+  constructor(options: LRUCache.Options<K, V>)
+
+  /**
+   * Number of items in the cache.
+   * Alias for {@link size}
+   *
+   * @deprecated since 7.0 use {@link size} instead
+   */
+  public readonly length: LRUCount
+
+  public readonly max: LRUCount
+  public readonly maxSize: LRUSize
+  public readonly maxEntrySize: LRUSize
+  public readonly sizeCalculation:
+    | LRUCache.SizeCalculator<K, V>
+    | undefined
+  public readonly dispose: LRUCache.Disposer<K, V>
+  /**
+   * @since 7.4.0
+   */
+  public readonly disposeAfter: LRUCache.Disposer<K, V> | null
+  public readonly noDisposeOnSet: boolean
+  public readonly ttl: LRUMilliseconds
+  public readonly ttlResolution: LRUMilliseconds
+  public readonly ttlAutopurge: boolean
+  public readonly allowStale: boolean
+  public readonly updateAgeOnGet: boolean
+  /**
+   * @since 7.11.0
+   */
+  public readonly noDeleteOnStaleGet: boolean
+  /**
+   * @since 7.6.0
+   */
+  public readonly fetchMethod: LRUCache.Fetcher<K, V> | null
+
+  /**
+   * The total number of items held in the cache at the current moment.
+   */
+  public readonly size: LRUCount
+
+  /**
+   * The total size of items in cache when using size tracking.
+   */
+  public readonly calculatedSize: LRUSize
+
+  /**
+   * Add a value to the cache.
+   */
+  public set(
+    key: K,
+    value: V,
+    options?: LRUCache.SetOptions<K, V>
+  ): this
+
+  /**
+   * Return a value from the cache. Will update the recency of the cache entry
+   * found.
+   *
+   * If the key is not found, {@link get} will return `undefined`. This can be
+   * confusing when setting values specifically to `undefined`, as in
+   * `cache.set(key, undefined)`. Use {@link has} to determine whether a key is
+   * present in the cache at all.
+   */
+  public get(key: K, options?: LRUCache.GetOptions<V>): V | undefined
+
+  /**
+   * Like {@link get} but doesn't update recency or delete stale items.
+   * Returns `undefined` if the item is stale, unless {@link allowStale} is set
+   * either on the cache or in the options object.
+   */
+  public peek(key: K, options?: LRUCache.PeekOptions): V | undefined
+
+  /**
+   * Check if a key is in the cache, without updating the recency of use.
+   * Will return false if the item is stale, even though it is technically
+   * in the cache.
+   *
+   * Will not update item age unless {@link updateAgeOnHas} is set in the
+   * options or constructor.
+   */
+  public has(key: K, options?: LRUCache.HasOptions<V>): boolean
+
+  /**
+   * Deletes a key out of the cache.
+   * Returns true if the key was deleted, false otherwise.
+   */
+  public delete(key: K): boolean
+
+  /**
+   * Clear the cache entirely, throwing away all values.
+   */
+  public clear(): void
+
+  /**
+   * Delete any stale entries. Returns true if anything was removed, false
+   * otherwise.
+   */
+  public purgeStale(): boolean
+
+  /**
+   * Find a value for which the supplied fn method returns a truthy value,
+   * similar to Array.find().  fn is called as fn(value, key, cache).
+   */
+  public find(
+    callbackFn: (
+      value: V,
+      key: K,
+      cache: this
+    ) => boolean | undefined | void,
+    options?: LRUCache.GetOptions<V>
+  ): V | undefined
+
+  /**
+   * Call the supplied function on each item in the cache, in order from
+   * most recently used to least recently used.  fn is called as
+   * fn(value, key, cache).  Does not update age or recenty of use.
+   */
+  public forEach<T = this>(
+    callbackFn: (this: T, value: V, key: K, cache: this) => void,
+    thisArg?: T
+  ): void
+
+  /**
+   * The same as {@link forEach} but items are iterated over in reverse
+   * order.  (ie, less recently used items are iterated over first.)
+   */
+  public rforEach<T = this>(
+    callbackFn: (this: T, value: V, key: K, cache: this) => void,
+    thisArg?: T
+  ): void
+
+  /**
+   * Return a generator yielding the keys in the cache,
+   * in order from most recently used to least recently used.
+   */
+  public keys(): Generator<K, void, void>
+
+  /**
+   * Inverse order version of {@link keys}
+   *
+   * Return a generator yielding the keys in the cache,
+   * in order from least recently used to most recently used.
+   */
+  public rkeys(): Generator<K, void, void>
+
+  /**
+   * Return a generator yielding the values in the cache,
+   * in order from most recently used to least recently used.
+   */
+  public values(): Generator<V, void, void>
+
+  /**
+   * Inverse order version of {@link values}
+   *
+   * Return a generator yielding the values in the cache,
+   * in order from least recently used to most recently used.
+   */
+  public rvalues(): Generator<V, void, void>
+
+  /**
+   * Return a generator yielding `[key, value]` pairs,
+   * in order from most recently used to least recently used.
+   */
+  public entries(): Generator<[K, V], void, void>
+
+  /**
+   * Inverse order version of {@link entries}
+   *
+   * Return a generator yielding `[key, value]` pairs,
+   * in order from least recently used to most recently used.
+   */
+  public rentries(): Generator<[K, V], void, void>
+
+  /**
+   * Iterating over the cache itself yields the same results as
+   * {@link entries}
+   */
+  public [Symbol.iterator](): Generator<[K, V], void, void>
+
+  /**
+   * Return an array of [key, entry] objects which can be passed to
+   * cache.load()
+   */
+  public dump(): Array<[K, LRUCache.Entry<V>]>
+
+  /**
+   * Reset the cache and load in the items in entries in the order listed.
+   * Note that the shape of the resulting cache may be different if the
+   * same options are not used in both caches.
+   */
+  public load(
+    cacheEntries: ReadonlyArray<[K, LRUCache.Entry<V>]>
+  ): void
+
+  /**
+   * Evict the least recently used item, returning its value or `undefined`
+   * if cache is empty.
+   */
+  public pop(): V | undefined
+
+  /**
+   * Deletes a key out of the cache.
+   *
+   * @deprecated since 7.0 use delete() instead
+   */
+  public del(key: K): boolean
+
+  /**
+   * Clear the cache entirely, throwing away all values.
+   *
+   * @deprecated since 7.0 use clear() instead
+   */
+  public reset(): void
+
+  /**
+   * Manually iterates over the entire cache proactively pruning old entries.
+   *
+   * @deprecated since 7.0 use purgeStale() instead
+   */
+  public prune(): boolean
+
+  /**
+   * Make an asynchronous cached fetch using the {@link fetchMethod} function.
+   *
+   * If multiple fetches for the same key are issued, then they will all be
+   * coalesced into a single call to fetchMethod.
+   *
+   * Note that this means that handling options such as
+   * {@link allowStaleOnFetchAbort}, {@link signal}, and
+   * {@link allowStaleOnFetchRejection} will be determined by the FIRST fetch()
+   * call for a given key.
+   *
+   * This is a known (fixable) shortcoming which will be addresed on when
+   * someone complains about it, as the fix would involve added complexity and
+   * may not be worth the costs for this edge case.
+   *
+   * since: 7.6.0
+   */
+  public fetch(
+    key: K,
+    options?: LRUCache.FetchOptions<K, V>
+  ): Promise<V>
+
+  /**
+   * since: 7.6.0
+   */
+  public getRemainingTTL(key: K): LRUMilliseconds
+}
+
+declare namespace LRUCache {
+  type DisposeReason = 'evict' | 'set' | 'delete'
+
+  type SizeCalculator<K, V> = (value: V, key: K) => LRUSize
+  type Disposer<K, V> = (
+    value: V,
+    key: K,
+    reason: DisposeReason
+  ) => void
+  type Fetcher<K, V> = (
+    key: K,
+    staleValue: V | undefined,
+    options: FetcherOptions<K, V>
+  ) => Promise<V | void | undefined> | V | void | undefined
+
+  interface DeprecatedOptions<K, V> {
+    /**
+     * alias for ttl
+     *
+     * @deprecated since 7.0 use options.ttl instead
+     */
+    maxAge?: LRUMilliseconds
+
+    /**
+     * alias for {@link sizeCalculation}
+     *
+     * @deprecated since 7.0 use {@link sizeCalculation} instead
+     */
+    length?: SizeCalculator<K, V>
+
+    /**
+     * alias for allowStale
+     *
+     * @deprecated since 7.0 use options.allowStale instead
+     */
+    stale?: boolean
+  }
+
+  interface LimitedByCount {
+    /**
+     * The number of most recently used items to keep.
+     * Note that we may store fewer items than this if maxSize is hit.
+     */
+    max: LRUCount
+  }
+
+  type MaybeMaxEntrySizeLimit<K, V> =
+    | {
+        /**
+         * The maximum allowed size for any single item in the cache.
+         *
+         * If a larger item is passed to {@link set} or returned by a
+         * {@link fetchMethod}, then it will not be stored in the cache.
+         */
+        maxEntrySize: LRUSize
+        sizeCalculation?: SizeCalculator<K, V>
+      }
+    | {}
+
+  interface LimitedBySize<K, V> {
+    /**
+     * If you wish to track item size, you must provide a maxSize
+     * note that we still will only keep up to max *actual items*,
+     * if max is set, so size tracking may cause fewer than max items
+     * to be stored.  At the extreme, a single item of maxSize size
+     * will cause everything else in the cache to be dropped when it
+     * is added.  Use with caution!
+     *
+     * Note also that size tracking can negatively impact performance,
+     * though for most cases, only minimally.
+     */
+    maxSize: LRUSize
+
+    /**
+     * Function to calculate size of items.  Useful if storing strings or
+     * buffers or other items where memory size depends on the object itself.
+     *
+     * Items larger than {@link maxEntrySize} will not be stored in the cache.
+     *
+     * Note that when {@link maxSize} or {@link maxEntrySize} are set, every
+     * item added MUST have a size specified, either via a `sizeCalculation` in
+     * the constructor, or `sizeCalculation` or {@link size} options to
+     * {@link set}.
+     */
+    sizeCalculation?: SizeCalculator<K, V>
+  }
+
+  interface LimitedByTTL {
+    /**
+     * Max time in milliseconds for items to live in cache before they are
+     * considered stale.  Note that stale items are NOT preemptively removed
+     * by default, and MAY live in the cache, contributing to its LRU max,
+     * long after they have expired.
+     *
+     * Also, as this cache is optimized for LRU/MRU operations, some of
+     * the staleness/TTL checks will reduce performance, as they will incur
+     * overhead by deleting items.
+     *
+     * Must be an integer number of ms, defaults to 0, which means "no TTL"
+     */
+    ttl: LRUMilliseconds
+
+    /**
+     * Boolean flag to tell the cache to not update the TTL when
+     * setting a new value for an existing key (ie, when updating a value
+     * rather than inserting a new value).  Note that the TTL value is
+     * _always_ set (if provided) when adding a new entry into the cache.
+     *
+     * @default false
+     * @since 7.4.0
+     */
+    noUpdateTTL?: boolean
+
+    /**
+     * Minimum amount of time in ms in which to check for staleness.
+     * Defaults to 1, which means that the current time is checked
+     * at most once per millisecond.
+     *
+     * Set to 0 to check the current time every time staleness is tested.
+     * (This reduces performance, and is theoretically unnecessary.)
+     *
+     * Setting this to a higher value will improve performance somewhat
+     * while using ttl tracking, albeit at the expense of keeping stale
+     * items around a bit longer than their TTLs would indicate.
+     *
+     * @default 1
+     * @since 7.1.0
+     */
+    ttlResolution?: LRUMilliseconds
+
+    /**
+     * Preemptively remove stale items from the cache.
+     * Note that this may significantly degrade performance,
+     * especially if the cache is storing a large number of items.
+     * It is almost always best to just leave the stale items in
+     * the cache, and let them fall out as new items are added.
+     *
+     * Note that this means that {@link allowStale} is a bit pointless,
+     * as stale items will be deleted almost as soon as they expire.
+     *
+     * Use with caution!
+     *
+     * @default false
+     * @since 7.1.0
+     */
+    ttlAutopurge?: boolean
+
+    /**
+     * Return stale items from {@link get} before disposing of them.
+     * Return stale values from {@link fetch} while performing a call
+     * to the {@link fetchMethod} in the background.
+     *
+     * @default false
+     */
+    allowStale?: boolean
+
+    /**
+     * Update the age of items on {@link get}, renewing their TTL
+     *
+     * @default false
+     */
+    updateAgeOnGet?: boolean
+
+    /**
+     * Do not delete stale items when they are retrieved with {@link get}.
+     * Note that the {@link get} return value will still be `undefined` unless
+     * allowStale is true.
+     *
+     * @default false
+     * @since 7.11.0
+     */
+    noDeleteOnStaleGet?: boolean
+
+    /**
+     * Update the age of items on {@link has}, renewing their TTL
+     *
+     * @default false
+     */
+    updateAgeOnHas?: boolean
+  }
+
+  type SafetyBounds<K, V> =
+    | LimitedByCount
+    | LimitedBySize<K, V>
+    | LimitedByTTL
+
+  // options shared by all three of the limiting scenarios
+  interface SharedOptions<K, V> {
+    /**
+     * Function that is called on items when they are dropped from the cache.
+     * This can be handy if you want to close file descriptors or do other
+     * cleanup tasks when items are no longer accessible. Called with `key,
+     * value`.  It's called before actually removing the item from the
+     * internal cache, so it is *NOT* safe to re-add them.
+     * Use {@link disposeAfter} if you wish to dispose items after they have
+     * been full removed, when it is safe to add them back to the cache.
+     */
+    dispose?: Disposer<K, V>
+
+    /**
+     * The same as dispose, but called *after* the entry is completely
+     * removed and the cache is once again in a clean state.  It is safe to
+     * add an item right back into the cache at this point.
+     * However, note that it is *very* easy to inadvertently create infinite
+     * recursion this way.
+     *
+     * @since 7.3.0
+     */
+    disposeAfter?: Disposer<K, V>
+
+    /**
+     * Set to true to suppress calling the dispose() function if the entry
+     * key is still accessible within the cache.
+     * This may be overridden by passing an options object to {@link set}.
+     *
+     * @default false
+     */
+    noDisposeOnSet?: boolean
+
+    /**
+     * Function that is used to make background asynchronous fetches.  Called
+     * with `fetchMethod(key, staleValue, { signal, options, context })`.
+     *
+     * If `fetchMethod` is not provided, then {@link fetch} is
+     * equivalent to `Promise.resolve(cache.get(key))`.
+     *
+     * The `fetchMethod` should ONLY return `undefined` in cases where the
+     * abort controller has sent an abort signal.
+     *
+     * @since 7.6.0
+     */
+    fetchMethod?: LRUCache.Fetcher<K, V>
+
+    /**
+     * Set to true to suppress the deletion of stale data when a
+     * {@link fetchMethod} throws an error or returns a rejected promise
+     *
+     * This may be overridden in the {@link fetchMethod}.
+     *
+     * @default false
+     * @since 7.10.0
+     */
+    noDeleteOnFetchRejection?: boolean
+
+    /**
+     * Set to true to allow returning stale data when a {@link fetchMethod}
+     * throws an error or returns a rejected promise. Note that this
+     * differs from using {@link allowStale} in that stale data will
+     * ONLY be returned in the case that the fetch fails, not any other
+     * times.
+     *
+     * This may be overridden in the {@link fetchMethod}.
+     *
+     * @default false
+     * @since 7.16.0
+     */
+    allowStaleOnFetchRejection?: boolean
+
+    /**
+     *
+     * Set to true to ignore the `abort` event emitted by the `AbortSignal`
+     * object passed to {@link fetchMethod}, and still cache the
+     * resulting resolution value, as long as it is not `undefined`.
+     *
+     * When used on its own, this means aborted {@link fetch} calls are not
+     * immediately resolved or rejected when they are aborted, and instead take
+     * the full time to await.
+     *
+     * When used with {@link allowStaleOnFetchAbort}, aborted {@link fetch}
+     * calls will resolve immediately to their stale cached value or
+     * `undefined`, and will continue to process and eventually update the
+     * cache when they resolve, as long as the resulting value is not
+     * `undefined`, thus supporting a "return stale on timeout while
+     * refreshing" mechanism by passing `AbortSignal.timeout(n)` as the signal.
+     *
+     * **Note**: regardless of this setting, an `abort` event _is still emitted
+     * on the `AbortSignal` object_, so may result in invalid results when
+     * passed to other underlying APIs that use AbortSignals.
+     *
+     * This may be overridden in the {@link fetchMethod} or the call to
+     * {@link fetch}.
+     *
+     * @default false
+     * @since 7.17.0
+     */
+    ignoreFetchAbort?: boolean
+
+    /**
+     * Set to true to return a stale value from the cache when the
+     * `AbortSignal` passed to the {@link fetchMethod} dispatches an `'abort'`
+     * event, whether user-triggered, or due to internal cache behavior.
+     *
+     * Unless {@link ignoreFetchAbort} is also set, the underlying
+     * {@link fetchMethod} will still be considered canceled, and its return
+     * value will be ignored and not cached.
+     *
+     * This may be overridden in the {@link fetchMethod} or the call to
+     * {@link fetch}.
+     *
+     * @default false
+     * @since 7.17.0
+     */
+    allowStaleOnFetchAbort?: boolean
+
+    /**
+     * Set to any value in the constructor or {@link fetch} options to
+     * pass arbitrary data to the {@link fetchMethod} in the {@link context}
+     * options field.
+     *
+     * @since 7.12.0
+     */
+    fetchContext?: any
+  }
+
+  type Options<K, V> = SharedOptions<K, V> &
+    DeprecatedOptions<K, V> &
+    SafetyBounds<K, V> &
+    MaybeMaxEntrySizeLimit<K, V>
+
+  /**
+   * options which override the options set in the LRUCache constructor
+   * when making calling {@link set}.
+   */
+  interface SetOptions<K, V> {
+    /**
+     * A value for the size of the entry, prevents calls to
+     * {@link sizeCalculation}.
+     *
+     * Items larger than {@link maxEntrySize} will not be stored in the cache.
+     *
+     * Note that when {@link maxSize} or {@link maxEntrySize} are set, every
+     * item added MUST have a size specified, either via a `sizeCalculation` in
+     * the constructor, or {@link sizeCalculation} or `size` options to
+     * {@link set}.
+     */
+    size?: LRUSize
+    /**
+     * Overrides the {@link sizeCalculation} method set in the constructor.
+     *
+     * Items larger than {@link maxEntrySize} will not be stored in the cache.
+     *
+     * Note that when {@link maxSize} or {@link maxEntrySize} are set, every
+     * item added MUST have a size specified, either via a `sizeCalculation` in
+     * the constructor, or `sizeCalculation` or {@link size} options to
+     * {@link set}.
+     */
+    sizeCalculation?: SizeCalculator<K, V>
+    ttl?: LRUMilliseconds
+    start?: LRUMilliseconds
+    noDisposeOnSet?: boolean
+    noUpdateTTL?: boolean
+    status?: Status<V>
+  }
+
+  /**
+   * options which override the options set in the LRUCAche constructor
+   * when calling {@link has}.
+   */
+  interface HasOptions<V> {
+    updateAgeOnHas?: boolean
+    status: Status<V>
+  }
+
+  /**
+   * options which override the options set in the LRUCache constructor
+   * when calling {@link get}.
+   */
+  interface GetOptions<V> {
+    allowStale?: boolean
+    updateAgeOnGet?: boolean
+    noDeleteOnStaleGet?: boolean
+    status?: Status<V>
+  }
+
+  /**
+   * options which override the options set in the LRUCache constructor
+   * when calling {@link peek}.
+   */
+  interface PeekOptions {
+    allowStale?: boolean
+  }
+
+  /**
+   * Options object passed to the {@link fetchMethod}
+   *
+   * May be mutated by the {@link fetchMethod} to affect the behavior of the
+   * resulting {@link set} operation on resolution, or in the case of
+   * {@link noDeleteOnFetchRejection}, {@link ignoreFetchAbort}, and
+   * {@link allowStaleOnFetchRejection}, the handling of failure.
+   */
+  interface FetcherFetchOptions<K, V> {
+    allowStale?: boolean
+    updateAgeOnGet?: boolean
+    noDeleteOnStaleGet?: boolean
+    size?: LRUSize
+    sizeCalculation?: SizeCalculator<K, V>
+    ttl?: LRUMilliseconds
+    noDisposeOnSet?: boolean
+    noUpdateTTL?: boolean
+    noDeleteOnFetchRejection?: boolean
+    allowStaleOnFetchRejection?: boolean
+    ignoreFetchAbort?: boolean
+    allowStaleOnFetchAbort?: boolean
+    status?: Status<V>
+  }
+
+  /**
+   * Status object that may be passed to {@link fetch}, {@link get},
+   * {@link set}, and {@link has}.
+   */
+  interface Status<V> {
+    /**
+     * The status of a set() operation.
+     *
+     * - add: the item was not found in the cache, and was added
+     * - update: the item was in the cache, with the same value provided
+     * - replace: the item was in the cache, and replaced
+     * - miss: the item was not added to the cache for some reason
+     */
+    set?: 'add' | 'update' | 'replace' | 'miss'
+
+    /**
+     * the ttl stored for the item, or undefined if ttls are not used.
+     */
+    ttl?: LRUMilliseconds
+
+    /**
+     * the start time for the item, or undefined if ttls are not used.
+     */
+    start?: LRUMilliseconds
+
+    /**
+     * The timestamp used for TTL calculation
+     */
+    now?: LRUMilliseconds
+
+    /**
+     * the remaining ttl for the item, or undefined if ttls are not used.
+     */
+    remainingTTL?: LRUMilliseconds
+
+    /**
+     * The calculated size for the item, if sizes are used.
+     */
+    size?: LRUSize
+
+    /**
+     * A flag indicating that the item was not stored, due to exceeding the
+     * {@link maxEntrySize}
+     */
+    maxEntrySizeExceeded?: true
+
+    /**
+     * The old value, specified in the case of `set:'update'` or
+     * `set:'replace'`
+     */
+    oldValue?: V
+
+    /**
+     * The results of a {@link has} operation
+     *
+     * - hit: the item was found in the cache
+     * - stale: the item was found in the cache, but is stale
+     * - miss: the item was not found in the cache
+     */
+    has?: 'hit' | 'stale' | 'miss'
+
+    /**
+     * The status of a {@link fetch} operation.
+     * Note that this can change as the underlying fetch() moves through
+     * various states.
+     *
+     * - inflight: there is another fetch() for this key which is in process
+     * - get: there is no fetchMethod, so {@link get} was called.
+     * - miss: the item is not in cache, and will be fetched.
+     * - hit: the item is in the cache, and was resolved immediately.
+     * - stale: the item is in the cache, but stale.
+     * - refresh: the item is in the cache, and not stale, but
+     *   {@link forceRefresh} was specified.
+     */
+    fetch?: 'get' | 'inflight' | 'miss' | 'hit' | 'stale' | 'refresh'
+
+    /**
+     * The {@link fetchMethod} was called
+     */
+    fetchDispatched?: true
+
+    /**
+     * The cached value was updated after a successful call to fetchMethod
+     */
+    fetchUpdated?: true
+
+    /**
+     * The reason for a fetch() rejection.  Either the error raised by the
+     * {@link fetchMethod}, or the reason for an AbortSignal.
+     */
+    fetchError?: Error
+
+    /**
+     * The fetch received an abort signal
+     */
+    fetchAborted?: true
+
+    /**
+     * The abort signal received was ignored, and the fetch was allowed to
+     * continue.
+     */
+    fetchAbortIgnored?: true
+
+    /**
+     * The fetchMethod promise resolved successfully
+     */
+    fetchResolved?: true
+
+    /**
+     * The fetchMethod promise was rejected
+     */
+    fetchRejected?: true
+
+    /**
+     * The status of a {@link get} operation.
+     *
+     * - fetching: The item is currently being fetched.  If a previous value is
+     *   present and allowed, that will be returned.
+     * - stale: The item is in the cache, and is stale.
+     * - hit: the item is in the cache
+     * - miss: the item is not in the cache
+     */
+    get?: 'stale' | 'hit' | 'miss'
+
+    /**
+     * A fetch or get operation returned a stale value.
+     */
+    returnedStale?: true
+  }
+
+  /**
+   * options which override the options set in the LRUCache constructor
+   * when calling {@link fetch}.
+   *
+   * This is the union of GetOptions and SetOptions, plus
+   * {@link noDeleteOnFetchRejection}, {@link allowStaleOnFetchRejection},
+   * {@link forceRefresh}, and {@link fetchContext}
+   */
+  interface FetchOptions<K, V> extends FetcherFetchOptions<K, V> {
+    forceRefresh?: boolean
+    fetchContext?: any
+    signal?: AbortSignal
+    status?: Status<V>
+  }
+
+  interface FetcherOptions<K, V> {
+    signal: AbortSignal
+    options: FetcherFetchOptions<K, V>
+    /**
+     * Object provided in the {@link fetchContext} option
+     */
+    context: any
+  }
+
+  interface Entry<V> {
+    value: V
+    ttl?: LRUMilliseconds
+    size?: LRUSize
+    start?: LRUMilliseconds
+  }
+}
+
+export = LRUCache
+©/index.jsÅ„const perf =
+  typeof performance === 'object' &&
+  performance &&
+  typeof performance.now === 'function'
+    ? performance
+    : Date
+
+const hasAbortController = typeof AbortController === 'function'
+
+// minimal backwards-compatibility polyfill
+// this doesn't have nearly all the checks and whatnot that
+// actual AbortController/Signal has, but it's enough for
+// our purposes, and if used properly, behaves the same.
+const AC = hasAbortController
+  ? AbortController
+  : class AbortController {
+      constructor() {
+        this.signal = new AS()
+      }
+      abort(reason = new Error('This operation was aborted')) {
+        this.signal.reason = this.signal.reason || reason
+        this.signal.aborted = true
+        this.signal.dispatchEvent({
+          type: 'abort',
+          target: this.signal,
+        })
+      }
+    }
+
+const hasAbortSignal = typeof AbortSignal === 'function'
+// Some polyfills put this on the AC class, not global
+const hasACAbortSignal = typeof AC.AbortSignal === 'function'
+const AS = hasAbortSignal
+  ? AbortSignal
+  : hasACAbortSignal
+  ? AC.AbortController
+  : class AbortSignal {
+      constructor() {
+        this.reason = undefined
+        this.aborted = false
+        this._listeners = []
+      }
+      dispatchEvent(e) {
+        if (e.type === 'abort') {
+          this.aborted = true
+          this.onabort(e)
+          this._listeners.forEach(f => f(e), this)
+        }
+      }
+      onabort() {}
+      addEventListener(ev, fn) {
+        if (ev === 'abort') {
+          this._listeners.push(fn)
+        }
+      }
+      removeEventListener(ev, fn) {
+        if (ev === 'abort') {
+          this._listeners = this._listeners.filter(f => f !== fn)
+        }
+      }
+    }
+
+const warned = new Set()
+const deprecatedOption = (opt, instead) => {
+  const code = `LRU_CACHE_OPTION_${opt}`
+  if (shouldWarn(code)) {
+    warn(code, `${opt} option`, `options.${instead}`, LRUCache)
+  }
+}
+const deprecatedMethod = (method, instead) => {
+  const code = `LRU_CACHE_METHOD_${method}`
+  if (shouldWarn(code)) {
+    const { prototype } = LRUCache
+    const { get } = Object.getOwnPropertyDescriptor(prototype, method)
+    warn(code, `${method} method`, `cache.${instead}()`, get)
+  }
+}
+const deprecatedProperty = (field, instead) => {
+  const code = `LRU_CACHE_PROPERTY_${field}`
+  if (shouldWarn(code)) {
+    const { prototype } = LRUCache
+    const { get } = Object.getOwnPropertyDescriptor(prototype, field)
+    warn(code, `${field} property`, `cache.${instead}`, get)
+  }
+}
+
+const emitWarning = (...a) => {
+  typeof process === 'object' &&
+  process &&
+  typeof process.emitWarning === 'function'
+    ? process.emitWarning(...a)
+    : console.error(...a)
+}
+
+const shouldWarn = code => !warned.has(code)
+
+const warn = (code, what, instead, fn) => {
+  warned.add(code)
+  const msg = `The ${what} is deprecated. Please use ${instead} instead.`
+  emitWarning(msg, 'DeprecationWarning', code, fn)
+}
+
+const isPosInt = n => n && n === Math.floor(n) && n > 0 && isFinite(n)
+
+/* istanbul ignore next - This is a little bit ridiculous, tbh.
+ * The maximum array length is 2^32-1 or thereabouts on most JS impls.
+ * And well before that point, you're caching the entire world, I mean,
+ * that's ~32GB of just integers for the next/prev links, plus whatever
+ * else to hold that many keys and values.  Just filling the memory with
+ * zeroes at init time is brutal when you get that big.
+ * But why not be complete?
+ * Maybe in the future, these limits will have expanded. */
+const getUintArray = max =>
+  !isPosInt(max)
+    ? null
+    : max <= Math.pow(2, 8)
+    ? Uint8Array
+    : max <= Math.pow(2, 16)
+    ? Uint16Array
+    : max <= Math.pow(2, 32)
+    ? Uint32Array
+    : max <= Number.MAX_SAFE_INTEGER
+    ? ZeroArray
+    : null
+
+class ZeroArray extends Array {
+  constructor(size) {
+    super(size)
+    this.fill(0)
+  }
+}
+
+class Stack {
+  constructor(max) {
+    if (max === 0) {
+      return []
+    }
+    const UintArray = getUintArray(max)
+    this.heap = new UintArray(max)
+    this.length = 0
+  }
+  push(n) {
+    this.heap[this.length++] = n
+  }
+  pop() {
+    return this.heap[--this.length]
+  }
+}
+
+class LRUCache {
+  constructor(options = {}) {
+    const {
+      max = 0,
+      ttl,
+      ttlResolution = 1,
+      ttlAutopurge,
+      updateAgeOnGet,
+      updateAgeOnHas,
+      allowStale,
+      dispose,
+      disposeAfter,
+      noDisposeOnSet,
+      noUpdateTTL,
+      maxSize = 0,
+      maxEntrySize = 0,
+      sizeCalculation,
+      fetchMethod,
+      fetchContext,
+      noDeleteOnFetchRejection,
+      noDeleteOnStaleGet,
+      allowStaleOnFetchRejection,
+      allowStaleOnFetchAbort,
+      ignoreFetchAbort,
+    } = options
+
+    // deprecated options, don't trigger a warning for getting them if
+    // the thing being passed in is another LRUCache we're copying.
+    const { length, maxAge, stale } =
+      options instanceof LRUCache ? {} : options
+
+    if (max !== 0 && !isPosInt(max)) {
+      throw new TypeError('max option must be a nonnegative integer')
+    }
+
+    const UintArray = max ? getUintArray(max) : Array
+    if (!UintArray) {
+      throw new Error('invalid max value: ' + max)
+    }
+
+    this.max = max
+    this.maxSize = maxSize
+    this.maxEntrySize = maxEntrySize || this.maxSize
+    this.sizeCalculation = sizeCalculation || length
+    if (this.sizeCalculation) {
+      if (!this.maxSize && !this.maxEntrySize) {
+        throw new TypeError(
+          'cannot set sizeCalculation without setting maxSize or maxEntrySize'
+        )
+      }
+      if (typeof this.sizeCalculation !== 'function') {
+        throw new TypeError('sizeCalculation set to non-function')
+      }
+    }
+
+    this.fetchMethod = fetchMethod || null
+    if (this.fetchMethod && typeof this.fetchMethod !== 'function') {
+      throw new TypeError(
+        'fetchMethod must be a function if specified'
+      )
+    }
+
+    this.fetchContext = fetchContext
+    if (!this.fetchMethod && fetchContext !== undefined) {
+      throw new TypeError(
+        'cannot set fetchContext without fetchMethod'
+      )
+    }
+
+    this.keyMap = new Map()
+    this.keyList = new Array(max).fill(null)
+    this.valList = new Array(max).fill(null)
+    this.next = new UintArray(max)
+    this.prev = new UintArray(max)
+    this.head = 0
+    this.tail = 0
+    this.free = new Stack(max)
+    this.initialFill = 1
+    this.size = 0
+
+    if (typeof dispose === 'function') {
+      this.dispose = dispose
+    }
+    if (typeof disposeAfter === 'function') {
+      this.disposeAfter = disposeAfter
+      this.disposed = []
+    } else {
+      this.disposeAfter = null
+      this.disposed = null
+    }
+    this.noDisposeOnSet = !!noDisposeOnSet
+    this.noUpdateTTL = !!noUpdateTTL
+    this.noDeleteOnFetchRejection = !!noDeleteOnFetchRejection
+    this.allowStaleOnFetchRejection = !!allowStaleOnFetchRejection
+    this.allowStaleOnFetchAbort = !!allowStaleOnFetchAbort
+    this.ignoreFetchAbort = !!ignoreFetchAbort
+
+    // NB: maxEntrySize is set to maxSize if it's set
+    if (this.maxEntrySize !== 0) {
+      if (this.maxSize !== 0) {
+        if (!isPosInt(this.maxSize)) {
+          throw new TypeError(
+            'maxSize must be a positive integer if specified'
+          )
+        }
+      }
+      if (!isPosInt(this.maxEntrySize)) {
+        throw new TypeError(
+          'maxEntrySize must be a positive integer if specified'
+        )
+      }
+      this.initializeSizeTracking()
+    }
+
+    this.allowStale = !!allowStale || !!stale
+    this.noDeleteOnStaleGet = !!noDeleteOnStaleGet
+    this.updateAgeOnGet = !!updateAgeOnGet
+    this.updateAgeOnHas = !!updateAgeOnHas
+    this.ttlResolution =
+      isPosInt(ttlResolution) || ttlResolution === 0
+        ? ttlResolution
+        : 1
+    this.ttlAutopurge = !!ttlAutopurge
+    this.ttl = ttl || maxAge || 0
+    if (this.ttl) {
+      if (!isPosInt(this.ttl)) {
+        throw new TypeError(
+          'ttl must be a positive integer if specified'
+        )
+      }
+      this.initializeTTLTracking()
+    }
+
+    // do not allow completely unbounded caches
+    if (this.max === 0 && this.ttl === 0 && this.maxSize === 0) {
+      throw new TypeError(
+        'At least one of max, maxSize, or ttl is required'
+      )
+    }
+    if (!this.ttlAutopurge && !this.max && !this.maxSize) {
+      const code = 'LRU_CACHE_UNBOUNDED'
+      if (shouldWarn(code)) {
+        warned.add(code)
+        const msg =
+          'TTL caching without ttlAutopurge, max, or maxSize can ' +
+          'result in unbounded memory consumption.'
+        emitWarning(msg, 'UnboundedCacheWarning', code, LRUCache)
+      }
+    }
+
+    if (stale) {
+      deprecatedOption('stale', 'allowStale')
+    }
+    if (maxAge) {
+      deprecatedOption('maxAge', 'ttl')
+    }
+    if (length) {
+      deprecatedOption('length', 'sizeCalculation')
+    }
+  }
+
+  getRemainingTTL(key) {
+    return this.has(key, { updateAgeOnHas: false }) ? Infinity : 0
+  }
+
+  initializeTTLTracking() {
+    this.ttls = new ZeroArray(this.max)
+    this.starts = new ZeroArray(this.max)
+
+    this.setItemTTL = (index, ttl, start = perf.now()) => {
+      this.starts[index] = ttl !== 0 ? start : 0
+      this.ttls[index] = ttl
+      if (ttl !== 0 && this.ttlAutopurge) {
+        const t = setTimeout(() => {
+          if (this.isStale(index)) {
+            this.delete(this.keyList[index])
+          }
+        }, ttl + 1)
+        /* istanbul ignore else - unref() not supported on all platforms */
+        if (t.unref) {
+          t.unref()
+        }
+      }
+    }
+
+    this.updateItemAge = index => {
+      this.starts[index] = this.ttls[index] !== 0 ? perf.now() : 0
+    }
+
+    this.statusTTL = (status, index) => {
+      if (status) {
+        status.ttl = this.ttls[index]
+        status.start = this.starts[index]
+        status.now = cachedNow || getNow()
+        status.remainingTTL = status.now + status.ttl - status.start
+      }
+    }
+
+    // debounce calls to perf.now() to 1s so we're not hitting
+    // that costly call repeatedly.
+    let cachedNow = 0
+    const getNow = () => {
+      const n = perf.now()
+      if (this.ttlResolution > 0) {
+        cachedNow = n
+        const t = setTimeout(
+          () => (cachedNow = 0),
+          this.ttlResolution
+        )
+        /* istanbul ignore else - not available on all platforms */
+        if (t.unref) {
+          t.unref()
+        }
+      }
+      return n
+    }
+
+    this.getRemainingTTL = key => {
+      const index = this.keyMap.get(key)
+      if (index === undefined) {
+        return 0
+      }
+      return this.ttls[index] === 0 || this.starts[index] === 0
+        ? Infinity
+        : this.starts[index] +
+            this.ttls[index] -
+            (cachedNow || getNow())
+    }
+
+    this.isStale = index => {
+      return (
+        this.ttls[index] !== 0 &&
+        this.starts[index] !== 0 &&
+        (cachedNow || getNow()) - this.starts[index] >
+          this.ttls[index]
+      )
+    }
+  }
+  updateItemAge(_index) {}
+  statusTTL(_status, _index) {}
+  setItemTTL(_index, _ttl, _start) {}
+  isStale(_index) {
+    return false
+  }
+
+  initializeSizeTracking() {
+    this.calculatedSize = 0
+    this.sizes = new ZeroArray(this.max)
+    this.removeItemSize = index => {
+      this.calculatedSize -= this.sizes[index]
+      this.sizes[index] = 0
+    }
+    this.requireSize = (k, v, size, sizeCalculation) => {
+      // provisionally accept background fetches.
+      // actual value size will be checked when they return.
+      if (this.isBackgroundFetch(v)) {
+        return 0
+      }
+      if (!isPosInt(size)) {
+        if (sizeCalculation) {
+          if (typeof sizeCalculation !== 'function') {
+            throw new TypeError('sizeCalculation must be a function')
+          }
+          size = sizeCalculation(v, k)
+          if (!isPosInt(size)) {
+            throw new TypeError(
+              'sizeCalculation return invalid (expect positive integer)'
+            )
+          }
+        } else {
+          throw new TypeError(
+            'invalid size value (must be positive integer). ' +
+              'When maxSize or maxEntrySize is used, sizeCalculation or size ' +
+              'must be set.'
+          )
+        }
+      }
+      return size
+    }
+    this.addItemSize = (index, size, status) => {
+      this.sizes[index] = size
+      if (this.maxSize) {
+        const maxSize = this.maxSize - this.sizes[index]
+        while (this.calculatedSize > maxSize) {
+          this.evict(true)
+        }
+      }
+      this.calculatedSize += this.sizes[index]
+      if (status) {
+        status.entrySize = size
+        status.totalCalculatedSize = this.calculatedSize
+      }
+    }
+  }
+  removeItemSize(_index) {}
+  addItemSize(_index, _size) {}
+  requireSize(_k, _v, size, sizeCalculation) {
+    if (size || sizeCalculation) {
+      throw new TypeError(
+        'cannot set size without setting maxSize or maxEntrySize on cache'
+      )
+    }
+  }
+
+  *indexes({ allowStale = this.allowStale } = {}) {
+    if (this.size) {
+      for (let i = this.tail; true; ) {
+        if (!this.isValidIndex(i)) {
+          break
+        }
+        if (allowStale || !this.isStale(i)) {
+          yield i
+        }
+        if (i === this.head) {
+          break
+        } else {
+          i = this.prev[i]
+        }
+      }
+    }
+  }
+
+  *rindexes({ allowStale = this.allowStale } = {}) {
+    if (this.size) {
+      for (let i = this.head; true; ) {
+        if (!this.isValidIndex(i)) {
+          break
+        }
+        if (allowStale || !this.isStale(i)) {
+          yield i
+        }
+        if (i === this.tail) {
+          break
+        } else {
+          i = this.next[i]
+        }
+      }
+    }
+  }
+
+  isValidIndex(index) {
+    return (
+      index !== undefined &&
+      this.keyMap.get(this.keyList[index]) === index
+    )
+  }
+
+  *entries() {
+    for (const i of this.indexes()) {
+      if (
+        this.valList[i] !== undefined &&
+        this.keyList[i] !== undefined &&
+        !this.isBackgroundFetch(this.valList[i])
+      ) {
+        yield [this.keyList[i], this.valList[i]]
+      }
+    }
+  }
+  *rentries() {
+    for (const i of this.rindexes()) {
+      if (
+        this.valList[i] !== undefined &&
+        this.keyList[i] !== undefined &&
+        !this.isBackgroundFetch(this.valList[i])
+      ) {
+        yield [this.keyList[i], this.valList[i]]
+      }
+    }
+  }
+
+  *keys() {
+    for (const i of this.indexes()) {
+      if (
+        this.keyList[i] !== undefined &&
+        !this.isBackgroundFetch(this.valList[i])
+      ) {
+        yield this.keyList[i]
+      }
+    }
+  }
+  *rkeys() {
+    for (const i of this.rindexes()) {
+      if (
+        this.keyList[i] !== undefined &&
+        !this.isBackgroundFetch(this.valList[i])
+      ) {
+        yield this.keyList[i]
+      }
+    }
+  }
+
+  *values() {
+    for (const i of this.indexes()) {
+      if (
+        this.valList[i] !== undefined &&
+        !this.isBackgroundFetch(this.valList[i])
+      ) {
+        yield this.valList[i]
+      }
+    }
+  }
+  *rvalues() {
+    for (const i of this.rindexes()) {
+      if (
+        this.valList[i] !== undefined &&
+        !this.isBackgroundFetch(this.valList[i])
+      ) {
+        yield this.valList[i]
+      }
+    }
+  }
+
+  [Symbol.iterator]() {
+    return this.entries()
+  }
+
+  find(fn, getOptions) {
+    for (const i of this.indexes()) {
+      const v = this.valList[i]
+      const value = this.isBackgroundFetch(v)
+        ? v.__staleWhileFetching
+        : v
+      if (value === undefined) continue
+      if (fn(value, this.keyList[i], this)) {
+        return this.get(this.keyList[i], getOptions)
+      }
+    }
+  }
+
+  forEach(fn, thisp = this) {
+    for (const i of this.indexes()) {
+      const v = this.valList[i]
+      const value = this.isBackgroundFetch(v)
+        ? v.__staleWhileFetching
+        : v
+      if (value === undefined) continue
+      fn.call(thisp, value, this.keyList[i], this)
+    }
+  }
+
+  rforEach(fn, thisp = this) {
+    for (const i of this.rindexes()) {
+      const v = this.valList[i]
+      const value = this.isBackgroundFetch(v)
+        ? v.__staleWhileFetching
+        : v
+      if (value === undefined) continue
+      fn.call(thisp, value, this.keyList[i], this)
+    }
+  }
+
+  get prune() {
+    deprecatedMethod('prune', 'purgeStale')
+    return this.purgeStale
+  }
+
+  purgeStale() {
+    let deleted = false
+    for (const i of this.rindexes({ allowStale: true })) {
+      if (this.isStale(i)) {
+        this.delete(this.keyList[i])
+        deleted = true
+      }
+    }
+    return deleted
+  }
+
+  dump() {
+    const arr = []
+    for (const i of this.indexes({ allowStale: true })) {
+      const key = this.keyList[i]
+      const v = this.valList[i]
+      const value = this.isBackgroundFetch(v)
+        ? v.__staleWhileFetching
+        : v
+      if (value === undefined) continue
+      const entry = { value }
+      if (this.ttls) {
+        entry.ttl = this.ttls[i]
+        // always dump the start relative to a portable timestamp
+        // it's ok for this to be a bit slow, it's a rare operation.
+        const age = perf.now() - this.starts[i]
+        entry.start = Math.floor(Date.now() - age)
+      }
+      if (this.sizes) {
+        entry.size = this.sizes[i]
+      }
+      arr.unshift([key, entry])
+    }
+    return arr
+  }
+
+  load(arr) {
+    this.clear()
+    for (const [key, entry] of arr) {
+      if (entry.start) {
+        // entry.start is a portable timestamp, but we may be using
+        // node's performance.now(), so calculate the offset.
+        // it's ok for this to be a bit slow, it's a rare operation.
+        const age = Date.now() - entry.start
+        entry.start = perf.now() - age
+      }
+      this.set(key, entry.value, entry)
+    }
+  }
+
+  dispose(_v, _k, _reason) {}
+
+  set(
+    k,
+    v,
+    {
+      ttl = this.ttl,
+      start,
+      noDisposeOnSet = this.noDisposeOnSet,
+      size = 0,
+      sizeCalculation = this.sizeCalculation,
+      noUpdateTTL = this.noUpdateTTL,
+      status,
+    } = {}
+  ) {
+    size = this.requireSize(k, v, size, sizeCalculation)
+    // if the item doesn't fit, don't do anything
+    // NB: maxEntrySize set to maxSize by default
+    if (this.maxEntrySize && size > this.maxEntrySize) {
+      if (status) {
+        status.set = 'miss'
+        status.maxEntrySizeExceeded = true
+      }
+      // have to delete, in case a background fetch is there already.
+      // in non-async cases, this is a no-op
+      this.delete(k)
+      return this
+    }
+    let index = this.size === 0 ? undefined : this.keyMap.get(k)
+    if (index === undefined) {
+      // addition
+      index = this.newIndex()
+      this.keyList[index] = k
+      this.valList[index] = v
+      this.keyMap.set(k, index)
+      this.next[this.tail] = index
+      this.prev[index] = this.tail
+      this.tail = index
+      this.size++
+      this.addItemSize(index, size, status)
+      if (status) {
+        status.set = 'add'
+      }
+      noUpdateTTL = false
+    } else {
+      // update
+      this.moveToTail(index)
+      const oldVal = this.valList[index]
+      if (v !== oldVal) {
+        if (this.isBackgroundFetch(oldVal)) {
+          oldVal.__abortController.abort(new Error('replaced'))
+        } else {
+          if (!noDisposeOnSet) {
+            this.dispose(oldVal, k, 'set')
+            if (this.disposeAfter) {
+              this.disposed.push([oldVal, k, 'set'])
+            }
+          }
+        }
+        this.removeItemSize(index)
+        this.valList[index] = v
+        this.addItemSize(index, size, status)
+        if (status) {
+          status.set = 'replace'
+          const oldValue =
+            oldVal && this.isBackgroundFetch(oldVal)
+              ? oldVal.__staleWhileFetching
+              : oldVal
+          if (oldValue !== undefined) status.oldValue = oldValue
+        }
+      } else if (status) {
+        status.set = 'update'
+      }
+    }
+    if (ttl !== 0 && this.ttl === 0 && !this.ttls) {
+      this.initializeTTLTracking()
+    }
+    if (!noUpdateTTL) {
+      this.setItemTTL(index, ttl, start)
+    }
+    this.statusTTL(status, index)
+    if (this.disposeAfter) {
+      while (this.disposed.length) {
+        this.disposeAfter(...this.disposed.shift())
+      }
+    }
+    return this
+  }
+
+  newIndex() {
+    if (this.size === 0) {
+      return this.tail
+    }
+    if (this.size === this.max && this.max !== 0) {
+      return this.evict(false)
+    }
+    if (this.free.length !== 0) {
+      return this.free.pop()
+    }
+    // initial fill, just keep writing down the list
+    return this.initialFill++
+  }
+
+  pop() {
+    if (this.size) {
+      const val = this.valList[this.head]
+      this.evict(true)
+      return val
+    }
+  }
+
+  evict(free) {
+    const head = this.head
+    const k = this.keyList[head]
+    const v = this.valList[head]
+    if (this.isBackgroundFetch(v)) {
+      v.__abortController.abort(new Error('evicted'))
+    } else {
+      this.dispose(v, k, 'evict')
+      if (this.disposeAfter) {
+        this.disposed.push([v, k, 'evict'])
+      }
+    }
+    this.removeItemSize(head)
+    // if we aren't about to use the index, then null these out
+    if (free) {
+      this.keyList[head] = null
+      this.valList[head] = null
+      this.free.push(head)
+    }
+    this.head = this.next[head]
+    this.keyMap.delete(k)
+    this.size--
+    return head
+  }
+
+  has(k, { updateAgeOnHas = this.updateAgeOnHas, status } = {}) {
+    const index = this.keyMap.get(k)
+    if (index !== undefined) {
+      if (!this.isStale(index)) {
+        if (updateAgeOnHas) {
+          this.updateItemAge(index)
+        }
+        if (status) status.has = 'hit'
+        this.statusTTL(status, index)
+        return true
+      } else if (status) {
+        status.has = 'stale'
+        this.statusTTL(status, index)
+      }
+    } else if (status) {
+      status.has = 'miss'
+    }
+    return false
+  }
+
+  // like get(), but without any LRU updating or TTL expiration
+  peek(k, { allowStale = this.allowStale } = {}) {
+    const index = this.keyMap.get(k)
+    if (index !== undefined && (allowStale || !this.isStale(index))) {
+      const v = this.valList[index]
+      // either stale and allowed, or forcing a refresh of non-stale value
+      return this.isBackgroundFetch(v) ? v.__staleWhileFetching : v
+    }
+  }
+
+  backgroundFetch(k, index, options, context) {
+    const v = index === undefined ? undefined : this.valList[index]
+    if (this.isBackgroundFetch(v)) {
+      return v
+    }
+    const ac = new AC()
+    if (options.signal) {
+      options.signal.addEventListener('abort', () =>
+        ac.abort(options.signal.reason)
+      )
+    }
+    const fetchOpts = {
+      signal: ac.signal,
+      options,
+      context,
+    }
+    const cb = (v, updateCache = false) => {
+      const { aborted } = ac.signal
+      const ignoreAbort = options.ignoreFetchAbort && v !== undefined
+      if (options.status) {
+        if (aborted && !updateCache) {
+          options.status.fetchAborted = true
+          options.status.fetchError = ac.signal.reason
+          if (ignoreAbort) options.status.fetchAbortIgnored = true
+        } else {
+          options.status.fetchResolved = true
+        }
+      }
+      if (aborted && !ignoreAbort && !updateCache) {
+        return fetchFail(ac.signal.reason)
+      }
+      // either we didn't abort, and are still here, or we did, and ignored
+      if (this.valList[index] === p) {
+        if (v === undefined) {
+          if (p.__staleWhileFetching) {
+            this.valList[index] = p.__staleWhileFetching
+          } else {
+            this.delete(k)
+          }
+        } else {
+          if (options.status) options.status.fetchUpdated = true
+          this.set(k, v, fetchOpts.options)
+        }
+      }
+      return v
+    }
+    const eb = er => {
+      if (options.status) {
+        options.status.fetchRejected = true
+        options.status.fetchError = er
+      }
+      return fetchFail(er)
+    }
+    const fetchFail = er => {
+      const { aborted } = ac.signal
+      const allowStaleAborted =
+        aborted && options.allowStaleOnFetchAbort
+      const allowStale =
+        allowStaleAborted || options.allowStaleOnFetchRejection
+      const noDelete = allowStale || options.noDeleteOnFetchRejection
+      if (this.valList[index] === p) {
+        // if we allow stale on fetch rejections, then we need to ensure that
+        // the stale value is not removed from the cache when the fetch fails.
+        const del = !noDelete || p.__staleWhileFetching === undefined
+        if (del) {
+          this.delete(k)
+        } else if (!allowStaleAborted) {
+          // still replace the *promise* with the stale value,
+          // since we are done with the promise at this point.
+          // leave it untouched if we're still waiting for an
+          // aborted background fetch that hasn't yet returned.
+          this.valList[index] = p.__staleWhileFetching
+        }
+      }
+      if (allowStale) {
+        if (options.status && p.__staleWhileFetching !== undefined) {
+          options.status.returnedStale = true
+        }
+        return p.__staleWhileFetching
+      } else if (p.__returned === p) {
+        throw er
+      }
+    }
+    const pcall = (res, rej) => {
+      this.fetchMethod(k, v, fetchOpts).then(v => res(v), rej)
+      // ignored, we go until we finish, regardless.
+      // defer check until we are actually aborting,
+      // so fetchMethod can override.
+      ac.signal.addEventListener('abort', () => {
+        if (
+          !options.ignoreFetchAbort ||
+          options.allowStaleOnFetchAbort
+        ) {
+          res()
+          // when it eventually resolves, update the cache.
+          if (options.allowStaleOnFetchAbort) {
+            res = v => cb(v, true)
+          }
+        }
+      })
+    }
+    if (options.status) options.status.fetchDispatched = true
+    const p = new Promise(pcall).then(cb, eb)
+    p.__abortController = ac
+    p.__staleWhileFetching = v
+    p.__returned = null
+    if (index === undefined) {
+      // internal, don't expose status.
+      this.set(k, p, { ...fetchOpts.options, status: undefined })
+      index = this.keyMap.get(k)
+    } else {
+      this.valList[index] = p
+    }
+    return p
+  }
+
+  isBackgroundFetch(p) {
+    return (
+      p &&
+      typeof p === 'object' &&
+      typeof p.then === 'function' &&
+      Object.prototype.hasOwnProperty.call(
+        p,
+        '__staleWhileFetching'
+      ) &&
+      Object.prototype.hasOwnProperty.call(p, '__returned') &&
+      (p.__returned === p || p.__returned === null)
+    )
+  }
+
+  // this takes the union of get() and set() opts, because it does both
+  async fetch(
+    k,
+    {
+      // get options
+      allowStale = this.allowStale,
+      updateAgeOnGet = this.updateAgeOnGet,
+      noDeleteOnStaleGet = this.noDeleteOnStaleGet,
+      // set options
+      ttl = this.ttl,
+      noDisposeOnSet = this.noDisposeOnSet,
+      size = 0,
+      sizeCalculation = this.sizeCalculation,
+      noUpdateTTL = this.noUpdateTTL,
+      // fetch exclusive options
+      noDeleteOnFetchRejection = this.noDeleteOnFetchRejection,
+      allowStaleOnFetchRejection = this.allowStaleOnFetchRejection,
+      ignoreFetchAbort = this.ignoreFetchAbort,
+      allowStaleOnFetchAbort = this.allowStaleOnFetchAbort,
+      fetchContext = this.fetchContext,
+      forceRefresh = false,
+      status,
+      signal,
+    } = {}
+  ) {
+    if (!this.fetchMethod) {
+      if (status) status.fetch = 'get'
+      return this.get(k, {
+        allowStale,
+        updateAgeOnGet,
+        noDeleteOnStaleGet,
+        status,
+      })
+    }
+
+    const options = {
+      allowStale,
+      updateAgeOnGet,
+      noDeleteOnStaleGet,
+      ttl,
+      noDisposeOnSet,
+      size,
+      sizeCalculation,
+      noUpdateTTL,
+      noDeleteOnFetchRejection,
+      allowStaleOnFetchRejection,
+      allowStaleOnFetchAbort,
+      ignoreFetchAbort,
+      status,
+      signal,
+    }
+
+    let index = this.keyMap.get(k)
+    if (index === undefined) {
+      if (status) status.fetch = 'miss'
+      const p = this.backgroundFetch(k, index, options, fetchContext)
+      return (p.__returned = p)
+    } else {
+      // in cache, maybe already fetching
+      const v = this.valList[index]
+      if (this.isBackgroundFetch(v)) {
+        const stale =
+          allowStale && v.__staleWhileFetching !== undefined
+        if (status) {
+          status.fetch = 'inflight'
+          if (stale) status.returnedStale = true
+        }
+        return stale ? v.__staleWhileFetching : (v.__returned = v)
+      }
+
+      // if we force a refresh, that means do NOT serve the cached value,
+      // unless we are already in the process of refreshing the cache.
+      const isStale = this.isStale(index)
+      if (!forceRefresh && !isStale) {
+        if (status) status.fetch = 'hit'
+        this.moveToTail(index)
+        if (updateAgeOnGet) {
+          this.updateItemAge(index)
+        }
+        this.statusTTL(status, index)
+        return v
+      }
+
+      // ok, it is stale or a forced refresh, and not already fetching.
+      // refresh the cache.
+      const p = this.backgroundFetch(k, index, options, fetchContext)
+      const hasStale = p.__staleWhileFetching !== undefined
+      const staleVal = hasStale && allowStale
+      if (status) {
+        status.fetch = hasStale && isStale ? 'stale' : 'refresh'
+        if (staleVal && isStale) status.returnedStale = true
+      }
+      return staleVal ? p.__staleWhileFetching : (p.__returned = p)
+    }
+  }
+
+  get(
+    k,
+    {
+      allowStale = this.allowStale,
+      updateAgeOnGet = this.updateAgeOnGet,
+      noDeleteOnStaleGet = this.noDeleteOnStaleGet,
+      status,
+    } = {}
+  ) {
+    const index = this.keyMap.get(k)
+    if (index !== undefined) {
+      const value = this.valList[index]
+      const fetching = this.isBackgroundFetch(value)
+      this.statusTTL(status, index)
+      if (this.isStale(index)) {
+        if (status) status.get = 'stale'
+        // delete only if not an in-flight background fetch
+        if (!fetching) {
+          if (!noDeleteOnStaleGet) {
+            this.delete(k)
+          }
+          if (status) status.returnedStale = allowStale
+          return allowStale ? value : undefined
+        } else {
+          if (status) {
+            status.returnedStale =
+              allowStale && value.__staleWhileFetching !== undefined
+          }
+          return allowStale ? value.__staleWhileFetching : undefined
+        }
+      } else {
+        if (status) status.get = 'hit'
+        // if we're currently fetching it, we don't actually have it yet
+        // it's not stale, which means this isn't a staleWhileRefetching.
+        // If it's not stale, and fetching, AND has a __staleWhileFetching
+        // value, then that means the user fetched with {forceRefresh:true},
+        // so it's safe to return that value.
+        if (fetching) {
+          return value.__staleWhileFetching
+        }
+        this.moveToTail(index)
+        if (updateAgeOnGet) {
+          this.updateItemAge(index)
+        }
+        return value
+      }
+    } else if (status) {
+      status.get = 'miss'
+    }
+  }
+
+  connect(p, n) {
+    this.prev[n] = p
+    this.next[p] = n
+  }
+
+  moveToTail(index) {
+    // if tail already, nothing to do
+    // if head, move head to next[index]
+    // else
+    //   move next[prev[index]] to next[index] (head has no prev)
+    //   move prev[next[index]] to prev[index]
+    // prev[index] = tail
+    // next[tail] = index
+    // tail = index
+    if (index !== this.tail) {
+      if (index === this.head) {
+        this.head = this.next[index]
+      } else {
+        this.connect(this.prev[index], this.next[index])
+      }
+      this.connect(this.tail, index)
+      this.tail = index
+    }
+  }
+
+  get del() {
+    deprecatedMethod('del', 'delete')
+    return this.delete
+  }
+
+  delete(k) {
+    let deleted = false
+    if (this.size !== 0) {
+      const index = this.keyMap.get(k)
+      if (index !== undefined) {
+        deleted = true
+        if (this.size === 1) {
+          this.clear()
+        } else {
+          this.removeItemSize(index)
+          const v = this.valList[index]
+          if (this.isBackgroundFetch(v)) {
+            v.__abortController.abort(new Error('deleted'))
+          } else {
+            this.dispose(v, k, 'delete')
+            if (this.disposeAfter) {
+              this.disposed.push([v, k, 'delete'])
+            }
+          }
+          this.keyMap.delete(k)
+          this.keyList[index] = null
+          this.valList[index] = null
+          if (index === this.tail) {
+            this.tail = this.prev[index]
+          } else if (index === this.head) {
+            this.head = this.next[index]
+          } else {
+            this.next[this.prev[index]] = this.next[index]
+            this.prev[this.next[index]] = this.prev[index]
+          }
+          this.size--
+          this.free.push(index)
+        }
+      }
+    }
+    if (this.disposed) {
+      while (this.disposed.length) {
+        this.disposeAfter(...this.disposed.shift())
+      }
+    }
+    return deleted
+  }
+
+  clear() {
+    for (const index of this.rindexes({ allowStale: true })) {
+      const v = this.valList[index]
+      if (this.isBackgroundFetch(v)) {
+        v.__abortController.abort(new Error('deleted'))
+      } else {
+        const k = this.keyList[index]
+        this.dispose(v, k, 'delete')
+        if (this.disposeAfter) {
+          this.disposed.push([v, k, 'delete'])
+        }
+      }
+    }
+
+    this.keyMap.clear()
+    this.valList.fill(null)
+    this.keyList.fill(null)
+    if (this.ttls) {
+      this.ttls.fill(0)
+      this.starts.fill(0)
+    }
+    if (this.sizes) {
+      this.sizes.fill(0)
+    }
+    this.head = 0
+    this.tail = 0
+    this.initialFill = 1
+    this.free.length = 0
+    this.calculatedSize = 0
+    this.size = 0
+    if (this.disposed) {
+      while (this.disposed.length) {
+        this.disposeAfter(...this.disposed.shift())
+      }
+    }
+  }
+
+  get reset() {
+    deprecatedMethod('reset', 'clear')
+    return this.clear
+  }
+
+  get length() {
+    deprecatedProperty('length', 'size')
+    return this.size
+  }
+
+  static get AbortController() {
+    return AC
+  }
+  static get AbortSignal() {
+    return AS
+  }
+}
+
+module.exports = LRUCache
+ª/index.mjsÅ„‹const perf =
+  typeof performance === 'object' &&
+  performance &&
+  typeof performance.now === 'function'
+    ? performance
+    : Date
+
+const hasAbortController = typeof AbortController === 'function'
+
+// minimal backwards-compatibility polyfill
+// this doesn't have nearly all the checks and whatnot that
+// actual AbortController/Signal has, but it's enough for
+// our purposes, and if used properly, behaves the same.
+const AC = hasAbortController
+  ? AbortController
+  : class AbortController {
+      constructor() {
+        this.signal = new AS()
+      }
+      abort(reason = new Error('This operation was aborted')) {
+        this.signal.reason = this.signal.reason || reason
+        this.signal.aborted = true
+        this.signal.dispatchEvent({
+          type: 'abort',
+          target: this.signal,
+        })
+      }
+    }
+
+const hasAbortSignal = typeof AbortSignal === 'function'
+// Some polyfills put this on the AC class, not global
+const hasACAbortSignal = typeof AC.AbortSignal === 'function'
+const AS = hasAbortSignal
+  ? AbortSignal
+  : hasACAbortSignal
+  ? AC.AbortController
+  : class AbortSignal {
+      constructor() {
+        this.reason = undefined
+        this.aborted = false
+        this._listeners = []
+      }
+      dispatchEvent(e) {
+        if (e.type === 'abort') {
+          this.aborted = true
+          this.onabort(e)
+          this._listeners.forEach(f => f(e), this)
+        }
+      }
+      onabort() {}
+      addEventListener(ev, fn) {
+        if (ev === 'abort') {
+          this._listeners.push(fn)
+        }
+      }
+      removeEventListener(ev, fn) {
+        if (ev === 'abort') {
+          this._listeners = this._listeners.filter(f => f !== fn)
+        }
+      }
+    }
+
+const warned = new Set()
+const deprecatedOption = (opt, instead) => {
+  const code = `LRU_CACHE_OPTION_${opt}`
+  if (shouldWarn(code)) {
+    warn(code, `${opt} option`, `options.${instead}`, LRUCache)
+  }
+}
+const deprecatedMethod = (method, instead) => {
+  const code = `LRU_CACHE_METHOD_${method}`
+  if (shouldWarn(code)) {
+    const { prototype } = LRUCache
+    const { get } = Object.getOwnPropertyDescriptor(prototype, method)
+    warn(code, `${method} method`, `cache.${instead}()`, get)
+  }
+}
+const deprecatedProperty = (field, instead) => {
+  const code = `LRU_CACHE_PROPERTY_${field}`
+  if (shouldWarn(code)) {
+    const { prototype } = LRUCache
+    const { get } = Object.getOwnPropertyDescriptor(prototype, field)
+    warn(code, `${field} property`, `cache.${instead}`, get)
+  }
+}
+
+const emitWarning = (...a) => {
+  typeof process === 'object' &&
+  process &&
+  typeof process.emitWarning === 'function'
+    ? process.emitWarning(...a)
+    : console.error(...a)
+}
+
+const shouldWarn = code => !warned.has(code)
+
+const warn = (code, what, instead, fn) => {
+  warned.add(code)
+  const msg = `The ${what} is deprecated. Please use ${instead} instead.`
+  emitWarning(msg, 'DeprecationWarning', code, fn)
+}
+
+const isPosInt = n => n && n === Math.floor(n) && n > 0 && isFinite(n)
+
+/* istanbul ignore next - This is a little bit ridiculous, tbh.
+ * The maximum array length is 2^32-1 or thereabouts on most JS impls.
+ * And well before that point, you're caching the entire world, I mean,
+ * that's ~32GB of just integers for the next/prev links, plus whatever
+ * else to hold that many keys and values.  Just filling the memory with
+ * zeroes at init time is brutal when you get that big.
+ * But why not be complete?
+ * Maybe in the future, these limits will have expanded. */
+const getUintArray = max =>
+  !isPosInt(max)
+    ? null
+    : max <= Math.pow(2, 8)
+    ? Uint8Array
+    : max <= Math.pow(2, 16)
+    ? Uint16Array
+    : max <= Math.pow(2, 32)
+    ? Uint32Array
+    : max <= Number.MAX_SAFE_INTEGER
+    ? ZeroArray
+    : null
+
+class ZeroArray extends Array {
+  constructor(size) {
+    super(size)
+    this.fill(0)
+  }
+}
+
+class Stack {
+  constructor(max) {
+    if (max === 0) {
+      return []
+    }
+    const UintArray = getUintArray(max)
+    this.heap = new UintArray(max)
+    this.length = 0
+  }
+  push(n) {
+    this.heap[this.length++] = n
+  }
+  pop() {
+    return this.heap[--this.length]
+  }
+}
+
+class LRUCache {
+  constructor(options = {}) {
+    const {
+      max = 0,
+      ttl,
+      ttlResolution = 1,
+      ttlAutopurge,
+      updateAgeOnGet,
+      updateAgeOnHas,
+      allowStale,
+      dispose,
+      disposeAfter,
+      noDisposeOnSet,
+      noUpdateTTL,
+      maxSize = 0,
+      maxEntrySize = 0,
+      sizeCalculation,
+      fetchMethod,
+      fetchContext,
+      noDeleteOnFetchRejection,
+      noDeleteOnStaleGet,
+      allowStaleOnFetchRejection,
+      allowStaleOnFetchAbort,
+      ignoreFetchAbort,
+    } = options
+
+    // deprecated options, don't trigger a warning for getting them if
+    // the thing being passed in is another LRUCache we're copying.
+    const { length, maxAge, stale } =
+      options instanceof LRUCache ? {} : options
+
+    if (max !== 0 && !isPosInt(max)) {
+      throw new TypeError('max option must be a nonnegative integer')
+    }
+
+    const UintArray = max ? getUintArray(max) : Array
+    if (!UintArray) {
+      throw new Error('invalid max value: ' + max)
+    }
+
+    this.max = max
+    this.maxSize = maxSize
+    this.maxEntrySize = maxEntrySize || this.maxSize
+    this.sizeCalculation = sizeCalculation || length
+    if (this.sizeCalculation) {
+      if (!this.maxSize && !this.maxEntrySize) {
+        throw new TypeError(
+          'cannot set sizeCalculation without setting maxSize or maxEntrySize'
+        )
+      }
+      if (typeof this.sizeCalculation !== 'function') {
+        throw new TypeError('sizeCalculation set to non-function')
+      }
+    }
+
+    this.fetchMethod = fetchMethod || null
+    if (this.fetchMethod && typeof this.fetchMethod !== 'function') {
+      throw new TypeError(
+        'fetchMethod must be a function if specified'
+      )
+    }
+
+    this.fetchContext = fetchContext
+    if (!this.fetchMethod && fetchContext !== undefined) {
+      throw new TypeError(
+        'cannot set fetchContext without fetchMethod'
+      )
+    }
+
+    this.keyMap = new Map()
+    this.keyList = new Array(max).fill(null)
+    this.valList = new Array(max).fill(null)
+    this.next = new UintArray(max)
+    this.prev = new UintArray(max)
+    this.head = 0
+    this.tail = 0
+    this.free = new Stack(max)
+    this.initialFill = 1
+    this.size = 0
+
+    if (typeof dispose === 'function') {
+      this.dispose = dispose
+    }
+    if (typeof disposeAfter === 'function') {
+      this.disposeAfter = disposeAfter
+      this.disposed = []
+    } else {
+      this.disposeAfter = null
+      this.disposed = null
+    }
+    this.noDisposeOnSet = !!noDisposeOnSet
+    this.noUpdateTTL = !!noUpdateTTL
+    this.noDeleteOnFetchRejection = !!noDeleteOnFetchRejection
+    this.allowStaleOnFetchRejection = !!allowStaleOnFetchRejection
+    this.allowStaleOnFetchAbort = !!allowStaleOnFetchAbort
+    this.ignoreFetchAbort = !!ignoreFetchAbort
+
+    // NB: maxEntrySize is set to maxSize if it's set
+    if (this.maxEntrySize !== 0) {
+      if (this.maxSize !== 0) {
+        if (!isPosInt(this.maxSize)) {
+          throw new TypeError(
+            'maxSize must be a positive integer if specified'
+          )
+        }
+      }
+      if (!isPosInt(this.maxEntrySize)) {
+        throw new TypeError(
+          'maxEntrySize must be a positive integer if specified'
+        )
+      }
+      this.initializeSizeTracking()
+    }
+
+    this.allowStale = !!allowStale || !!stale
+    this.noDeleteOnStaleGet = !!noDeleteOnStaleGet
+    this.updateAgeOnGet = !!updateAgeOnGet
+    this.updateAgeOnHas = !!updateAgeOnHas
+    this.ttlResolution =
+      isPosInt(ttlResolution) || ttlResolution === 0
+        ? ttlResolution
+        : 1
+    this.ttlAutopurge = !!ttlAutopurge
+    this.ttl = ttl || maxAge || 0
+    if (this.ttl) {
+      if (!isPosInt(this.ttl)) {
+        throw new TypeError(
+          'ttl must be a positive integer if specified'
+        )
+      }
+      this.initializeTTLTracking()
+    }
+
+    // do not allow completely unbounded caches
+    if (this.max === 0 && this.ttl === 0 && this.maxSize === 0) {
+      throw new TypeError(
+        'At least one of max, maxSize, or ttl is required'
+      )
+    }
+    if (!this.ttlAutopurge && !this.max && !this.maxSize) {
+      const code = 'LRU_CACHE_UNBOUNDED'
+      if (shouldWarn(code)) {
+        warned.add(code)
+        const msg =
+          'TTL caching without ttlAutopurge, max, or maxSize can ' +
+          'result in unbounded memory consumption.'
+        emitWarning(msg, 'UnboundedCacheWarning', code, LRUCache)
+      }
+    }
+
+    if (stale) {
+      deprecatedOption('stale', 'allowStale')
+    }
+    if (maxAge) {
+      deprecatedOption('maxAge', 'ttl')
+    }
+    if (length) {
+      deprecatedOption('length', 'sizeCalculation')
+    }
+  }
+
+  getRemainingTTL(key) {
+    return this.has(key, { updateAgeOnHas: false }) ? Infinity : 0
+  }
+
+  initializeTTLTracking() {
+    this.ttls = new ZeroArray(this.max)
+    this.starts = new ZeroArray(this.max)
+
+    this.setItemTTL = (index, ttl, start = perf.now()) => {
+      this.starts[index] = ttl !== 0 ? start : 0
+      this.ttls[index] = ttl
+      if (ttl !== 0 && this.ttlAutopurge) {
+        const t = setTimeout(() => {
+          if (this.isStale(index)) {
+            this.delete(this.keyList[index])
+          }
+        }, ttl + 1)
+        /* istanbul ignore else - unref() not supported on all platforms */
+        if (t.unref) {
+          t.unref()
+        }
+      }
+    }
+
+    this.updateItemAge = index => {
+      this.starts[index] = this.ttls[index] !== 0 ? perf.now() : 0
+    }
+
+    this.statusTTL = (status, index) => {
+      if (status) {
+        status.ttl = this.ttls[index]
+        status.start = this.starts[index]
+        status.now = cachedNow || getNow()
+        status.remainingTTL = status.now + status.ttl - status.start
+      }
+    }
+
+    // debounce calls to perf.now() to 1s so we're not hitting
+    // that costly call repeatedly.
+    let cachedNow = 0
+    const getNow = () => {
+      const n = perf.now()
+      if (this.ttlResolution > 0) {
+        cachedNow = n
+        const t = setTimeout(
+          () => (cachedNow = 0),
+          this.ttlResolution
+        )
+        /* istanbul ignore else - not available on all platforms */
+        if (t.unref) {
+          t.unref()
+        }
+      }
+      return n
+    }
+
+    this.getRemainingTTL = key => {
+      const index = this.keyMap.get(key)
+      if (index === undefined) {
+        return 0
+      }
+      return this.ttls[index] === 0 || this.starts[index] === 0
+        ? Infinity
+        : this.starts[index] +
+            this.ttls[index] -
+            (cachedNow || getNow())
+    }
+
+    this.isStale = index => {
+      return (
+        this.ttls[index] !== 0 &&
+        this.starts[index] !== 0 &&
+        (cachedNow || getNow()) - this.starts[index] >
+          this.ttls[index]
+      )
+    }
+  }
+  updateItemAge(_index) {}
+  statusTTL(_status, _index) {}
+  setItemTTL(_index, _ttl, _start) {}
+  isStale(_index) {
+    return false
+  }
+
+  initializeSizeTracking() {
+    this.calculatedSize = 0
+    this.sizes = new ZeroArray(this.max)
+    this.removeItemSize = index => {
+      this.calculatedSize -= this.sizes[index]
+      this.sizes[index] = 0
+    }
+    this.requireSize = (k, v, size, sizeCalculation) => {
+      // provisionally accept background fetches.
+      // actual value size will be checked when they return.
+      if (this.isBackgroundFetch(v)) {
+        return 0
+      }
+      if (!isPosInt(size)) {
+        if (sizeCalculation) {
+          if (typeof sizeCalculation !== 'function') {
+            throw new TypeError('sizeCalculation must be a function')
+          }
+          size = sizeCalculation(v, k)
+          if (!isPosInt(size)) {
+            throw new TypeError(
+              'sizeCalculation return invalid (expect positive integer)'
+            )
+          }
+        } else {
+          throw new TypeError(
+            'invalid size value (must be positive integer). ' +
+              'When maxSize or maxEntrySize is used, sizeCalculation or size ' +
+              'must be set.'
+          )
+        }
+      }
+      return size
+    }
+    this.addItemSize = (index, size, status) => {
+      this.sizes[index] = size
+      if (this.maxSize) {
+        const maxSize = this.maxSize - this.sizes[index]
+        while (this.calculatedSize > maxSize) {
+          this.evict(true)
+        }
+      }
+      this.calculatedSize += this.sizes[index]
+      if (status) {
+        status.entrySize = size
+        status.totalCalculatedSize = this.calculatedSize
+      }
+    }
+  }
+  removeItemSize(_index) {}
+  addItemSize(_index, _size) {}
+  requireSize(_k, _v, size, sizeCalculation) {
+    if (size || sizeCalculation) {
+      throw new TypeError(
+        'cannot set size without setting maxSize or maxEntrySize on cache'
+      )
+    }
+  }
+
+  *indexes({ allowStale = this.allowStale } = {}) {
+    if (this.size) {
+      for (let i = this.tail; true; ) {
+        if (!this.isValidIndex(i)) {
+          break
+        }
+        if (allowStale || !this.isStale(i)) {
+          yield i
+        }
+        if (i === this.head) {
+          break
+        } else {
+          i = this.prev[i]
+        }
+      }
+    }
+  }
+
+  *rindexes({ allowStale = this.allowStale } = {}) {
+    if (this.size) {
+      for (let i = this.head; true; ) {
+        if (!this.isValidIndex(i)) {
+          break
+        }
+        if (allowStale || !this.isStale(i)) {
+          yield i
+        }
+        if (i === this.tail) {
+          break
+        } else {
+          i = this.next[i]
+        }
+      }
+    }
+  }
+
+  isValidIndex(index) {
+    return (
+      index !== undefined &&
+      this.keyMap.get(this.keyList[index]) === index
+    )
+  }
+
+  *entries() {
+    for (const i of this.indexes()) {
+      if (
+        this.valList[i] !== undefined &&
+        this.keyList[i] !== undefined &&
+        !this.isBackgroundFetch(this.valList[i])
+      ) {
+        yield [this.keyList[i], this.valList[i]]
+      }
+    }
+  }
+  *rentries() {
+    for (const i of this.rindexes()) {
+      if (
+        this.valList[i] !== undefined &&
+        this.keyList[i] !== undefined &&
+        !this.isBackgroundFetch(this.valList[i])
+      ) {
+        yield [this.keyList[i], this.valList[i]]
+      }
+    }
+  }
+
+  *keys() {
+    for (const i of this.indexes()) {
+      if (
+        this.keyList[i] !== undefined &&
+        !this.isBackgroundFetch(this.valList[i])
+      ) {
+        yield this.keyList[i]
+      }
+    }
+  }
+  *rkeys() {
+    for (const i of this.rindexes()) {
+      if (
+        this.keyList[i] !== undefined &&
+        !this.isBackgroundFetch(this.valList[i])
+      ) {
+        yield this.keyList[i]
+      }
+    }
+  }
+
+  *values() {
+    for (const i of this.indexes()) {
+      if (
+        this.valList[i] !== undefined &&
+        !this.isBackgroundFetch(this.valList[i])
+      ) {
+        yield this.valList[i]
+      }
+    }
+  }
+  *rvalues() {
+    for (const i of this.rindexes()) {
+      if (
+        this.valList[i] !== undefined &&
+        !this.isBackgroundFetch(this.valList[i])
+      ) {
+        yield this.valList[i]
+      }
+    }
+  }
+
+  [Symbol.iterator]() {
+    return this.entries()
+  }
+
+  find(fn, getOptions) {
+    for (const i of this.indexes()) {
+      const v = this.valList[i]
+      const value = this.isBackgroundFetch(v)
+        ? v.__staleWhileFetching
+        : v
+      if (value === undefined) continue
+      if (fn(value, this.keyList[i], this)) {
+        return this.get(this.keyList[i], getOptions)
+      }
+    }
+  }
+
+  forEach(fn, thisp = this) {
+    for (const i of this.indexes()) {
+      const v = this.valList[i]
+      const value = this.isBackgroundFetch(v)
+        ? v.__staleWhileFetching
+        : v
+      if (value === undefined) continue
+      fn.call(thisp, value, this.keyList[i], this)
+    }
+  }
+
+  rforEach(fn, thisp = this) {
+    for (const i of this.rindexes()) {
+      const v = this.valList[i]
+      const value = this.isBackgroundFetch(v)
+        ? v.__staleWhileFetching
+        : v
+      if (value === undefined) continue
+      fn.call(thisp, value, this.keyList[i], this)
+    }
+  }
+
+  get prune() {
+    deprecatedMethod('prune', 'purgeStale')
+    return this.purgeStale
+  }
+
+  purgeStale() {
+    let deleted = false
+    for (const i of this.rindexes({ allowStale: true })) {
+      if (this.isStale(i)) {
+        this.delete(this.keyList[i])
+        deleted = true
+      }
+    }
+    return deleted
+  }
+
+  dump() {
+    const arr = []
+    for (const i of this.indexes({ allowStale: true })) {
+      const key = this.keyList[i]
+      const v = this.valList[i]
+      const value = this.isBackgroundFetch(v)
+        ? v.__staleWhileFetching
+        : v
+      if (value === undefined) continue
+      const entry = { value }
+      if (this.ttls) {
+        entry.ttl = this.ttls[i]
+        // always dump the start relative to a portable timestamp
+        // it's ok for this to be a bit slow, it's a rare operation.
+        const age = perf.now() - this.starts[i]
+        entry.start = Math.floor(Date.now() - age)
+      }
+      if (this.sizes) {
+        entry.size = this.sizes[i]
+      }
+      arr.unshift([key, entry])
+    }
+    return arr
+  }
+
+  load(arr) {
+    this.clear()
+    for (const [key, entry] of arr) {
+      if (entry.start) {
+        // entry.start is a portable timestamp, but we may be using
+        // node's performance.now(), so calculate the offset.
+        // it's ok for this to be a bit slow, it's a rare operation.
+        const age = Date.now() - entry.start
+        entry.start = perf.now() - age
+      }
+      this.set(key, entry.value, entry)
+    }
+  }
+
+  dispose(_v, _k, _reason) {}
+
+  set(
+    k,
+    v,
+    {
+      ttl = this.ttl,
+      start,
+      noDisposeOnSet = this.noDisposeOnSet,
+      size = 0,
+      sizeCalculation = this.sizeCalculation,
+      noUpdateTTL = this.noUpdateTTL,
+      status,
+    } = {}
+  ) {
+    size = this.requireSize(k, v, size, sizeCalculation)
+    // if the item doesn't fit, don't do anything
+    // NB: maxEntrySize set to maxSize by default
+    if (this.maxEntrySize && size > this.maxEntrySize) {
+      if (status) {
+        status.set = 'miss'
+        status.maxEntrySizeExceeded = true
+      }
+      // have to delete, in case a background fetch is there already.
+      // in non-async cases, this is a no-op
+      this.delete(k)
+      return this
+    }
+    let index = this.size === 0 ? undefined : this.keyMap.get(k)
+    if (index === undefined) {
+      // addition
+      index = this.newIndex()
+      this.keyList[index] = k
+      this.valList[index] = v
+      this.keyMap.set(k, index)
+      this.next[this.tail] = index
+      this.prev[index] = this.tail
+      this.tail = index
+      this.size++
+      this.addItemSize(index, size, status)
+      if (status) {
+        status.set = 'add'
+      }
+      noUpdateTTL = false
+    } else {
+      // update
+      this.moveToTail(index)
+      const oldVal = this.valList[index]
+      if (v !== oldVal) {
+        if (this.isBackgroundFetch(oldVal)) {
+          oldVal.__abortController.abort(new Error('replaced'))
+        } else {
+          if (!noDisposeOnSet) {
+            this.dispose(oldVal, k, 'set')
+            if (this.disposeAfter) {
+              this.disposed.push([oldVal, k, 'set'])
+            }
+          }
+        }
+        this.removeItemSize(index)
+        this.valList[index] = v
+        this.addItemSize(index, size, status)
+        if (status) {
+          status.set = 'replace'
+          const oldValue =
+            oldVal && this.isBackgroundFetch(oldVal)
+              ? oldVal.__staleWhileFetching
+              : oldVal
+          if (oldValue !== undefined) status.oldValue = oldValue
+        }
+      } else if (status) {
+        status.set = 'update'
+      }
+    }
+    if (ttl !== 0 && this.ttl === 0 && !this.ttls) {
+      this.initializeTTLTracking()
+    }
+    if (!noUpdateTTL) {
+      this.setItemTTL(index, ttl, start)
+    }
+    this.statusTTL(status, index)
+    if (this.disposeAfter) {
+      while (this.disposed.length) {
+        this.disposeAfter(...this.disposed.shift())
+      }
+    }
+    return this
+  }
+
+  newIndex() {
+    if (this.size === 0) {
+      return this.tail
+    }
+    if (this.size === this.max && this.max !== 0) {
+      return this.evict(false)
+    }
+    if (this.free.length !== 0) {
+      return this.free.pop()
+    }
+    // initial fill, just keep writing down the list
+    return this.initialFill++
+  }
+
+  pop() {
+    if (this.size) {
+      const val = this.valList[this.head]
+      this.evict(true)
+      return val
+    }
+  }
+
+  evict(free) {
+    const head = this.head
+    const k = this.keyList[head]
+    const v = this.valList[head]
+    if (this.isBackgroundFetch(v)) {
+      v.__abortController.abort(new Error('evicted'))
+    } else {
+      this.dispose(v, k, 'evict')
+      if (this.disposeAfter) {
+        this.disposed.push([v, k, 'evict'])
+      }
+    }
+    this.removeItemSize(head)
+    // if we aren't about to use the index, then null these out
+    if (free) {
+      this.keyList[head] = null
+      this.valList[head] = null
+      this.free.push(head)
+    }
+    this.head = this.next[head]
+    this.keyMap.delete(k)
+    this.size--
+    return head
+  }
+
+  has(k, { updateAgeOnHas = this.updateAgeOnHas, status } = {}) {
+    const index = this.keyMap.get(k)
+    if (index !== undefined) {
+      if (!this.isStale(index)) {
+        if (updateAgeOnHas) {
+          this.updateItemAge(index)
+        }
+        if (status) status.has = 'hit'
+        this.statusTTL(status, index)
+        return true
+      } else if (status) {
+        status.has = 'stale'
+        this.statusTTL(status, index)
+      }
+    } else if (status) {
+      status.has = 'miss'
+    }
+    return false
+  }
+
+  // like get(), but without any LRU updating or TTL expiration
+  peek(k, { allowStale = this.allowStale } = {}) {
+    const index = this.keyMap.get(k)
+    if (index !== undefined && (allowStale || !this.isStale(index))) {
+      const v = this.valList[index]
+      // either stale and allowed, or forcing a refresh of non-stale value
+      return this.isBackgroundFetch(v) ? v.__staleWhileFetching : v
+    }
+  }
+
+  backgroundFetch(k, index, options, context) {
+    const v = index === undefined ? undefined : this.valList[index]
+    if (this.isBackgroundFetch(v)) {
+      return v
+    }
+    const ac = new AC()
+    if (options.signal) {
+      options.signal.addEventListener('abort', () =>
+        ac.abort(options.signal.reason)
+      )
+    }
+    const fetchOpts = {
+      signal: ac.signal,
+      options,
+      context,
+    }
+    const cb = (v, updateCache = false) => {
+      const { aborted } = ac.signal
+      const ignoreAbort = options.ignoreFetchAbort && v !== undefined
+      if (options.status) {
+        if (aborted && !updateCache) {
+          options.status.fetchAborted = true
+          options.status.fetchError = ac.signal.reason
+          if (ignoreAbort) options.status.fetchAbortIgnored = true
+        } else {
+          options.status.fetchResolved = true
+        }
+      }
+      if (aborted && !ignoreAbort && !updateCache) {
+        return fetchFail(ac.signal.reason)
+      }
+      // either we didn't abort, and are still here, or we did, and ignored
+      if (this.valList[index] === p) {
+        if (v === undefined) {
+          if (p.__staleWhileFetching) {
+            this.valList[index] = p.__staleWhileFetching
+          } else {
+            this.delete(k)
+          }
+        } else {
+          if (options.status) options.status.fetchUpdated = true
+          this.set(k, v, fetchOpts.options)
+        }
+      }
+      return v
+    }
+    const eb = er => {
+      if (options.status) {
+        options.status.fetchRejected = true
+        options.status.fetchError = er
+      }
+      return fetchFail(er)
+    }
+    const fetchFail = er => {
+      const { aborted } = ac.signal
+      const allowStaleAborted =
+        aborted && options.allowStaleOnFetchAbort
+      const allowStale =
+        allowStaleAborted || options.allowStaleOnFetchRejection
+      const noDelete = allowStale || options.noDeleteOnFetchRejection
+      if (this.valList[index] === p) {
+        // if we allow stale on fetch rejections, then we need to ensure that
+        // the stale value is not removed from the cache when the fetch fails.
+        const del = !noDelete || p.__staleWhileFetching === undefined
+        if (del) {
+          this.delete(k)
+        } else if (!allowStaleAborted) {
+          // still replace the *promise* with the stale value,
+          // since we are done with the promise at this point.
+          // leave it untouched if we're still waiting for an
+          // aborted background fetch that hasn't yet returned.
+          this.valList[index] = p.__staleWhileFetching
+        }
+      }
+      if (allowStale) {
+        if (options.status && p.__staleWhileFetching !== undefined) {
+          options.status.returnedStale = true
+        }
+        return p.__staleWhileFetching
+      } else if (p.__returned === p) {
+        throw er
+      }
+    }
+    const pcall = (res, rej) => {
+      this.fetchMethod(k, v, fetchOpts).then(v => res(v), rej)
+      // ignored, we go until we finish, regardless.
+      // defer check until we are actually aborting,
+      // so fetchMethod can override.
+      ac.signal.addEventListener('abort', () => {
+        if (
+          !options.ignoreFetchAbort ||
+          options.allowStaleOnFetchAbort
+        ) {
+          res()
+          // when it eventually resolves, update the cache.
+          if (options.allowStaleOnFetchAbort) {
+            res = v => cb(v, true)
+          }
+        }
+      })
+    }
+    if (options.status) options.status.fetchDispatched = true
+    const p = new Promise(pcall).then(cb, eb)
+    p.__abortController = ac
+    p.__staleWhileFetching = v
+    p.__returned = null
+    if (index === undefined) {
+      // internal, don't expose status.
+      this.set(k, p, { ...fetchOpts.options, status: undefined })
+      index = this.keyMap.get(k)
+    } else {
+      this.valList[index] = p
+    }
+    return p
+  }
+
+  isBackgroundFetch(p) {
+    return (
+      p &&
+      typeof p === 'object' &&
+      typeof p.then === 'function' &&
+      Object.prototype.hasOwnProperty.call(
+        p,
+        '__staleWhileFetching'
+      ) &&
+      Object.prototype.hasOwnProperty.call(p, '__returned') &&
+      (p.__returned === p || p.__returned === null)
+    )
+  }
+
+  // this takes the union of get() and set() opts, because it does both
+  async fetch(
+    k,
+    {
+      // get options
+      allowStale = this.allowStale,
+      updateAgeOnGet = this.updateAgeOnGet,
+      noDeleteOnStaleGet = this.noDeleteOnStaleGet,
+      // set options
+      ttl = this.ttl,
+      noDisposeOnSet = this.noDisposeOnSet,
+      size = 0,
+      sizeCalculation = this.sizeCalculation,
+      noUpdateTTL = this.noUpdateTTL,
+      // fetch exclusive options
+      noDeleteOnFetchRejection = this.noDeleteOnFetchRejection,
+      allowStaleOnFetchRejection = this.allowStaleOnFetchRejection,
+      ignoreFetchAbort = this.ignoreFetchAbort,
+      allowStaleOnFetchAbort = this.allowStaleOnFetchAbort,
+      fetchContext = this.fetchContext,
+      forceRefresh = false,
+      status,
+      signal,
+    } = {}
+  ) {
+    if (!this.fetchMethod) {
+      if (status) status.fetch = 'get'
+      return this.get(k, {
+        allowStale,
+        updateAgeOnGet,
+        noDeleteOnStaleGet,
+        status,
+      })
+    }
+
+    const options = {
+      allowStale,
+      updateAgeOnGet,
+      noDeleteOnStaleGet,
+      ttl,
+      noDisposeOnSet,
+      size,
+      sizeCalculation,
+      noUpdateTTL,
+      noDeleteOnFetchRejection,
+      allowStaleOnFetchRejection,
+      allowStaleOnFetchAbort,
+      ignoreFetchAbort,
+      status,
+      signal,
+    }
+
+    let index = this.keyMap.get(k)
+    if (index === undefined) {
+      if (status) status.fetch = 'miss'
+      const p = this.backgroundFetch(k, index, options, fetchContext)
+      return (p.__returned = p)
+    } else {
+      // in cache, maybe already fetching
+      const v = this.valList[index]
+      if (this.isBackgroundFetch(v)) {
+        const stale =
+          allowStale && v.__staleWhileFetching !== undefined
+        if (status) {
+          status.fetch = 'inflight'
+          if (stale) status.returnedStale = true
+        }
+        return stale ? v.__staleWhileFetching : (v.__returned = v)
+      }
+
+      // if we force a refresh, that means do NOT serve the cached value,
+      // unless we are already in the process of refreshing the cache.
+      const isStale = this.isStale(index)
+      if (!forceRefresh && !isStale) {
+        if (status) status.fetch = 'hit'
+        this.moveToTail(index)
+        if (updateAgeOnGet) {
+          this.updateItemAge(index)
+        }
+        this.statusTTL(status, index)
+        return v
+      }
+
+      // ok, it is stale or a forced refresh, and not already fetching.
+      // refresh the cache.
+      const p = this.backgroundFetch(k, index, options, fetchContext)
+      const hasStale = p.__staleWhileFetching !== undefined
+      const staleVal = hasStale && allowStale
+      if (status) {
+        status.fetch = hasStale && isStale ? 'stale' : 'refresh'
+        if (staleVal && isStale) status.returnedStale = true
+      }
+      return staleVal ? p.__staleWhileFetching : (p.__returned = p)
+    }
+  }
+
+  get(
+    k,
+    {
+      allowStale = this.allowStale,
+      updateAgeOnGet = this.updateAgeOnGet,
+      noDeleteOnStaleGet = this.noDeleteOnStaleGet,
+      status,
+    } = {}
+  ) {
+    const index = this.keyMap.get(k)
+    if (index !== undefined) {
+      const value = this.valList[index]
+      const fetching = this.isBackgroundFetch(value)
+      this.statusTTL(status, index)
+      if (this.isStale(index)) {
+        if (status) status.get = 'stale'
+        // delete only if not an in-flight background fetch
+        if (!fetching) {
+          if (!noDeleteOnStaleGet) {
+            this.delete(k)
+          }
+          if (status) status.returnedStale = allowStale
+          return allowStale ? value : undefined
+        } else {
+          if (status) {
+            status.returnedStale =
+              allowStale && value.__staleWhileFetching !== undefined
+          }
+          return allowStale ? value.__staleWhileFetching : undefined
+        }
+      } else {
+        if (status) status.get = 'hit'
+        // if we're currently fetching it, we don't actually have it yet
+        // it's not stale, which means this isn't a staleWhileRefetching.
+        // If it's not stale, and fetching, AND has a __staleWhileFetching
+        // value, then that means the user fetched with {forceRefresh:true},
+        // so it's safe to return that value.
+        if (fetching) {
+          return value.__staleWhileFetching
+        }
+        this.moveToTail(index)
+        if (updateAgeOnGet) {
+          this.updateItemAge(index)
+        }
+        return value
+      }
+    } else if (status) {
+      status.get = 'miss'
+    }
+  }
+
+  connect(p, n) {
+    this.prev[n] = p
+    this.next[p] = n
+  }
+
+  moveToTail(index) {
+    // if tail already, nothing to do
+    // if head, move head to next[index]
+    // else
+    //   move next[prev[index]] to next[index] (head has no prev)
+    //   move prev[next[index]] to prev[index]
+    // prev[index] = tail
+    // next[tail] = index
+    // tail = index
+    if (index !== this.tail) {
+      if (index === this.head) {
+        this.head = this.next[index]
+      } else {
+        this.connect(this.prev[index], this.next[index])
+      }
+      this.connect(this.tail, index)
+      this.tail = index
+    }
+  }
+
+  get del() {
+    deprecatedMethod('del', 'delete')
+    return this.delete
+  }
+
+  delete(k) {
+    let deleted = false
+    if (this.size !== 0) {
+      const index = this.keyMap.get(k)
+      if (index !== undefined) {
+        deleted = true
+        if (this.size === 1) {
+          this.clear()
+        } else {
+          this.removeItemSize(index)
+          const v = this.valList[index]
+          if (this.isBackgroundFetch(v)) {
+            v.__abortController.abort(new Error('deleted'))
+          } else {
+            this.dispose(v, k, 'delete')
+            if (this.disposeAfter) {
+              this.disposed.push([v, k, 'delete'])
+            }
+          }
+          this.keyMap.delete(k)
+          this.keyList[index] = null
+          this.valList[index] = null
+          if (index === this.tail) {
+            this.tail = this.prev[index]
+          } else if (index === this.head) {
+            this.head = this.next[index]
+          } else {
+            this.next[this.prev[index]] = this.next[index]
+            this.prev[this.next[index]] = this.prev[index]
+          }
+          this.size--
+          this.free.push(index)
+        }
+      }
+    }
+    if (this.disposed) {
+      while (this.disposed.length) {
+        this.disposeAfter(...this.disposed.shift())
+      }
+    }
+    return deleted
+  }
+
+  clear() {
+    for (const index of this.rindexes({ allowStale: true })) {
+      const v = this.valList[index]
+      if (this.isBackgroundFetch(v)) {
+        v.__abortController.abort(new Error('deleted'))
+      } else {
+        const k = this.keyList[index]
+        this.dispose(v, k, 'delete')
+        if (this.disposeAfter) {
+          this.disposed.push([v, k, 'delete'])
+        }
+      }
+    }
+
+    this.keyMap.clear()
+    this.valList.fill(null)
+    this.keyList.fill(null)
+    if (this.ttls) {
+      this.ttls.fill(0)
+      this.starts.fill(0)
+    }
+    if (this.sizes) {
+      this.sizes.fill(0)
+    }
+    this.head = 0
+    this.tail = 0
+    this.initialFill = 1
+    this.free.length = 0
+    this.calculatedSize = 0
+    this.size = 0
+    if (this.disposed) {
+      while (this.disposed.length) {
+        this.disposeAfter(...this.disposed.shift())
+      }
+    }
+  }
+
+  get reset() {
+    deprecatedMethod('reset', 'clear')
+    return this.clear
+  }
+
+  get length() {
+    deprecatedProperty('length', 'size')
+    return this.size
+  }
+
+  static get AbortController() {
+    return AC
+  }
+  static get AbortSignal() {
+    return AS
+  }
+}
+
+export default LRUCache
+­/package.jsonÅU{
+  "name": "lru-cache",
+  "description": "A cache object that deletes the least-recently-used items.",
+  "version": "7.18.3",
+  "author": "Isaac Z. Schlueter <i@izs.me>",
+  "keywords": [
+    "mru",
+    "lru",
+    "cache"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "npm run prepare",
+    "pretest": "npm run prepare",
+    "presnap": "npm run prepare",
+    "prepare": "node ./scripts/transpile-to-esm.js",
+    "size": "size-limit",
+    "test": "tap",
+    "snap": "tap",
+    "preversion": "npm test",
+    "postversion": "npm publish",
+    "prepublishOnly": "git push origin --follow-tags",
+    "format": "prettier --write .",
+    "typedoc": "typedoc ./index.d.ts"
+  },
+  "type": "commonjs",
+  "main": "./index.js",
+  "module": "./index.mjs",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./index.d.ts",
+        "default": "./index.mjs"
+      },
+      "require": {
+        "types": "./index.d.ts",
+        "default": "./index.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "repository": "git://github.com/isaacs/node-lru-cache.git",
+  "devDependencies": {
+    "@size-limit/preset-small-lib": "^7.0.8",
+    "@types/node": "^17.0.31",
+    "@types/tap": "^15.0.6",
+    "benchmark": "^2.1.4",
+    "c8": "^7.11.2",
+    "clock-mock": "^1.0.6",
+    "eslint-config-prettier": "^8.5.0",
+    "prettier": "^2.6.2",
+    "size-limit": "^7.0.8",
+    "tap": "^16.3.4",
+    "ts-node": "^10.7.0",
+    "tslib": "^2.4.0",
+    "typedoc": "^0.23.24",
+    "typescript": "^4.6.4"
+  },
+  "license": "ISC",
+  "files": [
+    "index.js",
+    "index.mjs",
+    "index.d.ts"
+  ],
+  "engines": {
+    "node": ">=12"
+  },
+  "prettier": {
+    "semi": false,
+    "printWidth": 70,
+    "tabWidth": 2,
+    "useTabs": false,
+    "singleQuote": true,
+    "jsxSingleQuote": false,
+    "bracketSameLine": true,
+    "arrowParens": "avoid",
+    "endOfLine": "lf"
+  },
+  "tap": {
+    "nyc-arg": [
+      "--include=index.js"
+    ],
+    "node-arg": [
+      "--expose-gc",
+      "--require",
+      "ts-node/register"
+    ],
+    "ts": false
+  },
+  "size-limit": [
+    {
+      "path": "./index.js"
+    }
+  ]
+}
+ª/README.mdÅ;# lru-cache
+
+A cache object that deletes the least-recently-used items.
+
+Specify a max number of the most recently used items that you
+want to keep, and this cache will keep that many of the most
+recently accessed items.
+
+This is not primarily a TTL cache, and does not make strong TTL
+guarantees. There is no preemptive pruning of expired items by
+default, but you _may_ set a TTL on the cache or on a single
+`set`. If you do so, it will treat expired items as missing, and
+delete them when fetched. If you are more interested in TTL
+caching than LRU caching, check out
+[@isaacs/ttlcache](http://npm.im/@isaacs/ttlcache).
+
+As of version 7, this is one of the most performant LRU
+implementations available in JavaScript, and supports a wide
+diversity of use cases. However, note that using some of the
+features will necessarily impact performance, by causing the
+cache to have to do more work. See the "Performance" section
+below.
+
+## Installation
+
+```bash
+npm install lru-cache --save
+```
+
+## Usage
+
+```js
+// hybrid module, either works
+import LRUCache from 'lru-cache'
+// or:
+const LRUCache = require('lru-cache')
+
+// At least one of 'max', 'ttl', or 'maxSize' is required, to prevent
+// unsafe unbounded storage.
+//
+// In most cases, it's best to specify a max for performance, so all
+// the required memory allocation is done up-front.
+//
+// All the other options are optional, see the sections below for
+// documentation on what each one does.  Most of them can be
+// overridden for specific items in get()/set()
+const options = {
+  max: 500,
+
+  // for use with tracking overall storage size
+  maxSize: 5000,
+  sizeCalculation: (value, key) => {
+    return 1
+  },
+
+  // for use when you need to clean up something when objects
+  // are evicted from the cache
+  dispose: (value, key) => {
+    freeFromMemoryOrWhatever(value)
+  },
+
+  // how long to live in ms
+  ttl: 1000 * 60 * 5,
+
+  // return stale items before removing from cache?
+  allowStale: false,
+
+  updateAgeOnGet: false,
+  updateAgeOnHas: false,
+
+  // async method to use for cache.fetch(), for
+  // stale-while-revalidate type of behavior
+  fetchMethod: async (key, staleValue, { options, signal }) => {},
+}
+
+const cache = new LRUCache(options)
+
+cache.set('key', 'value')
+cache.get('key') // "value"
+
+// non-string keys ARE fully supported
+// but note that it must be THE SAME object, not
+// just a JSON-equivalent object.
+var someObject = { a: 1 }
+cache.set(someObject, 'a value')
+// Object keys are not toString()-ed
+cache.set('[object Object]', 'a different value')
+assert.equal(cache.get(someObject), 'a value')
+// A similar object with same keys/values won't work,
+// because it's a different object identity
+assert.equal(cache.get({ a: 1 }), undefined)
+
+cache.clear() // empty the cache
+```
+
+If you put more stuff in it, then items will fall out.
+
+## Options
+
+### `max`
+
+The maximum number of items that remain in the cache (assuming no
+TTL pruning or explicit deletions). Note that fewer items may be
+stored if size calculation is used, and `maxSize` is exceeded.
+This must be a positive finite intger.
+
+At least one of `max`, `maxSize`, or `TTL` is required. This
+must be a positive integer if set.
+
+**It is strongly recommended to set a `max` to prevent unbounded
+growth of the cache.** See "Storage Bounds Safety" below.
+
+### `maxSize`
+
+Set to a positive integer to track the sizes of items added to
+the cache, and automatically evict items in order to stay below
+this size. Note that this may result in fewer than `max` items
+being stored.
+
+Attempting to add an item to the cache whose calculated size is
+greater that this amount will be a no-op. The item will not be
+cached, and no other items will be evicted.
+
+Optional, must be a positive integer if provided.
+
+Sets `maxEntrySize` to the same value, unless a different value
+is provided for `maxEntrySize`.
+
+At least one of `max`, `maxSize`, or `TTL` is required. This
+must be a positive integer if set.
+
+Even if size tracking is enabled, **it is strongly recommended to
+set a `max` to prevent unbounded growth of the cache.** See
+"Storage Bounds Safety" below.
+
+### `maxEntrySize`
+
+Set to a positive integer to track the sizes of items added to
+the cache, and prevent caching any item over a given size.
+Attempting to add an item whose calculated size is greater than
+this amount will be a no-op. The item will not be cached, and no
+other items will be evicted.
+
+Optional, must be a positive integer if provided. Defaults to
+the value of `maxSize` if provided.
+
+### `sizeCalculation`
+
+Function used to calculate the size of stored items. If you're
+storing strings or buffers, then you probably want to do
+something like `n => n.length`. The item is passed as the first
+argument, and the key is passed as the second argument.
+
+This may be overridden by passing an options object to
+`cache.set()`.
+
+Requires `maxSize` to be set.
+
+If the `size` (or return value of `sizeCalculation`) for a given
+entry is greater than `maxEntrySize`, then the item will not be
+added to the cache.
+
+Deprecated alias: `length`
+
+### `fetchMethod`
+
+Function that is used to make background asynchronous fetches.
+Called with `fetchMethod(key, staleValue, { signal, options,
+context })`. May return a Promise.
+
+If `fetchMethod` is not provided, then `cache.fetch(key)` is
+equivalent to `Promise.resolve(cache.get(key))`.
+
+The `signal` object is an `AbortSignal` if that's available in
+the global object, otherwise it's a pretty close polyfill.
+
+If at any time, `signal.aborted` is set to `true`, or if the
+`signal.onabort` method is called, or if it emits an `'abort'`
+event which you can listen to with `addEventListener`, then that
+means that the fetch should be abandoned. This may be passed
+along to async functions aware of AbortController/AbortSignal
+behavior.
+
+The `fetchMethod` should **only** return `undefined` or a Promise
+resolving to `undefined` if the AbortController signaled an
+`abort` event. In all other cases, it should return or resolve
+to a value suitable for adding to the cache.
+
+The `options` object is a union of the options that may be
+provided to `set()` and `get()`. If they are modified, then that
+will result in modifying the settings to `cache.set()` when the
+value is resolved, and in the case of `noDeleteOnFetchRejection`
+and `allowStaleOnFetchRejection`, the handling of `fetchMethod`
+failures.
+
+For example, a DNS cache may update the TTL based on the value
+returned from a remote DNS server by changing `options.ttl` in
+the `fetchMethod`.
+
+### `fetchContext`
+
+Arbitrary data that can be passed to the `fetchMethod` as the
+`context` option.
+
+Note that this will only be relevant when the `cache.fetch()`
+call needs to call `fetchMethod()`. Thus, any data which will
+meaningfully vary the fetch response needs to be present in the
+key. This is primarily intended for including `x-request-id`
+headers and the like for debugging purposes, which do not affect
+the `fetchMethod()` response.
+
+### `noDeleteOnFetchRejection`
+
+If a `fetchMethod` throws an error or returns a rejected promise,
+then by default, any existing stale value will be removed from
+the cache.
+
+If `noDeleteOnFetchRejection` is set to `true`, then this
+behavior is suppressed, and the stale value remains in the cache
+in the case of a rejected `fetchMethod`.
+
+This is important in cases where a `fetchMethod` is _only_ called
+as a background update while the stale value is returned, when
+`allowStale` is used.
+
+This is implicitly in effect when `allowStaleOnFetchRejection` is
+set.
+
+This may be set in calls to `fetch()`, or defaulted on the
+constructor, or overridden by modifying the options object in the
+`fetchMethod`.
+
+### `allowStaleOnFetchRejection`
+
+Set to true to return a stale value from the cache when a
+`fetchMethod` throws an error or returns a rejected Promise.
+
+If a `fetchMethod` fails, and there is no stale value available,
+the `fetch()` will resolve to `undefined`. Ie, all `fetchMethod`
+errors are suppressed.
+
+Implies `noDeleteOnFetchRejection`.
+
+This may be set in calls to `fetch()`, or defaulted on the
+constructor, or overridden by modifying the options object in the
+`fetchMethod`.
+
+### `allowStaleOnFetchAbort`
+
+Set to true to return a stale value from the cache when the
+`AbortSignal` passed to the `fetchMethod` dispatches an `'abort'`
+event, whether user-triggered, or due to internal cache behavior.
+
+Unless `ignoreFetchAbort` is also set, the underlying
+`fetchMethod` will still be considered canceled, and its return
+value will be ignored and not cached.
+
+### `ignoreFetchAbort`
+
+Set to true to ignore the `abort` event emitted by the
+`AbortSignal` object passed to `fetchMethod`, and still cache the
+resulting resolution value, as long as it is not `undefined`.
+
+When used on its own, this means aborted `fetch()` calls are not
+immediately resolved or rejected when they are aborted, and
+instead take the full time to await.
+
+When used with `allowStaleOnFetchAbort`, aborted `fetch()` calls
+will resolve immediately to their stale cached value or
+`undefined`, and will continue to process and eventually update
+the cache when they resolve, as long as the resulting value is
+not `undefined`, thus supporting a "return stale on timeout while
+refreshing" mechanism by passing `AbortSignal.timeout(n)` as the
+signal.
+
+For example:
+
+```js
+const c = new LRUCache({
+  ttl: 100,
+  ignoreFetchAbort: true,
+  allowStaleOnFetchAbort: true,
+  fetchMethod: async (key, oldValue, { signal }) => {
+    // note: do NOT pass the signal to fetch()!
+    // let's say this fetch can take a long time.
+    const res = await fetch(`https://slow-backend-server/${key}`)
+    return await res.json()
+  },
+})
+
+// this will return the stale value after 100ms, while still
+// updating in the background for next time.
+const val = await c.fetch('key', { signal: AbortSignal.timeout(100) })
+```
+
+**Note**: regardless of this setting, an `abort` event _is still
+emitted on the `AbortSignal` object_, so may result in invalid
+results when passed to other underlying APIs that use
+AbortSignals.
+
+This may be overridden on the `fetch()` call or in the
+`fetchMethod` itself.
+
+### `dispose`
+
+Function that is called on items when they are dropped from the
+cache, as `this.dispose(value, key, reason)`.
+
+This can be handy if you want to close file descriptors or do
+other cleanup tasks when items are no longer stored in the cache.
+
+**NOTE**: It is called _before_ the item has been fully removed
+from the cache, so if you want to put it right back in, you need
+to wait until the next tick. If you try to add it back in during
+the `dispose()` function call, it will break things in subtle and
+weird ways.
+
+Unlike several other options, this may _not_ be overridden by
+passing an option to `set()`, for performance reasons. If
+disposal functions may vary between cache entries, then the
+entire list must be scanned on every cache swap, even if no
+disposal function is in use.
+
+The `reason` will be one of the following strings, corresponding
+to the reason for the item's deletion:
+
+- `evict` Item was evicted to make space for a new addition
+- `set` Item was overwritten by a new value
+- `delete` Item was removed by explicit `cache.delete(key)` or by
+  calling `cache.clear()`, which deletes everything.
+
+The `dispose()` method is _not_ called for canceled calls to
+`fetchMethod()`. If you wish to handle evictions, overwrites,
+and deletes of in-flight asynchronous fetches, you must use the
+`AbortSignal` provided.
+
+Optional, must be a function.
+
+### `disposeAfter`
+
+The same as `dispose`, but called _after_ the entry is completely
+removed and the cache is once again in a clean state.
+
+It is safe to add an item right back into the cache at this
+point. However, note that it is _very_ easy to inadvertently
+create infinite recursion in this way.
+
+The `disposeAfter()` method is _not_ called for canceled calls to
+`fetchMethod()`. If you wish to handle evictions, overwrites,
+and deletes of in-flight asynchronous fetches, you must use the
+`AbortSignal` provided.
+
+### `noDisposeOnSet`
+
+Set to `true` to suppress calling the `dispose()` function if the
+entry key is still accessible within the cache.
+
+This may be overridden by passing an options object to
+`cache.set()`.
+
+Boolean, default `false`. Only relevant if `dispose` or
+`disposeAfter` options are set.
+
+### `ttl`
+
+Max time to live for items before they are considered stale.
+Note that stale items are NOT preemptively removed by default,
+and MAY live in the cache, contributing to its LRU max, long
+after they have expired.
+
+Also, as this cache is optimized for LRU/MRU operations, some of
+the staleness/TTL checks will reduce performance.
+
+This is not primarily a TTL cache, and does not make strong TTL
+guarantees. There is no pre-emptive pruning of expired items,
+but you _may_ set a TTL on the cache, and it will treat expired
+items as missing when they are fetched, and delete them.
+
+Optional, but must be a positive integer in ms if specified.
+
+This may be overridden by passing an options object to
+`cache.set()`.
+
+At least one of `max`, `maxSize`, or `TTL` is required. This
+must be a positive integer if set.
+
+Even if ttl tracking is enabled, **it is strongly recommended to
+set a `max` to prevent unbounded growth of the cache.** See
+"Storage Bounds Safety" below.
+
+If ttl tracking is enabled, and `max` and `maxSize` are not set,
+and `ttlAutopurge` is not set, then a warning will be emitted
+cautioning about the potential for unbounded memory consumption.
+
+Deprecated alias: `maxAge`
+
+### `noUpdateTTL`
+
+Boolean flag to tell the cache to not update the TTL when setting
+a new value for an existing key (ie, when updating a value rather
+than inserting a new value). Note that the TTL value is _always_
+set (if provided) when adding a new entry into the cache.
+
+This may be passed as an option to `cache.set()`.
+
+Boolean, default false.
+
+### `ttlResolution`
+
+Minimum amount of time in ms in which to check for staleness.
+Defaults to `1`, which means that the current time is checked at
+most once per millisecond.
+
+Set to `0` to check the current time every time staleness is
+tested.
+
+Note that setting this to a higher value _will_ improve
+performance somewhat while using ttl tracking, albeit at the
+expense of keeping stale items around a bit longer than intended.
+
+### `ttlAutopurge`
+
+Preemptively remove stale items from the cache.
+
+Note that this may _significantly_ degrade performance,
+especially if the cache is storing a large number of items. It
+is almost always best to just leave the stale items in the cache,
+and let them fall out as new items are added.
+
+Note that this means that `allowStale` is a bit pointless, as
+stale items will be deleted almost as soon as they expire.
+
+Use with caution!
+
+Boolean, default `false`
+
+### `allowStale`
+
+By default, if you set `ttl`, it'll only delete stale items from
+the cache when you `get(key)`. That is, it's not preemptively
+pruning items.
+
+If you set `allowStale:true`, it'll return the stale value as
+well as deleting it. If you don't set this, then it'll return
+`undefined` when you try to get a stale entry.
+
+Note that when a stale entry is fetched, _even if it is returned
+due to `allowStale` being set_, it is removed from the cache
+immediately. You can immediately put it back in the cache if you
+wish, thus resetting the TTL.
+
+This may be overridden by passing an options object to
+`cache.get()`. The `cache.has()` method will always return
+`false` for stale items.
+
+Boolean, default false, only relevant if `ttl` is set.
+
+Deprecated alias: `stale`
+
+### `noDeleteOnStaleGet`
+
+When using time-expiring entries with `ttl`, by default stale
+items will be removed from the cache when the key is accessed
+with `cache.get()`.
+
+Setting `noDeleteOnStaleGet` to `true` will cause stale items to
+remain in the cache, until they are explicitly deleted with
+`cache.delete(key)`, or retrieved with `noDeleteOnStaleGet` set
+to `false`.
+
+This may be overridden by passing an options object to
+`cache.get()`.
+
+Boolean, default false, only relevant if `ttl` is set.
+
+### `updateAgeOnGet`
+
+When using time-expiring entries with `ttl`, setting this to
+`true` will make each item's age reset to 0 whenever it is
+retrieved from cache with `get()`, causing it to not expire. (It
+can still fall out of cache based on recency of use, of course.)
+
+This may be overridden by passing an options object to
+`cache.get()`.
+
+Boolean, default false, only relevant if `ttl` is set.
+
+### `updateAgeOnHas`
+
+When using time-expiring entries with `ttl`, setting this to
+`true` will make each item's age reset to 0 whenever its presence
+in the cache is checked with `has()`, causing it to not expire.
+(It can still fall out of cache based on recency of use, of
+course.)
+
+This may be overridden by passing an options object to
+`cache.has()`.
+
+Boolean, default false, only relevant if `ttl` is set.
+
+## API
+
+### `new LRUCache(options)`
+
+Create a new LRUCache. All options are documented above, and are
+on the cache as public members.
+
+### `cache.max`, `cache.maxSize`, `cache.allowStale`,
+
+`cache.noDisposeOnSet`, `cache.sizeCalculation`, `cache.dispose`,
+`cache.maxSize`, `cache.ttl`, `cache.updateAgeOnGet`,
+`cache.updateAgeOnHas`
+
+All option names are exposed as public members on the cache
+object.
+
+These are intended for read access only. Changing them during
+program operation can cause undefined behavior.
+
+### `cache.size`
+
+The total number of items held in the cache at the current
+moment.
+
+### `cache.calculatedSize`
+
+The total size of items in cache when using size tracking.
+
+### `set(key, value, [{ size, sizeCalculation, ttl, noDisposeOnSet, start, status }])`
+
+Add a value to the cache.
+
+Optional options object may contain `ttl` and `sizeCalculation`
+as described above, which default to the settings on the cache
+object.
+
+If `start` is provided, then that will set the effective start
+time for the TTL calculation. Note that this must be a previous
+value of `performance.now()` if supported, or a previous value of
+`Date.now()` if not.
+
+Options object may also include `size`, which will prevent
+calling the `sizeCalculation` function and just use the specified
+number if it is a positive integer, and `noDisposeOnSet` which
+will prevent calling a `dispose` function in the case of
+overwrites.
+
+If the `size` (or return value of `sizeCalculation`) for a given
+entry is greater than `maxEntrySize`, then the item will not be
+added to the cache.
+
+Will update the recency of the entry.
+
+Returns the cache object.
+
+For the usage of the `status` option, see **Status Tracking**
+below.
+
+### `get(key, { updateAgeOnGet, allowStale, status } = {}) => value`
+
+Return a value from the cache.
+
+Will update the recency of the cache entry found.
+
+If the key is not found, `get()` will return `undefined`. This
+can be confusing when setting values specifically to `undefined`,
+as in `cache.set(key, undefined)`. Use `cache.has()` to
+determine whether a key is present in the cache at all.
+
+For the usage of the `status` option, see **Status Tracking**
+below.
+
+### `async fetch(key, options = {}) => Promise`
+
+The following options are supported:
+
+- `updateAgeOnGet`
+- `allowStale`
+- `size`
+- `sizeCalculation`
+- `ttl`
+- `noDisposeOnSet`
+- `forceRefresh`
+- `status` - See **Status Tracking** below.
+- `signal` - AbortSignal can be used to cancel the `fetch()`.
+  Note that the `signal` option provided to the `fetchMethod` is
+  a different object, because it must also respond to internal
+  cache state changes, but aborting this signal will abort the
+  one passed to `fetchMethod` as well.
+- `fetchContext` - sets the `context` option passed to the
+  underlying `fetchMethod`.
+
+If the value is in the cache and not stale, then the returned
+Promise resolves to the value.
+
+If not in the cache, or beyond its TTL staleness, then
+`fetchMethod(key, staleValue, { options, signal, context })` is
+called, and the value returned will be added to the cache once
+resolved.
+
+If called with `allowStale`, and an asynchronous fetch is
+currently in progress to reload a stale value, then the former
+stale value will be returned.
+
+If called with `forceRefresh`, then the cached item will be
+re-fetched, even if it is not stale. However, if `allowStale` is
+set, then the old value will still be returned. This is useful
+in cases where you want to force a reload of a cached value. If
+a background fetch is already in progress, then `forceRefresh`
+has no effect.
+
+Multiple fetches for the same `key` will only call `fetchMethod`
+a single time, and all will be resolved when the value is
+resolved, even if different options are used.
+
+If `fetchMethod` is not specified, then this is effectively an
+alias for `Promise.resolve(cache.get(key))`.
+
+When the fetch method resolves to a value, if the fetch has not
+been aborted due to deletion, eviction, or being overwritten,
+then it is added to the cache using the options provided.
+
+If the key is evicted or deleted before the `fetchMethod`
+resolves, then the AbortSignal passed to the `fetchMethod` will
+receive an `abort` event, and the promise returned by `fetch()`
+will reject with the reason for the abort.
+
+If a `signal` is passed to the `fetch()` call, then aborting the
+signal will abort the fetch and cause the `fetch()` promise to
+reject with the reason provided.
+
+### `peek(key, { allowStale } = {}) => value`
+
+Like `get()` but doesn't update recency or delete stale items.
+
+Returns `undefined` if the item is stale, unless `allowStale` is
+set either on the cache or in the options object.
+
+### `has(key, { updateAgeOnHas, status } = {}) => Boolean`
+
+Check if a key is in the cache, without updating the recency of
+use. Age is updated if `updateAgeOnHas` is set to `true` in
+either the options or the constructor.
+
+Will return `false` if the item is stale, even though it is
+technically in the cache.  The difference can be determined (if
+it matters) by using a `status` argument, and inspecting the
+`has` field.
+
+For the usage of the `status` option, see **Status Tracking**
+below.
+
+### `delete(key)`
+
+Deletes a key out of the cache.
+
+Returns `true` if the key was deleted, `false` otherwise.
+
+### `clear()`
+
+Clear the cache entirely, throwing away all values.
+
+Deprecated alias: `reset()`
+
+### `keys()`
+
+Return a generator yielding the keys in the cache, in order from
+most recently used to least recently used.
+
+### `rkeys()`
+
+Return a generator yielding the keys in the cache, in order from
+least recently used to most recently used.
+
+### `values()`
+
+Return a generator yielding the values in the cache, in order
+from most recently used to least recently used.
+
+### `rvalues()`
+
+Return a generator yielding the values in the cache, in order
+from least recently used to most recently used.
+
+### `entries()`
+
+Return a generator yielding `[key, value]` pairs, in order from
+most recently used to least recently used.
+
+### `rentries()`
+
+Return a generator yielding `[key, value]` pairs, in order from
+least recently used to most recently used.
+
+### `find(fn, [getOptions])`
+
+Find a value for which the supplied `fn` method returns a truthy
+value, similar to `Array.find()`.
+
+`fn` is called as `fn(value, key, cache)`.
+
+The optional `getOptions` are applied to the resulting `get()` of
+the item found.
+
+### `dump()`
+
+Return an array of `[key, entry]` objects which can be passed to
+`cache.load()`
+
+The `start` fields are calculated relative to a portable
+`Date.now()` timestamp, even if `performance.now()` is available.
+
+Stale entries are always included in the `dump`, even if
+`allowStale` is false.
+
+Note: this returns an actual array, not a generator, so it can be
+more easily passed around.
+
+### `load(entries)`
+
+Reset the cache and load in the items in `entries` in the order
+listed. Note that the shape of the resulting cache may be
+different if the same options are not used in both caches.
+
+The `start` fields are assumed to be calculated relative to a
+portable `Date.now()` timestamp, even if `performance.now()` is
+available.
+
+### `purgeStale()`
+
+Delete any stale entries. Returns `true` if anything was
+removed, `false` otherwise.
+
+Deprecated alias: `prune`
+
+### `getRemainingTTL(key)`
+
+Return the number of ms left in the item's TTL. If item is not
+in cache, returns `0`. Returns `Infinity` if item is in cache
+without a defined TTL.
+
+### `forEach(fn, [thisp])`
+
+Call the `fn` function with each set of `fn(value, key, cache)`
+in the LRU cache, from most recent to least recently used.
+
+Does not affect recency of use.
+
+If `thisp` is provided, function will be called in the
+`this`-context of the provided object.
+
+### `rforEach(fn, [thisp])`
+
+Same as `cache.forEach(fn, thisp)`, but in order from least
+recently used to most recently used.
+
+### `pop()`
+
+Evict the least recently used item, returning its value.
+
+Returns `undefined` if cache is empty.
+
+### Internal Methods and Properties
+
+In order to optimize performance as much as possible, "private"
+members and methods are exposed on the object as normal
+properties, rather than being accessed via Symbols, private
+members, or closure variables.
+
+**Do not use or rely on these.** They will change or be removed
+without notice. They will cause undefined behavior if used
+inappropriately. There is no need or reason to ever call them
+directly.
+
+This documentation is here so that it is especially clear that
+this not "undocumented" because someone forgot; it _is_
+documented, and the documentation is telling you not to do it.
+
+**Do not report bugs that stem from using these properties.**
+They will be ignored.
+
+- `initializeTTLTracking()` Set up the cache for tracking TTLs
+- `updateItemAge(index)` Called when an item age is updated, by
+  internal ID
+- `setItemTTL(index)` Called when an item ttl is updated, by
+  internal ID
+- `isStale(index)` Called to check an item's staleness, by
+  internal ID
+- `initializeSizeTracking()` Set up the cache for tracking item
+  size. Called automatically when a size is specified.
+- `removeItemSize(index)` Updates the internal size calculation
+  when an item is removed or modified, by internal ID
+- `addItemSize(index)` Updates the internal size calculation when
+  an item is added or modified, by internal ID
+- `indexes()` An iterator over the non-stale internal IDs, from
+  most recently to least recently used.
+- `rindexes()` An iterator over the non-stale internal IDs, from
+  least recently to most recently used.
+- `newIndex()` Create a new internal ID, either reusing a deleted
+  ID, evicting the least recently used ID, or walking to the end
+  of the allotted space.
+- `evict()` Evict the least recently used internal ID, returning
+  its ID. Does not do any bounds checking.
+- `connect(p, n)` Connect the `p` and `n` internal IDs in the
+  linked list.
+- `moveToTail(index)` Move the specified internal ID to the most
+  recently used position.
+- `keyMap` Map of keys to internal IDs
+- `keyList` List of keys by internal ID
+- `valList` List of values by internal ID
+- `sizes` List of calculated sizes by internal ID
+- `ttls` List of TTL values by internal ID
+- `starts` List of start time values by internal ID
+- `next` Array of "next" pointers by internal ID
+- `prev` Array of "previous" pointers by internal ID
+- `head` Internal ID of least recently used item
+- `tail` Internal ID of most recently used item
+- `free` Stack of deleted internal IDs
+
+## Status Tracking
+
+Occasionally, it may be useful to track the internal behavior of
+the cache, particularly for logging, debugging, or for behavior
+within the `fetchMethod`.  To do this, you can pass a `status`
+object to the `get()`, `set()`, `has()`, and `fetch()` methods.
+
+The `status` option should be a plain JavaScript object.
+
+The following fields will be set appropriately:
+
+```ts
+interface Status<V> {
+  /**
+   * The status of a set() operation.
+   *
+   * - add: the item was not found in the cache, and was added
+   * - update: the item was in the cache, with the same value provided
+   * - replace: the item was in the cache, and replaced
+   * - miss: the item was not added to the cache for some reason
+   */
+  set?: 'add' | 'update' | 'replace' | 'miss'
+
+  /**
+   * the ttl stored for the item, or undefined if ttls are not used.
+   */
+  ttl?: LRUMilliseconds
+
+  /**
+   * the start time for the item, or undefined if ttls are not used.
+   */
+  start?: LRUMilliseconds
+
+  /**
+   * The timestamp used for TTL calculation
+   */
+  now?: LRUMilliseconds
+
+  /**
+   * the remaining ttl for the item, or undefined if ttls are not used.
+   */
+  remainingTTL?: LRUMilliseconds
+
+  /**
+   * The calculated size for the item, if sizes are used.
+   */
+  size?: LRUSize
+
+  /**
+   * A flag indicating that the item was not stored, due to exceeding the
+   * {@link maxEntrySize}
+   */
+  maxEntrySizeExceeded?: true
+
+  /**
+   * The old value, specified in the case of `set:'update'` or
+   * `set:'replace'`
+   */
+  oldValue?: V
+
+  /**
+   * The results of a {@link has} operation
+   *
+   * - hit: the item was found in the cache
+   * - stale: the item was found in the cache, but is stale
+   * - miss: the item was not found in the cache
+   */
+  has?: 'hit' | 'stale' | 'miss'
+
+  /**
+   * The status of a {@link fetch} operation.
+   * Note that this can change as the underlying fetch() moves through
+   * various states.
+   *
+   * - inflight: there is another fetch() for this key which is in process
+   * - get: there is no fetchMethod, so {@link get} was called.
+   * - miss: the item is not in cache, and will be fetched.
+   * - hit: the item is in the cache, and was resolved immediately.
+   * - stale: the item is in the cache, but stale.
+   * - refresh: the item is in the cache, and not stale, but
+   *   {@link forceRefresh} was specified.
+   */
+  fetch?: 'get' | 'inflight' | 'miss' | 'hit' | 'stale' | 'refresh'
+
+  /**
+   * The {@link fetchMethod} was called
+   */
+  fetchDispatched?: true
+
+  /**
+   * The cached value was updated after a successful call to fetchMethod
+   */
+  fetchUpdated?: true
+
+  /**
+   * The reason for a fetch() rejection.  Either the error raised by the
+   * {@link fetchMethod}, or the reason for an AbortSignal.
+   */
+  fetchError?: Error
+
+  /**
+   * The fetch received an abort signal
+   */
+  fetchAborted?: true
+
+  /**
+   * The abort signal received was ignored, and the fetch was allowed to
+   * continue.
+   */
+  fetchAbortIgnored?: true
+
+  /**
+   * The fetchMethod promise resolved successfully
+   */
+  fetchResolved?: true
+
+  /**
+   * The results of the fetchMethod promise were stored in the cache
+   */
+  fetchUpdated?: true
+
+  /**
+   * The fetchMethod promise was rejected
+   */
+  fetchRejected?: true
+
+  /**
+   * The status of a {@link get} operation.
+   *
+   * - fetching: The item is currently being fetched.  If a previous value is
+   *   present and allowed, that will be returned.
+   * - stale: The item is in the cache, and is stale.
+   * - hit: the item is in the cache
+   * - miss: the item is not in the cache
+   */
+  get?: 'stale' | 'hit' | 'miss'
+
+  /**
+   * A fetch or get operation returned a stale value.
+   */
+  returnedStale?: true
+}
+```
+
+## Storage Bounds Safety
+
+This implementation aims to be as flexible as possible, within
+the limits of safe memory consumption and optimal performance.
+
+At initial object creation, storage is allocated for `max` items.
+If `max` is set to zero, then some performance is lost, and item
+count is unbounded. Either `maxSize` or `ttl` _must_ be set if
+`max` is not specified.
+
+If `maxSize` is set, then this creates a safe limit on the
+maximum storage consumed, but without the performance benefits of
+pre-allocation. When `maxSize` is set, every item _must_ provide
+a size, either via the `sizeCalculation` method provided to the
+constructor, or via a `size` or `sizeCalculation` option provided
+to `cache.set()`. The size of every item _must_ be a positive
+integer.
+
+If neither `max` nor `maxSize` are set, then `ttl` tracking must
+be enabled. Note that, even when tracking item `ttl`, items are
+_not_ preemptively deleted when they become stale, unless
+`ttlAutopurge` is enabled. Instead, they are only purged the
+next time the key is requested. Thus, if `ttlAutopurge`, `max`,
+and `maxSize` are all not set, then the cache will potentially
+grow unbounded.
+
+In this case, a warning is printed to standard error. Future
+versions may require the use of `ttlAutopurge` if `max` and
+`maxSize` are not specified.
+
+If you truly wish to use a cache that is bound _only_ by TTL
+expiration, consider using a `Map` object, and calling
+`setTimeout` to delete entries when they expire. It will perform
+much better than an LRU cache.
+
+Here is an implementation you may use, under the same
+[license](./LICENSE) as this package:
+
+```js
+// a storage-unbounded ttl cache that is not an lru-cache
+const cache = {
+  data: new Map(),
+  timers: new Map(),
+  set: (k, v, ttl) => {
+    if (cache.timers.has(k)) {
+      clearTimeout(cache.timers.get(k))
+    }
+    cache.timers.set(
+      k,
+      setTimeout(() => cache.delete(k), ttl)
+    )
+    cache.data.set(k, v)
+  },
+  get: k => cache.data.get(k),
+  has: k => cache.data.has(k),
+  delete: k => {
+    if (cache.timers.has(k)) {
+      clearTimeout(cache.timers.get(k))
+    }
+    cache.timers.delete(k)
+    return cache.data.delete(k)
+  },
+  clear: () => {
+    cache.data.clear()
+    for (const v of cache.timers.values()) {
+      clearTimeout(v)
+    }
+    cache.timers.clear()
+  },
+}
+```
+
+If that isn't to your liking, check out
+[@isaacs/ttlcache](http://npm.im/@isaacs/ttlcache).
+
+## Performance
+
+As of January 2022, version 7 of this library is one of the most
+performant LRU cache implementations in JavaScript.
+
+Benchmarks can be extremely difficult to get right. In
+particular, the performance of set/get/delete operations on
+objects will vary _wildly_ depending on the type of key used. V8
+is highly optimized for objects with keys that are short strings,
+especially integer numeric strings. Thus any benchmark which
+tests _solely_ using numbers as keys will tend to find that an
+object-based approach performs the best.
+
+Note that coercing _anything_ to strings to use as object keys is
+unsafe, unless you can be 100% certain that no other type of
+value will be used. For example:
+
+```js
+const myCache = {}
+const set = (k, v) => (myCache[k] = v)
+const get = k => myCache[k]
+
+set({}, 'please hang onto this for me')
+set('[object Object]', 'oopsie')
+```
+
+Also beware of "Just So" stories regarding performance. Garbage
+collection of large (especially: deep) object graphs can be
+incredibly costly, with several "tipping points" where it
+increases exponentially. As a result, putting that off until
+later can make it much worse, and less predictable. If a library
+performs well, but only in a scenario where the object graph is
+kept shallow, then that won't help you if you are using large
+objects as keys.
+
+In general, when attempting to use a library to improve
+performance (such as a cache like this one), it's best to choose
+an option that will perform well in the sorts of scenarios where
+you'll actually use it.
+
+This library is optimized for repeated gets and minimizing
+eviction time, since that is the expected need of a LRU. Set
+operations are somewhat slower on average than a few other
+options, in part because of that optimization. It is assumed
+that you'll be caching some costly operation, ideally as rarely
+as possible, so optimizing set over get would be unwise.
+
+If performance matters to you:
+
+1. If it's at all possible to use small integer values as keys,
+   and you can guarantee that no other types of values will be
+   used as keys, then do that, and use a cache such as
+   [lru-fast](https://npmjs.com/package/lru-fast), or
+   [mnemonist's
+   LRUCache](https://yomguithereal.github.io/mnemonist/lru-cache)
+   which uses an Object as its data store.
+2. Failing that, if at all possible, use short non-numeric
+   strings (ie, less than 256 characters) as your keys, and use
+   [mnemonist's
+   LRUCache](https://yomguithereal.github.io/mnemonist/lru-cache).
+3. If the types of your keys will be long strings, strings that
+   look like floats, `null`, objects, or some mix of types, or if
+   you aren't sure, then this library will work well for you.
+4. Do not use a `dispose` function, size tracking, or especially
+   ttl behavior, unless absolutely needed. These features are
+   convenient, and necessary in some use cases, and every attempt
+   has been made to make the performance impact minimal, but it
+   isn't nothing.
+
+## Breaking Changes in Version 7
+
+This library changed to a different algorithm and internal data
+structure in version 7, yielding significantly better
+performance, albeit with some subtle changes as a result.
+
+If you were relying on the internals of LRUCache in version 6 or
+before, it probably will not work in version 7 and above.
+
+For more info, see the [change log](CHANGELOG.md).
+¨/LICENSEÅThe ISC License
+
+Copyright (c) 2010-2023 Isaac Z. Schlueter and Contributors
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.

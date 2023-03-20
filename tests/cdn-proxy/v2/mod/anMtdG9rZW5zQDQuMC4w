@@ -1,56 +1,24 @@
-Ö©/index.js≈®// Copyright 2014, 2015, 2016, 2017, 2018 Simon Lydell
-// License: MIT. (See LICENSE.)
+Ö®/LICENSE≈OThe MIT License (MIT)
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-})
+Copyright (c) 2014, 2015, 2016, 2017, 2018 Simon Lydell
 
-// This regex comes from regex.coffee, and is inserted here by generate-index.js
-// (run `npm run build`).
-exports.default = /((['"])(?:(?!\2|\\).|\\(?:\r\n|[\s\S]))*(\2)?|`(?:[^`\\$]|\\[\s\S]|\$(?!\{)|\$\{(?:[^{}]|\{[^}]*\}?)*\}?)*(`)?)|(\/\/.*)|(\/\*(?:[^*]|\*(?!\/))*(\*\/)?)|(\/(?!\*)(?:\[(?:(?![\]\\]).|\\.)*\]|(?![\/\]\\]).|\\.)+\/(?:(?!\s*(?:\b|[\u0080-\uFFFF$\\'"~({]|[+\-!](?!=)|\.?\d))|[gmiyus]{1,6}\b(?![\u0080-\uFFFF$\\]|\s*(?:[+\-*%&|^<>!=?({]|\/(?![\/*])))))|(0[xX][\da-fA-F]+|0[oO][0-7]+|0[bB][01]+|(?:\d*\.\d+|\d+\.?)(?:[eE][+-]?\d+)?)|((?!\d)(?:(?!\s)[$\w\u0080-\uFFFF]|\\u[\da-fA-F]{4}|\\u\{[\da-fA-F]+\})+)|(--|\+\+|&&|\|\||=>|\.{3}|(?:[+\-\/%&|^]|\*{1,2}|<{1,2}|>{1,3}|!=?|={1,2})=?|[?~.,:;[\](){}])|(\s+)|(^$|[\s\S])/g
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-exports.matchToToken = function(match) {
-  var token = {type: "invalid", value: match[0], closed: undefined}
-       if (match[ 1]) token.type = "string" , token.closed = !!(match[3] || match[4])
-  else if (match[ 5]) token.type = "comment"
-  else if (match[ 6]) token.type = "comment", token.closed = !!match[7]
-  else if (match[ 8]) token.type = "regex"
-  else if (match[ 9]) token.type = "number"
-  else if (match[10]) token.type = "name"
-  else if (match[11]) token.type = "punctuator"
-  else if (match[12]) token.type = "whitespace"
-  return token
-}
-≠/package.json≈â{
-  "name": "js-tokens",
-  "version": "4.0.0",
-  "author": "Simon Lydell",
-  "license": "MIT",
-  "description": "A regex that tokenizes JavaScript.",
-  "keywords": [
-    "JavaScript",
-    "js",
-    "token",
-    "tokenize",
-    "regex"
-  ],
-  "files": [
-    "index.js"
-  ],
-  "repository": "lydell/js-tokens",
-  "scripts": {
-    "test": "mocha --ui tdd",
-    "esprima-compare": "node esprima-compare ./index.js everything.js/es5.js",
-    "build": "node generate-index.js",
-    "dev": "npm run build && npm test"
-  },
-  "devDependencies": {
-    "coffeescript": "2.1.1",
-    "esprima": "4.0.0",
-    "everything.js": "1.0.3",
-    "mocha": "5.0.0"
-  }
-}
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 ≠/CHANGELOG.md≈Å### Version 4.0.0 (2018-01-28) ###
 
 - Added: Support for ES2018. The only change needed was recognizing the `s`
@@ -202,27 +170,36 @@ These are the breaking changes:
 ### Version 0.1.0 (2014-03-08) ###
 
 - Initial release.
-®/LICENSE≈OThe MIT License (MIT)
-
-Copyright (c) 2014, 2015, 2016, 2017, 2018 Simon Lydell
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+≠/package.json≈â{
+  "name": "js-tokens",
+  "version": "4.0.0",
+  "author": "Simon Lydell",
+  "license": "MIT",
+  "description": "A regex that tokenizes JavaScript.",
+  "keywords": [
+    "JavaScript",
+    "js",
+    "token",
+    "tokenize",
+    "regex"
+  ],
+  "files": [
+    "index.js"
+  ],
+  "repository": "lydell/js-tokens",
+  "scripts": {
+    "test": "mocha --ui tdd",
+    "esprima-compare": "node esprima-compare ./index.js everything.js/es5.js",
+    "build": "node generate-index.js",
+    "dev": "npm run build && npm test"
+  },
+  "devDependencies": {
+    "coffeescript": "2.1.1",
+    "esprima": "4.0.0",
+    "everything.js": "1.0.3",
+    "mocha": "5.0.0"
+  }
+}
 ™/README.md≈‹Overview [![Build Status](https://travis-ci.org/lydell/js-tokens.svg?branch=master)](https://travis-ci.org/lydell/js-tokens)
 ========
 
@@ -463,3 +440,26 @@ License
 =======
 
 [MIT](LICENSE).
+©/index.js≈®// Copyright 2014, 2015, 2016, 2017, 2018 Simon Lydell
+// License: MIT. (See LICENSE.)
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+})
+
+// This regex comes from regex.coffee, and is inserted here by generate-index.js
+// (run `npm run build`).
+exports.default = /((['"])(?:(?!\2|\\).|\\(?:\r\n|[\s\S]))*(\2)?|`(?:[^`\\$]|\\[\s\S]|\$(?!\{)|\$\{(?:[^{}]|\{[^}]*\}?)*\}?)*(`)?)|(\/\/.*)|(\/\*(?:[^*]|\*(?!\/))*(\*\/)?)|(\/(?!\*)(?:\[(?:(?![\]\\]).|\\.)*\]|(?![\/\]\\]).|\\.)+\/(?:(?!\s*(?:\b|[\u0080-\uFFFF$\\'"~({]|[+\-!](?!=)|\.?\d))|[gmiyus]{1,6}\b(?![\u0080-\uFFFF$\\]|\s*(?:[+\-*%&|^<>!=?({]|\/(?![\/*])))))|(0[xX][\da-fA-F]+|0[oO][0-7]+|0[bB][01]+|(?:\d*\.\d+|\d+\.?)(?:[eE][+-]?\d+)?)|((?!\d)(?:(?!\s)[$\w\u0080-\uFFFF]|\\u[\da-fA-F]{4}|\\u\{[\da-fA-F]+\})+)|(--|\+\+|&&|\|\||=>|\.{3}|(?:[+\-\/%&|^]|\*{1,2}|<{1,2}|>{1,3}|!=?|={1,2})=?|[?~.,:;[\](){}])|(\s+)|(^$|[\s\S])/g
+
+exports.matchToToken = function(match) {
+  var token = {type: "invalid", value: match[0], closed: undefined}
+       if (match[ 1]) token.type = "string" , token.closed = !!(match[3] || match[4])
+  else if (match[ 5]) token.type = "comment"
+  else if (match[ 6]) token.type = "comment", token.closed = !!match[7]
+  else if (match[ 8]) token.type = "regex"
+  else if (match[ 9]) token.type = "number"
+  else if (match[10]) token.type = "name"
+  else if (match[11]) token.type = "punctuator"
+  else if (match[12]) token.type = "whitespace"
+  return token
+}

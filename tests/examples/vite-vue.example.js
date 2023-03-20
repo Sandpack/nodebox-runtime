@@ -73,9 +73,17 @@ export default defineConfig({
 `,
 
     '/package.json': JSON.stringify({
-      scripts: { dev: 'vite' },
-      dependencies: { vue: 'latest' },
-      devDependencies: { '@vitejs/plugin-vue': '^3.2.0', vite: '^4.0.0', 'esbuild-wasm': '0.15.12' },
+      scripts: {
+        dev: 'vite',
+      },
+      dependencies: {
+        vue: 'latest',
+      },
+      devDependencies: {
+        vite: '4.2.0',
+        'esbuild-wasm': '0.17.12',
+        '@vitejs/plugin-vue': '4.1.0',
+      },
     }),
   });
 

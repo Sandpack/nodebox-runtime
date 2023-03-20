@@ -69,18 +69,15 @@ Simply clone the repo, `npm install`, and run `npm test`
 [codecov-url]: https://app.codecov.io/gh/inspect-js/node-supports-preserve-symlinks-flag/
 [actions-image]: https://img.shields.io/endpoint?url=https://github-actions-badge-u3jn4tfpocch.runkit.sh/inspect-js/node-supports-preserve-symlinks-flag
 [actions-url]: https://github.com/inspect-js/node-supports-preserve-symlinks-flag/actions
-´/.github/FUNDING.ymlÅY# These are supported funding model platforms
+©/index.jsÅ%'use strict';
 
-github: [ljharb]
-patreon: # Replace with a single Patreon username
-open_collective: # Replace with a single Open Collective username
-ko_fi: # Replace with a single Ko-fi username
-tidelift: npm/supports-preserve-symlink-flag
-community_bridge: # Replace with a single Community Bridge project-name e.g., cloud-foundry
-liberapay: # Replace with a single Liberapay username
-issuehunt: # Replace with a single IssueHunt username
-otechie: # Replace with a single Otechie username
-custom: # Replace with up to 4 custom sponsorship URLs e.g., ['link1', 'link2']
+module.exports = (
+// node 12+
+	process.allowedNodeEnvironmentFlags && process.allowedNodeEnvironmentFlags.has('--preserve-symlinks')
+) || (
+// node v6.2 - v11
+	String(module.constructor._findPath).indexOf('preserveSymlinks') >= 0 // eslint-disable-line no-underscore-dangle
+);
 ­/package.jsonÅg{
 	"name": "supports-preserve-symlinks-flag",
 	"version": "1.0.0",
@@ -151,22 +148,14 @@ custom: # Replace with up to 4 custom sponsorship URLs e.g., ['link1', 'link2']
 		"hideCredit": true
 	}
 }
-«/browser.jsÄ&'use strict';
-
-module.exports = null;
-ª/.eslintrcÄ„{
-	"root": true,
-
-	"extends": "@ljharb",
-
-	"env": {
-		"browser": true,
-		"node": true,
-	},
-
-	"rules": {
-		"id-length": "off",
-	},
+§/.nycrcÄ‹{
+	"all": true,
+	"check-coverage": false,
+	"reporter": ["text-summary", "text", "html", "json"],
+	"exclude": [
+		"coverage",
+		"test"
+	]
 }
 ¨/LICENSEÅ+MIT License
 
@@ -189,15 +178,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-§/.nycrcÄ‹{
-	"all": true,
-	"check-coverage": false,
-	"reporter": ["text-summary", "text", "html", "json"],
-	"exclude": [
-		"coverage",
-		"test"
-	]
-}
 ­/CHANGELOG.mdÅÅ# Changelog
 
 All notable changes to this project will be documented in this file.
@@ -220,12 +200,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Only apps should have lockfiles [`ab318ed`](https://github.com/inspect-js/node-supports-preserve-symlinks-flag/commit/ab318ed7ae62f6c2c0e80a50398d40912afd8f69)
 - [meta] add `safe-publish-latest` [`2bb23b3`](https://github.com/inspect-js/node-supports-preserve-symlinks-flag/commit/2bb23b3ebab02dc4135c4cdf0217db82835b9fca)
 - [meta] add `sideEffects` flag [`600223b`](https://github.com/inspect-js/node-supports-preserve-symlinks-flag/commit/600223ba24f30779f209d9097721eff35ed62741)
-©/index.jsÅ%'use strict';
+´/.github/FUNDING.ymlÅY# These are supported funding model platforms
 
-module.exports = (
-// node 12+
-	process.allowedNodeEnvironmentFlags && process.allowedNodeEnvironmentFlags.has('--preserve-symlinks')
-) || (
-// node v6.2 - v11
-	String(module.constructor._findPath).indexOf('preserveSymlinks') >= 0 // eslint-disable-line no-underscore-dangle
-);
+github: [ljharb]
+patreon: # Replace with a single Patreon username
+open_collective: # Replace with a single Open Collective username
+ko_fi: # Replace with a single Ko-fi username
+tidelift: npm/supports-preserve-symlink-flag
+community_bridge: # Replace with a single Community Bridge project-name e.g., cloud-foundry
+liberapay: # Replace with a single Liberapay username
+issuehunt: # Replace with a single IssueHunt username
+otechie: # Replace with a single Otechie username
+custom: # Replace with up to 4 custom sponsorship URLs e.g., ['link1', 'link2']
+«/browser.jsÄ&'use strict';
+
+module.exports = null;
+ª/.eslintrcÄ„{
+	"root": true,
+
+	"extends": "@ljharb",
+
+	"env": {
+		"browser": true,
+		"node": true,
+	},
+
+	"rules": {
+		"id-length": "off",
+	},
+}

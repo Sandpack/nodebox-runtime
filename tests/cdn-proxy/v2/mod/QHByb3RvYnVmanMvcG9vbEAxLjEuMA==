@@ -1,4 +1,100 @@
-‡­/package.jsonÅ{
+‡¯/tests/index.jsÅívar tape = require("tape");
+
+var pool = require("..");
+
+if (typeof Uint8Array !== "undefined")
+tape.test("pool", function(test) {
+
+    var alloc = pool(function(size) { return new Uint8Array(size); }, Uint8Array.prototype.subarray);
+
+    var buf1 = alloc(0);
+    test.equal(buf1.length, 0, "should allocate a buffer of size 0");
+
+    var buf2 = alloc(1);
+    test.equal(buf2.length, 1, "should allocate a buffer of size 1 (initializes slab)");
+
+    test.notEqual(buf2.buffer, buf1.buffer, "should not reference the same backing buffer if previous buffer had size 0");
+    test.equal(buf2.byteOffset, 0, "should allocate at byteOffset 0 when using a new slab");
+
+    buf1 = alloc(1);
+    test.equal(buf1.buffer, buf2.buffer, "should reference the same backing buffer when allocating a chunk fitting into the slab");
+    test.equal(buf1.byteOffset, 8, "should align slices to 32 bit and this allocate at byteOffset 8");
+
+    var buf3 = alloc(4097);
+    test.notEqual(buf3.buffer, buf2.buffer, "should not reference the same backing buffer when allocating a buffer larger than half the backing buffer's size");
+
+    buf2 = alloc(4096);
+    test.equal(buf2.buffer, buf1.buffer, "should reference the same backing buffer when allocating a buffer smaller or equal than half the backing buffer's size");
+
+    buf1 = alloc(4096);
+    test.notEqual(buf1.buffer, buf2.buffer, "should not reference the same backing buffer when the slab is exhausted (initializes new slab)");
+
+    test.end();
+});ª/README.mdÅþ@protobufjs/pool
+================
+[![npm](https://img.shields.io/npm/v/@protobufjs/pool.svg)](https://www.npmjs.com/package/@protobufjs/pool)
+
+A general purpose buffer pool.
+
+API
+---
+
+* **pool(alloc: `function(size: number): Uint8Array`, slice: `function(this: Uint8Array, start: number, end: number): Uint8Array`, [size=8192: `number`]): `function(size: number): Uint8Array`**<br />
+  Creates a pooled allocator.
+
+**License:** [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause)
+«/.npmignoreÄ'npm-debug.*
+node_modules/
+coverage/
+©/index.jsÅØ"use strict";
+module.exports = pool;
+
+/**
+ * An allocator as used by {@link util.pool}.
+ * @typedef PoolAllocator
+ * @type {function}
+ * @param {number} size Buffer size
+ * @returns {Uint8Array} Buffer
+ */
+
+/**
+ * A slicer as used by {@link util.pool}.
+ * @typedef PoolSlicer
+ * @type {function}
+ * @param {number} start Start offset
+ * @param {number} end End offset
+ * @returns {Uint8Array} Buffer slice
+ * @this {Uint8Array}
+ */
+
+/**
+ * A general purpose buffer pool.
+ * @memberof util
+ * @function
+ * @param {PoolAllocator} alloc Allocator
+ * @param {PoolSlicer} slice Slicer
+ * @param {number} [size=8192] Slab size
+ * @returns {PoolAllocator} Pooled allocator
+ */
+function pool(alloc, slice, size) {
+    var SIZE   = size || 8192;
+    var MAX    = SIZE >>> 1;
+    var slab   = null;
+    var offset = SIZE;
+    return function pool_alloc(size) {
+        if (size < 1 || size > MAX)
+            return alloc(size);
+        if (offset + size > SIZE) {
+            slab = alloc(SIZE);
+            offset = 0;
+        }
+        var buf = slice.call(slab, offset, offset += size);
+        if (offset & 7) // align to 32 bit
+            offset = (offset | 7) + 1;
+        return buf;
+    };
+}
+­/package.jsonÅ{
   "name": "@protobufjs/pool",
   "description": "A general purpose buffer pool.",
   "version": "1.1.0",
@@ -19,9 +115,6 @@
     "coverage": "istanbul cover node_modules/tape/bin/tape tests/*.js"
   }
 }
-«/.npmignoreÄ'npm-debug.*
-node_modules/
-coverage/
 ¨/LICENSEÅáCopyright (c) 2016, Daniel Wirtz  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -80,96 +173,3 @@ type PoolSlicer = (this: Uint8Array, start: number, end: number) => Uint8Array;
  * @returns {PoolAllocator} Pooled allocator
  */
 declare function pool(alloc: PoolAllocator, slice: PoolSlicer, size?: number): PoolAllocator;
-¯/tests/index.jsÅívar tape = require("tape");
-
-var pool = require("..");
-
-if (typeof Uint8Array !== "undefined")
-tape.test("pool", function(test) {
-
-    var alloc = pool(function(size) { return new Uint8Array(size); }, Uint8Array.prototype.subarray);
-
-    var buf1 = alloc(0);
-    test.equal(buf1.length, 0, "should allocate a buffer of size 0");
-
-    var buf2 = alloc(1);
-    test.equal(buf2.length, 1, "should allocate a buffer of size 1 (initializes slab)");
-
-    test.notEqual(buf2.buffer, buf1.buffer, "should not reference the same backing buffer if previous buffer had size 0");
-    test.equal(buf2.byteOffset, 0, "should allocate at byteOffset 0 when using a new slab");
-
-    buf1 = alloc(1);
-    test.equal(buf1.buffer, buf2.buffer, "should reference the same backing buffer when allocating a chunk fitting into the slab");
-    test.equal(buf1.byteOffset, 8, "should align slices to 32 bit and this allocate at byteOffset 8");
-
-    var buf3 = alloc(4097);
-    test.notEqual(buf3.buffer, buf2.buffer, "should not reference the same backing buffer when allocating a buffer larger than half the backing buffer's size");
-
-    buf2 = alloc(4096);
-    test.equal(buf2.buffer, buf1.buffer, "should reference the same backing buffer when allocating a buffer smaller or equal than half the backing buffer's size");
-
-    buf1 = alloc(4096);
-    test.notEqual(buf1.buffer, buf2.buffer, "should not reference the same backing buffer when the slab is exhausted (initializes new slab)");
-
-    test.end();
-});©/index.jsÅØ"use strict";
-module.exports = pool;
-
-/**
- * An allocator as used by {@link util.pool}.
- * @typedef PoolAllocator
- * @type {function}
- * @param {number} size Buffer size
- * @returns {Uint8Array} Buffer
- */
-
-/**
- * A slicer as used by {@link util.pool}.
- * @typedef PoolSlicer
- * @type {function}
- * @param {number} start Start offset
- * @param {number} end End offset
- * @returns {Uint8Array} Buffer slice
- * @this {Uint8Array}
- */
-
-/**
- * A general purpose buffer pool.
- * @memberof util
- * @function
- * @param {PoolAllocator} alloc Allocator
- * @param {PoolSlicer} slice Slicer
- * @param {number} [size=8192] Slab size
- * @returns {PoolAllocator} Pooled allocator
- */
-function pool(alloc, slice, size) {
-    var SIZE   = size || 8192;
-    var MAX    = SIZE >>> 1;
-    var slab   = null;
-    var offset = SIZE;
-    return function pool_alloc(size) {
-        if (size < 1 || size > MAX)
-            return alloc(size);
-        if (offset + size > SIZE) {
-            slab = alloc(SIZE);
-            offset = 0;
-        }
-        var buf = slice.call(slab, offset, offset += size);
-        if (offset & 7) // align to 32 bit
-            offset = (offset | 7) + 1;
-        return buf;
-    };
-}
-ª/README.mdÅþ@protobufjs/pool
-================
-[![npm](https://img.shields.io/npm/v/@protobufjs/pool.svg)](https://www.npmjs.com/package/@protobufjs/pool)
-
-A general purpose buffer pool.
-
-API
----
-
-* **pool(alloc: `function(size: number): Uint8Array`, slice: `function(this: Uint8Array, start: number, end: number): Uint8Array`, [size=8192: `number`]): `function(size: number): Uint8Array`**<br />
-  Creates a pooled allocator.
-
-**License:** [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause)

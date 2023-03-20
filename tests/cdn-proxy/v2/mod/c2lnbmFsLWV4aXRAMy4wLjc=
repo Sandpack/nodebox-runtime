@@ -1,42 +1,4 @@
-Ö≠/package.json≈`{
-  "name": "signal-exit",
-  "version": "3.0.7",
-  "description": "when you want to fire an event no matter how a process exits.",
-  "main": "index.js",
-  "scripts": {
-    "test": "tap",
-    "snap": "tap",
-    "preversion": "npm test",
-    "postversion": "npm publish",
-    "prepublishOnly": "git push origin --follow-tags"
-  },
-  "files": [
-    "index.js",
-    "signals.js"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/tapjs/signal-exit.git"
-  },
-  "keywords": [
-    "signal",
-    "exit"
-  ],
-  "author": "Ben Coe <ben@npmjs.com>",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/tapjs/signal-exit/issues"
-  },
-  "homepage": "https://github.com/tapjs/signal-exit",
-  "devDependencies": {
-    "chai": "^3.5.0",
-    "coveralls": "^3.1.1",
-    "nyc": "^15.1.0",
-    "standard-version": "^9.3.1",
-    "tap": "^15.1.1"
-  }
-}
-™/README.md≈?# signal-exit
+Ö™/README.md≈?# signal-exit
 
 [![Build Status](https://travis-ci.org/tapjs/signal-exit.png)](https://travis-ci.org/tapjs/signal-exit)
 [![Coverage](https://coveralls.io/repos/tapjs/signal-exit/badge.svg?branch=master)](https://coveralls.io/r/tapjs/signal-exit?branch=master)
@@ -75,22 +37,6 @@ it is a fatal signal.
 
 * `alwaysLast`: Run this handler after any other signal or exit
   handlers.  This causes `process.emit` to be monkeypatched.
-¨/LICENSE.txt≈ÏThe ISC License
-
-Copyright (c) 2015, Contributors
-
-Permission to use, copy, modify, and/or distribute this software
-for any purpose with or without fee is hereby granted, provided
-that the above copyright notice and this permission notice
-appear in all copies.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
-OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE
-LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES
-OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
-WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
-ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ©/index.js≈L// Note: since nyc uses this module to output coverage, any lines
 // that are in the direct sync flow of nyc's outputCoverage are
 // ignored, since we can never get coverage for them.
@@ -293,6 +239,22 @@ if (!processOk(process)) {
     }
   }
 }
+¨/LICENSE.txt≈ÏThe ISC License
+
+Copyright (c) 2015, Contributors
+
+Permission to use, copy, modify, and/or distribute this software
+for any purpose with or without fee is hereby granted, provided
+that the above copyright notice and this permission notice
+appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE
+LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES
+OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ´/signals.js≈// This is not the set of all possible signals.
 //
 // It IS, however, the set of all signals that trigger
@@ -345,4 +307,42 @@ if (process.platform === 'linux') {
     'SIGSTKFLT',
     'SIGUNUSED'
   )
+}
+≠/package.json≈`{
+  "name": "signal-exit",
+  "version": "3.0.7",
+  "description": "when you want to fire an event no matter how a process exits.",
+  "main": "index.js",
+  "scripts": {
+    "test": "tap",
+    "snap": "tap",
+    "preversion": "npm test",
+    "postversion": "npm publish",
+    "prepublishOnly": "git push origin --follow-tags"
+  },
+  "files": [
+    "index.js",
+    "signals.js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tapjs/signal-exit.git"
+  },
+  "keywords": [
+    "signal",
+    "exit"
+  ],
+  "author": "Ben Coe <ben@npmjs.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tapjs/signal-exit/issues"
+  },
+  "homepage": "https://github.com/tapjs/signal-exit",
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "coveralls": "^3.1.1",
+    "nyc": "^15.1.0",
+    "standard-version": "^9.3.1",
+    "tap": "^15.1.1"
+  }
 }

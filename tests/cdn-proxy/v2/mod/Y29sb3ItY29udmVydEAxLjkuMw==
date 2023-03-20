@@ -1,4 +1,101 @@
-á©/index.js≈Ωvar conversions = require('./conversions');
+á©/route.js≈≥var conversions = require('./conversions');
+
+/*
+	this function routes a model to all other models.
+
+	all functions that are routed have a property `.conversion` attached
+	to the returned synthetic function. This property is an array
+	of strings, each with the steps in between the 'from' and 'to'
+	color models (inclusive).
+
+	conversions that are not possible simply are not included.
+*/
+
+function buildGraph() {
+	var graph = {};
+	// https://jsperf.com/object-keys-vs-for-in-with-closure/3
+	var models = Object.keys(conversions);
+
+	for (var len = models.length, i = 0; i < len; i++) {
+		graph[models[i]] = {
+			// http://jsperf.com/1-vs-infinity
+			// micro-opt, but this is simple.
+			distance: -1,
+			parent: null
+		};
+	}
+
+	return graph;
+}
+
+// https://en.wikipedia.org/wiki/Breadth-first_search
+function deriveBFS(fromModel) {
+	var graph = buildGraph();
+	var queue = [fromModel]; // unshift -> queue -> pop
+
+	graph[fromModel].distance = 0;
+
+	while (queue.length) {
+		var current = queue.pop();
+		var adjacents = Object.keys(conversions[current]);
+
+		for (var len = adjacents.length, i = 0; i < len; i++) {
+			var adjacent = adjacents[i];
+			var node = graph[adjacent];
+
+			if (node.distance === -1) {
+				node.distance = graph[current].distance + 1;
+				node.parent = current;
+				queue.unshift(adjacent);
+			}
+		}
+	}
+
+	return graph;
+}
+
+function link(from, to) {
+	return function (args) {
+		return to(from(args));
+	};
+}
+
+function wrapConversion(toModel, graph) {
+	var path = [graph[toModel].parent, toModel];
+	var fn = conversions[graph[toModel].parent][toModel];
+
+	var cur = graph[toModel].parent;
+	while (graph[cur].parent) {
+		path.unshift(graph[cur].parent);
+		fn = link(conversions[graph[cur].parent][cur], fn);
+		cur = graph[cur].parent;
+	}
+
+	fn.conversion = path;
+	return fn;
+}
+
+module.exports = function (fromModel) {
+	var graph = deriveBFS(fromModel);
+	var conversion = {};
+
+	var models = Object.keys(graph);
+	for (var len = models.length, i = 0; i < len; i++) {
+		var toModel = models[i];
+		var node = graph[toModel];
+
+		if (node.parent === null) {
+			// no possible conversion, or this node is the source model.
+			continue;
+		}
+
+		conversion[toModel] = wrapConversion(toModel, graph);
+	}
+
+	return conversion;
+};
+
+©/index.js≈Ωvar conversions = require('./conversions');
 var route = require('./route');
 
 var convert = {};
@@ -76,81 +173,52 @@ models.forEach(function (fromModel) {
 });
 
 module.exports = convert;
-®/LICENSE≈?Copyright (c) 2011-2016 Heather Arthur <fayearthur@gmail.com>
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-≠/CHANGELOG.md≈â# 1.0.0 - 2016-01-07
-
-- Removed: unused speed test
-- Added: Automatic routing between previously unsupported conversions
-([#27](https://github.com/Qix-/color-convert/pull/27))
-- Removed: `xxx2xxx()` and `xxx2xxxRaw()` functions
-([#27](https://github.com/Qix-/color-convert/pull/27))
-- Removed: `convert()` class
-([#27](https://github.com/Qix-/color-convert/pull/27))
-- Changed: all functions to lookup dictionary
-([#27](https://github.com/Qix-/color-convert/pull/27))
-- Changed: `ansi` to `ansi256`
-([#27](https://github.com/Qix-/color-convert/pull/27))
-- Fixed: argument grouping for functions requiring only one argument
-([#27](https://github.com/Qix-/color-convert/pull/27))
-
-# 0.6.0 - 2015-07-23
-
-- Added: methods to handle
-[ANSI](https://en.wikipedia.org/wiki/ANSI_escape_code#Colors) 16/256 colors:
-  - rgb2ansi16
-  - rgb2ansi
-  - hsl2ansi16
-  - hsl2ansi
-  - hsv2ansi16
-  - hsv2ansi
-  - hwb2ansi16
-  - hwb2ansi
-  - cmyk2ansi16
-  - cmyk2ansi
-  - keyword2ansi16
-  - keyword2ansi
-  - ansi162rgb
-  - ansi162hsl
-  - ansi162hsv
-  - ansi162hwb
-  - ansi162cmyk
-  - ansi162keyword
-  - ansi2rgb
-  - ansi2hsl
-  - ansi2hsv
-  - ansi2hwb
-  - ansi2cmyk
-  - ansi2keyword
-([#18](https://github.com/harthur/color-convert/pull/18))
-
-# 0.5.3 - 2015-06-02
-
-- Fixed: hsl2hsv does not return `NaN` anymore when using `[0,0,0]`
-([#15](https://github.com/harthur/color-convert/issues/15))
-
----
-
-Check out commit logs for older releases
+≠/package.json≈%{
+  "name": "color-convert",
+  "description": "Plain color conversion functions",
+  "version": "1.9.3",
+  "author": "Heather Arthur <fayearthur@gmail.com>",
+  "license": "MIT",
+  "repository": "Qix-/color-convert",
+  "scripts": {
+    "pretest": "xo",
+    "test": "node test/basic.js"
+  },
+  "keywords": [
+    "color",
+    "colour",
+    "convert",
+    "converter",
+    "conversion",
+    "rgb",
+    "hsl",
+    "hsv",
+    "hwb",
+    "cmyk",
+    "ansi",
+    "ansi16"
+  ],
+  "files": [
+    "index.js",
+    "conversions.js",
+    "css-keywords.js",
+    "route.js"
+  ],
+  "xo": {
+    "rules": {
+      "default-case": 0,
+      "no-inline-comments": 0,
+      "operator-linebreak": 0
+    }
+  },
+  "devDependencies": {
+    "chalk": "1.1.1",
+    "xo": "0.11.2"
+  },
+  "dependencies": {
+    "color-name": "1.1.3"
+  }
+}
 Ø/conversions.js≈A“/* MIT license */
 var cssKeywords = require('color-name');
 
@@ -1019,149 +1087,6 @@ convert.rgb.gray = function (rgb) {
 	var val = (rgb[0] + rgb[1] + rgb[2]) / 3;
 	return [val / 255 * 100];
 };
-≠/package.json≈%{
-  "name": "color-convert",
-  "description": "Plain color conversion functions",
-  "version": "1.9.3",
-  "author": "Heather Arthur <fayearthur@gmail.com>",
-  "license": "MIT",
-  "repository": "Qix-/color-convert",
-  "scripts": {
-    "pretest": "xo",
-    "test": "node test/basic.js"
-  },
-  "keywords": [
-    "color",
-    "colour",
-    "convert",
-    "converter",
-    "conversion",
-    "rgb",
-    "hsl",
-    "hsv",
-    "hwb",
-    "cmyk",
-    "ansi",
-    "ansi16"
-  ],
-  "files": [
-    "index.js",
-    "conversions.js",
-    "css-keywords.js",
-    "route.js"
-  ],
-  "xo": {
-    "rules": {
-      "default-case": 0,
-      "no-inline-comments": 0,
-      "operator-linebreak": 0
-    }
-  },
-  "devDependencies": {
-    "chalk": "1.1.1",
-    "xo": "0.11.2"
-  },
-  "dependencies": {
-    "color-name": "1.1.3"
-  }
-}
-©/route.js≈≥var conversions = require('./conversions');
-
-/*
-	this function routes a model to all other models.
-
-	all functions that are routed have a property `.conversion` attached
-	to the returned synthetic function. This property is an array
-	of strings, each with the steps in between the 'from' and 'to'
-	color models (inclusive).
-
-	conversions that are not possible simply are not included.
-*/
-
-function buildGraph() {
-	var graph = {};
-	// https://jsperf.com/object-keys-vs-for-in-with-closure/3
-	var models = Object.keys(conversions);
-
-	for (var len = models.length, i = 0; i < len; i++) {
-		graph[models[i]] = {
-			// http://jsperf.com/1-vs-infinity
-			// micro-opt, but this is simple.
-			distance: -1,
-			parent: null
-		};
-	}
-
-	return graph;
-}
-
-// https://en.wikipedia.org/wiki/Breadth-first_search
-function deriveBFS(fromModel) {
-	var graph = buildGraph();
-	var queue = [fromModel]; // unshift -> queue -> pop
-
-	graph[fromModel].distance = 0;
-
-	while (queue.length) {
-		var current = queue.pop();
-		var adjacents = Object.keys(conversions[current]);
-
-		for (var len = adjacents.length, i = 0; i < len; i++) {
-			var adjacent = adjacents[i];
-			var node = graph[adjacent];
-
-			if (node.distance === -1) {
-				node.distance = graph[current].distance + 1;
-				node.parent = current;
-				queue.unshift(adjacent);
-			}
-		}
-	}
-
-	return graph;
-}
-
-function link(from, to) {
-	return function (args) {
-		return to(from(args));
-	};
-}
-
-function wrapConversion(toModel, graph) {
-	var path = [graph[toModel].parent, toModel];
-	var fn = conversions[graph[toModel].parent][toModel];
-
-	var cur = graph[toModel].parent;
-	while (graph[cur].parent) {
-		path.unshift(graph[cur].parent);
-		fn = link(conversions[graph[cur].parent][cur], fn);
-		cur = graph[cur].parent;
-	}
-
-	fn.conversion = path;
-	return fn;
-}
-
-module.exports = function (fromModel) {
-	var graph = deriveBFS(fromModel);
-	var conversion = {};
-
-	var models = Object.keys(graph);
-	for (var len = models.length, i = 0; i < len; i++) {
-		var toModel = models[i];
-		var node = graph[toModel];
-
-		if (node.parent === null) {
-			// no possible conversion, or this node is the source model.
-			continue;
-		}
-
-		conversion[toModel] = wrapConversion(toModel, graph);
-	}
-
-	return conversion;
-};
-
 ™/README.md≈%# color-convert
 
 [![Build Status](https://travis-ci.org/Qix-/color-convert.svg?branch=master)](https://travis-ci.org/Qix-/color-convert)
@@ -1230,3 +1155,78 @@ If there is a new model you would like to support, or want to add a direct conve
 
 # License
 Copyright &copy; 2011-2016, Heather Arthur and Josh Junon. Licensed under the [MIT License](LICENSE).
+®/LICENSE≈?Copyright (c) 2011-2016 Heather Arthur <fayearthur@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+≠/CHANGELOG.md≈â# 1.0.0 - 2016-01-07
+
+- Removed: unused speed test
+- Added: Automatic routing between previously unsupported conversions
+([#27](https://github.com/Qix-/color-convert/pull/27))
+- Removed: `xxx2xxx()` and `xxx2xxxRaw()` functions
+([#27](https://github.com/Qix-/color-convert/pull/27))
+- Removed: `convert()` class
+([#27](https://github.com/Qix-/color-convert/pull/27))
+- Changed: all functions to lookup dictionary
+([#27](https://github.com/Qix-/color-convert/pull/27))
+- Changed: `ansi` to `ansi256`
+([#27](https://github.com/Qix-/color-convert/pull/27))
+- Fixed: argument grouping for functions requiring only one argument
+([#27](https://github.com/Qix-/color-convert/pull/27))
+
+# 0.6.0 - 2015-07-23
+
+- Added: methods to handle
+[ANSI](https://en.wikipedia.org/wiki/ANSI_escape_code#Colors) 16/256 colors:
+  - rgb2ansi16
+  - rgb2ansi
+  - hsl2ansi16
+  - hsl2ansi
+  - hsv2ansi16
+  - hsv2ansi
+  - hwb2ansi16
+  - hwb2ansi
+  - cmyk2ansi16
+  - cmyk2ansi
+  - keyword2ansi16
+  - keyword2ansi
+  - ansi162rgb
+  - ansi162hsl
+  - ansi162hsv
+  - ansi162hwb
+  - ansi162cmyk
+  - ansi162keyword
+  - ansi2rgb
+  - ansi2hsl
+  - ansi2hsv
+  - ansi2hwb
+  - ansi2cmyk
+  - ansi2keyword
+([#18](https://github.com/harthur/color-convert/pull/18))
+
+# 0.5.3 - 2015-06-02
+
+- Fixed: hsl2hsv does not return `NaN` anymore when using `[0,0,0]`
+([#15](https://github.com/harthur/color-convert/issues/15))
+
+---
+
+Check out commit logs for older releases

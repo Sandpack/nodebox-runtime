@@ -1,57 +1,4 @@
-Ü™/readme.md≈# cli-spinners
-
-> 70+ spinners for use in the terminal
-
-<p align="center">
-	<br>
-	<img width="700" src="screenshot.svg">
-	<br>
-	<br>
-</p>
-
-The list of spinners is just a [JSON file](spinners.json) and can be used wherever.
-
-You probably want to use one of these spinners through the [`ora`](https://github.com/sindresorhus/ora) module.
-
-## Install
-
-```
-$ npm install cli-spinners
-```
-
-## Usage
-
-```js
-const cliSpinners = require('cli-spinners');
-
-console.log(cliSpinners.dots);
-/*
-{
-	interval: 80,
-	frames: ['‚†ã', '‚†ô', '‚†π', '‚†∏', '‚†º', '‚†¥', '‚†¶', '‚†ß', '‚†á', '‚†è']
-}
-*/
-```
-
-## Preview
-
-The header GIF is outdated. See all the [spinner at once](https://jsfiddle.net/sindresorhus/2eLtsbey/embedded/result/) or [one at the time](https://asciinema.org/a/95348?size=big).
-
-## API
-
-Each spinner comes with a recommended `interval` and an array of `frames`.
-
-[See the spinners.](spinners.json)
-
-The `random` spinner will return a random spinner each time it's called.
-
-## Related
-
-- [ora](https://github.com/sindresorhus/ora) - Elegant terminal spinner
-- [CLISpinner](https://github.com/kiliankoe/CLISpinner) - Terminal spinners for Swift
-- [py-spinners](https://github.com/ManrajGrover/py-spinners) - Python port
-- [spinners](https://github.com/FGRibreau/spinners) - Terminal spinners for Rust
-≠/package.json≈é{
+Ü≠/package.json≈é{
 	"name": "cli-spinners",
 	"version": "2.7.0",
 	"description": "Spinners for use in the terminal",
@@ -100,30 +47,6 @@ The `random` spinner will return a random spinner each time it's called.
 		"xo": "^0.24.0"
 	}
 }
-®/license≈]MIT License
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-©/index.js≈ñ'use strict';
-
-const spinners = Object.assign({}, require('./spinners.json')); // eslint-disable-line import/extensions
-
-const spinnersList = Object.keys(spinners);
-
-Object.defineProperty(spinners, 'random', {
-	get() {
-		const randomIndex = Math.floor(Math.random() * spinnersList.length);
-		const spinnerName = spinnersList[randomIndex];
-		return spinners[spinnerName];
-	}
-});
-
-module.exports = spinners;
 Æ/spinners.json≈WL{
 	"dots": {
 		"interval": 80,
@@ -1592,6 +1515,83 @@ module.exports = spinners;
 		]
 	}
 }
+™/readme.md≈# cli-spinners
+
+> 70+ spinners for use in the terminal
+
+<p align="center">
+	<br>
+	<img width="700" src="screenshot.svg">
+	<br>
+	<br>
+</p>
+
+The list of spinners is just a [JSON file](spinners.json) and can be used wherever.
+
+You probably want to use one of these spinners through the [`ora`](https://github.com/sindresorhus/ora) module.
+
+## Install
+
+```
+$ npm install cli-spinners
+```
+
+## Usage
+
+```js
+const cliSpinners = require('cli-spinners');
+
+console.log(cliSpinners.dots);
+/*
+{
+	interval: 80,
+	frames: ['‚†ã', '‚†ô', '‚†π', '‚†∏', '‚†º', '‚†¥', '‚†¶', '‚†ß', '‚†á', '‚†è']
+}
+*/
+```
+
+## Preview
+
+The header GIF is outdated. See all the [spinner at once](https://jsfiddle.net/sindresorhus/2eLtsbey/embedded/result/) or [one at the time](https://asciinema.org/a/95348?size=big).
+
+## API
+
+Each spinner comes with a recommended `interval` and an array of `frames`.
+
+[See the spinners.](spinners.json)
+
+The `random` spinner will return a random spinner each time it's called.
+
+## Related
+
+- [ora](https://github.com/sindresorhus/ora) - Elegant terminal spinner
+- [CLISpinner](https://github.com/kiliankoe/CLISpinner) - Terminal spinners for Swift
+- [py-spinners](https://github.com/ManrajGrover/py-spinners) - Python port
+- [spinners](https://github.com/FGRibreau/spinners) - Terminal spinners for Rust
+®/license≈]MIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+©/index.js≈ñ'use strict';
+
+const spinners = Object.assign({}, require('./spinners.json')); // eslint-disable-line import/extensions
+
+const spinnersList = Object.keys(spinners);
+
+Object.defineProperty(spinners, 'random', {
+	get() {
+		const randomIndex = Math.floor(Math.random() * spinnersList.length);
+		const spinnerName = spinnersList[randomIndex];
+		return spinners[spinnerName];
+	}
+});
+
+module.exports = spinners;
 ´/index.d.ts≈≥declare namespace cliSpinners {
 	type SpinnerName =
 		| 'dots'

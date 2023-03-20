@@ -179,40 +179,6 @@ away.
 * `prune()`
 
     Manually iterates over the entire cache proactively pruning old entries
-≠/package.json≈¡{
-  "name": "lru-cache",
-  "description": "A cache object that deletes the least-recently-used items.",
-  "version": "6.0.0",
-  "author": "Isaac Z. Schlueter <i@izs.me>",
-  "keywords": [
-    "mru",
-    "lru",
-    "cache"
-  ],
-  "scripts": {
-    "test": "tap",
-    "snap": "tap",
-    "preversion": "npm test",
-    "postversion": "npm publish",
-    "prepublishOnly": "git push origin --follow-tags"
-  },
-  "main": "index.js",
-  "repository": "git://github.com/isaacs/node-lru-cache.git",
-  "devDependencies": {
-    "benchmark": "^2.1.4",
-    "tap": "^14.10.7"
-  },
-  "license": "ISC",
-  "dependencies": {
-    "yallist": "^4.0.0"
-  },
-  "files": [
-    "index.js"
-  ],
-  "engines": {
-    "node": ">=10"
-  }
-}
 ©/index.js≈˙'use strict'
 
 // A linked list to keep track of recently-used-ness
@@ -547,3 +513,37 @@ const forEachStep = (self, fn, node, thisp) => {
 }
 
 module.exports = LRUCache
+≠/package.json≈¡{
+  "name": "lru-cache",
+  "description": "A cache object that deletes the least-recently-used items.",
+  "version": "6.0.0",
+  "author": "Isaac Z. Schlueter <i@izs.me>",
+  "keywords": [
+    "mru",
+    "lru",
+    "cache"
+  ],
+  "scripts": {
+    "test": "tap",
+    "snap": "tap",
+    "preversion": "npm test",
+    "postversion": "npm publish",
+    "prepublishOnly": "git push origin --follow-tags"
+  },
+  "main": "index.js",
+  "repository": "git://github.com/isaacs/node-lru-cache.git",
+  "devDependencies": {
+    "benchmark": "^2.1.4",
+    "tap": "^14.10.7"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "yallist": "^4.0.0"
+  },
+  "files": [
+    "index.js"
+  ],
+  "engines": {
+    "node": ">=10"
+  }
+}

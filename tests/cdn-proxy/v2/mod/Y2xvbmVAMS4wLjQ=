@@ -1,73 +1,4 @@
-Ü≠/package.json≈`{
-  "name": "clone",
-  "description": "deep cloning of objects and arrays",
-  "tags": [
-    "clone",
-    "object",
-    "array",
-    "function",
-    "date"
-  ],
-  "version": "1.0.4",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/pvorb/node-clone.git"
-  },
-  "bugs": {
-    "url": "https://github.com/pvorb/node-clone/issues"
-  },
-  "main": "clone.js",
-  "author": "Paul Vorbach <paul@vorba.ch> (http://paul.vorba.ch/)",
-  "contributors": [
-    "Blake Miner <miner.blake@gmail.com> (http://www.blakeminer.com/)",
-    "Tian You <axqd001@gmail.com> (http://blog.axqd.net/)",
-    "George Stagas <gstagas@gmail.com> (http://stagas.com/)",
-    "Tobiasz Cudnik <tobiasz.cudnik@gmail.com> (https://github.com/TobiaszCudnik)",
-    "Pavel Lang <langpavel@phpskelet.org> (https://github.com/langpavel)",
-    "Dan MacTough (http://yabfog.com/)",
-    "w1nk (https://github.com/w1nk)",
-    "Hugh Kennedy (http://twitter.com/hughskennedy)",
-    "Dustin Diaz (http://dustindiaz.com)",
-    "Ilya Shaisultanov (https://github.com/diversario)",
-    "Nathan MacInnes <nathan@macinn.es> (http://macinn.es/)",
-    "Benjamin E. Coe <ben@npmjs.com> (https://twitter.com/benjamincoe)",
-    "Nathan Zadoks (https://github.com/nathan7)",
-    "R√≥bert Oroszi <robert+gh@oroszi.net> (https://github.com/oroce)",
-    "Aur√©lio A. Heckert (http://softwarelivre.org/aurium)",
-    "Guy Ellis (http://www.guyellisrocks.com/)"
-  ],
-  "license": "MIT",
-  "engines": {
-    "node": ">=0.8"
-  },
-  "dependencies": {},
-  "devDependencies": {
-    "nodeunit": "~0.9.0"
-  },
-  "optionalDependencies": {},
-  "scripts": {
-    "test": "nodeunit test.js"
-  }
-}
-®/LICENSE≈.Copyright ¬© 2011-2015 Paul Vorbach <paul@vorba.ch>
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the ‚ÄúSoftware‚Äù), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED ‚ÄúAS IS‚Äù, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-™/README.md≈# clone
+Ü™/README.md≈# clone
 
 [![build status](https://secure.travis-ci.org/pvorb/node-clone.png)](http://travis-ci.org/pvorb/node-clone)
 
@@ -193,7 +124,16 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-©/clone.js≈%var clone = (function() {
+™/clone.iml≈õ<?xml version="1.0" encoding="UTF-8"?>
+<module type="WEB_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="clone node_modules" level="project" />
+  </component>
+</module>©/clone.js≈%var clone = (function() {
 'use strict';
 
 /**
@@ -359,16 +299,76 @@ return clone;
 if (typeof module === 'object' && module.exports) {
   module.exports = clone;
 }
-™/clone.iml≈õ<?xml version="1.0" encoding="UTF-8"?>
-<module type="WEB_MODULE" version="4">
-  <component name="NewModuleRootManager" inherit-compiler-output="true">
-    <exclude-output />
-    <content url="file://$MODULE_DIR$" />
-    <orderEntry type="inheritedJdk" />
-    <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="clone node_modules" level="project" />
-  </component>
-</module>´/.npmignoreƒ-/node_modules/
+´/.npmignoreƒ-/node_modules/
 /test.js
 /*.html
 /.travis.yml
+≠/package.json≈`{
+  "name": "clone",
+  "description": "deep cloning of objects and arrays",
+  "tags": [
+    "clone",
+    "object",
+    "array",
+    "function",
+    "date"
+  ],
+  "version": "1.0.4",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/pvorb/node-clone.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pvorb/node-clone/issues"
+  },
+  "main": "clone.js",
+  "author": "Paul Vorbach <paul@vorba.ch> (http://paul.vorba.ch/)",
+  "contributors": [
+    "Blake Miner <miner.blake@gmail.com> (http://www.blakeminer.com/)",
+    "Tian You <axqd001@gmail.com> (http://blog.axqd.net/)",
+    "George Stagas <gstagas@gmail.com> (http://stagas.com/)",
+    "Tobiasz Cudnik <tobiasz.cudnik@gmail.com> (https://github.com/TobiaszCudnik)",
+    "Pavel Lang <langpavel@phpskelet.org> (https://github.com/langpavel)",
+    "Dan MacTough (http://yabfog.com/)",
+    "w1nk (https://github.com/w1nk)",
+    "Hugh Kennedy (http://twitter.com/hughskennedy)",
+    "Dustin Diaz (http://dustindiaz.com)",
+    "Ilya Shaisultanov (https://github.com/diversario)",
+    "Nathan MacInnes <nathan@macinn.es> (http://macinn.es/)",
+    "Benjamin E. Coe <ben@npmjs.com> (https://twitter.com/benjamincoe)",
+    "Nathan Zadoks (https://github.com/nathan7)",
+    "R√≥bert Oroszi <robert+gh@oroszi.net> (https://github.com/oroce)",
+    "Aur√©lio A. Heckert (http://softwarelivre.org/aurium)",
+    "Guy Ellis (http://www.guyellisrocks.com/)"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=0.8"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "nodeunit": "~0.9.0"
+  },
+  "optionalDependencies": {},
+  "scripts": {
+    "test": "nodeunit test.js"
+  }
+}
+®/LICENSE≈.Copyright ¬© 2011-2015 Paul Vorbach <paul@vorba.ch>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the ‚ÄúSoftware‚Äù), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED ‚ÄúAS IS‚Äù, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

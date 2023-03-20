@@ -1,18 +1,31 @@
-‰¨/LICENSEÅMCopyright 2019 "David Mark Clements <david.mark.clements@gmail.com>"
+‰°/index.test-d.tsÄ®import { expectType } from 'tsd';
+import rfdc = require('.');
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
-documentation files (the "Software"), to deal in the Software without restriction, including without limitation 
-the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
-to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+const clone = rfdc();
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions 
-of the Software.
+expectType<number>(clone(5));
+expectType<{ lorem: string }>(clone({ lorem: "ipsum" }));
+¹/.github/workflows/ci.ymlÅÀname: CI
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED 
-TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
-THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
-CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
-IN THE SOFTWARE.
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [8.x, 10.x, 12.x, 14.x]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: npm install
+    - run: npm run ci
 ®/test/index.jsÅ,Œ'use strict'
 
 const { test } = require('tap')
@@ -304,6 +317,21 @@ function types (clone, label) {
 «/default.jsÄ7'use strict'
 
 module.exports = require('./index.js')()
+¨/LICENSEÅMCopyright 2019 "David Mark Clements <david.mark.clements@gmail.com>"
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation 
+the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
+to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions 
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED 
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
+IN THE SOFTWARE.
 ­/package.jsonÅ{
   "name": "rfdc",
   "version": "1.3.0",
@@ -707,13 +735,6 @@ function rfdcCircles (opts) {
     return o2
   }
 }
-°/index.test-d.tsÄ®import { expectType } from 'tsd';
-import rfdc = require('.');
-
-const clone = rfdc();
-
-expectType<number>(clone(5));
-expectType<{ lorem: string }>(clone({ lorem: "ipsum" }));
 «/index.d.tsÄµdeclare namespace rfdc {
   interface Options {
     proto?: boolean;
@@ -724,24 +745,3 @@ expectType<{ lorem: string }>(clone({ lorem: "ipsum" }));
 declare function rfdc(options?: rfdc.Options): <T>(input: T) => T;
 
 export = rfdc;
-¹/.github/workflows/ci.ymlÅÀname: CI
-
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: [8.x, 10.x, 12.x, 14.x]
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-    - run: npm install
-    - run: npm run ci

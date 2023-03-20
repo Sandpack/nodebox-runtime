@@ -1,48 +1,4 @@
-èæ/data/overlapping-plugins.json≈Ô{
-  "transform-async-to-generator": [
-    "bugfix/transform-async-arrows-in-class"
-  ],
-  "transform-parameters": [
-    "bugfix/transform-edge-default-parameters",
-    "bugfix/transform-safari-id-destructuring-collision-in-function-expression"
-  ],
-  "transform-function-name": [
-    "bugfix/transform-edge-function-name"
-  ],
-  "transform-block-scoping": [
-    "bugfix/transform-safari-block-shadowing",
-    "bugfix/transform-safari-for-shadowing"
-  ],
-  "transform-template-literals": [
-    "bugfix/transform-tagged-template-caching"
-  ],
-  "transform-optional-chaining": [
-    "bugfix/transform-v8-spread-parameters-in-optional-chaining"
-  ],
-  "proposal-optional-chaining": [
-    "bugfix/transform-v8-spread-parameters-in-optional-chaining"
-  ]
-}
-π/data/native-modules.json≈<{
-  "es6.module": {
-    "chrome": "61",
-    "and_chr": "61",
-    "edge": "16",
-    "firefox": "60",
-    "and_ff": "60",
-    "node": "13.2.0",
-    "opera": "48",
-    "op_mob": "48",
-    "safari": "10.1",
-    "ios": "10.3",
-    "samsung": "8.2",
-    "android": "61",
-    "electron": "2.0",
-    "ios_saf": "10.3"
-  }
-}
-µ/corejs2-built-ins.jsƒ;module.exports = require("./data/corejs2-built-ins.json");
-º/data/corejs2-built-ins.json≈è+{
+èº/data/corejs2-built-ins.json≈è+{
   "es6.array.copy-within": {
     "chrome": "45",
     "opera": "32",
@@ -1977,191 +1933,6 @@
     "electron": "1.2"
   }
 }
-∫/data/plugin-bugfixes.json≈a{
-  "bugfix/transform-async-arrows-in-class": {
-    "chrome": "55",
-    "opera": "42",
-    "edge": "15",
-    "firefox": "52",
-    "safari": "11",
-    "node": "7.6",
-    "deno": "1",
-    "ios": "11",
-    "samsung": "6",
-    "electron": "1.6"
-  },
-  "bugfix/transform-edge-default-parameters": {
-    "chrome": "49",
-    "opera": "36",
-    "edge": "18",
-    "firefox": "52",
-    "safari": "10",
-    "node": "6",
-    "deno": "1",
-    "ios": "10",
-    "samsung": "5",
-    "electron": "0.37"
-  },
-  "bugfix/transform-edge-function-name": {
-    "chrome": "51",
-    "opera": "38",
-    "edge": "79",
-    "firefox": "53",
-    "safari": "10",
-    "node": "6.5",
-    "deno": "1",
-    "ios": "10",
-    "samsung": "5",
-    "electron": "1.2"
-  },
-  "bugfix/transform-safari-block-shadowing": {
-    "chrome": "49",
-    "opera": "36",
-    "edge": "12",
-    "firefox": "44",
-    "safari": "11",
-    "node": "6",
-    "deno": "1",
-    "ie": "11",
-    "ios": "11",
-    "samsung": "5",
-    "electron": "0.37"
-  },
-  "bugfix/transform-safari-for-shadowing": {
-    "chrome": "49",
-    "opera": "36",
-    "edge": "12",
-    "firefox": "4",
-    "safari": "11",
-    "node": "6",
-    "deno": "1",
-    "ie": "11",
-    "ios": "11",
-    "samsung": "5",
-    "rhino": "1.7.13",
-    "electron": "0.37"
-  },
-  "bugfix/transform-safari-id-destructuring-collision-in-function-expression": {
-    "chrome": "49",
-    "opera": "36",
-    "edge": "14",
-    "firefox": "2",
-    "node": "6",
-    "deno": "1",
-    "samsung": "5",
-    "electron": "0.37"
-  },
-  "bugfix/transform-tagged-template-caching": {
-    "chrome": "41",
-    "opera": "28",
-    "edge": "12",
-    "firefox": "34",
-    "safari": "13",
-    "node": "4",
-    "deno": "1",
-    "ios": "13",
-    "samsung": "3.4",
-    "rhino": "1.7.14",
-    "electron": "0.21"
-  },
-  "bugfix/transform-v8-spread-parameters-in-optional-chaining": {
-    "chrome": "91",
-    "opera": "77",
-    "edge": "91",
-    "firefox": "74",
-    "safari": "13.1",
-    "node": "16.9",
-    "deno": "1.9",
-    "ios": "13.4",
-    "samsung": "16",
-    "electron": "13.0"
-  },
-  "transform-optional-chaining": {
-    "chrome": "80",
-    "opera": "67",
-    "edge": "80",
-    "firefox": "74",
-    "safari": "13.1",
-    "node": "14",
-    "deno": "1",
-    "ios": "13.4",
-    "samsung": "13",
-    "electron": "8.0"
-  },
-  "proposal-optional-chaining": {
-    "chrome": "80",
-    "opera": "67",
-    "edge": "80",
-    "firefox": "74",
-    "safari": "13.1",
-    "node": "14",
-    "deno": "1",
-    "ios": "13.4",
-    "samsung": "13",
-    "electron": "8.0"
-  },
-  "transform-parameters": {
-    "chrome": "49",
-    "opera": "36",
-    "edge": "15",
-    "firefox": "53",
-    "safari": "10",
-    "node": "6",
-    "deno": "1",
-    "ios": "10",
-    "samsung": "5",
-    "electron": "0.37"
-  },
-  "transform-async-to-generator": {
-    "chrome": "55",
-    "opera": "42",
-    "edge": "15",
-    "firefox": "52",
-    "safari": "10.1",
-    "node": "7.6",
-    "deno": "1",
-    "ios": "10.3",
-    "samsung": "6",
-    "electron": "1.6"
-  },
-  "transform-template-literals": {
-    "chrome": "41",
-    "opera": "28",
-    "edge": "13",
-    "firefox": "34",
-    "safari": "9",
-    "node": "4",
-    "deno": "1",
-    "ios": "9",
-    "samsung": "3.4",
-    "electron": "0.21"
-  },
-  "transform-function-name": {
-    "chrome": "51",
-    "opera": "38",
-    "edge": "14",
-    "firefox": "53",
-    "safari": "10",
-    "node": "6.5",
-    "deno": "1",
-    "ios": "10",
-    "samsung": "5",
-    "electron": "1.2"
-  },
-  "transform-block-scoping": {
-    "chrome": "49",
-    "opera": "36",
-    "edge": "14",
-    "firefox": "51",
-    "safari": "10",
-    "node": "6",
-    "deno": "1",
-    "ios": "10",
-    "samsung": "5",
-    "electron": "0.37"
-  }
-}
-≥/plugin-bugfixes.jsƒ9module.exports = require("./data/plugin-bugfixes.json");
 ≤/native-modules.jsƒ8module.exports = require("./data/native-modules.json");
 ≠/package.json≈s{
   "name": "@babel/compat-data",
@@ -2203,48 +1974,11 @@
   },
   "type": "commonjs"
 }Ω/corejs3-shipped-proposals.jsƒCmodule.exports = require("./data/corejs3-shipped-proposals.json");
-∑/overlapping-plugins.jsƒ=module.exports = require("./data/overlapping-plugins.json");
-®/LICENSE≈RMIT License
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-™/README.md≈# @babel/compat-data
-
-> 
-
-See our website [@babel/compat-data](https://babeljs.io/docs/en/babel-compat-data) for more information.
-
-## Install
-
-Using npm:
-
-```sh
-npm install --save @babel/compat-data
-```
-
-or using yarn:
-
-```sh
-yarn add @babel/compat-data
-```
+Ÿ$/data/corejs3-shipped-proposals.jsonƒX[
+  "esnext.global-this",
+  "esnext.promise.all-settled",
+  "esnext.string.match-all"
+]
 ≤/data/plugins.json≈4⁄{
   "transform-class-static-block": {
     "chrome": "94",
@@ -2936,9 +2670,275 @@ yarn add @babel/compat-data
     "electron": "5.0"
   }
 }
+∫/data/plugin-bugfixes.json≈a{
+  "bugfix/transform-async-arrows-in-class": {
+    "chrome": "55",
+    "opera": "42",
+    "edge": "15",
+    "firefox": "52",
+    "safari": "11",
+    "node": "7.6",
+    "deno": "1",
+    "ios": "11",
+    "samsung": "6",
+    "electron": "1.6"
+  },
+  "bugfix/transform-edge-default-parameters": {
+    "chrome": "49",
+    "opera": "36",
+    "edge": "18",
+    "firefox": "52",
+    "safari": "10",
+    "node": "6",
+    "deno": "1",
+    "ios": "10",
+    "samsung": "5",
+    "electron": "0.37"
+  },
+  "bugfix/transform-edge-function-name": {
+    "chrome": "51",
+    "opera": "38",
+    "edge": "79",
+    "firefox": "53",
+    "safari": "10",
+    "node": "6.5",
+    "deno": "1",
+    "ios": "10",
+    "samsung": "5",
+    "electron": "1.2"
+  },
+  "bugfix/transform-safari-block-shadowing": {
+    "chrome": "49",
+    "opera": "36",
+    "edge": "12",
+    "firefox": "44",
+    "safari": "11",
+    "node": "6",
+    "deno": "1",
+    "ie": "11",
+    "ios": "11",
+    "samsung": "5",
+    "electron": "0.37"
+  },
+  "bugfix/transform-safari-for-shadowing": {
+    "chrome": "49",
+    "opera": "36",
+    "edge": "12",
+    "firefox": "4",
+    "safari": "11",
+    "node": "6",
+    "deno": "1",
+    "ie": "11",
+    "ios": "11",
+    "samsung": "5",
+    "rhino": "1.7.13",
+    "electron": "0.37"
+  },
+  "bugfix/transform-safari-id-destructuring-collision-in-function-expression": {
+    "chrome": "49",
+    "opera": "36",
+    "edge": "14",
+    "firefox": "2",
+    "node": "6",
+    "deno": "1",
+    "samsung": "5",
+    "electron": "0.37"
+  },
+  "bugfix/transform-tagged-template-caching": {
+    "chrome": "41",
+    "opera": "28",
+    "edge": "12",
+    "firefox": "34",
+    "safari": "13",
+    "node": "4",
+    "deno": "1",
+    "ios": "13",
+    "samsung": "3.4",
+    "rhino": "1.7.14",
+    "electron": "0.21"
+  },
+  "bugfix/transform-v8-spread-parameters-in-optional-chaining": {
+    "chrome": "91",
+    "opera": "77",
+    "edge": "91",
+    "firefox": "74",
+    "safari": "13.1",
+    "node": "16.9",
+    "deno": "1.9",
+    "ios": "13.4",
+    "samsung": "16",
+    "electron": "13.0"
+  },
+  "transform-optional-chaining": {
+    "chrome": "80",
+    "opera": "67",
+    "edge": "80",
+    "firefox": "74",
+    "safari": "13.1",
+    "node": "14",
+    "deno": "1",
+    "ios": "13.4",
+    "samsung": "13",
+    "electron": "8.0"
+  },
+  "proposal-optional-chaining": {
+    "chrome": "80",
+    "opera": "67",
+    "edge": "80",
+    "firefox": "74",
+    "safari": "13.1",
+    "node": "14",
+    "deno": "1",
+    "ios": "13.4",
+    "samsung": "13",
+    "electron": "8.0"
+  },
+  "transform-parameters": {
+    "chrome": "49",
+    "opera": "36",
+    "edge": "15",
+    "firefox": "53",
+    "safari": "10",
+    "node": "6",
+    "deno": "1",
+    "ios": "10",
+    "samsung": "5",
+    "electron": "0.37"
+  },
+  "transform-async-to-generator": {
+    "chrome": "55",
+    "opera": "42",
+    "edge": "15",
+    "firefox": "52",
+    "safari": "10.1",
+    "node": "7.6",
+    "deno": "1",
+    "ios": "10.3",
+    "samsung": "6",
+    "electron": "1.6"
+  },
+  "transform-template-literals": {
+    "chrome": "41",
+    "opera": "28",
+    "edge": "13",
+    "firefox": "34",
+    "safari": "9",
+    "node": "4",
+    "deno": "1",
+    "ios": "9",
+    "samsung": "3.4",
+    "electron": "0.21"
+  },
+  "transform-function-name": {
+    "chrome": "51",
+    "opera": "38",
+    "edge": "14",
+    "firefox": "53",
+    "safari": "10",
+    "node": "6.5",
+    "deno": "1",
+    "ios": "10",
+    "samsung": "5",
+    "electron": "1.2"
+  },
+  "transform-block-scoping": {
+    "chrome": "49",
+    "opera": "36",
+    "edge": "14",
+    "firefox": "51",
+    "safari": "10",
+    "node": "6",
+    "deno": "1",
+    "ios": "10",
+    "samsung": "5",
+    "electron": "0.37"
+  }
+}
+≥/plugin-bugfixes.jsƒ9module.exports = require("./data/plugin-bugfixes.json");
+®/LICENSE≈RMIT License
+
+Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+µ/corejs2-built-ins.jsƒ;module.exports = require("./data/corejs2-built-ins.json");
+æ/data/overlapping-plugins.json≈Ô{
+  "transform-async-to-generator": [
+    "bugfix/transform-async-arrows-in-class"
+  ],
+  "transform-parameters": [
+    "bugfix/transform-edge-default-parameters",
+    "bugfix/transform-safari-id-destructuring-collision-in-function-expression"
+  ],
+  "transform-function-name": [
+    "bugfix/transform-edge-function-name"
+  ],
+  "transform-block-scoping": [
+    "bugfix/transform-safari-block-shadowing",
+    "bugfix/transform-safari-for-shadowing"
+  ],
+  "transform-template-literals": [
+    "bugfix/transform-tagged-template-caching"
+  ],
+  "transform-optional-chaining": [
+    "bugfix/transform-v8-spread-parameters-in-optional-chaining"
+  ],
+  "proposal-optional-chaining": [
+    "bugfix/transform-v8-spread-parameters-in-optional-chaining"
+  ]
+}
+π/data/native-modules.json≈<{
+  "es6.module": {
+    "chrome": "61",
+    "and_chr": "61",
+    "edge": "16",
+    "firefox": "60",
+    "and_ff": "60",
+    "node": "13.2.0",
+    "opera": "48",
+    "op_mob": "48",
+    "safari": "10.1",
+    "ios": "10.3",
+    "samsung": "8.2",
+    "android": "61",
+    "electron": "2.0",
+    "ios_saf": "10.3"
+  }
+}
+∑/overlapping-plugins.jsƒ=module.exports = require("./data/overlapping-plugins.json");
 ´/plugins.jsƒ1module.exports = require("./data/plugins.json");
-Ÿ$/data/corejs3-shipped-proposals.jsonƒX[
-  "esnext.global-this",
-  "esnext.promise.all-settled",
-  "esnext.string.match-all"
-]
+™/README.md≈# @babel/compat-data
+
+> 
+
+See our website [@babel/compat-data](https://babeljs.io/docs/en/babel-compat-data) for more information.
+
+## Install
+
+Using npm:
+
+```sh
+npm install --save @babel/compat-data
+```
+
+or using yarn:
+
+```sh
+yarn add @babel/compat-data
+```

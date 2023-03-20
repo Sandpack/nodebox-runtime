@@ -1,204 +1,4 @@
-…©/index.jsÅ	¯/*!
- * etag
- * Copyright(c) 2014-2016 Douglas Christopher Wilson
- * MIT Licensed
- */
-
-'use strict'
-
-/**
- * Module exports.
- * @public
- */
-
-module.exports = etag
-
-/**
- * Module dependencies.
- * @private
- */
-
-var crypto = require('crypto')
-var Stats = require('fs').Stats
-
-/**
- * Module variables.
- * @private
- */
-
-var toString = Object.prototype.toString
-
-/**
- * Generate an entity tag.
- *
- * @param {Buffer|string} entity
- * @return {string}
- * @private
- */
-
-function entitytag (entity) {
-  if (entity.length === 0) {
-    // fast-path empty
-    return '"0-2jmj7l5rSw0yVb/vlWAYkK/YBwk"'
-  }
-
-  // compute hash of entity
-  var hash = crypto
-    .createHash('sha1')
-    .update(entity, 'utf8')
-    .digest('base64')
-    .substring(0, 27)
-
-  // compute length of entity
-  var len = typeof entity === 'string'
-    ? Buffer.byteLength(entity, 'utf8')
-    : entity.length
-
-  return '"' + len.toString(16) + '-' + hash + '"'
-}
-
-/**
- * Create a simple ETag.
- *
- * @param {string|Buffer|Stats} entity
- * @param {object} [options]
- * @param {boolean} [options.weak]
- * @return {String}
- * @public
- */
-
-function etag (entity, options) {
-  if (entity == null) {
-    throw new TypeError('argument entity is required')
-  }
-
-  // support fs.Stats object
-  var isStats = isstats(entity)
-  var weak = options && typeof options.weak === 'boolean'
-    ? options.weak
-    : isStats
-
-  // validate argument
-  if (!isStats && typeof entity !== 'string' && !Buffer.isBuffer(entity)) {
-    throw new TypeError('argument entity must be string, Buffer, or fs.Stats')
-  }
-
-  // generate entity tag
-  var tag = isStats
-    ? stattag(entity)
-    : entitytag(entity)
-
-  return weak
-    ? 'W/' + tag
-    : tag
-}
-
-/**
- * Determine if object is a Stats object.
- *
- * @param {object} obj
- * @return {boolean}
- * @api private
- */
-
-function isstats (obj) {
-  // genuine fs.Stats
-  if (typeof Stats === 'function' && obj instanceof Stats) {
-    return true
-  }
-
-  // quack quack
-  return obj && typeof obj === 'object' &&
-    'ctime' in obj && toString.call(obj.ctime) === '[object Date]' &&
-    'mtime' in obj && toString.call(obj.mtime) === '[object Date]' &&
-    'ino' in obj && typeof obj.ino === 'number' &&
-    'size' in obj && typeof obj.size === 'number'
-}
-
-/**
- * Generate a tag for a stat.
- *
- * @param {object} stat
- * @return {string}
- * @private
- */
-
-function stattag (stat) {
-  var mtime = stat.mtime.getTime().toString(16)
-  var size = stat.size.toString(16)
-
-  return '"' + size + '-' + mtime + '"'
-}
-­/package.jsonÅ{
-  "name": "etag",
-  "description": "Create simple HTTP ETags",
-  "version": "1.8.1",
-  "contributors": [
-    "Douglas Christopher Wilson <doug@somethingdoug.com>",
-    "David BjÃ¶rklund <david.bjorklund@gmail.com>"
-  ],
-  "license": "MIT",
-  "keywords": [
-    "etag",
-    "http",
-    "res"
-  ],
-  "repository": "jshttp/etag",
-  "devDependencies": {
-    "beautify-benchmark": "0.2.4",
-    "benchmark": "2.1.4",
-    "eslint": "3.19.0",
-    "eslint-config-standard": "10.2.1",
-    "eslint-plugin-import": "2.7.0",
-    "eslint-plugin-markdown": "1.0.0-beta.6",
-    "eslint-plugin-node": "5.1.1",
-    "eslint-plugin-promise": "3.5.0",
-    "eslint-plugin-standard": "3.0.1",
-    "istanbul": "0.4.5",
-    "mocha": "1.21.5",
-    "safe-buffer": "5.1.1",
-    "seedrandom": "2.4.3"
-  },
-  "files": [
-    "LICENSE",
-    "HISTORY.md",
-    "README.md",
-    "index.js"
-  ],
-  "engines": {
-    "node": ">= 0.6"
-  },
-  "scripts": {
-    "bench": "node benchmark/index.js",
-    "lint": "eslint --plugin markdown --ext js,md .",
-    "test": "mocha --reporter spec --bail --check-leaks test/",
-    "test-cov": "istanbul cover node_modules/mocha/bin/_mocha -- --reporter dot --check-leaks test/",
-    "test-travis": "istanbul cover node_modules/mocha/bin/_mocha --report lcovonly -- --reporter spec --check-leaks test/"
-  }
-}
-¨/LICENSEÅF(The MIT License)
-
-Copyright (c) 2014-2016 Douglas Christopher Wilson
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-'Software'), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-«/HISTORY.mdÅÄ1.8.1 / 2017-09-12
+…«/HISTORY.mdÅÄ1.8.1 / 2017-09-12
 ==================
 
   * perf: replace regular expression with substring
@@ -281,6 +81,75 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ==================
 
   * Initial release
+¨/LICENSEÅF(The MIT License)
+
+Copyright (c) 2014-2016 Douglas Christopher Wilson
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+­/package.jsonÅ{
+  "name": "etag",
+  "description": "Create simple HTTP ETags",
+  "version": "1.8.1",
+  "contributors": [
+    "Douglas Christopher Wilson <doug@somethingdoug.com>",
+    "David BjÃ¶rklund <david.bjorklund@gmail.com>"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "etag",
+    "http",
+    "res"
+  ],
+  "repository": "jshttp/etag",
+  "devDependencies": {
+    "beautify-benchmark": "0.2.4",
+    "benchmark": "2.1.4",
+    "eslint": "3.19.0",
+    "eslint-config-standard": "10.2.1",
+    "eslint-plugin-import": "2.7.0",
+    "eslint-plugin-markdown": "1.0.0-beta.6",
+    "eslint-plugin-node": "5.1.1",
+    "eslint-plugin-promise": "3.5.0",
+    "eslint-plugin-standard": "3.0.1",
+    "istanbul": "0.4.5",
+    "mocha": "1.21.5",
+    "safe-buffer": "5.1.1",
+    "seedrandom": "2.4.3"
+  },
+  "files": [
+    "LICENSE",
+    "HISTORY.md",
+    "README.md",
+    "index.js"
+  ],
+  "engines": {
+    "node": ">= 0.6"
+  },
+  "scripts": {
+    "bench": "node benchmark/index.js",
+    "lint": "eslint --plugin markdown --ext js,md .",
+    "test": "mocha --reporter spec --bail --check-leaks test/",
+    "test-cov": "istanbul cover node_modules/mocha/bin/_mocha -- --reporter dot --check-leaks test/",
+    "test-travis": "istanbul cover node_modules/mocha/bin/_mocha --report lcovonly -- --reporter spec --check-leaks test/"
+  }
+}
 ª/README.mdÅf# etag
 
 [![NPM Version][npm-image]][npm-url]
@@ -440,3 +309,134 @@ $ npm run-script bench
 [coveralls-url]: https://coveralls.io/r/jshttp/etag?branch=master
 [downloads-image]: https://img.shields.io/npm/dm/etag.svg
 [downloads-url]: https://npmjs.org/package/etag
+©/index.jsÅ	¯/*!
+ * etag
+ * Copyright(c) 2014-2016 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+'use strict'
+
+/**
+ * Module exports.
+ * @public
+ */
+
+module.exports = etag
+
+/**
+ * Module dependencies.
+ * @private
+ */
+
+var crypto = require('crypto')
+var Stats = require('fs').Stats
+
+/**
+ * Module variables.
+ * @private
+ */
+
+var toString = Object.prototype.toString
+
+/**
+ * Generate an entity tag.
+ *
+ * @param {Buffer|string} entity
+ * @return {string}
+ * @private
+ */
+
+function entitytag (entity) {
+  if (entity.length === 0) {
+    // fast-path empty
+    return '"0-2jmj7l5rSw0yVb/vlWAYkK/YBwk"'
+  }
+
+  // compute hash of entity
+  var hash = crypto
+    .createHash('sha1')
+    .update(entity, 'utf8')
+    .digest('base64')
+    .substring(0, 27)
+
+  // compute length of entity
+  var len = typeof entity === 'string'
+    ? Buffer.byteLength(entity, 'utf8')
+    : entity.length
+
+  return '"' + len.toString(16) + '-' + hash + '"'
+}
+
+/**
+ * Create a simple ETag.
+ *
+ * @param {string|Buffer|Stats} entity
+ * @param {object} [options]
+ * @param {boolean} [options.weak]
+ * @return {String}
+ * @public
+ */
+
+function etag (entity, options) {
+  if (entity == null) {
+    throw new TypeError('argument entity is required')
+  }
+
+  // support fs.Stats object
+  var isStats = isstats(entity)
+  var weak = options && typeof options.weak === 'boolean'
+    ? options.weak
+    : isStats
+
+  // validate argument
+  if (!isStats && typeof entity !== 'string' && !Buffer.isBuffer(entity)) {
+    throw new TypeError('argument entity must be string, Buffer, or fs.Stats')
+  }
+
+  // generate entity tag
+  var tag = isStats
+    ? stattag(entity)
+    : entitytag(entity)
+
+  return weak
+    ? 'W/' + tag
+    : tag
+}
+
+/**
+ * Determine if object is a Stats object.
+ *
+ * @param {object} obj
+ * @return {boolean}
+ * @api private
+ */
+
+function isstats (obj) {
+  // genuine fs.Stats
+  if (typeof Stats === 'function' && obj instanceof Stats) {
+    return true
+  }
+
+  // quack quack
+  return obj && typeof obj === 'object' &&
+    'ctime' in obj && toString.call(obj.ctime) === '[object Date]' &&
+    'mtime' in obj && toString.call(obj.mtime) === '[object Date]' &&
+    'ino' in obj && typeof obj.ino === 'number' &&
+    'size' in obj && typeof obj.size === 'number'
+}
+
+/**
+ * Generate a tag for a stat.
+ *
+ * @param {object} stat
+ * @return {string}
+ * @private
+ */
+
+function stattag (stat) {
+  var mtime = stat.mtime.getTime().toString(16)
+  var size = stat.size.toString(16)
+
+  return '"' + size + '-' + mtime + '"'
+}

@@ -1,42 +1,28 @@
-„­/package.jsonÅæ{
-  "name": "fast-levenshtein",
-  "version": "2.0.6",
-  "description": "Efficient implementation of Levenshtein algorithm  with locale-specific collator support.",
-  "main": "levenshtein.js",
-  "files": [
-    "levenshtein.js"
-  ],
-  "scripts": {
-    "build": "grunt build",
-    "prepublish": "npm run build",
-    "benchmark": "grunt benchmark",
-    "test": "mocha"
-  },
-  "devDependencies": {
-    "chai": "~1.5.0",
-    "grunt": "~0.4.1",
-    "grunt-benchmark": "~0.2.0",
-    "grunt-cli": "^1.2.0",
-    "grunt-contrib-jshint": "~0.4.3",
-    "grunt-contrib-uglify": "~0.2.0",
-    "grunt-mocha-test": "~0.2.2",
-    "grunt-npm-install": "~0.1.0",
-    "load-grunt-tasks": "~0.6.0",
-    "lodash": "^4.0.1",
-    "mocha": "~1.9.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/hiddentao/fast-levenshtein.git"
-  },
-  "keywords": [
-    "levenshtein",
-    "distance",
-    "string"
-  ],
-  "author": "Ramesh Nair <ram@hiddentao.com> (http://www.hiddentao.com/)",
-  "license": "MIT"
-}
+„«/LICENSE.mdÅL(MIT License)
+
+Copyright (c) 2013 [Ramesh Nair](http://www.hiddentao.com/)
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
 ª/README.mdÅV# fast-levenshtein - Levenshtein algorithm in Javascript
 
 [![Build Status](https://secure.travis-ci.org/hiddentao/fast-levenshtein.png)](http://travis-ci.org/hiddentao/fast-levenshtein)
@@ -141,31 +127,45 @@ See [CONTRIBUTING.md](https://github.com/hiddentao/fast-levenshtein/blob/master/
 ## License
 
 MIT - see [LICENSE.md](https://github.com/hiddentao/fast-levenshtein/blob/master/LICENSE.md)
-«/LICENSE.mdÅL(MIT License)
-
-Copyright (c) 2013 [Ramesh Nair](http://www.hiddentao.com/)
-
-Permission is hereby granted, free of charge, to any person
-obtaining a copy of this software and associated documentation
-files (the "Software"), to deal in the Software without
-restriction, including without limitation the rights to use,
-copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following
-conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-OTHER DEALINGS IN THE SOFTWARE.
-
+­/package.jsonÅæ{
+  "name": "fast-levenshtein",
+  "version": "2.0.6",
+  "description": "Efficient implementation of Levenshtein algorithm  with locale-specific collator support.",
+  "main": "levenshtein.js",
+  "files": [
+    "levenshtein.js"
+  ],
+  "scripts": {
+    "build": "grunt build",
+    "prepublish": "npm run build",
+    "benchmark": "grunt benchmark",
+    "test": "mocha"
+  },
+  "devDependencies": {
+    "chai": "~1.5.0",
+    "grunt": "~0.4.1",
+    "grunt-benchmark": "~0.2.0",
+    "grunt-cli": "^1.2.0",
+    "grunt-contrib-jshint": "~0.4.3",
+    "grunt-contrib-uglify": "~0.2.0",
+    "grunt-mocha-test": "~0.2.2",
+    "grunt-npm-install": "~0.1.0",
+    "load-grunt-tasks": "~0.6.0",
+    "lodash": "^4.0.1",
+    "mocha": "~1.9.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hiddentao/fast-levenshtein.git"
+  },
+  "keywords": [
+    "levenshtein",
+    "distance",
+    "string"
+  ],
+  "author": "Ramesh Nair <ram@hiddentao.com> (http://www.hiddentao.com/)",
+  "license": "MIT"
+}
 ¯/levenshtein.jsÅ\(function() {
   'use strict';
   

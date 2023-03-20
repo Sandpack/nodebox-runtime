@@ -1,4 +1,215 @@
-ˆ¬/FormData.jsÅ.b/* formdata-polyfill. MIT License. Jimmy WÃ¤rting <https://jimmy.warting.se/opensource> */
+ˆ«/esm.min.jsÅ	J/*! formdata-polyfill. MIT License. Jimmy WÃ¤rting <https://jimmy.warting.se/opensource> */
+
+import C from 'fetch-blob'
+import F from 'fetch-blob/file.js'
+
+var {toStringTag:t,iterator:i,hasInstance:h}=Symbol,
+r=Math.random,
+m='append,set,get,getAll,delete,keys,values,entries,forEach,constructor'.split(','),
+f=(a,b,c)=>(a+='',/^(Blob|File)$/.test(b && b[t])?[(c=c!==void 0?c+'':b[t]=='File'?b.name:'blob',a),b.name!==c||b[t]=='blob'?new F([b],c,b):b]:[a,b+'']),
+e=(c,f)=>(f?c:c.replace(/\r?\n|\r/g,'\r\n')).replace(/\n/g,'%0A').replace(/\r/g,'%0D').replace(/"/g,'%22'),
+x=(n, a, e)=>{if(a.length<e){throw new TypeError(`Failed to execute '${n}' on 'FormData': ${e} arguments required, but only ${a.length} present.`)}}
+
+export const File = F
+
+/** @type {typeof globalThis.FormData} */
+export const FormData = class FormData {
+#d=[];
+constructor(...a){if(a.length)throw new TypeError(`Failed to construct 'FormData': parameter 1 is not of type 'HTMLFormElement'.`)}
+get [t]() {return 'FormData'}
+[i](){return this.entries()}
+static [h](o) {return o&&typeof o==='object'&&o[t]==='FormData'&&!m.some(m=>typeof o[m]!='function')}
+append(...a){x('append',arguments,2);this.#d.push(f(...a))}
+delete(a){x('delete',arguments,1);a+='';this.#d=this.#d.filter(([b])=>b!==a)}
+get(a){x('get',arguments,1);a+='';for(var b=this.#d,l=b.length,c=0;c<l;c++)if(b[c][0]===a)return b[c][1];return null}
+getAll(a,b){x('getAll',arguments,1);b=[];a+='';this.#d.forEach(c=>c[0]===a&&b.push(c[1]));return b}
+has(a){x('has',arguments,1);a+='';return this.#d.some(b=>b[0]===a)}
+forEach(a,b){x('forEach',arguments,1);for(var [c,d]of this)a.call(b,d,c,this)}
+set(...a){x('set',arguments,2);var b=[],c=!0;a=f(...a);this.#d.forEach(d=>{d[0]===a[0]?c&&(c=!b.push(a)):b.push(d)});c&&b.push(a);this.#d=b}
+*entries(){yield*this.#d}
+*keys(){for(var[a]of this)yield a}
+*values(){for(var[,a]of this)yield a}}
+
+/** @param {FormData} F */
+export function formDataToBlob (F,B=C){
+var b=`${r()}${r()}`.replace(/\./g, '').slice(-28).padStart(32, '-'),c=[],p=`--${b}\r\nContent-Disposition: form-data; name="`
+F.forEach((v,n)=>typeof v=='string'
+?c.push(p+e(n)+`"\r\n\r\n${v.replace(/\r(?!\n)|(?<!\r)\n/g, '\r\n')}\r\n`)
+:c.push(p+e(n)+`"; filename="${e(v.name, 1)}"\r\nContent-Type: ${v.type||"application/octet-stream"}\r\n\r\n`, v, '\r\n'))
+c.push(`--${b}--`)
+return new B(c,{type:"multipart/form-data; boundary="+b})}
+¨/LICENSEÅ;MIT License
+
+Copyright (c) 2016 Jimmy Karl Roland WÃ¤rting
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ª/README.mdÅ¯### A `FormData` polyfill for the browser ...and a module for NodeJS (`New!`)
+
+```bash
+npm install formdata-polyfill
+```
+
+The browser polyfill will likely have done its part already, and i hope you stop supporting old browsers c",)<br>
+But NodeJS still laks a proper FormData<br>The good old form-data package is a very old and isn't spec compatible and dose some abnormal stuff to construct and read FormData instances that other http libraries are not happy about when it comes to follow the spec.
+
+### The NodeJS / ESM version
+- The modular (~2.3 KiB minified uncompressed) version of this package is independent of any browser stuff and don't patch anything
+- It's as pure/spec compatible as it possible gets the test are run by WPT.
+- It's compatible with [node-fetch](https://github.com/node-fetch/node-fetch).
+- It have higher platform dependencies as it uses classes, symbols, ESM & private fields
+- Only dependency it has is [fetch-blob](https://github.com/node-fetch/fetch-blob)
+
+```js
+// Node example
+import fetch from 'node-fetch'
+import File from 'fetch-blob/file.js'
+import { fileFromSync } from 'fetch-blob/from.js'
+import { FormData } from 'formdata-polyfill/esm.min.js'
+
+const file = fileFromSync('./README.md')
+const fd = new FormData()
+
+fd.append('file-upload', new File(['abc'], 'hello-world.txt'))
+fd.append('file-upload', file)
+
+// it's also possible to append file/blob look-a-like items
+// if you have streams coming from other destinations
+fd.append('file-upload', {
+  size: 123,
+  type: '',
+  name: 'cat-video.mp4',
+  stream() { return stream },
+  [Symbol.toStringTag]: 'File'
+})
+
+fetch('https://httpbin.org/post', { method: 'POST', body: fd })
+```
+
+----
+
+It also comes with way to convert FormData into Blobs - it's not something that every developer should have to deal with.
+It's mainly for [node-fetch](https://github.com/node-fetch/node-fetch) and other http library to ease the process of serializing a FormData into a blob and just wish to deal with Blobs instead (Both Deno and Undici adapted a version of this [formDataToBlob](https://github.com/jimmywarting/FormData/blob/5ddea9e0de2fc5e246ab1b2f9d404dee0c319c02/formdata-to-blob.js) to the core and passes all WPT tests run by the browser itself)
+```js
+import { Readable } from 'node:stream'
+import { FormData, formDataToBlob } from 'formdata-polyfill/esm.min.js'
+
+const blob = formDataToBlob(new FormData())
+fetch('https://httpbin.org/post', { method: 'POST', body: blob })
+
+// node built in http and other similar http library have to do:
+const stream = Readable.from(blob.stream())
+const req = http.request('http://httpbin.org/post', {
+  method: 'post',
+  headers: {
+    'Content-Length': blob.size,
+    'Content-Type': blob.type
+  }
+})
+stream.pipe(req)
+```
+
+PS: blob & file that are appended to the FormData will not be read until any of the serialized blob read-methods gets called
+...so uploading very large files is no biggie
+
+### Browser polyfill
+
+usage:
+
+```js
+import 'formdata-polyfill' // that's it
+```
+
+The browser polyfill conditionally replaces the native implementation rather than fixing the missing functions,
+since otherwise there is no way to get or delete existing values in the FormData object.
+Therefore this also patches `XMLHttpRequest.prototype.send` and `fetch` to send the `FormData` as a blob,
+and `navigator.sendBeacon` to send native `FormData`.
+
+I was unable to patch the Response/Request constructor
+so if you are constructing them with FormData then you need to call `fd._blob()` manually.
+
+```js
+new Request(url, {
+  method: 'post',
+  body: fd._blob ? fd._blob() : fd
+})
+```
+
+Dependencies
+---
+
+If you need to support IE <= 9 then I recommend you to include eligrey's [blob.js]
+(which i hope you don't - since IE is now dead)
+
+<details>
+    <summary>Updating from 2.x to 3.x</summary>
+
+Previously you had to import the polyfill and use that,
+since it didn't replace the global (existing) FormData implementation.
+But now it transparently calls `_blob()` for you when you are sending something with fetch or XHR,
+by way of monkey-patching the `XMLHttpRequest.prototype.send` and `fetch` functions.
+
+So you maybe had something like this:
+
+```javascript
+var FormData = require('formdata-polyfill')
+var fd = new FormData(form)
+xhr.send(fd._blob())
+```
+
+There is no longer anything exported from the module
+(though you of course still need to import it to install the polyfill),
+so you can now use the FormData object as normal:
+
+```javascript
+require('formdata-polyfill')
+var fd = new FormData(form)
+xhr.send(fd)
+```
+
+</details>
+
+
+
+Native Browser compatibility (as of 2021-05-08)
+---
+Based on this you can decide for yourself if you need this polyfill.
+
+[![screenshot](https://user-images.githubusercontent.com/1148376/117550329-0993aa80-b040-11eb-976c-14e31f1a3ba4.png)](https://developer.mozilla.org/en-US/docs/Web/API/FormData#Browser_compatibility)
+
+
+
+This normalizes support for the FormData API:
+
+ - `append` with filename
+ - `delete()`, `get()`, `getAll()`, `has()`, `set()`
+ - `entries()`, `keys()`, `values()`, and support for `for...of`
+ - Available in web workers (just include the polyfill)
+
+  [npm-image]: https://img.shields.io/npm/v/formdata-polyfill.svg
+  [npm-url]: https://www.npmjs.com/package/formdata-polyfill
+  [blob.js]: https://github.com/eligrey/Blob.js
+­/esm.min.d.tsÄ‘export declare const FormData: {
+  new (): FormData;
+  prototype: FormData;
+};
+export declare function formDataToBlob(formData: FormData): Blob;
+¬/FormData.jsÅ.b/* formdata-polyfill. MIT License. Jimmy WÃ¤rting <https://jimmy.warting.se/opensource> */
 
 /* global FormData self Blob File */
 /* eslint-disable no-inner-declarations */
@@ -528,32 +739,6 @@ export function formDataToBlob (formData, BlobClass = Blob) {
     "google-closure-compiler": "^20210808.0.0"
   }
 }
-­/esm.min.d.tsÄ‘export declare const FormData: {
-  new (): FormData;
-  prototype: FormData;
-};
-export declare function formDataToBlob(formData: FormData): Blob;
-¨/LICENSEÅ;MIT License
-
-Copyright (c) 2016 Jimmy Karl Roland WÃ¤rting
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
 °/formdata.min.jsÅ"º/*! formdata-polyfill. MIT License. Jimmy W?rting <https://jimmy.warting.se/opensource> */
 ;(function(){var h;function l(a){var b=0;return function(){return b<a.length?{done:!1,value:a[b++]}:{done:!0}}}var m="function"==typeof Object.defineProperties?Object.defineProperty:function(a,b,c){if(a==Array.prototype||a==Object.prototype)return a;a[b]=c.value;return a};
 function n(a){a=["object"==typeof globalThis&&globalThis,a,"object"==typeof window&&window,"object"==typeof self&&self,"object"==typeof global&&global];for(var b=0;b<a.length;++b){var c=a[b];if(c&&c.Math==Math)return c}throw Error("Cannot find global object");}var q=n(this);function r(a,b){if(b)a:{var c=q;a=a.split(".");for(var d=0;d<a.length-1;d++){var e=a[d];if(!(e in c))break a;c=c[e]}a=a[a.length-1];d=c[a];b=b(d);b!=d&&null!=b&&m(c,a,{configurable:!0,writable:!0,value:b})}}
@@ -575,188 +760,3 @@ d,e),k=!0;M(this.i,function(p){p[0]===c?k&&(k=!f.push(g)):f.push(p)});k&&f.push(
 Math.random(),e=[],f="--"+d+'\r\nContent-Disposition: form-data; name="';this.forEach(function(g,k){return"string"==typeof g?e.push(f+escape(N(k))+('"\r\n\r\n'+N(g)+"\r\n")):e.push(f+escape(N(k))+('"; filename="'+escape(g.name)+'"\r\nContent-Type: '+(g.type||"application/octet-stream")+"\r\n\r\n"),g,"\r\n")});e.push("--"+d+"--");return new Blob(e,{type:"multipart/form-data; boundary="+d})};X.prototype[Symbol.iterator]=function(){return this.entries()};X.prototype.toString=function(){return"[object FormData]"};
 V&&!V.matches&&(V.matches=V.matchesSelector||V.mozMatchesSelector||V.msMatchesSelector||V.oMatchesSelector||V.webkitMatchesSelector||function(d){d=(this.document||this.ownerDocument).querySelectorAll(d);for(var e=d.length;0<=--e&&d.item(e)!==this;);return-1<e});W&&(X.prototype[W]="FormData");if(S){var Y=Q.XMLHttpRequest.prototype.setRequestHeader;Q.XMLHttpRequest.prototype.setRequestHeader=function(d,e){Y.call(this,d,e);"content-type"===d.toLowerCase()&&(this.B=!0)};Q.XMLHttpRequest.prototype.send=
 function(d){d instanceof X?(d=d._blob(),this.B||this.setRequestHeader("Content-Type",d.type),S.call(this,d)):S.call(this,d)}}T&&(Q.fetch=function(d,e){e&&e.body&&e.body instanceof X&&(e.body=e.body._blob());return T.call(this,d,e)});U&&(Q.navigator.sendBeacon=function(d,e){e instanceof X&&(e=e._asNative());return U.call(this,d,e)});Q.FormData=X};})();
-«/esm.min.jsÅ	J/*! formdata-polyfill. MIT License. Jimmy WÃ¤rting <https://jimmy.warting.se/opensource> */
-
-import C from 'fetch-blob'
-import F from 'fetch-blob/file.js'
-
-var {toStringTag:t,iterator:i,hasInstance:h}=Symbol,
-r=Math.random,
-m='append,set,get,getAll,delete,keys,values,entries,forEach,constructor'.split(','),
-f=(a,b,c)=>(a+='',/^(Blob|File)$/.test(b && b[t])?[(c=c!==void 0?c+'':b[t]=='File'?b.name:'blob',a),b.name!==c||b[t]=='blob'?new F([b],c,b):b]:[a,b+'']),
-e=(c,f)=>(f?c:c.replace(/\r?\n|\r/g,'\r\n')).replace(/\n/g,'%0A').replace(/\r/g,'%0D').replace(/"/g,'%22'),
-x=(n, a, e)=>{if(a.length<e){throw new TypeError(`Failed to execute '${n}' on 'FormData': ${e} arguments required, but only ${a.length} present.`)}}
-
-export const File = F
-
-/** @type {typeof globalThis.FormData} */
-export const FormData = class FormData {
-#d=[];
-constructor(...a){if(a.length)throw new TypeError(`Failed to construct 'FormData': parameter 1 is not of type 'HTMLFormElement'.`)}
-get [t]() {return 'FormData'}
-[i](){return this.entries()}
-static [h](o) {return o&&typeof o==='object'&&o[t]==='FormData'&&!m.some(m=>typeof o[m]!='function')}
-append(...a){x('append',arguments,2);this.#d.push(f(...a))}
-delete(a){x('delete',arguments,1);a+='';this.#d=this.#d.filter(([b])=>b!==a)}
-get(a){x('get',arguments,1);a+='';for(var b=this.#d,l=b.length,c=0;c<l;c++)if(b[c][0]===a)return b[c][1];return null}
-getAll(a,b){x('getAll',arguments,1);b=[];a+='';this.#d.forEach(c=>c[0]===a&&b.push(c[1]));return b}
-has(a){x('has',arguments,1);a+='';return this.#d.some(b=>b[0]===a)}
-forEach(a,b){x('forEach',arguments,1);for(var [c,d]of this)a.call(b,d,c,this)}
-set(...a){x('set',arguments,2);var b=[],c=!0;a=f(...a);this.#d.forEach(d=>{d[0]===a[0]?c&&(c=!b.push(a)):b.push(d)});c&&b.push(a);this.#d=b}
-*entries(){yield*this.#d}
-*keys(){for(var[a]of this)yield a}
-*values(){for(var[,a]of this)yield a}}
-
-/** @param {FormData} F */
-export function formDataToBlob (F,B=C){
-var b=`${r()}${r()}`.replace(/\./g, '').slice(-28).padStart(32, '-'),c=[],p=`--${b}\r\nContent-Disposition: form-data; name="`
-F.forEach((v,n)=>typeof v=='string'
-?c.push(p+e(n)+`"\r\n\r\n${v.replace(/\r(?!\n)|(?<!\r)\n/g, '\r\n')}\r\n`)
-:c.push(p+e(n)+`"; filename="${e(v.name, 1)}"\r\nContent-Type: ${v.type||"application/octet-stream"}\r\n\r\n`, v, '\r\n'))
-c.push(`--${b}--`)
-return new B(c,{type:"multipart/form-data; boundary="+b})}
-ª/README.mdÅ¯### A `FormData` polyfill for the browser ...and a module for NodeJS (`New!`)
-
-```bash
-npm install formdata-polyfill
-```
-
-The browser polyfill will likely have done its part already, and i hope you stop supporting old browsers c",)<br>
-But NodeJS still laks a proper FormData<br>The good old form-data package is a very old and isn't spec compatible and dose some abnormal stuff to construct and read FormData instances that other http libraries are not happy about when it comes to follow the spec.
-
-### The NodeJS / ESM version
-- The modular (~2.3 KiB minified uncompressed) version of this package is independent of any browser stuff and don't patch anything
-- It's as pure/spec compatible as it possible gets the test are run by WPT.
-- It's compatible with [node-fetch](https://github.com/node-fetch/node-fetch).
-- It have higher platform dependencies as it uses classes, symbols, ESM & private fields
-- Only dependency it has is [fetch-blob](https://github.com/node-fetch/fetch-blob)
-
-```js
-// Node example
-import fetch from 'node-fetch'
-import File from 'fetch-blob/file.js'
-import { fileFromSync } from 'fetch-blob/from.js'
-import { FormData } from 'formdata-polyfill/esm.min.js'
-
-const file = fileFromSync('./README.md')
-const fd = new FormData()
-
-fd.append('file-upload', new File(['abc'], 'hello-world.txt'))
-fd.append('file-upload', file)
-
-// it's also possible to append file/blob look-a-like items
-// if you have streams coming from other destinations
-fd.append('file-upload', {
-  size: 123,
-  type: '',
-  name: 'cat-video.mp4',
-  stream() { return stream },
-  [Symbol.toStringTag]: 'File'
-})
-
-fetch('https://httpbin.org/post', { method: 'POST', body: fd })
-```
-
-----
-
-It also comes with way to convert FormData into Blobs - it's not something that every developer should have to deal with.
-It's mainly for [node-fetch](https://github.com/node-fetch/node-fetch) and other http library to ease the process of serializing a FormData into a blob and just wish to deal with Blobs instead (Both Deno and Undici adapted a version of this [formDataToBlob](https://github.com/jimmywarting/FormData/blob/5ddea9e0de2fc5e246ab1b2f9d404dee0c319c02/formdata-to-blob.js) to the core and passes all WPT tests run by the browser itself)
-```js
-import { Readable } from 'node:stream'
-import { FormData, formDataToBlob } from 'formdata-polyfill/esm.min.js'
-
-const blob = formDataToBlob(new FormData())
-fetch('https://httpbin.org/post', { method: 'POST', body: blob })
-
-// node built in http and other similar http library have to do:
-const stream = Readable.from(blob.stream())
-const req = http.request('http://httpbin.org/post', {
-  method: 'post',
-  headers: {
-    'Content-Length': blob.size,
-    'Content-Type': blob.type
-  }
-})
-stream.pipe(req)
-```
-
-PS: blob & file that are appended to the FormData will not be read until any of the serialized blob read-methods gets called
-...so uploading very large files is no biggie
-
-### Browser polyfill
-
-usage:
-
-```js
-import 'formdata-polyfill' // that's it
-```
-
-The browser polyfill conditionally replaces the native implementation rather than fixing the missing functions,
-since otherwise there is no way to get or delete existing values in the FormData object.
-Therefore this also patches `XMLHttpRequest.prototype.send` and `fetch` to send the `FormData` as a blob,
-and `navigator.sendBeacon` to send native `FormData`.
-
-I was unable to patch the Response/Request constructor
-so if you are constructing them with FormData then you need to call `fd._blob()` manually.
-
-```js
-new Request(url, {
-  method: 'post',
-  body: fd._blob ? fd._blob() : fd
-})
-```
-
-Dependencies
----
-
-If you need to support IE <= 9 then I recommend you to include eligrey's [blob.js]
-(which i hope you don't - since IE is now dead)
-
-<details>
-    <summary>Updating from 2.x to 3.x</summary>
-
-Previously you had to import the polyfill and use that,
-since it didn't replace the global (existing) FormData implementation.
-But now it transparently calls `_blob()` for you when you are sending something with fetch or XHR,
-by way of monkey-patching the `XMLHttpRequest.prototype.send` and `fetch` functions.
-
-So you maybe had something like this:
-
-```javascript
-var FormData = require('formdata-polyfill')
-var fd = new FormData(form)
-xhr.send(fd._blob())
-```
-
-There is no longer anything exported from the module
-(though you of course still need to import it to install the polyfill),
-so you can now use the FormData object as normal:
-
-```javascript
-require('formdata-polyfill')
-var fd = new FormData(form)
-xhr.send(fd)
-```
-
-</details>
-
-
-
-Native Browser compatibility (as of 2021-05-08)
----
-Based on this you can decide for yourself if you need this polyfill.
-
-[![screenshot](https://user-images.githubusercontent.com/1148376/117550329-0993aa80-b040-11eb-976c-14e31f1a3ba4.png)](https://developer.mozilla.org/en-US/docs/Web/API/FormData#Browser_compatibility)
-
-
-
-This normalizes support for the FormData API:
-
- - `append` with filename
- - `delete()`, `get()`, `getAll()`, `has()`, `set()`
- - `entries()`, `keys()`, `values()`, and support for `for...of`
- - Available in web workers (just include the polyfill)
-
-  [npm-image]: https://img.shields.io/npm/v/formdata-polyfill.svg
-  [npm-url]: https://www.npmjs.com/package/formdata-polyfill
-  [blob.js]: https://github.com/eligrey/Blob.js

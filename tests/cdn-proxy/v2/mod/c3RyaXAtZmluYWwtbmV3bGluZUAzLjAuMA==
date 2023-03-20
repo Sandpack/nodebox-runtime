@@ -50,6 +50,20 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		"xo": "^0.39.1"
 	}
 }
+©/index.js≈[export default function stripFinalNewline(input) {
+	const LF = typeof input === 'string' ? '\n' : '\n'.charCodeAt();
+	const CR = typeof input === 'string' ? '\r' : '\r'.charCodeAt();
+
+	if (input[input.length - 1] === LF) {
+		input = input.slice(0, -1);
+	}
+
+	if (input[input.length - 1] === CR) {
+		input = input.slice(0, -1);
+	}
+
+	return input;
+}
 ™/readme.md≈u# strip-final-newline
 
 > Strip the final [newline character](https://en.wikipedia.org/wiki/Newline) from a string/buffer
@@ -85,17 +99,3 @@ stripFinalNewline(Buffer.from('foo\nbar\n\n')).toString();
 		Tidelift helps make open source sustainable for maintainers while giving companies<br>assurances about security, maintenance, and licensing for their dependencies.
 	</sub>
 </div>
-©/index.js≈[export default function stripFinalNewline(input) {
-	const LF = typeof input === 'string' ? '\n' : '\n'.charCodeAt();
-	const CR = typeof input === 'string' ? '\r' : '\r'.charCodeAt();
-
-	if (input[input.length - 1] === LF) {
-		input = input.slice(0, -1);
-	}
-
-	if (input[input.length - 1] === CR) {
-		input = input.slice(0, -1);
-	}
-
-	return input;
-}

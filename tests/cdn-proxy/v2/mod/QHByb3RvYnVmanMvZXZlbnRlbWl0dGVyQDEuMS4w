@@ -1,4 +1,69 @@
-Ü©/index.js≈("use strict";
+Ü´/index.d.ts≈export = EventEmitter;
+
+/**
+ * Constructs a new event emitter instance.
+ * @classdesc A minimal event emitter.
+ * @memberof util
+ * @constructor
+ */
+declare class EventEmitter {
+
+    /**
+     * Constructs a new event emitter instance.
+     * @classdesc A minimal event emitter.
+     * @memberof util
+     * @constructor
+     */
+    constructor();
+
+    /**
+     * Registers an event listener.
+     * @param {string} evt Event name
+     * @param {function} fn Listener
+     * @param {*} [ctx] Listener context
+     * @returns {util.EventEmitter} `this`
+     */
+    on(evt: string, fn: () => any, ctx?: any): EventEmitter;
+
+    /**
+     * Removes an event listener or any matching listeners if arguments are omitted.
+     * @param {string} [evt] Event name. Removes all listeners if omitted.
+     * @param {function} [fn] Listener to remove. Removes all listeners of `evt` if omitted.
+     * @returns {util.EventEmitter} `this`
+     */
+    off(evt?: string, fn?: () => any): EventEmitter;
+
+    /**
+     * Emits an event by calling its listeners with the specified arguments.
+     * @param {string} evt Event name
+     * @param {...*} args Arguments
+     * @returns {util.EventEmitter} `this`
+     */
+    emit(evt: string, ...args: any[]): EventEmitter;
+}
+™/README.md≈6@protobufjs/eventemitter
+========================
+[![npm](https://img.shields.io/npm/v/@protobufjs/eventemitter.svg)](https://www.npmjs.com/package/@protobufjs/eventemitter)
+
+A minimal event emitter.
+
+API
+---
+
+* **new EventEmitter()**<br />
+  Constructs a new event emitter instance.
+
+* **EventEmitter#on(evt: `string`, fn: `function`, [ctx: `Object`]): `EventEmitter`**<br />
+  Registers an event listener.
+
+* **EventEmitter#off([evt: `string`], [fn: `function`]): `EventEmitter`**<br />
+  Removes an event listener or any matching listeners if arguments are omitted.
+
+* **EventEmitter#emit(evt: `string`, ...args: `*`): `EventEmitter`**<br />
+  Emits an event by calling its listeners with the specified arguments.
+
+**License:** [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause)
+©/index.js≈("use strict";
 module.exports = EventEmitter;
 
 /**
@@ -121,7 +186,27 @@ tape.test("eventemitter", function(test) {
 
     test.end();
 });
-®/LICENSE≈·Copyright (c) 2016, Daniel Wirtz  All rights reserved.
+≠/package.json≈*{
+  "name": "@protobufjs/eventemitter",
+  "description": "A minimal event emitter.",
+  "version": "1.1.0",
+  "author": "Daniel Wirtz <dcode+protobufjs@dcode.io>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dcodeIO/protobuf.js.git"
+  },
+  "license": "BSD-3-Clause",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "devDependencies": {
+    "istanbul": "^0.4.5",
+    "tape": "^4.6.3"
+  },
+  "scripts": {
+    "test": "tape tests/*.js",
+    "coverage": "istanbul cover node_modules/tape/bin/tape tests/*.js"
+  }
+}®/LICENSE≈·Copyright (c) 2016, Daniel Wirtz  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -147,88 +232,3 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-´/index.d.ts≈export = EventEmitter;
-
-/**
- * Constructs a new event emitter instance.
- * @classdesc A minimal event emitter.
- * @memberof util
- * @constructor
- */
-declare class EventEmitter {
-
-    /**
-     * Constructs a new event emitter instance.
-     * @classdesc A minimal event emitter.
-     * @memberof util
-     * @constructor
-     */
-    constructor();
-
-    /**
-     * Registers an event listener.
-     * @param {string} evt Event name
-     * @param {function} fn Listener
-     * @param {*} [ctx] Listener context
-     * @returns {util.EventEmitter} `this`
-     */
-    on(evt: string, fn: () => any, ctx?: any): EventEmitter;
-
-    /**
-     * Removes an event listener or any matching listeners if arguments are omitted.
-     * @param {string} [evt] Event name. Removes all listeners if omitted.
-     * @param {function} [fn] Listener to remove. Removes all listeners of `evt` if omitted.
-     * @returns {util.EventEmitter} `this`
-     */
-    off(evt?: string, fn?: () => any): EventEmitter;
-
-    /**
-     * Emits an event by calling its listeners with the specified arguments.
-     * @param {string} evt Event name
-     * @param {...*} args Arguments
-     * @returns {util.EventEmitter} `this`
-     */
-    emit(evt: string, ...args: any[]): EventEmitter;
-}
-≠/package.json≈*{
-  "name": "@protobufjs/eventemitter",
-  "description": "A minimal event emitter.",
-  "version": "1.1.0",
-  "author": "Daniel Wirtz <dcode+protobufjs@dcode.io>",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/dcodeIO/protobuf.js.git"
-  },
-  "license": "BSD-3-Clause",
-  "main": "index.js",
-  "types": "index.d.ts",
-  "devDependencies": {
-    "istanbul": "^0.4.5",
-    "tape": "^4.6.3"
-  },
-  "scripts": {
-    "test": "tape tests/*.js",
-    "coverage": "istanbul cover node_modules/tape/bin/tape tests/*.js"
-  }
-}™/README.md≈6@protobufjs/eventemitter
-========================
-[![npm](https://img.shields.io/npm/v/@protobufjs/eventemitter.svg)](https://www.npmjs.com/package/@protobufjs/eventemitter)
-
-A minimal event emitter.
-
-API
----
-
-* **new EventEmitter()**<br />
-  Constructs a new event emitter instance.
-
-* **EventEmitter#on(evt: `string`, fn: `function`, [ctx: `Object`]): `EventEmitter`**<br />
-  Registers an event listener.
-
-* **EventEmitter#off([evt: `string`], [fn: `function`]): `EventEmitter`**<br />
-  Removes an event listener or any matching listeners if arguments are omitted.
-
-* **EventEmitter#emit(evt: `string`, ...args: `*`): `EventEmitter`**<br />
-  Emits an event by calling its listeners with the specified arguments.
-
-**License:** [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause)

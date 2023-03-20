@@ -1,67 +1,4 @@
-Ö≠/package.json≈Q{
-  "name": "glob-parent",
-  "version": "5.1.2",
-  "description": "Extract the non-magic parent path from a glob string.",
-  "author": "Gulp Team <team@gulpjs.com> (https://gulpjs.com/)",
-  "contributors": [
-    "Elan Shanker (https://github.com/es128)",
-    "Blaine Bublitz <blaine.bublitz@gmail.com>"
-  ],
-  "repository": "gulpjs/glob-parent",
-  "license": "ISC",
-  "engines": {
-    "node": ">= 6"
-  },
-  "main": "index.js",
-  "files": [
-    "LICENSE",
-    "index.js"
-  ],
-  "scripts": {
-    "lint": "eslint .",
-    "pretest": "npm run lint",
-    "test": "nyc mocha --async-only",
-    "azure-pipelines": "nyc mocha --async-only --reporter xunit -O output=test.xunit",
-    "coveralls": "nyc report --reporter=text-lcov | coveralls"
-  },
-  "dependencies": {
-    "is-glob": "^4.0.1"
-  },
-  "devDependencies": {
-    "coveralls": "^3.0.11",
-    "eslint": "^2.13.1",
-    "eslint-config-gulp": "^3.0.1",
-    "expect": "^1.20.2",
-    "mocha": "^6.0.2",
-    "nyc": "^13.3.0"
-  },
-  "keywords": [
-    "glob",
-    "parent",
-    "strip",
-    "path",
-    "dirname",
-    "directory",
-    "base",
-    "wildcard"
-  ]
-}
-®/LICENSE≈ÒThe ISC License
-
-Copyright (c) 2015, 2019 Elan Shanker
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted, provided that the above
-copyright notice and this permission notice appear in all copies.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
-IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-≠/CHANGELOG.md≈û### [5.1.2](https://github.com/gulpjs/glob-parent/compare/v5.1.1...v5.1.2) (2021-03-06)
+Ö≠/CHANGELOG.md≈û### [5.1.2](https://github.com/gulpjs/glob-parent/compare/v5.1.1...v5.1.2) (2021-03-06)
 
 
 ### Bug Fixes
@@ -213,6 +150,54 @@ module.exports = function globParent(str, opts) {
   // remove escape chars and return result
   return str.replace(escaped, '$1');
 };
+≠/package.json≈Q{
+  "name": "glob-parent",
+  "version": "5.1.2",
+  "description": "Extract the non-magic parent path from a glob string.",
+  "author": "Gulp Team <team@gulpjs.com> (https://gulpjs.com/)",
+  "contributors": [
+    "Elan Shanker (https://github.com/es128)",
+    "Blaine Bublitz <blaine.bublitz@gmail.com>"
+  ],
+  "repository": "gulpjs/glob-parent",
+  "license": "ISC",
+  "engines": {
+    "node": ">= 6"
+  },
+  "main": "index.js",
+  "files": [
+    "LICENSE",
+    "index.js"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "nyc mocha --async-only",
+    "azure-pipelines": "nyc mocha --async-only --reporter xunit -O output=test.xunit",
+    "coveralls": "nyc report --reporter=text-lcov | coveralls"
+  },
+  "dependencies": {
+    "is-glob": "^4.0.1"
+  },
+  "devDependencies": {
+    "coveralls": "^3.0.11",
+    "eslint": "^2.13.1",
+    "eslint-config-gulp": "^3.0.1",
+    "expect": "^1.20.2",
+    "mocha": "^6.0.2",
+    "nyc": "^13.3.0"
+  },
+  "keywords": [
+    "glob",
+    "parent",
+    "strip",
+    "path",
+    "dirname",
+    "directory",
+    "base",
+    "wildcard"
+  ]
+}
 ™/README.md≈&<p align="center">
   <a href="https://gulpjs.com">
     <img height="257" width="114" src="https://raw.githubusercontent.com/gulpjs/artwork/master/gulp-2x.png">
@@ -350,3 +335,18 @@ ISC
 
 [gitter-url]: https://gitter.im/gulpjs/gulp
 [gitter-image]: https://badges.gitter.im/gulpjs/gulp.svg
+®/LICENSE≈ÒThe ISC License
+
+Copyright (c) 2015, 2019 Elan Shanker
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.

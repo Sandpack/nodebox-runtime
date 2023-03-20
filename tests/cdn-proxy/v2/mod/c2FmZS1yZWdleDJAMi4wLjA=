@@ -1,4 +1,47 @@
-á∞/example/safe.jsƒ_var safe = require('../')
+á≠/package.json≈{
+  "name": "safe-regex2",
+  "version": "2.0.0",
+  "description": "detect possibly catastrophic, exponential-time regular expressions",
+  "main": "index.js",
+  "dependencies": {
+    "ret": "~0.2.0"
+  },
+  "devDependencies": {
+    "standard": "^12.0.1",
+    "tape": "^4.0.0"
+  },
+  "scripts": {
+    "test": "standard && tape test/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/fastify/safe-regex.git"
+  },
+  "homepage": "https://github.com/fastify/safe-regex",
+  "keywords": [
+    "catastrophic",
+    "exponential",
+    "regex",
+    "safe",
+    "sandbox"
+  ],
+  "author": {
+    "name": "James Halliday",
+    "email": "mail@substack.net",
+    "url": "http://substack.net"
+  },
+  "contributors": [
+    "Matteo Collina <hello@matteocollina.com>"
+  ],
+  "license": "MIT"
+}
+¨/.travis.ymlƒ5language: node_js
+node_js:
+  - 6
+  - 8
+  - 10
+  - 11
+∞/example/safe.jsƒ_var safe = require('../')
 var regex = process.argv.slice(2).join(' ')
 console.log(safe(regex))
 ©/index.js≈>'use strict'
@@ -49,12 +92,6 @@ module.exports = function (re, opts) {
 function isRegExp (x) {
   return {}.toString.call(x) === '[object RegExp]'
 }
-¨/.travis.ymlƒ5language: node_js
-node_js:
-  - 6
-  - 8
-  - 10
-  - 11
 Æ/test/regex.js≈pvar safe = require('../')
 var test = require('tape')
 
@@ -104,6 +141,24 @@ test('invalid regex', function (t) {
     t.equal(safe(re), false)
   })
 })
+®/LICENSE≈1This software is released under the MIT license:
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ∞/readme.markdown≈{# safe-regex2
 
 [![Build Status](https://travis-ci.com/fastify/safe-regex.svg?branch=master)](https://travis-ci.com/fastify/safe-regex)
@@ -167,58 +222,3 @@ npm install safe-regex2
 # license
 
 MIT
-≠/package.json≈{
-  "name": "safe-regex2",
-  "version": "2.0.0",
-  "description": "detect possibly catastrophic, exponential-time regular expressions",
-  "main": "index.js",
-  "dependencies": {
-    "ret": "~0.2.0"
-  },
-  "devDependencies": {
-    "standard": "^12.0.1",
-    "tape": "^4.0.0"
-  },
-  "scripts": {
-    "test": "standard && tape test/*.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/fastify/safe-regex.git"
-  },
-  "homepage": "https://github.com/fastify/safe-regex",
-  "keywords": [
-    "catastrophic",
-    "exponential",
-    "regex",
-    "safe",
-    "sandbox"
-  ],
-  "author": {
-    "name": "James Halliday",
-    "email": "mail@substack.net",
-    "url": "http://substack.net"
-  },
-  "contributors": [
-    "Matteo Collina <hello@matteocollina.com>"
-  ],
-  "license": "MIT"
-}
-®/LICENSE≈1This software is released under the MIT license:
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

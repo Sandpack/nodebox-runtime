@@ -1,24 +1,17 @@
-â¨/test/cmp.js≈ævar test = require('tape');
+â¨/test/NaN.js≈Ivar test = require('tape');
 var equal = require('../');
 
-test('equal', function (t) {
-    t.ok(equal(
-        { a : [ 2, 3 ], b : [ 4 ] },
-        { a : [ 2, 3 ], b : [ 4 ] }
-    ));
+test('NaN and 0 values', function (t) {
+    t.ok(equal(NaN, NaN));
+    t.notOk(equal(0, NaN));
+    t.ok(equal(0, 0));
+    t.notOk(equal(0, 1));
     t.end();
 });
 
-test('not equal', function (t) {
-    t.notOk(equal(
-        { x : 5, y : [6] },
-        { x : 5, y : 6 }
-    ));
-    t.end();
-});
 
-test('nested nulls', function (t) {
-    t.ok(equal([ null, null, null ], [ null, null, null ]));
+test('nested NaN values', function (t) {
+    t.ok(equal([ NaN, 1, NaN ], [ NaN, 1, NaN ]));
     t.end();
 });
 ∞/README.markdown≈£deep-is
@@ -193,42 +186,17 @@ function objEquiv(a, b) {
   }
   return true;
 }
-¨/test/NaN.js≈Ivar test = require('tape');
-var equal = require('../');
-
-test('NaN and 0 values', function (t) {
-    t.ok(equal(NaN, NaN));
-    t.notOk(equal(0, NaN));
-    t.ok(equal(0, 0));
-    t.notOk(equal(0, 1));
-    t.end();
-});
-
-
-test('nested NaN values', function (t) {
-    t.ok(equal([ NaN, 1, NaN ], [ NaN, 1, NaN ]));
-    t.end();
-});
-¨/.travis.ymlƒ4language: node_js
-node_js:
-  - 0.6
-  - 0.8
-  - 0.10
-µ/test/neg-vs-pos-0.js≈Wvar test = require('tape');
-var equal = require('../');
-
-test('0 values', function (t) {
-    t.ok(equal( 0,  0), ' 0 ===  0');
-    t.ok(equal( 0, +0), ' 0 === +0');
-    t.ok(equal(+0, +0), '+0 === +0');
-    t.ok(equal(-0, -0), '-0 === -0');
-
-    t.notOk(equal(-0,  0), '-0 !==  0');
-    t.notOk(equal(-0, +0), '-0 !== +0');
-
-    t.end();
-});
-
+Ø/example/cmp.jsƒœvar equal = require('../');
+console.dir([
+    equal(
+        { a : [ 2, 3 ], b : [ 4 ] },
+        { a : [ 2, 3 ], b : [ 4 ] }
+    ),
+    equal(
+        { x : 5, y : [6] },
+        { x : 5, y : 6 }
+    )
+]);
 ≠/package.json≈π{
   "name": "deep-is",
   "version": "0.1.4",
@@ -287,6 +255,34 @@ test('0 values', function (t) {
     }
   }
 }
+¨/test/cmp.js≈ævar test = require('tape');
+var equal = require('../');
+
+test('equal', function (t) {
+    t.ok(equal(
+        { a : [ 2, 3 ], b : [ 4 ] },
+        { a : [ 2, 3 ], b : [ 4 ] }
+    ));
+    t.end();
+});
+
+test('not equal', function (t) {
+    t.notOk(equal(
+        { x : 5, y : [6] },
+        { x : 5, y : 6 }
+    ));
+    t.end();
+});
+
+test('nested nulls', function (t) {
+    t.ok(equal([ null, null, null ], [ null, null, null ]));
+    t.end();
+});
+¨/.travis.ymlƒ4language: node_js
+node_js:
+  - 0.6
+  - 0.8
+  - 0.10
 ®/LICENSE≈’Copyright (c) 2012, 2013 Thorsten Lorenz <thlorenz@gmx.de>
 Copyright (c) 2012 James Halliday <mail@substack.net>
 Copyright (c) 2009 Thomas Robinson <280north.com>
@@ -309,14 +305,18 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-Ø/example/cmp.jsƒœvar equal = require('../');
-console.dir([
-    equal(
-        { a : [ 2, 3 ], b : [ 4 ] },
-        { a : [ 2, 3 ], b : [ 4 ] }
-    ),
-    equal(
-        { x : 5, y : [6] },
-        { x : 5, y : 6 }
-    )
-]);
+µ/test/neg-vs-pos-0.js≈Wvar test = require('tape');
+var equal = require('../');
+
+test('0 values', function (t) {
+    t.ok(equal( 0,  0), ' 0 ===  0');
+    t.ok(equal( 0, +0), ' 0 === +0');
+    t.ok(equal(+0, +0), '+0 === +0');
+    t.ok(equal(-0, -0), '-0 === -0');
+
+    t.notOk(equal(-0,  0), '-0 !==  0');
+    t.notOk(equal(-0, +0), '-0 !== +0');
+
+    t.end();
+});
+

@@ -1,143 +1,4 @@
-‡¯/bin/esparse.jsÅT#!/usr/bin/env node
-/*
-  Copyright JS Foundation and other contributors, https://js.foundation/
-
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
-  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
-/*jslint sloppy:true node:true rhino:true */
-
-var fs, esprima, fname, forceFile, content, options, syntax;
-
-if (typeof require === 'function') {
-    fs = require('fs');
-    try {
-        esprima = require('esprima');
-    } catch (e) {
-        esprima = require('../');
-    }
-} else if (typeof load === 'function') {
-    try {
-        load('esprima.js');
-    } catch (e) {
-        load('../esprima.js');
-    }
-}
-
-// Shims to Node.js objects when running under Rhino.
-if (typeof console === 'undefined' && typeof process === 'undefined') {
-    console = { log: print };
-    fs = { readFileSync: readFile };
-    process = { argv: arguments, exit: quit };
-    process.argv.unshift('esparse.js');
-    process.argv.unshift('rhino');
-}
-
-function showUsage() {
-    console.log('Usage:');
-    console.log('   esparse [options] [file.js]');
-    console.log();
-    console.log('Available options:');
-    console.log();
-    console.log('  --comment      Gather all line and block comments in an array');
-    console.log('  --loc          Include line-column location info for each syntax node');
-    console.log('  --range        Include index-based range for each syntax node');
-    console.log('  --raw          Display the raw value of literals');
-    console.log('  --tokens       List all tokens in an array');
-    console.log('  --tolerant     Tolerate errors on a best-effort basis (experimental)');
-    console.log('  -v, --version  Shows program version');
-    console.log();
-    process.exit(1);
-}
-
-options = {};
-
-process.argv.splice(2).forEach(function (entry) {
-
-    if (forceFile || entry === '-' || entry.slice(0, 1) !== '-') {
-        if (typeof fname === 'string') {
-            console.log('Error: more than one input file.');
-            process.exit(1);
-        } else {
-            fname = entry;
-        }
-    } else if (entry === '-h' || entry === '--help') {
-        showUsage();
-    } else if (entry === '-v' || entry === '--version') {
-        console.log('ECMAScript Parser (using Esprima version', esprima.version, ')');
-        console.log();
-        process.exit(0);
-    } else if (entry === '--comment') {
-        options.comment = true;
-    } else if (entry === '--loc') {
-        options.loc = true;
-    } else if (entry === '--range') {
-        options.range = true;
-    } else if (entry === '--raw') {
-        options.raw = true;
-    } else if (entry === '--tokens') {
-        options.tokens = true;
-    } else if (entry === '--tolerant') {
-        options.tolerant = true;
-    } else if (entry === '--') {
-        forceFile = true;
-    } else {
-        console.log('Error: unknown option ' + entry + '.');
-        process.exit(1);
-    }
-});
-
-// Special handling for regular expression literal since we need to
-// convert it to a string literal, otherwise it will be decoded
-// as object "{}" and the regular expression would be lost.
-function adjustRegexLiteral(key, value) {
-    if (key === 'value' && value instanceof RegExp) {
-        value = value.toString();
-    }
-    return value;
-}
-
-function run(content) {
-    syntax = esprima.parse(content, options);
-    console.log(JSON.stringify(syntax, adjustRegexLiteral, 4));
-}
-
-try {
-    if (fname && (fname !== '-' || forceFile)) {
-        run(fs.readFileSync(fname, 'utf-8'));
-    } else {
-        var content = '';
-        process.stdin.resume();
-        process.stdin.on('data', function(chunk) {
-            content += chunk;
-        });
-        process.stdin.on('end', function() {
-            run(content);
-        });
-    }
-} catch (e) {
-    console.log('Error: ' + e.message);
-    process.exit(1);
-}
-²/bin/esvalidate.jsÅ@#!/usr/bin/env node
+‡²/bin/esvalidate.jsÅ@#!/usr/bin/env node
 /*
   Copyright JS Foundation and other contributors, https://js.foundation/
 
@@ -373,118 +234,6 @@ process.on('exit', function () {
         process.exit(0);
     }
 });
-­/package.jsonÅk{
-  "name": "esprima",
-  "description": "ECMAScript parsing infrastructure for multipurpose analysis",
-  "homepage": "http://esprima.org",
-  "main": "dist/esprima.js",
-  "bin": {
-    "esparse": "./bin/esparse.js",
-    "esvalidate": "./bin/esvalidate.js"
-  },
-  "version": "4.0.1",
-  "files": [
-    "bin",
-    "dist/esprima.js"
-  ],
-  "engines": {
-    "node": ">=4"
-  },
-  "author": {
-    "name": "Ariya Hidayat",
-    "email": "ariya.hidayat@gmail.com"
-  },
-  "maintainers": [
-    {
-      "name": "Ariya Hidayat",
-      "email": "ariya.hidayat@gmail.com",
-      "web": "http://ariya.ofilabs.com"
-    }
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/jquery/esprima.git"
-  },
-  "bugs": {
-    "url": "https://github.com/jquery/esprima/issues"
-  },
-  "license": "BSD-2-Clause",
-  "devDependencies": {
-    "codecov.io": "~0.1.6",
-    "escomplex-js": "1.2.0",
-    "everything.js": "~1.0.3",
-    "glob": "~7.1.0",
-    "istanbul": "~0.4.0",
-    "json-diff": "~0.3.1",
-    "karma": "~1.3.0",
-    "karma-chrome-launcher": "~2.0.0",
-    "karma-detect-browsers": "~2.2.3",
-    "karma-edge-launcher": "~0.2.0",
-    "karma-firefox-launcher": "~1.0.0",
-    "karma-ie-launcher": "~1.0.0",
-    "karma-mocha": "~1.3.0",
-    "karma-safari-launcher": "~1.0.0",
-    "karma-safaritechpreview-launcher": "~0.0.4",
-    "karma-sauce-launcher": "~1.1.0",
-    "lodash": "~3.10.1",
-    "mocha": "~3.2.0",
-    "node-tick-processor": "~0.0.2",
-    "regenerate": "~1.3.2",
-    "temp": "~0.8.3",
-    "tslint": "~5.1.0",
-    "typescript": "~2.3.2",
-    "typescript-formatter": "~5.1.3",
-    "unicode-8.0.0": "~0.7.0",
-    "webpack": "~1.14.0"
-  },
-  "keywords": [
-    "ast",
-    "ecmascript",
-    "esprima",
-    "javascript",
-    "parser",
-    "syntax"
-  ],
-  "scripts": {
-    "check-version": "node test/check-version.js",
-    "tslint": "tslint src/*.ts",
-    "code-style": "tsfmt --verify src/*.ts && tsfmt --verify test/*.js",
-    "format-code": "tsfmt -r src/*.ts && tsfmt -r test/*.js",
-    "complexity": "node test/check-complexity.js",
-    "static-analysis": "npm run check-version && npm run tslint && npm run code-style && npm run complexity",
-    "hostile-env-tests": "node test/hostile-environment-tests.js",
-    "unit-tests": "node test/unit-tests.js",
-    "api-tests": "mocha -R dot test/api-tests.js",
-    "grammar-tests": "node test/grammar-tests.js",
-    "regression-tests": "node test/regression-tests.js",
-    "all-tests": "npm run verify-line-ending && npm run generate-fixtures && npm run unit-tests && npm run api-tests && npm run grammar-tests && npm run regression-tests && npm run hostile-env-tests",
-    "verify-line-ending": "node test/verify-line-ending.js",
-    "generate-fixtures": "node tools/generate-fixtures.js",
-    "browser-tests": "npm run compile && npm run generate-fixtures && cd test && karma start --single-run",
-    "saucelabs-evergreen": "cd test && karma start saucelabs-evergreen.conf.js",
-    "saucelabs-safari": "cd test && karma start saucelabs-safari.conf.js",
-    "saucelabs-ie": "cd test && karma start saucelabs-ie.conf.js",
-    "saucelabs": "npm run saucelabs-evergreen && npm run saucelabs-ie && npm run saucelabs-safari",
-    "analyze-coverage": "istanbul cover test/unit-tests.js",
-    "check-coverage": "istanbul check-coverage --statement 100 --branch 100 --function 100",
-    "dynamic-analysis": "npm run analyze-coverage && npm run check-coverage",
-    "compile": "tsc -p src/ && webpack && node tools/fixupbundle.js",
-    "test": "npm run compile && npm run all-tests && npm run static-analysis && npm run dynamic-analysis",
-    "prepublish": "npm run compile",
-    "profile": "node --prof test/profile.js && mv isolate*.log v8.log && node-tick-processor",
-    "benchmark-parser": "node -expose_gc test/benchmark-parser.js",
-    "benchmark-tokenizer": "node --expose_gc test/benchmark-tokenizer.js",
-    "benchmark": "npm run benchmark-parser && npm run benchmark-tokenizer",
-    "codecov": "istanbul report cobertura && codecov < ./coverage/cobertura-coverage.xml",
-    "downstream": "node test/downstream.js",
-    "travis": "npm test",
-    "circleci": "npm test && npm run codecov && npm run downstream",
-    "appveyor": "npm run compile && npm run all-tests && npm run browser-tests",
-    "droneio": "npm run compile && npm run all-tests && npm run saucelabs",
-    "generate-regex": "node tools/generate-identifier-regex.js",
-    "generate-xhtml-entities": "node tools/generate-xhtml-entities.js"
-  }
-}
 ª/ChangeLogÅ&¹2018-06-17: Version 4.0.1
 
       *  Fix parsing async get/set in a class (issue 1861, 1875)
@@ -720,7 +469,191 @@ process.on('exit', function () {
 2012-10-22: Version 1.0.0
 
     Initial release.
-°/dist/esprima.jsÆ S¯(function webpackUniversalModuleDefinition(root, factory) {
+¯/bin/esparse.jsÅT#!/usr/bin/env node
+/*
+  Copyright JS Foundation and other contributors, https://js.foundation/
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+/*jslint sloppy:true node:true rhino:true */
+
+var fs, esprima, fname, forceFile, content, options, syntax;
+
+if (typeof require === 'function') {
+    fs = require('fs');
+    try {
+        esprima = require('esprima');
+    } catch (e) {
+        esprima = require('../');
+    }
+} else if (typeof load === 'function') {
+    try {
+        load('esprima.js');
+    } catch (e) {
+        load('../esprima.js');
+    }
+}
+
+// Shims to Node.js objects when running under Rhino.
+if (typeof console === 'undefined' && typeof process === 'undefined') {
+    console = { log: print };
+    fs = { readFileSync: readFile };
+    process = { argv: arguments, exit: quit };
+    process.argv.unshift('esparse.js');
+    process.argv.unshift('rhino');
+}
+
+function showUsage() {
+    console.log('Usage:');
+    console.log('   esparse [options] [file.js]');
+    console.log();
+    console.log('Available options:');
+    console.log();
+    console.log('  --comment      Gather all line and block comments in an array');
+    console.log('  --loc          Include line-column location info for each syntax node');
+    console.log('  --range        Include index-based range for each syntax node');
+    console.log('  --raw          Display the raw value of literals');
+    console.log('  --tokens       List all tokens in an array');
+    console.log('  --tolerant     Tolerate errors on a best-effort basis (experimental)');
+    console.log('  -v, --version  Shows program version');
+    console.log();
+    process.exit(1);
+}
+
+options = {};
+
+process.argv.splice(2).forEach(function (entry) {
+
+    if (forceFile || entry === '-' || entry.slice(0, 1) !== '-') {
+        if (typeof fname === 'string') {
+            console.log('Error: more than one input file.');
+            process.exit(1);
+        } else {
+            fname = entry;
+        }
+    } else if (entry === '-h' || entry === '--help') {
+        showUsage();
+    } else if (entry === '-v' || entry === '--version') {
+        console.log('ECMAScript Parser (using Esprima version', esprima.version, ')');
+        console.log();
+        process.exit(0);
+    } else if (entry === '--comment') {
+        options.comment = true;
+    } else if (entry === '--loc') {
+        options.loc = true;
+    } else if (entry === '--range') {
+        options.range = true;
+    } else if (entry === '--raw') {
+        options.raw = true;
+    } else if (entry === '--tokens') {
+        options.tokens = true;
+    } else if (entry === '--tolerant') {
+        options.tolerant = true;
+    } else if (entry === '--') {
+        forceFile = true;
+    } else {
+        console.log('Error: unknown option ' + entry + '.');
+        process.exit(1);
+    }
+});
+
+// Special handling for regular expression literal since we need to
+// convert it to a string literal, otherwise it will be decoded
+// as object "{}" and the regular expression would be lost.
+function adjustRegexLiteral(key, value) {
+    if (key === 'value' && value instanceof RegExp) {
+        value = value.toString();
+    }
+    return value;
+}
+
+function run(content) {
+    syntax = esprima.parse(content, options);
+    console.log(JSON.stringify(syntax, adjustRegexLiteral, 4));
+}
+
+try {
+    if (fname && (fname !== '-' || forceFile)) {
+        run(fs.readFileSync(fname, 'utf-8'));
+    } else {
+        var content = '';
+        process.stdin.resume();
+        process.stdin.on('data', function(chunk) {
+            content += chunk;
+        });
+        process.stdin.on('end', function() {
+            run(content);
+        });
+    }
+} catch (e) {
+    console.log('Error: ' + e.message);
+    process.exit(1);
+}
+ª/README.mdÅ	{[![NPM version](https://img.shields.io/npm/v/esprima.svg)](https://www.npmjs.com/package/esprima)
+[![npm download](https://img.shields.io/npm/dm/esprima.svg)](https://www.npmjs.com/package/esprima)
+[![Build Status](https://img.shields.io/travis/jquery/esprima/master.svg)](https://travis-ci.org/jquery/esprima)
+[![Coverage Status](https://img.shields.io/codecov/c/github/jquery/esprima/master.svg)](https://codecov.io/github/jquery/esprima)
+
+**Esprima** ([esprima.org](http://esprima.org), BSD license) is a high performance,
+standard-compliant [ECMAScript](http://www.ecma-international.org/publications/standards/Ecma-262.htm)
+parser written in ECMAScript (also popularly known as
+[JavaScript](https://en.wikipedia.org/wiki/JavaScript)).
+Esprima is created and maintained by [Ariya Hidayat](https://twitter.com/ariyahidayat),
+with the help of [many contributors](https://github.com/jquery/esprima/contributors).
+
+### Features
+
+- Full support for ECMAScript 2017 ([ECMA-262 8th Edition](http://www.ecma-international.org/publications/standards/Ecma-262.htm))
+- Sensible [syntax tree format](https://github.com/estree/estree/blob/master/es5.md) as standardized by [ESTree project](https://github.com/estree/estree)
+- Experimental support for [JSX](https://facebook.github.io/jsx/), a syntax extension for [React](https://facebook.github.io/react/)
+- Optional tracking of syntax node location (index-based and line-column)
+- [Heavily tested](http://esprima.org/test/ci.html) (~1500 [unit tests](https://github.com/jquery/esprima/tree/master/test/fixtures) with [full code coverage](https://codecov.io/github/jquery/esprima))
+
+### API
+
+Esprima can be used to perform [lexical analysis](https://en.wikipedia.org/wiki/Lexical_analysis) (tokenization) or [syntactic analysis](https://en.wikipedia.org/wiki/Parsing) (parsing) of a JavaScript program.
+
+A simple example on Node.js REPL:
+
+```javascript
+> var esprima = require('esprima');
+> var program = 'const answer = 42';
+
+> esprima.tokenize(program);
+[ { type: 'Keyword', value: 'const' },
+  { type: 'Identifier', value: 'answer' },
+  { type: 'Punctuator', value: '=' },
+  { type: 'Numeric', value: '42' } ]
+  
+> esprima.parseScript(program);
+{ type: 'Program',
+  body:
+   [ { type: 'VariableDeclaration',
+       declarations: [Object],
+       kind: 'const' } ],
+  sourceType: 'script' }
+```
+
+For more information, please read the [complete documentation](http://esprima.org/doc).°/dist/esprima.jsÆ S¯(function webpackUniversalModuleDefinition(root, factory) {
 /* istanbul ignore next */
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -7428,52 +7361,119 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ }
 /******/ ])
 });
-;ª/README.mdÅ	{[![NPM version](https://img.shields.io/npm/v/esprima.svg)](https://www.npmjs.com/package/esprima)
-[![npm download](https://img.shields.io/npm/dm/esprima.svg)](https://www.npmjs.com/package/esprima)
-[![Build Status](https://img.shields.io/travis/jquery/esprima/master.svg)](https://travis-ci.org/jquery/esprima)
-[![Coverage Status](https://img.shields.io/codecov/c/github/jquery/esprima/master.svg)](https://codecov.io/github/jquery/esprima)
-
-**Esprima** ([esprima.org](http://esprima.org), BSD license) is a high performance,
-standard-compliant [ECMAScript](http://www.ecma-international.org/publications/standards/Ecma-262.htm)
-parser written in ECMAScript (also popularly known as
-[JavaScript](https://en.wikipedia.org/wiki/JavaScript)).
-Esprima is created and maintained by [Ariya Hidayat](https://twitter.com/ariyahidayat),
-with the help of [many contributors](https://github.com/jquery/esprima/contributors).
-
-### Features
-
-- Full support for ECMAScript 2017 ([ECMA-262 8th Edition](http://www.ecma-international.org/publications/standards/Ecma-262.htm))
-- Sensible [syntax tree format](https://github.com/estree/estree/blob/master/es5.md) as standardized by [ESTree project](https://github.com/estree/estree)
-- Experimental support for [JSX](https://facebook.github.io/jsx/), a syntax extension for [React](https://facebook.github.io/react/)
-- Optional tracking of syntax node location (index-based and line-column)
-- [Heavily tested](http://esprima.org/test/ci.html) (~1500 [unit tests](https://github.com/jquery/esprima/tree/master/test/fixtures) with [full code coverage](https://codecov.io/github/jquery/esprima))
-
-### API
-
-Esprima can be used to perform [lexical analysis](https://en.wikipedia.org/wiki/Lexical_analysis) (tokenization) or [syntactic analysis](https://en.wikipedia.org/wiki/Parsing) (parsing) of a JavaScript program.
-
-A simple example on Node.js REPL:
-
-```javascript
-> var esprima = require('esprima');
-> var program = 'const answer = 42';
-
-> esprima.tokenize(program);
-[ { type: 'Keyword', value: 'const' },
-  { type: 'Identifier', value: 'answer' },
-  { type: 'Punctuator', value: '=' },
-  { type: 'Numeric', value: '42' } ]
-  
-> esprima.parseScript(program);
-{ type: 'Program',
-  body:
-   [ { type: 'VariableDeclaration',
-       declarations: [Object],
-       kind: 'const' } ],
-  sourceType: 'script' }
-```
-
-For more information, please read the [complete documentation](http://esprima.org/doc).¬/LICENSE.BSDÅCopyright JS Foundation and other contributors, https://js.foundation/
+;­/package.jsonÅk{
+  "name": "esprima",
+  "description": "ECMAScript parsing infrastructure for multipurpose analysis",
+  "homepage": "http://esprima.org",
+  "main": "dist/esprima.js",
+  "bin": {
+    "esparse": "./bin/esparse.js",
+    "esvalidate": "./bin/esvalidate.js"
+  },
+  "version": "4.0.1",
+  "files": [
+    "bin",
+    "dist/esprima.js"
+  ],
+  "engines": {
+    "node": ">=4"
+  },
+  "author": {
+    "name": "Ariya Hidayat",
+    "email": "ariya.hidayat@gmail.com"
+  },
+  "maintainers": [
+    {
+      "name": "Ariya Hidayat",
+      "email": "ariya.hidayat@gmail.com",
+      "web": "http://ariya.ofilabs.com"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jquery/esprima.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jquery/esprima/issues"
+  },
+  "license": "BSD-2-Clause",
+  "devDependencies": {
+    "codecov.io": "~0.1.6",
+    "escomplex-js": "1.2.0",
+    "everything.js": "~1.0.3",
+    "glob": "~7.1.0",
+    "istanbul": "~0.4.0",
+    "json-diff": "~0.3.1",
+    "karma": "~1.3.0",
+    "karma-chrome-launcher": "~2.0.0",
+    "karma-detect-browsers": "~2.2.3",
+    "karma-edge-launcher": "~0.2.0",
+    "karma-firefox-launcher": "~1.0.0",
+    "karma-ie-launcher": "~1.0.0",
+    "karma-mocha": "~1.3.0",
+    "karma-safari-launcher": "~1.0.0",
+    "karma-safaritechpreview-launcher": "~0.0.4",
+    "karma-sauce-launcher": "~1.1.0",
+    "lodash": "~3.10.1",
+    "mocha": "~3.2.0",
+    "node-tick-processor": "~0.0.2",
+    "regenerate": "~1.3.2",
+    "temp": "~0.8.3",
+    "tslint": "~5.1.0",
+    "typescript": "~2.3.2",
+    "typescript-formatter": "~5.1.3",
+    "unicode-8.0.0": "~0.7.0",
+    "webpack": "~1.14.0"
+  },
+  "keywords": [
+    "ast",
+    "ecmascript",
+    "esprima",
+    "javascript",
+    "parser",
+    "syntax"
+  ],
+  "scripts": {
+    "check-version": "node test/check-version.js",
+    "tslint": "tslint src/*.ts",
+    "code-style": "tsfmt --verify src/*.ts && tsfmt --verify test/*.js",
+    "format-code": "tsfmt -r src/*.ts && tsfmt -r test/*.js",
+    "complexity": "node test/check-complexity.js",
+    "static-analysis": "npm run check-version && npm run tslint && npm run code-style && npm run complexity",
+    "hostile-env-tests": "node test/hostile-environment-tests.js",
+    "unit-tests": "node test/unit-tests.js",
+    "api-tests": "mocha -R dot test/api-tests.js",
+    "grammar-tests": "node test/grammar-tests.js",
+    "regression-tests": "node test/regression-tests.js",
+    "all-tests": "npm run verify-line-ending && npm run generate-fixtures && npm run unit-tests && npm run api-tests && npm run grammar-tests && npm run regression-tests && npm run hostile-env-tests",
+    "verify-line-ending": "node test/verify-line-ending.js",
+    "generate-fixtures": "node tools/generate-fixtures.js",
+    "browser-tests": "npm run compile && npm run generate-fixtures && cd test && karma start --single-run",
+    "saucelabs-evergreen": "cd test && karma start saucelabs-evergreen.conf.js",
+    "saucelabs-safari": "cd test && karma start saucelabs-safari.conf.js",
+    "saucelabs-ie": "cd test && karma start saucelabs-ie.conf.js",
+    "saucelabs": "npm run saucelabs-evergreen && npm run saucelabs-ie && npm run saucelabs-safari",
+    "analyze-coverage": "istanbul cover test/unit-tests.js",
+    "check-coverage": "istanbul check-coverage --statement 100 --branch 100 --function 100",
+    "dynamic-analysis": "npm run analyze-coverage && npm run check-coverage",
+    "compile": "tsc -p src/ && webpack && node tools/fixupbundle.js",
+    "test": "npm run compile && npm run all-tests && npm run static-analysis && npm run dynamic-analysis",
+    "prepublish": "npm run compile",
+    "profile": "node --prof test/profile.js && mv isolate*.log v8.log && node-tick-processor",
+    "benchmark-parser": "node -expose_gc test/benchmark-parser.js",
+    "benchmark-tokenizer": "node --expose_gc test/benchmark-tokenizer.js",
+    "benchmark": "npm run benchmark-parser && npm run benchmark-tokenizer",
+    "codecov": "istanbul report cobertura && codecov < ./coverage/cobertura-coverage.xml",
+    "downstream": "node test/downstream.js",
+    "travis": "npm test",
+    "circleci": "npm test && npm run codecov && npm run downstream",
+    "appveyor": "npm run compile && npm run all-tests && npm run browser-tests",
+    "droneio": "npm run compile && npm run all-tests && npm run saucelabs",
+    "generate-regex": "node tools/generate-identifier-regex.js",
+    "generate-xhtml-entities": "node tools/generate-xhtml-entities.js"
+  }
+}
+¬/LICENSE.BSDÅCopyright JS Foundation and other contributors, https://js.foundation/
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:

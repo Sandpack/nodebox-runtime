@@ -6,15 +6,45 @@ module.exports = (flag, argv = process.argv) => {
 	const terminatorPosition = argv.indexOf('--');
 	return position !== -1 && (terminatorPosition === -1 || position < terminatorPosition);
 };
-¨/licenseÅUMIT License
+«/index.d.tsÅ¬/**
+Check if [`argv`](https://nodejs.org/docs/latest/api/process.html#process_process_argv) has a specific flag.
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+@param flag - CLI flag to look for. The `--` prefix is optional.
+@param argv - CLI arguments. Default: `process.argv`.
+@returns Whether the flag exists.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+@example
+```
+// $ ts-node foo.ts -f --unicorn --foo=bar -- --rainbow
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+// foo.ts
+import hasFlag = require('has-flag');
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+hasFlag('unicorn');
+//=> true
+
+hasFlag('--unicorn');
+//=> true
+
+hasFlag('f');
+//=> true
+
+hasFlag('-f');
+//=> true
+
+hasFlag('foo=bar');
+//=> true
+
+hasFlag('foo');
+//=> false
+
+hasFlag('rainbow');
+//=> false
+```
+*/
+declare function hasFlag(flag: string, argv?: string[]): boolean;
+
+export = hasFlag;
 ­/package.jsonÅ¸{
 	"name": "has-flag",
 	"version": "4.0.0",
@@ -61,45 +91,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		"xo": "^0.24.0"
 	}
 }
-«/index.d.tsÅ¬/**
-Check if [`argv`](https://nodejs.org/docs/latest/api/process.html#process_process_argv) has a specific flag.
-
-@param flag - CLI flag to look for. The `--` prefix is optional.
-@param argv - CLI arguments. Default: `process.argv`.
-@returns Whether the flag exists.
-
-@example
-```
-// $ ts-node foo.ts -f --unicorn --foo=bar -- --rainbow
-
-// foo.ts
-import hasFlag = require('has-flag');
-
-hasFlag('unicorn');
-//=> true
-
-hasFlag('--unicorn');
-//=> true
-
-hasFlag('f');
-//=> true
-
-hasFlag('-f');
-//=> true
-
-hasFlag('foo=bar');
-//=> true
-
-hasFlag('foo');
-//=> false
-
-hasFlag('rainbow');
-//=> false
-```
-*/
-declare function hasFlag(flag: string, argv?: string[]): boolean;
-
-export = hasFlag;
 ª/readme.mdÅ@# has-flag [![Build Status](https://travis-ci.org/sindresorhus/has-flag.svg?branch=master)](https://travis-ci.org/sindresorhus/has-flag)
 
 > Check if [`argv`](https://nodejs.org/docs/latest/api/process.html#process_process_argv) has a specific flag
@@ -189,3 +180,12 @@ To report a security vulnerability, please use the [Tidelift security contact](h
 ## License
 
 MIT Â© [Sindre Sorhus](https://sindresorhus.com)
+¨/licenseÅUMIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

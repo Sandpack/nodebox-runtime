@@ -1,575 +1,4 @@
-†¬/man/jsesc.1ÅH.Dd May 13, 2016
-.Dt jsesc 1
-.Sh NAME
-.Nm jsesc
-.Nd escape strings for use in JavaScript string literals
-.Sh SYNOPSIS
-.Nm
-.Op Fl s | -single-quotes Ar string
-.br
-.Op Fl d | -double-quotes Ar string
-.br
-.Op Fl w | -wrap Ar string
-.br
-.Op Fl e | -escape-everything Ar string
-.br
-.Op Fl 6 | -es6 Ar string
-.br
-.Op Fl l | -lowercase-hex Ar string
-.br
-.Op Fl j | -json Ar string
-.br
-.Op Fl p | -object Ar string
-.br
-.Op Fl p | -pretty Ar string
-.br
-.Op Fl v | -version
-.br
-.Op Fl h | -help
-.Sh DESCRIPTION
-.Nm
-escapes strings for use in JavaScript string literals while generating the shortest possible valid ASCII-only output.
-.Sh OPTIONS
-.Bl -ohang -offset
-.It Sy "-s, --single-quotes"
-Escape any occurrences of ' in the input string as \\', so that the output can be used in a JavaScript string literal wrapped in single quotes.
-.It Sy "-d, --double-quotes"
-Escape any occurrences of " in the input string as \\", so that the output can be used in a JavaScript string literal wrapped in double quotes.
-.It Sy "-w, --wrap"
-Make sure the output is a valid JavaScript string literal wrapped in quotes. The type of quotes can be specified using the
-.Ar -s | --single-quotes
-or
-.Ar -d | --double-quotes
-settings.
-.It Sy "-6, --es6"
-Escape any astral Unicode symbols using ECMAScript 6 Unicode code point escape sequences.
-.It Sy "-e, --escape-everything"
-Escape all the symbols in the output, even printable ASCII symbols.
-.It Sy "-j, --json"
-Make sure the output is valid JSON. Hexadecimal character escape sequences and the \\v or \\0 escape sequences will not be used. Setting this flag enables the
-.Ar -d | --double-quotes
-and
-.Ar -w | --wrap
-settings.
-.It Sy "-o, --object"
-Treat the input as a JavaScript object rather than a string. Accepted values are flat arrays containing only string values, and flat objects containing only string values.
-.It Sy "-p, --pretty"
-Pretty-print the output for objects, using whitespace to make it more readable. Setting this flag enables the
-.It Sy "-l, --lowercase-hex"
-Use lowercase for alphabetical hexadecimal digits in escape sequences.
-.Ar -o | --object
-setting.
-.It Sy "-v, --version"
-Print jsesc's version.
-.It Sy "-h, --help"
-Show the help screen.
-.El
-.Sh EXIT STATUS
-The
-.Nm jsesc
-utility exits with one of the following values:
-.Pp
-.Bl -tag -width flag -compact
-.It Li 0
-.Nm
-successfully escaped the given string and printed the result.
-.It Li 1
-.Nm
-wasn't instructed to escape anything (for example, the
-.Ar --help
-flag was set); or, an error occurred.
-.El
-.Sh EXAMPLES
-.Bl -ohang -offset
-.It Sy "jsesc 'foo bar baz'"
-Print an escaped version of the given string.
-.It Sy echo\ 'foo bar baz'\ |\ jsesc
-Print an escaped version of the string that gets piped in.
-.El
-.Sh BUGS
-jsesc's bug tracker is located at <https://github.com/mathiasbynens/jsesc/issues>.
-.Sh AUTHOR
-Mathias Bynens <https://mathiasbynens.be/>
-.Sh WWW
-<https://mths.be/jsesc>
-ª/bin/jsescÅù#!/usr/bin/env node
-(function() {
-
-	var fs = require('fs');
-	var stringEscape = require('../jsesc.js');
-	var strings = process.argv.splice(2);
-	var stdin = process.stdin;
-	var data;
-	var timeout;
-	var isObject = false;
-	var options = {};
-	var log = console.log;
-
-	var main = function() {
-		var option = strings[0];
-
-		if (/^(?:-h|--help|undefined)$/.test(option)) {
-			log(
-				'jsesc v%s - https://mths.be/jsesc',
-				stringEscape.version
-			);
-			log([
-				'\nUsage:\n',
-				'\tjsesc [string]',
-				'\tjsesc [-s | --single-quotes] [string]',
-				'\tjsesc [-d | --double-quotes] [string]',
-				'\tjsesc [-w | --wrap] [string]',
-				'\tjsesc [-e | --escape-everything] [string]',
-				'\tjsesc [-t | --escape-etago] [string]',
-				'\tjsesc [-6 | --es6] [string]',
-				'\tjsesc [-l | --lowercase-hex] [string]',
-				'\tjsesc [-j | --json] [string]',
-				'\tjsesc [-o | --object] [stringified_object]', // `JSON.parse()` the argument
-				'\tjsesc [-p | --pretty] [string]', // `compact: false`
-				'\tjsesc [-v | --version]',
-				'\tjsesc [-h | --help]',
-				'\nExamples:\n',
-				'\tjsesc \'f\xF6o \u2665 b\xE5r \uD834\uDF06 baz\'',
-				'\tjsesc --json \'f\xF6o \u2665 b\xE5r \uD834\uDF06 baz\'',
-				'\tjsesc --json --escape-everything \'f\xF6o \u2665 b\xE5r \uD834\uDF06 baz\'',
-				'\tjsesc --double-quotes --wrap \'f\xF6o \u2665 b\xE5r \uD834\uDF06 baz\'',
-				'\techo \'f\xF6o \u2665 b\xE5r \uD834\uDF06 baz\' | jsesc'
-			].join('\n'));
-			return process.exit(1);
-		}
-
-		if (/^(?:-v|--version)$/.test(option)) {
-			log('v%s', stringEscape.version);
-			return process.exit(1);
-		}
-
-		strings.forEach(function(string) {
-			// Process options
-			if (/^(?:-s|--single-quotes)$/.test(string)) {
-				options.quotes = 'single';
-				return;
-			}
-			if (/^(?:-d|--double-quotes)$/.test(string)) {
-				options.quotes = 'double';
-				return;
-			}
-			if (/^(?:-w|--wrap)$/.test(string)) {
-				options.wrap = true;
-				return;
-			}
-			if (/^(?:-e|--escape-everything)$/.test(string)) {
-				options.escapeEverything = true;
-				return;
-			}
-			if (/^(?:-t|--escape-etago)$/.test(string)) {
-				options.escapeEtago = true;
-				return;
-			}
-			if (/^(?:-6|--es6)$/.test(string)) {
-				options.es6 = true;
-				return;
-			}
-			if (/^(?:-l|--lowercase-hex)$/.test(string)) {
-				options.lowercaseHex = true;
-				return;
-			}
-			if (/^(?:-j|--json)$/.test(string)) {
-				options.json = true;
-				return;
-			}
-			if (/^(?:-o|--object)$/.test(string)) {
-				isObject = true;
-				return;
-			}
-			if (/^(?:-p|--pretty)$/.test(string)) {
-				isObject = true;
-				options.compact = false;
-				return;
-			}
-
-			// Process string(s)
-			var result;
-			try {
-				if (isObject) {
-					string = JSON.parse(string);
-				}
-				result = stringEscape(string, options);
-				log(result);
-			} catch(error) {
-				log(error.message + '\n');
-				log('Error: failed to escape.');
-				log('If you think this is a bug in jsesc, please report it:');
-				log('https://github.com/mathiasbynens/jsesc/issues/new');
-				log(
-					'\nStack trace using jsesc@%s:\n',
-					stringEscape.version
-				);
-				log(error.stack);
-				return process.exit(1);
-			}
-		});
-		// Return with exit status 0 outside of the `forEach` loop, in case
-		// multiple strings were passed in.
-		return process.exit(0);
-
-	};
-
-	if (stdin.isTTY) {
-		// handle shell arguments
-		main();
-	} else {
-		// Either the script is called from within a non-TTY context,
-		// or `stdin` content is being piped in.
-		if (!process.stdout.isTTY) { // called from a non-TTY context
-			timeout = setTimeout(function() {
-				// if no piped data arrived after a while, handle shell arguments
-				main();
-			}, 250);
-		}
-
-		data = '';
-		stdin.on('data', function(chunk) {
-			clearTimeout(timeout);
-			data += chunk;
-		});
-		stdin.on('end', function() {
-			strings.push(data.trim());
-			main();
-		});
-		stdin.resume();
-	}
-
-}());
-©/jsesc.jsÅ Ñ'use strict';
-
-const object = {};
-const hasOwnProperty = object.hasOwnProperty;
-const forOwn = (object, callback) => {
-	for (const key in object) {
-		if (hasOwnProperty.call(object, key)) {
-			callback(key, object[key]);
-		}
-	}
-};
-
-const extend = (destination, source) => {
-	if (!source) {
-		return destination;
-	}
-	forOwn(source, (key, value) => {
-		destination[key] = value;
-	});
-	return destination;
-};
-
-const forEach = (array, callback) => {
-	const length = array.length;
-	let index = -1;
-	while (++index < length) {
-		callback(array[index]);
-	}
-};
-
-const toString = object.toString;
-const isArray = Array.isArray;
-const isBuffer = Buffer.isBuffer;
-const isObject = (value) => {
-	// This is a very simple check, but itâ€™s good enough for what we need.
-	return toString.call(value) == '[object Object]';
-};
-const isString = (value) => {
-	return typeof value == 'string' ||
-		toString.call(value) == '[object String]';
-};
-const isNumber = (value) => {
-	return typeof value == 'number' ||
-		toString.call(value) == '[object Number]';
-};
-const isFunction = (value) => {
-	return typeof value == 'function';
-};
-const isMap = (value) => {
-	return toString.call(value) == '[object Map]';
-};
-const isSet = (value) => {
-	return toString.call(value) == '[object Set]';
-};
-
-/*--------------------------------------------------------------------------*/
-
-// https://mathiasbynens.be/notes/javascript-escapes#single
-const singleEscapes = {
-	'"': '\\"',
-	'\'': '\\\'',
-	'\\': '\\\\',
-	'\b': '\\b',
-	'\f': '\\f',
-	'\n': '\\n',
-	'\r': '\\r',
-	'\t': '\\t'
-	// `\v` is omitted intentionally, because in IE < 9, '\v' == 'v'.
-	// '\v': '\\x0B'
-};
-const regexSingleEscape = /["'\\\b\f\n\r\t]/;
-
-const regexDigit = /[0-9]/;
-const regexWhitelist = /[ !#-&\(-\[\]-_a-~]/;
-
-const jsesc = (argument, options) => {
-	const increaseIndentation = () => {
-		oldIndent = indent;
-		++options.indentLevel;
-		indent = options.indent.repeat(options.indentLevel)
-	};
-	// Handle options
-	const defaults = {
-		'escapeEverything': false,
-		'minimal': false,
-		'isScriptContext': false,
-		'quotes': 'single',
-		'wrap': false,
-		'es6': false,
-		'json': false,
-		'compact': true,
-		'lowercaseHex': false,
-		'numbers': 'decimal',
-		'indent': '\t',
-		'indentLevel': 0,
-		'__inline1__': false,
-		'__inline2__': false
-	};
-	const json = options && options.json;
-	if (json) {
-		defaults.quotes = 'double';
-		defaults.wrap = true;
-	}
-	options = extend(defaults, options);
-	if (
-		options.quotes != 'single' &&
-		options.quotes != 'double' &&
-		options.quotes != 'backtick'
-	) {
-		options.quotes = 'single';
-	}
-	const quote = options.quotes == 'double' ?
-		'"' :
-		(options.quotes == 'backtick' ?
-			'`' :
-			'\''
-		);
-	const compact = options.compact;
-	const lowercaseHex = options.lowercaseHex;
-	let indent = options.indent.repeat(options.indentLevel);
-	let oldIndent = '';
-	const inline1 = options.__inline1__;
-	const inline2 = options.__inline2__;
-	const newLine = compact ? '' : '\n';
-	let result;
-	let isEmpty = true;
-	const useBinNumbers = options.numbers == 'binary';
-	const useOctNumbers = options.numbers == 'octal';
-	const useDecNumbers = options.numbers == 'decimal';
-	const useHexNumbers = options.numbers == 'hexadecimal';
-
-	if (json && argument && isFunction(argument.toJSON)) {
-		argument = argument.toJSON();
-	}
-
-	if (!isString(argument)) {
-		if (isMap(argument)) {
-			if (argument.size == 0) {
-				return 'new Map()';
-			}
-			if (!compact) {
-				options.__inline1__ = true;
-				options.__inline2__ = false;
-			}
-			return 'new Map(' + jsesc(Array.from(argument), options) + ')';
-		}
-		if (isSet(argument)) {
-			if (argument.size == 0) {
-				return 'new Set()';
-			}
-			return 'new Set(' + jsesc(Array.from(argument), options) + ')';
-		}
-		if (isBuffer(argument)) {
-			if (argument.length == 0) {
-				return 'Buffer.from([])';
-			}
-			return 'Buffer.from(' + jsesc(Array.from(argument), options) + ')';
-		}
-		if (isArray(argument)) {
-			result = [];
-			options.wrap = true;
-			if (inline1) {
-				options.__inline1__ = false;
-				options.__inline2__ = true;
-			}
-			if (!inline2) {
-				increaseIndentation();
-			}
-			forEach(argument, (value) => {
-				isEmpty = false;
-				if (inline2) {
-					options.__inline2__ = false;
-				}
-				result.push(
-					(compact || inline2 ? '' : indent) +
-					jsesc(value, options)
-				);
-			});
-			if (isEmpty) {
-				return '[]';
-			}
-			if (inline2) {
-				return '[' + result.join(', ') + ']';
-			}
-			return '[' + newLine + result.join(',' + newLine) + newLine +
-				(compact ? '' : oldIndent) + ']';
-		} else if (isNumber(argument)) {
-			if (json) {
-				// Some number values (e.g. `Infinity`) cannot be represented in JSON.
-				return JSON.stringify(argument);
-			}
-			if (useDecNumbers) {
-				return String(argument);
-			}
-			if (useHexNumbers) {
-				let hexadecimal = argument.toString(16);
-				if (!lowercaseHex) {
-					hexadecimal = hexadecimal.toUpperCase();
-				}
-				return '0x' + hexadecimal;
-			}
-			if (useBinNumbers) {
-				return '0b' + argument.toString(2);
-			}
-			if (useOctNumbers) {
-				return '0o' + argument.toString(8);
-			}
-		} else if (!isObject(argument)) {
-			if (json) {
-				// For some values (e.g. `undefined`, `function` objects),
-				// `JSON.stringify(value)` returns `undefined` (which isnâ€™t valid
-				// JSON) instead of `'null'`.
-				return JSON.stringify(argument) || 'null';
-			}
-			return String(argument);
-		} else { // itâ€™s an object
-			result = [];
-			options.wrap = true;
-			increaseIndentation();
-			forOwn(argument, (key, value) => {
-				isEmpty = false;
-				result.push(
-					(compact ? '' : indent) +
-					jsesc(key, options) + ':' +
-					(compact ? '' : ' ') +
-					jsesc(value, options)
-				);
-			});
-			if (isEmpty) {
-				return '{}';
-			}
-			return '{' + newLine + result.join(',' + newLine) + newLine +
-				(compact ? '' : oldIndent) + '}';
-		}
-	}
-
-	const string = argument;
-	// Loop over each code unit in the string and escape it
-	let index = -1;
-	const length = string.length;
-	result = '';
-	while (++index < length) {
-		const character = string.charAt(index);
-		if (options.es6) {
-			const first = string.charCodeAt(index);
-			if ( // check if itâ€™s the start of a surrogate pair
-				first >= 0xD800 && first <= 0xDBFF && // high surrogate
-				length > index + 1 // there is a next code unit
-			) {
-				const second = string.charCodeAt(index + 1);
-				if (second >= 0xDC00 && second <= 0xDFFF) { // low surrogate
-					// https://mathiasbynens.be/notes/javascript-encoding#surrogate-formulae
-					const codePoint = (first - 0xD800) * 0x400 + second - 0xDC00 + 0x10000;
-					let hexadecimal = codePoint.toString(16);
-					if (!lowercaseHex) {
-						hexadecimal = hexadecimal.toUpperCase();
-					}
-					result += '\\u{' + hexadecimal + '}';
-					++index;
-					continue;
-				}
-			}
-		}
-		if (!options.escapeEverything) {
-			if (regexWhitelist.test(character)) {
-				// Itâ€™s a printable ASCII character that is not `"`, `'` or `\`,
-				// so donâ€™t escape it.
-				result += character;
-				continue;
-			}
-			if (character == '"') {
-				result += quote == character ? '\\"' : character;
-				continue;
-			}
-			if (character == '`') {
-				result += quote == character ? '\\`' : character;
-				continue;
-			}
-			if (character == '\'') {
-				result += quote == character ? '\\\'' : character;
-				continue;
-			}
-		}
-		if (
-			character == '\0' &&
-			!json &&
-			!regexDigit.test(string.charAt(index + 1))
-		) {
-			result += '\\0';
-			continue;
-		}
-		if (regexSingleEscape.test(character)) {
-			// no need for a `hasOwnProperty` check here
-			result += singleEscapes[character];
-			continue;
-		}
-		const charCode = character.charCodeAt(0);
-		if (options.minimal && charCode != 0x2028 && charCode != 0x2029) {
-			result += character;
-			continue;
-		}
-		let hexadecimal = charCode.toString(16);
-		if (!lowercaseHex) {
-			hexadecimal = hexadecimal.toUpperCase();
-		}
-		const longhand = hexadecimal.length > 2 || json;
-		const escaped = '\\' + (longhand ? 'u' : 'x') +
-			('0000' + hexadecimal).slice(longhand ? -4 : -2);
-		result += escaped;
-		continue;
-	}
-	if (options.wrap) {
-		result = quote + result + quote;
-	}
-	if (quote == '`') {
-		result = result.replace(/\$\{/g, '\\\$\{');
-	}
-	if (options.isScriptContext) {
-		// https://mathiasbynens.be/notes/etago
-		return result
-			.replace(/<\/(script|style)/gi, '<\\/$1')
-			.replace(/<!--/g, json ? '\\u003C!--' : '\\x3C!--');
-	}
-	return result;
-};
-
-jsesc.version = '2.5.2';
-
-module.exports = jsesc;
-­/package.jsonÅ{
+†­/package.jsonÅ{
   "name": "jsesc",
   "version": "2.5.2",
   "description": "Given some data, jsesc returns the shortest possible stringified & ASCII-safe representation of that data.",
@@ -1064,3 +493,574 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+©/jsesc.jsÅ Ñ'use strict';
+
+const object = {};
+const hasOwnProperty = object.hasOwnProperty;
+const forOwn = (object, callback) => {
+	for (const key in object) {
+		if (hasOwnProperty.call(object, key)) {
+			callback(key, object[key]);
+		}
+	}
+};
+
+const extend = (destination, source) => {
+	if (!source) {
+		return destination;
+	}
+	forOwn(source, (key, value) => {
+		destination[key] = value;
+	});
+	return destination;
+};
+
+const forEach = (array, callback) => {
+	const length = array.length;
+	let index = -1;
+	while (++index < length) {
+		callback(array[index]);
+	}
+};
+
+const toString = object.toString;
+const isArray = Array.isArray;
+const isBuffer = Buffer.isBuffer;
+const isObject = (value) => {
+	// This is a very simple check, but itâ€™s good enough for what we need.
+	return toString.call(value) == '[object Object]';
+};
+const isString = (value) => {
+	return typeof value == 'string' ||
+		toString.call(value) == '[object String]';
+};
+const isNumber = (value) => {
+	return typeof value == 'number' ||
+		toString.call(value) == '[object Number]';
+};
+const isFunction = (value) => {
+	return typeof value == 'function';
+};
+const isMap = (value) => {
+	return toString.call(value) == '[object Map]';
+};
+const isSet = (value) => {
+	return toString.call(value) == '[object Set]';
+};
+
+/*--------------------------------------------------------------------------*/
+
+// https://mathiasbynens.be/notes/javascript-escapes#single
+const singleEscapes = {
+	'"': '\\"',
+	'\'': '\\\'',
+	'\\': '\\\\',
+	'\b': '\\b',
+	'\f': '\\f',
+	'\n': '\\n',
+	'\r': '\\r',
+	'\t': '\\t'
+	// `\v` is omitted intentionally, because in IE < 9, '\v' == 'v'.
+	// '\v': '\\x0B'
+};
+const regexSingleEscape = /["'\\\b\f\n\r\t]/;
+
+const regexDigit = /[0-9]/;
+const regexWhitelist = /[ !#-&\(-\[\]-_a-~]/;
+
+const jsesc = (argument, options) => {
+	const increaseIndentation = () => {
+		oldIndent = indent;
+		++options.indentLevel;
+		indent = options.indent.repeat(options.indentLevel)
+	};
+	// Handle options
+	const defaults = {
+		'escapeEverything': false,
+		'minimal': false,
+		'isScriptContext': false,
+		'quotes': 'single',
+		'wrap': false,
+		'es6': false,
+		'json': false,
+		'compact': true,
+		'lowercaseHex': false,
+		'numbers': 'decimal',
+		'indent': '\t',
+		'indentLevel': 0,
+		'__inline1__': false,
+		'__inline2__': false
+	};
+	const json = options && options.json;
+	if (json) {
+		defaults.quotes = 'double';
+		defaults.wrap = true;
+	}
+	options = extend(defaults, options);
+	if (
+		options.quotes != 'single' &&
+		options.quotes != 'double' &&
+		options.quotes != 'backtick'
+	) {
+		options.quotes = 'single';
+	}
+	const quote = options.quotes == 'double' ?
+		'"' :
+		(options.quotes == 'backtick' ?
+			'`' :
+			'\''
+		);
+	const compact = options.compact;
+	const lowercaseHex = options.lowercaseHex;
+	let indent = options.indent.repeat(options.indentLevel);
+	let oldIndent = '';
+	const inline1 = options.__inline1__;
+	const inline2 = options.__inline2__;
+	const newLine = compact ? '' : '\n';
+	let result;
+	let isEmpty = true;
+	const useBinNumbers = options.numbers == 'binary';
+	const useOctNumbers = options.numbers == 'octal';
+	const useDecNumbers = options.numbers == 'decimal';
+	const useHexNumbers = options.numbers == 'hexadecimal';
+
+	if (json && argument && isFunction(argument.toJSON)) {
+		argument = argument.toJSON();
+	}
+
+	if (!isString(argument)) {
+		if (isMap(argument)) {
+			if (argument.size == 0) {
+				return 'new Map()';
+			}
+			if (!compact) {
+				options.__inline1__ = true;
+				options.__inline2__ = false;
+			}
+			return 'new Map(' + jsesc(Array.from(argument), options) + ')';
+		}
+		if (isSet(argument)) {
+			if (argument.size == 0) {
+				return 'new Set()';
+			}
+			return 'new Set(' + jsesc(Array.from(argument), options) + ')';
+		}
+		if (isBuffer(argument)) {
+			if (argument.length == 0) {
+				return 'Buffer.from([])';
+			}
+			return 'Buffer.from(' + jsesc(Array.from(argument), options) + ')';
+		}
+		if (isArray(argument)) {
+			result = [];
+			options.wrap = true;
+			if (inline1) {
+				options.__inline1__ = false;
+				options.__inline2__ = true;
+			}
+			if (!inline2) {
+				increaseIndentation();
+			}
+			forEach(argument, (value) => {
+				isEmpty = false;
+				if (inline2) {
+					options.__inline2__ = false;
+				}
+				result.push(
+					(compact || inline2 ? '' : indent) +
+					jsesc(value, options)
+				);
+			});
+			if (isEmpty) {
+				return '[]';
+			}
+			if (inline2) {
+				return '[' + result.join(', ') + ']';
+			}
+			return '[' + newLine + result.join(',' + newLine) + newLine +
+				(compact ? '' : oldIndent) + ']';
+		} else if (isNumber(argument)) {
+			if (json) {
+				// Some number values (e.g. `Infinity`) cannot be represented in JSON.
+				return JSON.stringify(argument);
+			}
+			if (useDecNumbers) {
+				return String(argument);
+			}
+			if (useHexNumbers) {
+				let hexadecimal = argument.toString(16);
+				if (!lowercaseHex) {
+					hexadecimal = hexadecimal.toUpperCase();
+				}
+				return '0x' + hexadecimal;
+			}
+			if (useBinNumbers) {
+				return '0b' + argument.toString(2);
+			}
+			if (useOctNumbers) {
+				return '0o' + argument.toString(8);
+			}
+		} else if (!isObject(argument)) {
+			if (json) {
+				// For some values (e.g. `undefined`, `function` objects),
+				// `JSON.stringify(value)` returns `undefined` (which isnâ€™t valid
+				// JSON) instead of `'null'`.
+				return JSON.stringify(argument) || 'null';
+			}
+			return String(argument);
+		} else { // itâ€™s an object
+			result = [];
+			options.wrap = true;
+			increaseIndentation();
+			forOwn(argument, (key, value) => {
+				isEmpty = false;
+				result.push(
+					(compact ? '' : indent) +
+					jsesc(key, options) + ':' +
+					(compact ? '' : ' ') +
+					jsesc(value, options)
+				);
+			});
+			if (isEmpty) {
+				return '{}';
+			}
+			return '{' + newLine + result.join(',' + newLine) + newLine +
+				(compact ? '' : oldIndent) + '}';
+		}
+	}
+
+	const string = argument;
+	// Loop over each code unit in the string and escape it
+	let index = -1;
+	const length = string.length;
+	result = '';
+	while (++index < length) {
+		const character = string.charAt(index);
+		if (options.es6) {
+			const first = string.charCodeAt(index);
+			if ( // check if itâ€™s the start of a surrogate pair
+				first >= 0xD800 && first <= 0xDBFF && // high surrogate
+				length > index + 1 // there is a next code unit
+			) {
+				const second = string.charCodeAt(index + 1);
+				if (second >= 0xDC00 && second <= 0xDFFF) { // low surrogate
+					// https://mathiasbynens.be/notes/javascript-encoding#surrogate-formulae
+					const codePoint = (first - 0xD800) * 0x400 + second - 0xDC00 + 0x10000;
+					let hexadecimal = codePoint.toString(16);
+					if (!lowercaseHex) {
+						hexadecimal = hexadecimal.toUpperCase();
+					}
+					result += '\\u{' + hexadecimal + '}';
+					++index;
+					continue;
+				}
+			}
+		}
+		if (!options.escapeEverything) {
+			if (regexWhitelist.test(character)) {
+				// Itâ€™s a printable ASCII character that is not `"`, `'` or `\`,
+				// so donâ€™t escape it.
+				result += character;
+				continue;
+			}
+			if (character == '"') {
+				result += quote == character ? '\\"' : character;
+				continue;
+			}
+			if (character == '`') {
+				result += quote == character ? '\\`' : character;
+				continue;
+			}
+			if (character == '\'') {
+				result += quote == character ? '\\\'' : character;
+				continue;
+			}
+		}
+		if (
+			character == '\0' &&
+			!json &&
+			!regexDigit.test(string.charAt(index + 1))
+		) {
+			result += '\\0';
+			continue;
+		}
+		if (regexSingleEscape.test(character)) {
+			// no need for a `hasOwnProperty` check here
+			result += singleEscapes[character];
+			continue;
+		}
+		const charCode = character.charCodeAt(0);
+		if (options.minimal && charCode != 0x2028 && charCode != 0x2029) {
+			result += character;
+			continue;
+		}
+		let hexadecimal = charCode.toString(16);
+		if (!lowercaseHex) {
+			hexadecimal = hexadecimal.toUpperCase();
+		}
+		const longhand = hexadecimal.length > 2 || json;
+		const escaped = '\\' + (longhand ? 'u' : 'x') +
+			('0000' + hexadecimal).slice(longhand ? -4 : -2);
+		result += escaped;
+		continue;
+	}
+	if (options.wrap) {
+		result = quote + result + quote;
+	}
+	if (quote == '`') {
+		result = result.replace(/\$\{/g, '\\\$\{');
+	}
+	if (options.isScriptContext) {
+		// https://mathiasbynens.be/notes/etago
+		return result
+			.replace(/<\/(script|style)/gi, '<\\/$1')
+			.replace(/<!--/g, json ? '\\u003C!--' : '\\x3C!--');
+	}
+	return result;
+};
+
+jsesc.version = '2.5.2';
+
+module.exports = jsesc;
+ª/bin/jsescÅù#!/usr/bin/env node
+(function() {
+
+	var fs = require('fs');
+	var stringEscape = require('../jsesc.js');
+	var strings = process.argv.splice(2);
+	var stdin = process.stdin;
+	var data;
+	var timeout;
+	var isObject = false;
+	var options = {};
+	var log = console.log;
+
+	var main = function() {
+		var option = strings[0];
+
+		if (/^(?:-h|--help|undefined)$/.test(option)) {
+			log(
+				'jsesc v%s - https://mths.be/jsesc',
+				stringEscape.version
+			);
+			log([
+				'\nUsage:\n',
+				'\tjsesc [string]',
+				'\tjsesc [-s | --single-quotes] [string]',
+				'\tjsesc [-d | --double-quotes] [string]',
+				'\tjsesc [-w | --wrap] [string]',
+				'\tjsesc [-e | --escape-everything] [string]',
+				'\tjsesc [-t | --escape-etago] [string]',
+				'\tjsesc [-6 | --es6] [string]',
+				'\tjsesc [-l | --lowercase-hex] [string]',
+				'\tjsesc [-j | --json] [string]',
+				'\tjsesc [-o | --object] [stringified_object]', // `JSON.parse()` the argument
+				'\tjsesc [-p | --pretty] [string]', // `compact: false`
+				'\tjsesc [-v | --version]',
+				'\tjsesc [-h | --help]',
+				'\nExamples:\n',
+				'\tjsesc \'f\xF6o \u2665 b\xE5r \uD834\uDF06 baz\'',
+				'\tjsesc --json \'f\xF6o \u2665 b\xE5r \uD834\uDF06 baz\'',
+				'\tjsesc --json --escape-everything \'f\xF6o \u2665 b\xE5r \uD834\uDF06 baz\'',
+				'\tjsesc --double-quotes --wrap \'f\xF6o \u2665 b\xE5r \uD834\uDF06 baz\'',
+				'\techo \'f\xF6o \u2665 b\xE5r \uD834\uDF06 baz\' | jsesc'
+			].join('\n'));
+			return process.exit(1);
+		}
+
+		if (/^(?:-v|--version)$/.test(option)) {
+			log('v%s', stringEscape.version);
+			return process.exit(1);
+		}
+
+		strings.forEach(function(string) {
+			// Process options
+			if (/^(?:-s|--single-quotes)$/.test(string)) {
+				options.quotes = 'single';
+				return;
+			}
+			if (/^(?:-d|--double-quotes)$/.test(string)) {
+				options.quotes = 'double';
+				return;
+			}
+			if (/^(?:-w|--wrap)$/.test(string)) {
+				options.wrap = true;
+				return;
+			}
+			if (/^(?:-e|--escape-everything)$/.test(string)) {
+				options.escapeEverything = true;
+				return;
+			}
+			if (/^(?:-t|--escape-etago)$/.test(string)) {
+				options.escapeEtago = true;
+				return;
+			}
+			if (/^(?:-6|--es6)$/.test(string)) {
+				options.es6 = true;
+				return;
+			}
+			if (/^(?:-l|--lowercase-hex)$/.test(string)) {
+				options.lowercaseHex = true;
+				return;
+			}
+			if (/^(?:-j|--json)$/.test(string)) {
+				options.json = true;
+				return;
+			}
+			if (/^(?:-o|--object)$/.test(string)) {
+				isObject = true;
+				return;
+			}
+			if (/^(?:-p|--pretty)$/.test(string)) {
+				isObject = true;
+				options.compact = false;
+				return;
+			}
+
+			// Process string(s)
+			var result;
+			try {
+				if (isObject) {
+					string = JSON.parse(string);
+				}
+				result = stringEscape(string, options);
+				log(result);
+			} catch(error) {
+				log(error.message + '\n');
+				log('Error: failed to escape.');
+				log('If you think this is a bug in jsesc, please report it:');
+				log('https://github.com/mathiasbynens/jsesc/issues/new');
+				log(
+					'\nStack trace using jsesc@%s:\n',
+					stringEscape.version
+				);
+				log(error.stack);
+				return process.exit(1);
+			}
+		});
+		// Return with exit status 0 outside of the `forEach` loop, in case
+		// multiple strings were passed in.
+		return process.exit(0);
+
+	};
+
+	if (stdin.isTTY) {
+		// handle shell arguments
+		main();
+	} else {
+		// Either the script is called from within a non-TTY context,
+		// or `stdin` content is being piped in.
+		if (!process.stdout.isTTY) { // called from a non-TTY context
+			timeout = setTimeout(function() {
+				// if no piped data arrived after a while, handle shell arguments
+				main();
+			}, 250);
+		}
+
+		data = '';
+		stdin.on('data', function(chunk) {
+			clearTimeout(timeout);
+			data += chunk;
+		});
+		stdin.on('end', function() {
+			strings.push(data.trim());
+			main();
+		});
+		stdin.resume();
+	}
+
+}());
+¬/man/jsesc.1ÅH.Dd May 13, 2016
+.Dt jsesc 1
+.Sh NAME
+.Nm jsesc
+.Nd escape strings for use in JavaScript string literals
+.Sh SYNOPSIS
+.Nm
+.Op Fl s | -single-quotes Ar string
+.br
+.Op Fl d | -double-quotes Ar string
+.br
+.Op Fl w | -wrap Ar string
+.br
+.Op Fl e | -escape-everything Ar string
+.br
+.Op Fl 6 | -es6 Ar string
+.br
+.Op Fl l | -lowercase-hex Ar string
+.br
+.Op Fl j | -json Ar string
+.br
+.Op Fl p | -object Ar string
+.br
+.Op Fl p | -pretty Ar string
+.br
+.Op Fl v | -version
+.br
+.Op Fl h | -help
+.Sh DESCRIPTION
+.Nm
+escapes strings for use in JavaScript string literals while generating the shortest possible valid ASCII-only output.
+.Sh OPTIONS
+.Bl -ohang -offset
+.It Sy "-s, --single-quotes"
+Escape any occurrences of ' in the input string as \\', so that the output can be used in a JavaScript string literal wrapped in single quotes.
+.It Sy "-d, --double-quotes"
+Escape any occurrences of " in the input string as \\", so that the output can be used in a JavaScript string literal wrapped in double quotes.
+.It Sy "-w, --wrap"
+Make sure the output is a valid JavaScript string literal wrapped in quotes. The type of quotes can be specified using the
+.Ar -s | --single-quotes
+or
+.Ar -d | --double-quotes
+settings.
+.It Sy "-6, --es6"
+Escape any astral Unicode symbols using ECMAScript 6 Unicode code point escape sequences.
+.It Sy "-e, --escape-everything"
+Escape all the symbols in the output, even printable ASCII symbols.
+.It Sy "-j, --json"
+Make sure the output is valid JSON. Hexadecimal character escape sequences and the \\v or \\0 escape sequences will not be used. Setting this flag enables the
+.Ar -d | --double-quotes
+and
+.Ar -w | --wrap
+settings.
+.It Sy "-o, --object"
+Treat the input as a JavaScript object rather than a string. Accepted values are flat arrays containing only string values, and flat objects containing only string values.
+.It Sy "-p, --pretty"
+Pretty-print the output for objects, using whitespace to make it more readable. Setting this flag enables the
+.It Sy "-l, --lowercase-hex"
+Use lowercase for alphabetical hexadecimal digits in escape sequences.
+.Ar -o | --object
+setting.
+.It Sy "-v, --version"
+Print jsesc's version.
+.It Sy "-h, --help"
+Show the help screen.
+.El
+.Sh EXIT STATUS
+The
+.Nm jsesc
+utility exits with one of the following values:
+.Pp
+.Bl -tag -width flag -compact
+.It Li 0
+.Nm
+successfully escaped the given string and printed the result.
+.It Li 1
+.Nm
+wasn't instructed to escape anything (for example, the
+.Ar --help
+flag was set); or, an error occurred.
+.El
+.Sh EXAMPLES
+.Bl -ohang -offset
+.It Sy "jsesc 'foo bar baz'"
+Print an escaped version of the given string.
+.It Sy echo\ 'foo bar baz'\ |\ jsesc
+Print an escaped version of the string that gets piped in.
+.El
+.Sh BUGS
+jsesc's bug tracker is located at <https://github.com/mathiasbynens/jsesc/issues>.
+.Sh AUTHOR
+Mathias Bynens <https://mathiasbynens.be/>
+.Sh WWW
+<https://mths.be/jsesc>

@@ -1,48 +1,4 @@
-à≠/package.json≈<{
-  "name": "@apollo/cache-control-types",
-  "version": "1.0.2",
-  "description": "TypeScript types for Apollo Server info.cacheControl",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/apollographql/apollo-utils.git",
-    "directory": "packages/cache-control-types/"
-  },
-  "keywords": [
-    "apollo",
-    "graphql",
-    "typescript",
-    "node"
-  ],
-  "author": "Apollo <packages@apollographql.com>",
-  "license": "MIT",
-  "peerDependencies": {
-    "graphql": "14.x || 15.x || 16.x"
-  }
-}
-®/LICENSE≈]MIT License
-
-Copyright (c) 2022 Apollo Graph, Inc. (Formerly Meteor Development Group, Inc.)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-Æ/dist/index.js≈W"use strict";
+àÆ/dist/index.js≈W"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.cacheControlFromInfo = exports.maybeCacheControlFromInfo = void 0;
 function maybeCacheControlFromInfo(info) {
@@ -89,7 +45,30 @@ export interface GraphQLResolveInfoWithCacheControl extends Omit<GraphQLResolveI
 }
 export declare function maybeCacheControlFromInfo(info: GraphQLResolveInfo): ResolveInfoCacheControl | null;
 export declare function cacheControlFromInfo(info: GraphQLResolveInfo): ResolveInfoCacheControl;
-//# sourceMappingURL=index.d.ts.map≤/dist/index.js.map≈{{"version":3,"file":"index.js","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":";;;AAmFA,SAAgB,yBAAyB,CACvC,IAAwB;;IAExB,IAAI,MAAA,MAAC,IAAY,CAAC,YAAY,0CAAE,SAAS,0CAAE,QAAQ,EAAE;QACnD,OAAQ,IAAY,CAAC,YAAY,CAAC;KACnC;IACD,OAAO,IAAI,CAAC;AACd,CAAC;AAPD,8DAOC;AAKD,SAAgB,oBAAoB,CAClC,IAAwB;;IAExB,IAAI,CAAC,CAAC,cAAc,IAAI,IAAI,CAAC,EAAE;QAC7B,MAAM,IAAI,KAAK,CACb,oEAAoE;YAClE,8EAA8E;YAC9E,yCAAyC,CAC5C,CAAC;KACH;IACD,IAAI,CAAC,CAAA,MAAA,MAAC,IAAY,CAAC,YAAY,0CAAE,SAAS,0CAAE,QAAQ,CAAA,EAAE;QACpD,MAAM,IAAI,KAAK,CACb,uFAAuF;YACrF,iGAAiG;YACjG,yCAAyC,CAC5C,CAAC;KACH;IACD,OAAQ,IAAY,CAAC,YAAY,CAAC;AACpC,CAAC;AAlBD,oDAkBC"}≠/src/index.ts≈Õ// NOTE: Once Apollo Server 4 is released, move this package into the
+//# sourceMappingURL=index.d.ts.map≤/dist/index.js.map≈{{"version":3,"file":"index.js","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":";;;AAmFA,SAAgB,yBAAyB,CACvC,IAAwB;;IAExB,IAAI,MAAA,MAAC,IAAY,CAAC,YAAY,0CAAE,SAAS,0CAAE,QAAQ,EAAE;QACnD,OAAQ,IAAY,CAAC,YAAY,CAAC;KACnC;IACD,OAAO,IAAI,CAAC;AACd,CAAC;AAPD,8DAOC;AAKD,SAAgB,oBAAoB,CAClC,IAAwB;;IAExB,IAAI,CAAC,CAAC,cAAc,IAAI,IAAI,CAAC,EAAE;QAC7B,MAAM,IAAI,KAAK,CACb,oEAAoE;YAClE,8EAA8E;YAC9E,yCAAyC,CAC5C,CAAC;KACH;IACD,IAAI,CAAC,CAAA,MAAA,MAAC,IAAY,CAAC,YAAY,0CAAE,SAAS,0CAAE,QAAQ,CAAA,EAAE;QACpD,MAAM,IAAI,KAAK,CACb,uFAAuF;YACrF,iGAAiG;YACjG,yCAAyC,CAC5C,CAAC;KACH;IACD,OAAQ,IAAY,CAAC,YAAY,CAAC;AACpC,CAAC;AAlBD,oDAkBC"}≠/package.json≈<{
+  "name": "@apollo/cache-control-types",
+  "version": "1.0.2",
+  "description": "TypeScript types for Apollo Server info.cacheControl",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apollographql/apollo-utils.git",
+    "directory": "packages/cache-control-types/"
+  },
+  "keywords": [
+    "apollo",
+    "graphql",
+    "typescript",
+    "node"
+  ],
+  "author": "Apollo <packages@apollographql.com>",
+  "license": "MIT",
+  "peerDependencies": {
+    "graphql": "14.x || 15.x || 16.x"
+  }
+}
+≠/src/index.ts≈Õ// NOTE: Once Apollo Server 4 is released, move this package into the
 // apollo-server repo. We're placing it in the apollo-utils repo for now to
 // enable us to make non-alpha releases that can be used on the apollo-server
 // version-4 branch.
@@ -203,6 +182,27 @@ export function cacheControlFromInfo(
   }
   return (info as any).cacheControl;
 }
+®/LICENSE≈]MIT License
+
+Copyright (c) 2022 Apollo Graph, Inc. (Formerly Meteor Development Group, Inc.)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ™/README.md≈# Cache Control types
 
 This package exports various TypeScript types related to Apollo Server's cache

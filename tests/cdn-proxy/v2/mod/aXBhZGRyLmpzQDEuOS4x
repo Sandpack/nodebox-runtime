@@ -1,4 +1,360 @@
-ÜÆ/lib/ipaddr.js≈KÖ(function() {
+Ü™/README.md≈ u# ipaddr.js ‚Äî an IPv6 and IPv4 address manipulation library [![Build Status](https://travis-ci.org/whitequark/ipaddr.js.svg)](https://travis-ci.org/whitequark/ipaddr.js)
+
+ipaddr.js is a small (1.9K minified and gzipped) library for manipulating
+IP addresses in JavaScript environments. It runs on both CommonJS runtimes
+(e.g. [nodejs]) and in a web browser.
+
+ipaddr.js allows you to verify and parse string representation of an IP
+address, match it against a CIDR range or range list, determine if it falls
+into some reserved ranges (examples include loopback and private ranges),
+and convert between IPv4 and IPv4-mapped IPv6 addresses.
+
+[nodejs]: http://nodejs.org
+
+## Installation
+
+`npm install ipaddr.js`
+
+or
+
+`bower install ipaddr.js`
+
+## API
+
+ipaddr.js defines one object in the global scope: `ipaddr`. In CommonJS,
+it is exported from the module:
+
+```js
+var ipaddr = require('ipaddr.js');
+```
+
+The API consists of several global methods and two classes: ipaddr.IPv6 and ipaddr.IPv4.
+
+### Global methods
+
+There are three global methods defined: `ipaddr.isValid`, `ipaddr.parse` and
+`ipaddr.process`. All of them receive a string as a single parameter.
+
+The `ipaddr.isValid` method returns `true` if the address is a valid IPv4 or
+IPv6 address, and `false` otherwise. It does not throw any exceptions.
+
+The `ipaddr.parse` method returns an object representing the IP address,
+or throws an `Error` if the passed string is not a valid representation of an
+IP address.
+
+The `ipaddr.process` method works just like the `ipaddr.parse` one, but it
+automatically converts IPv4-mapped IPv6 addresses to their IPv4 counterparts
+before returning. It is useful when you have a Node.js instance listening
+on an IPv6 socket, and the `net.ivp6.bindv6only` sysctl parameter (or its
+equivalent on non-Linux OS) is set to 0. In this case, you can accept IPv4
+connections on your IPv6-only socket, but the remote address will be mangled.
+Use `ipaddr.process` method to automatically demangle it.
+
+### Object representation
+
+Parsing methods return an object which descends from `ipaddr.IPv6` or
+`ipaddr.IPv4`. These objects share some properties, but most of them differ.
+
+#### Shared properties
+
+One can determine the type of address by calling `addr.kind()`. It will return
+either `"ipv6"` or `"ipv4"`.
+
+An address can be converted back to its string representation with `addr.toString()`.
+Note that this method:
+ * does not return the original string used to create the object (in fact, there is
+   no way of getting that string)
+ * returns a compact representation (when it is applicable)
+
+A `match(range, bits)` method can be used to check if the address falls into a
+certain CIDR range.
+Note that an address can be (obviously) matched only against an address of the same type.
+
+For example:
+
+```js
+var addr = ipaddr.parse("2001:db8:1234::1");
+var range = ipaddr.parse("2001:db8::");
+
+addr.match(range, 32); // => true
+```
+
+Alternatively, `match` can also be called as `match([range, bits])`. In this way,
+it can be used together with the `parseCIDR(string)` method, which parses an IP
+address together with a CIDR range.
+
+For example:
+
+```js
+var addr = ipaddr.parse("2001:db8:1234::1");
+
+addr.match(ipaddr.parseCIDR("2001:db8::/32")); // => true
+```
+
+A `range()` method returns one of predefined names for several special ranges defined
+by IP protocols. The exact names (and their respective CIDR ranges) can be looked up
+in the source: [IPv6 ranges] and [IPv4 ranges]. Some common ones include `"unicast"`
+(the default one) and `"reserved"`.
+
+You can match against your own range list by using
+`ipaddr.subnetMatch(address, rangeList, defaultName)` method. It can work with a mix of IPv6 or IPv4 addresses, and accepts a name-to-subnet map as the range list. For example:
+
+```js
+var rangeList = {
+  documentationOnly: [ ipaddr.parse('2001:db8::'), 32 ],
+  tunnelProviders: [
+    [ ipaddr.parse('2001:470::'), 32 ], // he.net
+    [ ipaddr.parse('2001:5c0::'), 32 ]  // freenet6
+  ]
+};
+ipaddr.subnetMatch(ipaddr.parse('2001:470:8:66::1'), rangeList, 'unknown'); // => "tunnelProviders"
+```
+
+The addresses can be converted to their byte representation with `toByteArray()`.
+(Actually, JavaScript mostly does not know about byte buffers. They are emulated with
+arrays of numbers, each in range of 0..255.)
+
+```js
+var bytes = ipaddr.parse('2a00:1450:8007::68').toByteArray(); // ipv6.google.com
+bytes // => [42, 0x00, 0x14, 0x50, 0x80, 0x07, 0x00, <zeroes...>, 0x00, 0x68 ]
+```
+
+The `ipaddr.IPv4` and `ipaddr.IPv6` objects have some methods defined, too. All of them
+have the same interface for both protocols, and are similar to global methods.
+
+`ipaddr.IPvX.isValid(string)` can be used to check if the string is a valid address
+for particular protocol, and `ipaddr.IPvX.parse(string)` is the error-throwing parser.
+
+`ipaddr.IPvX.isValid(string)` uses the same format for parsing as the POSIX `inet_ntoa` function, which accepts unusual formats like `0xc0.168.1.1` or `0x10000000`. The function `ipaddr.IPv4.isValidFourPartDecimal(string)` validates the IPv4 address and also ensures that it is written in four-part decimal format.
+
+[IPv6 ranges]: https://github.com/whitequark/ipaddr.js/blob/master/src/ipaddr.coffee#L186
+[IPv4 ranges]: https://github.com/whitequark/ipaddr.js/blob/master/src/ipaddr.coffee#L71
+
+#### IPv6 properties
+
+Sometimes you will want to convert IPv6 not to a compact string representation (with
+the `::` substitution); the `toNormalizedString()` method will return an address where
+all zeroes are explicit.
+
+For example:
+
+```js
+var addr = ipaddr.parse("2001:0db8::0001");
+addr.toString(); // => "2001:db8::1"
+addr.toNormalizedString(); // => "2001:db8:0:0:0:0:0:1"
+```
+
+The `isIPv4MappedAddress()` method will return `true` if this address is an IPv4-mapped
+one, and `toIPv4Address()` will return an IPv4 object address.
+
+To access the underlying binary representation of the address, use `addr.parts`.
+
+```js
+var addr = ipaddr.parse("2001:db8:10::1234:DEAD");
+addr.parts // => [0x2001, 0xdb8, 0x10, 0, 0, 0, 0x1234, 0xdead]
+```
+
+A IPv6 zone index can be accessed via `addr.zoneId`:
+
+```js
+var addr = ipaddr.parse("2001:db8::%eth0");
+addr.zoneId // => 'eth0'
+```
+
+#### IPv4 properties
+
+`toIPv4MappedAddress()` will return a corresponding IPv4-mapped IPv6 address.
+
+To access the underlying representation of the address, use `addr.octets`.
+
+```js
+var addr = ipaddr.parse("192.168.1.1");
+addr.octets // => [192, 168, 1, 1]
+```
+
+`prefixLengthFromSubnetMask()` will return a CIDR prefix length for a valid IPv4 netmask or
+null if the netmask is not valid.
+
+```js
+ipaddr.IPv4.parse('255.255.255.240').prefixLengthFromSubnetMask() == 28
+ipaddr.IPv4.parse('255.192.164.0').prefixLengthFromSubnetMask()  == null
+```
+
+`subnetMaskFromPrefixLength()` will return an IPv4 netmask for a valid CIDR prefix length.
+
+```js
+ipaddr.IPv4.subnetMaskFromPrefixLength(24) == "255.255.255.0"
+ipaddr.IPv4.subnetMaskFromPrefixLength(29) == "255.255.255.248"
+```
+
+`broadcastAddressFromCIDR()` will return the broadcast address for a given IPv4 interface and netmask in CIDR notation.
+```js
+ipaddr.IPv4.broadcastAddressFromCIDR("172.0.0.1/24") == "172.0.0.255"
+```
+`networkAddressFromCIDR()` will return the network address for a given IPv4 interface and netmask in CIDR notation.
+```js
+ipaddr.IPv4.networkAddressFromCIDR("172.0.0.1/24") == "172.0.0.0"
+```
+
+#### Conversion
+
+IPv4 and IPv6 can be converted bidirectionally to and from network byte order (MSB) byte arrays.
+
+The `fromByteArray()` method will take an array and create an appropriate IPv4 or IPv6 object
+if the input satisfies the requirements. For IPv4 it has to be an array of four 8-bit values,
+while for IPv6 it has to be an array of sixteen 8-bit values.
+
+For example:
+```js
+var addr = ipaddr.fromByteArray([0x7f, 0, 0, 1]);
+addr.toString(); // => "127.0.0.1"
+```
+
+or
+
+```js
+var addr = ipaddr.fromByteArray([0x20, 1, 0xd, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+addr.toString(); // => "2001:db8::1"
+```
+
+Both objects also offer a `toByteArray()` method, which returns an array in network byte order (MSB).
+
+For example:
+```js
+var addr = ipaddr.parse("127.0.0.1");
+addr.toByteArray(); // => [0x7f, 0, 0, 1]
+```
+
+or
+
+```js
+var addr = ipaddr.parse("2001:db8::1");
+addr.toByteArray(); // => [0x20, 1, 0xd, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+```
+≥/lib/ipaddr.js.d.ts≈èdeclare module "ipaddr.js" {
+    type IPv4Range = 'unicast' | 'unspecified' | 'broadcast' | 'multicast' | 'linkLocal' | 'loopback' | 'carrierGradeNat' | 'private' | 'reserved';
+    type IPv6Range = 'unicast' | 'unspecified' | 'linkLocal' | 'multicast' | 'loopback' | 'uniqueLocal' | 'ipv4Mapped' | 'rfc6145' | 'rfc6052' | '6to4' | 'teredo' | 'reserved';
+
+    interface RangeList<T> {
+        [name: string]: [T, number] | [T, number][];
+    }
+
+    // Common methods/properties for IPv4 and IPv6 classes.
+    class IP {
+        prefixLengthFromSubnetMask(): number | null;
+        toByteArray(): number[];
+        toNormalizedString(): string;
+        toString(): string;
+    }
+
+    namespace Address {
+        export function isValid(addr: string): boolean;
+        export function fromByteArray(bytes: number[]): IPv4 | IPv6;
+        export function parse(addr: string): IPv4 | IPv6;
+        export function parseCIDR(mask: string): [IPv4 | IPv6, number];
+        export function process(addr: string): IPv4 | IPv6;
+        export function subnetMatch(addr: IPv4, rangeList: RangeList<IPv4>, defaultName?: string): string;
+        export function subnetMatch(addr: IPv6, rangeList: RangeList<IPv6>, defaultName?: string): string;
+
+        export class IPv4 extends IP {
+            static broadcastAddressFromCIDR(addr: string): IPv4;
+            static isIPv4(addr: string): boolean;
+            static isValidFourPartDecimal(addr: string): boolean;
+            static isValid(addr: string): boolean;
+            static networkAddressFromCIDR(addr: string): IPv4;
+            static parse(addr: string): IPv4;
+            static parseCIDR(addr: string): [IPv4, number];
+            static subnetMaskFromPrefixLength(prefix: number): IPv4;
+            constructor(octets: number[]);
+            octets: number[]
+
+            kind(): 'ipv4';
+            match(addr: IPv4, bits: number): boolean;
+            match(mask: [IPv4, number]): boolean;
+            range(): IPv4Range;
+            subnetMatch(rangeList: RangeList<IPv4>, defaultName?: string): string;
+            toIPv4MappedAddress(): IPv6;
+        }
+
+        export class IPv6 extends IP {
+            static broadcastAddressFromCIDR(addr: string): IPv6;
+            static isIPv6(addr: string): boolean;
+            static isValid(addr: string): boolean;
+            static parse(addr: string): IPv6;
+            static parseCIDR(addr: string): [IPv6, number];
+            static subnetMaskFromPrefixLength(prefix: number): IPv6;
+            constructor(parts: number[]);
+            parts: number[]
+            zoneId?: string
+
+            isIPv4MappedAddress(): boolean;
+            kind(): 'ipv6';
+            match(addr: IPv6, bits: number): boolean;
+            match(mask: [IPv6, number]): boolean;
+            range(): IPv6Range;
+            subnetMatch(rangeList: RangeList<IPv6>, defaultName?: string): string;
+            toIPv4Address(): IPv4;
+        }
+    }
+
+    export = Address;
+}
+≠/package.json≈œ{
+  "name": "ipaddr.js",
+  "description": "A library for manipulating IPv4 and IPv6 addresses in JavaScript.",
+  "version": "1.9.1",
+  "author": "whitequark <whitequark@whitequark.org>",
+  "directories": {
+    "lib": "./lib"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "coffee-script": "~1.12.6",
+    "nodeunit": "^0.11.3",
+    "uglify-js": "~3.0.19"
+  },
+  "scripts": {
+    "test": "cake build test"
+  },
+  "files": [
+    "lib/",
+    "LICENSE",
+    "ipaddr.min.js"
+  ],
+  "keywords": [
+    "ip",
+    "ipv4",
+    "ipv6"
+  ],
+  "repository": "git://github.com/whitequark/ipaddr.js",
+  "main": "./lib/ipaddr.js",
+  "engines": {
+    "node": ">= 0.10"
+  },
+  "license": "MIT",
+  "types": "./lib/ipaddr.js.d.ts"
+}
+Æ/ipaddr.min.js≈&
+(function(){var r,t,n,e,i,o,a,s;t={},s=this,"undefined"!=typeof module&&null!==module&&module.exports?module.exports=t:s.ipaddr=t,a=function(r,t,n,e){var i,o;if(r.length!==t.length)throw new Error("ipaddr: cannot match CIDR for objects with different lengths");for(i=0;e>0;){if((o=n-e)<0&&(o=0),r[i]>>o!=t[i]>>o)return!1;e-=n,i+=1}return!0},t.subnetMatch=function(r,t,n){var e,i,o,a,s;null==n&&(n="unicast");for(o in t)for(!(a=t[o])[0]||a[0]instanceof Array||(a=[a]),e=0,i=a.length;e<i;e++)if(s=a[e],r.kind()===s[0].kind()&&r.match.apply(r,s))return o;return n},t.IPv4=function(){function r(r){var t,n,e;if(4!==r.length)throw new Error("ipaddr: ipv4 octet count should be 4");for(t=0,n=r.length;t<n;t++)if(!(0<=(e=r[t])&&e<=255))throw new Error("ipaddr: ipv4 octet should fit in 8 bits");this.octets=r}return r.prototype.kind=function(){return"ipv4"},r.prototype.toString=function(){return this.octets.join(".")},r.prototype.toNormalizedString=function(){return this.toString()},r.prototype.toByteArray=function(){return this.octets.slice(0)},r.prototype.match=function(r,t){var n;if(void 0===t&&(r=(n=r)[0],t=n[1]),"ipv4"!==r.kind())throw new Error("ipaddr: cannot match ipv4 address with non-ipv4 one");return a(this.octets,r.octets,8,t)},r.prototype.SpecialRanges={unspecified:[[new r([0,0,0,0]),8]],broadcast:[[new r([255,255,255,255]),32]],multicast:[[new r([224,0,0,0]),4]],linkLocal:[[new r([169,254,0,0]),16]],loopback:[[new r([127,0,0,0]),8]],carrierGradeNat:[[new r([100,64,0,0]),10]],private:[[new r([10,0,0,0]),8],[new r([172,16,0,0]),12],[new r([192,168,0,0]),16]],reserved:[[new r([192,0,0,0]),24],[new r([192,0,2,0]),24],[new r([192,88,99,0]),24],[new r([198,51,100,0]),24],[new r([203,0,113,0]),24],[new r([240,0,0,0]),4]]},r.prototype.range=function(){return t.subnetMatch(this,this.SpecialRanges)},r.prototype.toIPv4MappedAddress=function(){return t.IPv6.parse("::ffff:"+this.toString())},r.prototype.prefixLengthFromSubnetMask=function(){var r,t,n,e,i,o,a;for(a={0:8,128:7,192:6,224:5,240:4,248:3,252:2,254:1,255:0},r=0,i=!1,t=n=3;n>=0;t=n+=-1){if(!((e=this.octets[t])in a))return null;if(o=a[e],i&&0!==o)return null;8!==o&&(i=!0),r+=o}return 32-r},r}(),n="(0?\\d+|0x[a-f0-9]+)",e={fourOctet:new RegExp("^"+n+"\\."+n+"\\."+n+"\\."+n+"$","i"),longValue:new RegExp("^"+n+"$","i")},t.IPv4.parser=function(r){var t,n,i,o,a;if(n=function(r){return"0"===r[0]&&"x"!==r[1]?parseInt(r,8):parseInt(r)},t=r.match(e.fourOctet))return function(){var r,e,o,a;for(a=[],r=0,e=(o=t.slice(1,6)).length;r<e;r++)i=o[r],a.push(n(i));return a}();if(t=r.match(e.longValue)){if((a=n(t[1]))>4294967295||a<0)throw new Error("ipaddr: address outside defined range");return function(){var r,t;for(t=[],o=r=0;r<=24;o=r+=8)t.push(a>>o&255);return t}().reverse()}return null},t.IPv6=function(){function r(r,t){var n,e,i,o,a,s;if(16===r.length)for(this.parts=[],n=e=0;e<=14;n=e+=2)this.parts.push(r[n]<<8|r[n+1]);else{if(8!==r.length)throw new Error("ipaddr: ipv6 part count should be 8 or 16");this.parts=r}for(i=0,o=(s=this.parts).length;i<o;i++)if(!(0<=(a=s[i])&&a<=65535))throw new Error("ipaddr: ipv6 part should fit in 16 bits");t&&(this.zoneId=t)}return r.prototype.kind=function(){return"ipv6"},r.prototype.toString=function(){return this.toNormalizedString().replace(/((^|:)(0(:|$))+)/,"::")},r.prototype.toRFC5952String=function(){var r,t,n,e,i;for(e=/((^|:)(0(:|$)){2,})/g,i=this.toNormalizedString(),r=0,t=-1;n=e.exec(i);)n[0].length>t&&(r=n.index,t=n[0].length);return t<0?i:i.substring(0,r)+"::"+i.substring(r+t)},r.prototype.toByteArray=function(){var r,t,n,e,i;for(r=[],t=0,n=(i=this.parts).length;t<n;t++)e=i[t],r.push(e>>8),r.push(255&e);return r},r.prototype.toNormalizedString=function(){var r,t,n;return r=function(){var r,n,e,i;for(i=[],r=0,n=(e=this.parts).length;r<n;r++)t=e[r],i.push(t.toString(16));return i}.call(this).join(":"),n="",this.zoneId&&(n="%"+this.zoneId),r+n},r.prototype.toFixedLengthString=function(){var r,t,n;return r=function(){var r,n,e,i;for(i=[],r=0,n=(e=this.parts).length;r<n;r++)t=e[r],i.push(t.toString(16).padStart(4,"0"));return i}.call(this).join(":"),n="",this.zoneId&&(n="%"+this.zoneId),r+n},r.prototype.match=function(r,t){var n;if(void 0===t&&(r=(n=r)[0],t=n[1]),"ipv6"!==r.kind())throw new Error("ipaddr: cannot match ipv6 address with non-ipv6 one");return a(this.parts,r.parts,16,t)},r.prototype.SpecialRanges={unspecified:[new r([0,0,0,0,0,0,0,0]),128],linkLocal:[new r([65152,0,0,0,0,0,0,0]),10],multicast:[new r([65280,0,0,0,0,0,0,0]),8],loopback:[new r([0,0,0,0,0,0,0,1]),128],uniqueLocal:[new r([64512,0,0,0,0,0,0,0]),7],ipv4Mapped:[new r([0,0,0,0,0,65535,0,0]),96],rfc6145:[new r([0,0,0,0,65535,0,0,0]),96],rfc6052:[new r([100,65435,0,0,0,0,0,0]),96],"6to4":[new r([8194,0,0,0,0,0,0,0]),16],teredo:[new r([8193,0,0,0,0,0,0,0]),32],reserved:[[new r([8193,3512,0,0,0,0,0,0]),32]]},r.prototype.range=function(){return t.subnetMatch(this,this.SpecialRanges)},r.prototype.isIPv4MappedAddress=function(){return"ipv4Mapped"===this.range()},r.prototype.toIPv4Address=function(){var r,n,e;if(!this.isIPv4MappedAddress())throw new Error("ipaddr: trying to convert a generic ipv6 address to ipv4");return e=this.parts.slice(-2),r=e[0],n=e[1],new t.IPv4([r>>8,255&r,n>>8,255&n])},r.prototype.prefixLengthFromSubnetMask=function(){var r,t,n,e,i,o,a;for(a={0:16,32768:15,49152:14,57344:13,61440:12,63488:11,64512:10,65024:9,65280:8,65408:7,65472:6,65504:5,65520:4,65528:3,65532:2,65534:1,65535:0},r=0,i=!1,t=n=7;n>=0;t=n+=-1){if(!((e=this.parts[t])in a))return null;if(o=a[e],i&&0!==o)return null;16!==o&&(i=!0),r+=o}return 128-r},r}(),i="(?:[0-9a-f]+::?)+",o={zoneIndex:new RegExp("%[0-9a-z]{1,}","i"),native:new RegExp("^(::)?("+i+")?([0-9a-f]+)?(::)?(%[0-9a-z]{1,})?$","i"),transitional:new RegExp("^((?:"+i+")|(?:::)(?:"+i+")?)"+n+"\\."+n+"\\."+n+"\\."+n+"(%[0-9a-z]{1,})?$","i")},r=function(r,t){var n,e,i,a,s,p;if(r.indexOf("::")!==r.lastIndexOf("::"))return null;for((p=(r.match(o.zoneIndex)||[])[0])&&(p=p.substring(1),r=r.replace(/%.+$/,"")),n=0,e=-1;(e=r.indexOf(":",e+1))>=0;)n++;if("::"===r.substr(0,2)&&n--,"::"===r.substr(-2,2)&&n--,n>t)return null;for(s=t-n,a=":";s--;)a+="0:";return":"===(r=r.replace("::",a))[0]&&(r=r.slice(1)),":"===r[r.length-1]&&(r=r.slice(0,-1)),t=function(){var t,n,e,o;for(o=[],t=0,n=(e=r.split(":")).length;t<n;t++)i=e[t],o.push(parseInt(i,16));return o}(),{parts:t,zoneId:p}},t.IPv6.parser=function(t){var n,e,i,a,s,p,u;if(o.native.test(t))return r(t,8);if((a=t.match(o.transitional))&&(u=a[6]||"",(n=r(a[1].slice(0,-1)+u,6)).parts)){for(e=0,i=(p=[parseInt(a[2]),parseInt(a[3]),parseInt(a[4]),parseInt(a[5])]).length;e<i;e++)if(!(0<=(s=p[e])&&s<=255))return null;return n.parts.push(p[0]<<8|p[1]),n.parts.push(p[2]<<8|p[3]),{parts:n.parts,zoneId:n.zoneId}}return null},t.IPv4.isIPv4=t.IPv6.isIPv6=function(r){return null!==this.parser(r)},t.IPv4.isValid=function(r){try{return new this(this.parser(r)),!0}catch(r){return r,!1}},t.IPv4.isValidFourPartDecimal=function(r){return!(!t.IPv4.isValid(r)||!r.match(/^(0|[1-9]\d*)(\.(0|[1-9]\d*)){3}$/))},t.IPv6.isValid=function(r){var t;if("string"==typeof r&&-1===r.indexOf(":"))return!1;try{return t=this.parser(r),new this(t.parts,t.zoneId),!0}catch(r){return r,!1}},t.IPv4.parse=function(r){var t;if(null===(t=this.parser(r)))throw new Error("ipaddr: string is not formatted like ip address");return new this(t)},t.IPv6.parse=function(r){var t;if(null===(t=this.parser(r)).parts)throw new Error("ipaddr: string is not formatted like ip address");return new this(t.parts,t.zoneId)},t.IPv4.parseCIDR=function(r){var t,n,e;if((n=r.match(/^(.+)\/(\d+)$/))&&(t=parseInt(n[2]))>=0&&t<=32)return e=[this.parse(n[1]),t],Object.defineProperty(e,"toString",{value:function(){return this.join("/")}}),e;throw new Error("ipaddr: string is not formatted like an IPv4 CIDR range")},t.IPv4.subnetMaskFromPrefixLength=function(r){var t,n,e;if((r=parseInt(r))<0||r>32)throw new Error("ipaddr: invalid IPv4 prefix length");for(e=[0,0,0,0],n=0,t=Math.floor(r/8);n<t;)e[n]=255,n++;return t<4&&(e[t]=Math.pow(2,r%8)-1<<8-r%8),new this(e)},t.IPv4.broadcastAddressFromCIDR=function(r){var t,n,e,i,o;try{for(e=(t=this.parseCIDR(r))[0].toByteArray(),o=this.subnetMaskFromPrefixLength(t[1]).toByteArray(),i=[],n=0;n<4;)i.push(parseInt(e[n],10)|255^parseInt(o[n],10)),n++;return new this(i)}catch(r){throw r,new Error("ipaddr: the address does not have IPv4 CIDR format")}},t.IPv4.networkAddressFromCIDR=function(r){var t,n,e,i,o;try{for(e=(t=this.parseCIDR(r))[0].toByteArray(),o=this.subnetMaskFromPrefixLength(t[1]).toByteArray(),i=[],n=0;n<4;)i.push(parseInt(e[n],10)&parseInt(o[n],10)),n++;return new this(i)}catch(r){throw r,new Error("ipaddr: the address does not have IPv4 CIDR format")}},t.IPv6.parseCIDR=function(r){var t,n,e;if((n=r.match(/^(.+)\/(\d+)$/))&&(t=parseInt(n[2]))>=0&&t<=128)return e=[this.parse(n[1]),t],Object.defineProperty(e,"toString",{value:function(){return this.join("/")}}),e;throw new Error("ipaddr: string is not formatted like an IPv6 CIDR range")},t.isValid=function(r){return t.IPv6.isValid(r)||t.IPv4.isValid(r)},t.parse=function(r){if(t.IPv6.isValid(r))return t.IPv6.parse(r);if(t.IPv4.isValid(r))return t.IPv4.parse(r);throw new Error("ipaddr: the address has neither IPv6 nor IPv4 format")},t.parseCIDR=function(r){try{return t.IPv6.parseCIDR(r)}catch(n){n;try{return t.IPv4.parseCIDR(r)}catch(r){throw r,new Error("ipaddr: the address has neither IPv6 nor IPv4 CIDR format")}}},t.fromByteArray=function(r){var n;if(4===(n=r.length))return new t.IPv4(r);if(16===n)return new t.IPv6(r);throw new Error("ipaddr: the binary input is neither an IPv6 nor IPv4 address")},t.process=function(r){var t;return t=this.parse(r),"ipv6"===t.kind()&&t.isIPv4MappedAddress()?t.toIPv4Address():t}}).call(this);®/LICENSE≈?Copyright (C) 2011-2017 whitequark <whitequark@whitequark.org>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+Æ/lib/ipaddr.js≈KÖ(function() {
   var expandIPv6, ipaddr, ipv4Part, ipv4Regexes, ipv6Part, ipv6Regexes, matchCIDR, root, zoneIndex;
 
   ipaddr = {};
@@ -671,359 +1027,3 @@
   };
 
 }).call(this);
-Æ/ipaddr.min.js≈&
-(function(){var r,t,n,e,i,o,a,s;t={},s=this,"undefined"!=typeof module&&null!==module&&module.exports?module.exports=t:s.ipaddr=t,a=function(r,t,n,e){var i,o;if(r.length!==t.length)throw new Error("ipaddr: cannot match CIDR for objects with different lengths");for(i=0;e>0;){if((o=n-e)<0&&(o=0),r[i]>>o!=t[i]>>o)return!1;e-=n,i+=1}return!0},t.subnetMatch=function(r,t,n){var e,i,o,a,s;null==n&&(n="unicast");for(o in t)for(!(a=t[o])[0]||a[0]instanceof Array||(a=[a]),e=0,i=a.length;e<i;e++)if(s=a[e],r.kind()===s[0].kind()&&r.match.apply(r,s))return o;return n},t.IPv4=function(){function r(r){var t,n,e;if(4!==r.length)throw new Error("ipaddr: ipv4 octet count should be 4");for(t=0,n=r.length;t<n;t++)if(!(0<=(e=r[t])&&e<=255))throw new Error("ipaddr: ipv4 octet should fit in 8 bits");this.octets=r}return r.prototype.kind=function(){return"ipv4"},r.prototype.toString=function(){return this.octets.join(".")},r.prototype.toNormalizedString=function(){return this.toString()},r.prototype.toByteArray=function(){return this.octets.slice(0)},r.prototype.match=function(r,t){var n;if(void 0===t&&(r=(n=r)[0],t=n[1]),"ipv4"!==r.kind())throw new Error("ipaddr: cannot match ipv4 address with non-ipv4 one");return a(this.octets,r.octets,8,t)},r.prototype.SpecialRanges={unspecified:[[new r([0,0,0,0]),8]],broadcast:[[new r([255,255,255,255]),32]],multicast:[[new r([224,0,0,0]),4]],linkLocal:[[new r([169,254,0,0]),16]],loopback:[[new r([127,0,0,0]),8]],carrierGradeNat:[[new r([100,64,0,0]),10]],private:[[new r([10,0,0,0]),8],[new r([172,16,0,0]),12],[new r([192,168,0,0]),16]],reserved:[[new r([192,0,0,0]),24],[new r([192,0,2,0]),24],[new r([192,88,99,0]),24],[new r([198,51,100,0]),24],[new r([203,0,113,0]),24],[new r([240,0,0,0]),4]]},r.prototype.range=function(){return t.subnetMatch(this,this.SpecialRanges)},r.prototype.toIPv4MappedAddress=function(){return t.IPv6.parse("::ffff:"+this.toString())},r.prototype.prefixLengthFromSubnetMask=function(){var r,t,n,e,i,o,a;for(a={0:8,128:7,192:6,224:5,240:4,248:3,252:2,254:1,255:0},r=0,i=!1,t=n=3;n>=0;t=n+=-1){if(!((e=this.octets[t])in a))return null;if(o=a[e],i&&0!==o)return null;8!==o&&(i=!0),r+=o}return 32-r},r}(),n="(0?\\d+|0x[a-f0-9]+)",e={fourOctet:new RegExp("^"+n+"\\."+n+"\\."+n+"\\."+n+"$","i"),longValue:new RegExp("^"+n+"$","i")},t.IPv4.parser=function(r){var t,n,i,o,a;if(n=function(r){return"0"===r[0]&&"x"!==r[1]?parseInt(r,8):parseInt(r)},t=r.match(e.fourOctet))return function(){var r,e,o,a;for(a=[],r=0,e=(o=t.slice(1,6)).length;r<e;r++)i=o[r],a.push(n(i));return a}();if(t=r.match(e.longValue)){if((a=n(t[1]))>4294967295||a<0)throw new Error("ipaddr: address outside defined range");return function(){var r,t;for(t=[],o=r=0;r<=24;o=r+=8)t.push(a>>o&255);return t}().reverse()}return null},t.IPv6=function(){function r(r,t){var n,e,i,o,a,s;if(16===r.length)for(this.parts=[],n=e=0;e<=14;n=e+=2)this.parts.push(r[n]<<8|r[n+1]);else{if(8!==r.length)throw new Error("ipaddr: ipv6 part count should be 8 or 16");this.parts=r}for(i=0,o=(s=this.parts).length;i<o;i++)if(!(0<=(a=s[i])&&a<=65535))throw new Error("ipaddr: ipv6 part should fit in 16 bits");t&&(this.zoneId=t)}return r.prototype.kind=function(){return"ipv6"},r.prototype.toString=function(){return this.toNormalizedString().replace(/((^|:)(0(:|$))+)/,"::")},r.prototype.toRFC5952String=function(){var r,t,n,e,i;for(e=/((^|:)(0(:|$)){2,})/g,i=this.toNormalizedString(),r=0,t=-1;n=e.exec(i);)n[0].length>t&&(r=n.index,t=n[0].length);return t<0?i:i.substring(0,r)+"::"+i.substring(r+t)},r.prototype.toByteArray=function(){var r,t,n,e,i;for(r=[],t=0,n=(i=this.parts).length;t<n;t++)e=i[t],r.push(e>>8),r.push(255&e);return r},r.prototype.toNormalizedString=function(){var r,t,n;return r=function(){var r,n,e,i;for(i=[],r=0,n=(e=this.parts).length;r<n;r++)t=e[r],i.push(t.toString(16));return i}.call(this).join(":"),n="",this.zoneId&&(n="%"+this.zoneId),r+n},r.prototype.toFixedLengthString=function(){var r,t,n;return r=function(){var r,n,e,i;for(i=[],r=0,n=(e=this.parts).length;r<n;r++)t=e[r],i.push(t.toString(16).padStart(4,"0"));return i}.call(this).join(":"),n="",this.zoneId&&(n="%"+this.zoneId),r+n},r.prototype.match=function(r,t){var n;if(void 0===t&&(r=(n=r)[0],t=n[1]),"ipv6"!==r.kind())throw new Error("ipaddr: cannot match ipv6 address with non-ipv6 one");return a(this.parts,r.parts,16,t)},r.prototype.SpecialRanges={unspecified:[new r([0,0,0,0,0,0,0,0]),128],linkLocal:[new r([65152,0,0,0,0,0,0,0]),10],multicast:[new r([65280,0,0,0,0,0,0,0]),8],loopback:[new r([0,0,0,0,0,0,0,1]),128],uniqueLocal:[new r([64512,0,0,0,0,0,0,0]),7],ipv4Mapped:[new r([0,0,0,0,0,65535,0,0]),96],rfc6145:[new r([0,0,0,0,65535,0,0,0]),96],rfc6052:[new r([100,65435,0,0,0,0,0,0]),96],"6to4":[new r([8194,0,0,0,0,0,0,0]),16],teredo:[new r([8193,0,0,0,0,0,0,0]),32],reserved:[[new r([8193,3512,0,0,0,0,0,0]),32]]},r.prototype.range=function(){return t.subnetMatch(this,this.SpecialRanges)},r.prototype.isIPv4MappedAddress=function(){return"ipv4Mapped"===this.range()},r.prototype.toIPv4Address=function(){var r,n,e;if(!this.isIPv4MappedAddress())throw new Error("ipaddr: trying to convert a generic ipv6 address to ipv4");return e=this.parts.slice(-2),r=e[0],n=e[1],new t.IPv4([r>>8,255&r,n>>8,255&n])},r.prototype.prefixLengthFromSubnetMask=function(){var r,t,n,e,i,o,a;for(a={0:16,32768:15,49152:14,57344:13,61440:12,63488:11,64512:10,65024:9,65280:8,65408:7,65472:6,65504:5,65520:4,65528:3,65532:2,65534:1,65535:0},r=0,i=!1,t=n=7;n>=0;t=n+=-1){if(!((e=this.parts[t])in a))return null;if(o=a[e],i&&0!==o)return null;16!==o&&(i=!0),r+=o}return 128-r},r}(),i="(?:[0-9a-f]+::?)+",o={zoneIndex:new RegExp("%[0-9a-z]{1,}","i"),native:new RegExp("^(::)?("+i+")?([0-9a-f]+)?(::)?(%[0-9a-z]{1,})?$","i"),transitional:new RegExp("^((?:"+i+")|(?:::)(?:"+i+")?)"+n+"\\."+n+"\\."+n+"\\."+n+"(%[0-9a-z]{1,})?$","i")},r=function(r,t){var n,e,i,a,s,p;if(r.indexOf("::")!==r.lastIndexOf("::"))return null;for((p=(r.match(o.zoneIndex)||[])[0])&&(p=p.substring(1),r=r.replace(/%.+$/,"")),n=0,e=-1;(e=r.indexOf(":",e+1))>=0;)n++;if("::"===r.substr(0,2)&&n--,"::"===r.substr(-2,2)&&n--,n>t)return null;for(s=t-n,a=":";s--;)a+="0:";return":"===(r=r.replace("::",a))[0]&&(r=r.slice(1)),":"===r[r.length-1]&&(r=r.slice(0,-1)),t=function(){var t,n,e,o;for(o=[],t=0,n=(e=r.split(":")).length;t<n;t++)i=e[t],o.push(parseInt(i,16));return o}(),{parts:t,zoneId:p}},t.IPv6.parser=function(t){var n,e,i,a,s,p,u;if(o.native.test(t))return r(t,8);if((a=t.match(o.transitional))&&(u=a[6]||"",(n=r(a[1].slice(0,-1)+u,6)).parts)){for(e=0,i=(p=[parseInt(a[2]),parseInt(a[3]),parseInt(a[4]),parseInt(a[5])]).length;e<i;e++)if(!(0<=(s=p[e])&&s<=255))return null;return n.parts.push(p[0]<<8|p[1]),n.parts.push(p[2]<<8|p[3]),{parts:n.parts,zoneId:n.zoneId}}return null},t.IPv4.isIPv4=t.IPv6.isIPv6=function(r){return null!==this.parser(r)},t.IPv4.isValid=function(r){try{return new this(this.parser(r)),!0}catch(r){return r,!1}},t.IPv4.isValidFourPartDecimal=function(r){return!(!t.IPv4.isValid(r)||!r.match(/^(0|[1-9]\d*)(\.(0|[1-9]\d*)){3}$/))},t.IPv6.isValid=function(r){var t;if("string"==typeof r&&-1===r.indexOf(":"))return!1;try{return t=this.parser(r),new this(t.parts,t.zoneId),!0}catch(r){return r,!1}},t.IPv4.parse=function(r){var t;if(null===(t=this.parser(r)))throw new Error("ipaddr: string is not formatted like ip address");return new this(t)},t.IPv6.parse=function(r){var t;if(null===(t=this.parser(r)).parts)throw new Error("ipaddr: string is not formatted like ip address");return new this(t.parts,t.zoneId)},t.IPv4.parseCIDR=function(r){var t,n,e;if((n=r.match(/^(.+)\/(\d+)$/))&&(t=parseInt(n[2]))>=0&&t<=32)return e=[this.parse(n[1]),t],Object.defineProperty(e,"toString",{value:function(){return this.join("/")}}),e;throw new Error("ipaddr: string is not formatted like an IPv4 CIDR range")},t.IPv4.subnetMaskFromPrefixLength=function(r){var t,n,e;if((r=parseInt(r))<0||r>32)throw new Error("ipaddr: invalid IPv4 prefix length");for(e=[0,0,0,0],n=0,t=Math.floor(r/8);n<t;)e[n]=255,n++;return t<4&&(e[t]=Math.pow(2,r%8)-1<<8-r%8),new this(e)},t.IPv4.broadcastAddressFromCIDR=function(r){var t,n,e,i,o;try{for(e=(t=this.parseCIDR(r))[0].toByteArray(),o=this.subnetMaskFromPrefixLength(t[1]).toByteArray(),i=[],n=0;n<4;)i.push(parseInt(e[n],10)|255^parseInt(o[n],10)),n++;return new this(i)}catch(r){throw r,new Error("ipaddr: the address does not have IPv4 CIDR format")}},t.IPv4.networkAddressFromCIDR=function(r){var t,n,e,i,o;try{for(e=(t=this.parseCIDR(r))[0].toByteArray(),o=this.subnetMaskFromPrefixLength(t[1]).toByteArray(),i=[],n=0;n<4;)i.push(parseInt(e[n],10)&parseInt(o[n],10)),n++;return new this(i)}catch(r){throw r,new Error("ipaddr: the address does not have IPv4 CIDR format")}},t.IPv6.parseCIDR=function(r){var t,n,e;if((n=r.match(/^(.+)\/(\d+)$/))&&(t=parseInt(n[2]))>=0&&t<=128)return e=[this.parse(n[1]),t],Object.defineProperty(e,"toString",{value:function(){return this.join("/")}}),e;throw new Error("ipaddr: string is not formatted like an IPv6 CIDR range")},t.isValid=function(r){return t.IPv6.isValid(r)||t.IPv4.isValid(r)},t.parse=function(r){if(t.IPv6.isValid(r))return t.IPv6.parse(r);if(t.IPv4.isValid(r))return t.IPv4.parse(r);throw new Error("ipaddr: the address has neither IPv6 nor IPv4 format")},t.parseCIDR=function(r){try{return t.IPv6.parseCIDR(r)}catch(n){n;try{return t.IPv4.parseCIDR(r)}catch(r){throw r,new Error("ipaddr: the address has neither IPv6 nor IPv4 CIDR format")}}},t.fromByteArray=function(r){var n;if(4===(n=r.length))return new t.IPv4(r);if(16===n)return new t.IPv6(r);throw new Error("ipaddr: the binary input is neither an IPv6 nor IPv4 address")},t.process=function(r){var t;return t=this.parse(r),"ipv6"===t.kind()&&t.isIPv4MappedAddress()?t.toIPv4Address():t}}).call(this);™/README.md≈ u# ipaddr.js ‚Äî an IPv6 and IPv4 address manipulation library [![Build Status](https://travis-ci.org/whitequark/ipaddr.js.svg)](https://travis-ci.org/whitequark/ipaddr.js)
-
-ipaddr.js is a small (1.9K minified and gzipped) library for manipulating
-IP addresses in JavaScript environments. It runs on both CommonJS runtimes
-(e.g. [nodejs]) and in a web browser.
-
-ipaddr.js allows you to verify and parse string representation of an IP
-address, match it against a CIDR range or range list, determine if it falls
-into some reserved ranges (examples include loopback and private ranges),
-and convert between IPv4 and IPv4-mapped IPv6 addresses.
-
-[nodejs]: http://nodejs.org
-
-## Installation
-
-`npm install ipaddr.js`
-
-or
-
-`bower install ipaddr.js`
-
-## API
-
-ipaddr.js defines one object in the global scope: `ipaddr`. In CommonJS,
-it is exported from the module:
-
-```js
-var ipaddr = require('ipaddr.js');
-```
-
-The API consists of several global methods and two classes: ipaddr.IPv6 and ipaddr.IPv4.
-
-### Global methods
-
-There are three global methods defined: `ipaddr.isValid`, `ipaddr.parse` and
-`ipaddr.process`. All of them receive a string as a single parameter.
-
-The `ipaddr.isValid` method returns `true` if the address is a valid IPv4 or
-IPv6 address, and `false` otherwise. It does not throw any exceptions.
-
-The `ipaddr.parse` method returns an object representing the IP address,
-or throws an `Error` if the passed string is not a valid representation of an
-IP address.
-
-The `ipaddr.process` method works just like the `ipaddr.parse` one, but it
-automatically converts IPv4-mapped IPv6 addresses to their IPv4 counterparts
-before returning. It is useful when you have a Node.js instance listening
-on an IPv6 socket, and the `net.ivp6.bindv6only` sysctl parameter (or its
-equivalent on non-Linux OS) is set to 0. In this case, you can accept IPv4
-connections on your IPv6-only socket, but the remote address will be mangled.
-Use `ipaddr.process` method to automatically demangle it.
-
-### Object representation
-
-Parsing methods return an object which descends from `ipaddr.IPv6` or
-`ipaddr.IPv4`. These objects share some properties, but most of them differ.
-
-#### Shared properties
-
-One can determine the type of address by calling `addr.kind()`. It will return
-either `"ipv6"` or `"ipv4"`.
-
-An address can be converted back to its string representation with `addr.toString()`.
-Note that this method:
- * does not return the original string used to create the object (in fact, there is
-   no way of getting that string)
- * returns a compact representation (when it is applicable)
-
-A `match(range, bits)` method can be used to check if the address falls into a
-certain CIDR range.
-Note that an address can be (obviously) matched only against an address of the same type.
-
-For example:
-
-```js
-var addr = ipaddr.parse("2001:db8:1234::1");
-var range = ipaddr.parse("2001:db8::");
-
-addr.match(range, 32); // => true
-```
-
-Alternatively, `match` can also be called as `match([range, bits])`. In this way,
-it can be used together with the `parseCIDR(string)` method, which parses an IP
-address together with a CIDR range.
-
-For example:
-
-```js
-var addr = ipaddr.parse("2001:db8:1234::1");
-
-addr.match(ipaddr.parseCIDR("2001:db8::/32")); // => true
-```
-
-A `range()` method returns one of predefined names for several special ranges defined
-by IP protocols. The exact names (and their respective CIDR ranges) can be looked up
-in the source: [IPv6 ranges] and [IPv4 ranges]. Some common ones include `"unicast"`
-(the default one) and `"reserved"`.
-
-You can match against your own range list by using
-`ipaddr.subnetMatch(address, rangeList, defaultName)` method. It can work with a mix of IPv6 or IPv4 addresses, and accepts a name-to-subnet map as the range list. For example:
-
-```js
-var rangeList = {
-  documentationOnly: [ ipaddr.parse('2001:db8::'), 32 ],
-  tunnelProviders: [
-    [ ipaddr.parse('2001:470::'), 32 ], // he.net
-    [ ipaddr.parse('2001:5c0::'), 32 ]  // freenet6
-  ]
-};
-ipaddr.subnetMatch(ipaddr.parse('2001:470:8:66::1'), rangeList, 'unknown'); // => "tunnelProviders"
-```
-
-The addresses can be converted to their byte representation with `toByteArray()`.
-(Actually, JavaScript mostly does not know about byte buffers. They are emulated with
-arrays of numbers, each in range of 0..255.)
-
-```js
-var bytes = ipaddr.parse('2a00:1450:8007::68').toByteArray(); // ipv6.google.com
-bytes // => [42, 0x00, 0x14, 0x50, 0x80, 0x07, 0x00, <zeroes...>, 0x00, 0x68 ]
-```
-
-The `ipaddr.IPv4` and `ipaddr.IPv6` objects have some methods defined, too. All of them
-have the same interface for both protocols, and are similar to global methods.
-
-`ipaddr.IPvX.isValid(string)` can be used to check if the string is a valid address
-for particular protocol, and `ipaddr.IPvX.parse(string)` is the error-throwing parser.
-
-`ipaddr.IPvX.isValid(string)` uses the same format for parsing as the POSIX `inet_ntoa` function, which accepts unusual formats like `0xc0.168.1.1` or `0x10000000`. The function `ipaddr.IPv4.isValidFourPartDecimal(string)` validates the IPv4 address and also ensures that it is written in four-part decimal format.
-
-[IPv6 ranges]: https://github.com/whitequark/ipaddr.js/blob/master/src/ipaddr.coffee#L186
-[IPv4 ranges]: https://github.com/whitequark/ipaddr.js/blob/master/src/ipaddr.coffee#L71
-
-#### IPv6 properties
-
-Sometimes you will want to convert IPv6 not to a compact string representation (with
-the `::` substitution); the `toNormalizedString()` method will return an address where
-all zeroes are explicit.
-
-For example:
-
-```js
-var addr = ipaddr.parse("2001:0db8::0001");
-addr.toString(); // => "2001:db8::1"
-addr.toNormalizedString(); // => "2001:db8:0:0:0:0:0:1"
-```
-
-The `isIPv4MappedAddress()` method will return `true` if this address is an IPv4-mapped
-one, and `toIPv4Address()` will return an IPv4 object address.
-
-To access the underlying binary representation of the address, use `addr.parts`.
-
-```js
-var addr = ipaddr.parse("2001:db8:10::1234:DEAD");
-addr.parts // => [0x2001, 0xdb8, 0x10, 0, 0, 0, 0x1234, 0xdead]
-```
-
-A IPv6 zone index can be accessed via `addr.zoneId`:
-
-```js
-var addr = ipaddr.parse("2001:db8::%eth0");
-addr.zoneId // => 'eth0'
-```
-
-#### IPv4 properties
-
-`toIPv4MappedAddress()` will return a corresponding IPv4-mapped IPv6 address.
-
-To access the underlying representation of the address, use `addr.octets`.
-
-```js
-var addr = ipaddr.parse("192.168.1.1");
-addr.octets // => [192, 168, 1, 1]
-```
-
-`prefixLengthFromSubnetMask()` will return a CIDR prefix length for a valid IPv4 netmask or
-null if the netmask is not valid.
-
-```js
-ipaddr.IPv4.parse('255.255.255.240').prefixLengthFromSubnetMask() == 28
-ipaddr.IPv4.parse('255.192.164.0').prefixLengthFromSubnetMask()  == null
-```
-
-`subnetMaskFromPrefixLength()` will return an IPv4 netmask for a valid CIDR prefix length.
-
-```js
-ipaddr.IPv4.subnetMaskFromPrefixLength(24) == "255.255.255.0"
-ipaddr.IPv4.subnetMaskFromPrefixLength(29) == "255.255.255.248"
-```
-
-`broadcastAddressFromCIDR()` will return the broadcast address for a given IPv4 interface and netmask in CIDR notation.
-```js
-ipaddr.IPv4.broadcastAddressFromCIDR("172.0.0.1/24") == "172.0.0.255"
-```
-`networkAddressFromCIDR()` will return the network address for a given IPv4 interface and netmask in CIDR notation.
-```js
-ipaddr.IPv4.networkAddressFromCIDR("172.0.0.1/24") == "172.0.0.0"
-```
-
-#### Conversion
-
-IPv4 and IPv6 can be converted bidirectionally to and from network byte order (MSB) byte arrays.
-
-The `fromByteArray()` method will take an array and create an appropriate IPv4 or IPv6 object
-if the input satisfies the requirements. For IPv4 it has to be an array of four 8-bit values,
-while for IPv6 it has to be an array of sixteen 8-bit values.
-
-For example:
-```js
-var addr = ipaddr.fromByteArray([0x7f, 0, 0, 1]);
-addr.toString(); // => "127.0.0.1"
-```
-
-or
-
-```js
-var addr = ipaddr.fromByteArray([0x20, 1, 0xd, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
-addr.toString(); // => "2001:db8::1"
-```
-
-Both objects also offer a `toByteArray()` method, which returns an array in network byte order (MSB).
-
-For example:
-```js
-var addr = ipaddr.parse("127.0.0.1");
-addr.toByteArray(); // => [0x7f, 0, 0, 1]
-```
-
-or
-
-```js
-var addr = ipaddr.parse("2001:db8::1");
-addr.toByteArray(); // => [0x20, 1, 0xd, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
-```
-≥/lib/ipaddr.js.d.ts≈èdeclare module "ipaddr.js" {
-    type IPv4Range = 'unicast' | 'unspecified' | 'broadcast' | 'multicast' | 'linkLocal' | 'loopback' | 'carrierGradeNat' | 'private' | 'reserved';
-    type IPv6Range = 'unicast' | 'unspecified' | 'linkLocal' | 'multicast' | 'loopback' | 'uniqueLocal' | 'ipv4Mapped' | 'rfc6145' | 'rfc6052' | '6to4' | 'teredo' | 'reserved';
-
-    interface RangeList<T> {
-        [name: string]: [T, number] | [T, number][];
-    }
-
-    // Common methods/properties for IPv4 and IPv6 classes.
-    class IP {
-        prefixLengthFromSubnetMask(): number | null;
-        toByteArray(): number[];
-        toNormalizedString(): string;
-        toString(): string;
-    }
-
-    namespace Address {
-        export function isValid(addr: string): boolean;
-        export function fromByteArray(bytes: number[]): IPv4 | IPv6;
-        export function parse(addr: string): IPv4 | IPv6;
-        export function parseCIDR(mask: string): [IPv4 | IPv6, number];
-        export function process(addr: string): IPv4 | IPv6;
-        export function subnetMatch(addr: IPv4, rangeList: RangeList<IPv4>, defaultName?: string): string;
-        export function subnetMatch(addr: IPv6, rangeList: RangeList<IPv6>, defaultName?: string): string;
-
-        export class IPv4 extends IP {
-            static broadcastAddressFromCIDR(addr: string): IPv4;
-            static isIPv4(addr: string): boolean;
-            static isValidFourPartDecimal(addr: string): boolean;
-            static isValid(addr: string): boolean;
-            static networkAddressFromCIDR(addr: string): IPv4;
-            static parse(addr: string): IPv4;
-            static parseCIDR(addr: string): [IPv4, number];
-            static subnetMaskFromPrefixLength(prefix: number): IPv4;
-            constructor(octets: number[]);
-            octets: number[]
-
-            kind(): 'ipv4';
-            match(addr: IPv4, bits: number): boolean;
-            match(mask: [IPv4, number]): boolean;
-            range(): IPv4Range;
-            subnetMatch(rangeList: RangeList<IPv4>, defaultName?: string): string;
-            toIPv4MappedAddress(): IPv6;
-        }
-
-        export class IPv6 extends IP {
-            static broadcastAddressFromCIDR(addr: string): IPv6;
-            static isIPv6(addr: string): boolean;
-            static isValid(addr: string): boolean;
-            static parse(addr: string): IPv6;
-            static parseCIDR(addr: string): [IPv6, number];
-            static subnetMaskFromPrefixLength(prefix: number): IPv6;
-            constructor(parts: number[]);
-            parts: number[]
-            zoneId?: string
-
-            isIPv4MappedAddress(): boolean;
-            kind(): 'ipv6';
-            match(addr: IPv6, bits: number): boolean;
-            match(mask: [IPv6, number]): boolean;
-            range(): IPv6Range;
-            subnetMatch(rangeList: RangeList<IPv6>, defaultName?: string): string;
-            toIPv4Address(): IPv4;
-        }
-    }
-
-    export = Address;
-}
-®/LICENSE≈?Copyright (C) 2011-2017 whitequark <whitequark@whitequark.org>
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-≠/package.json≈œ{
-  "name": "ipaddr.js",
-  "description": "A library for manipulating IPv4 and IPv6 addresses in JavaScript.",
-  "version": "1.9.1",
-  "author": "whitequark <whitequark@whitequark.org>",
-  "directories": {
-    "lib": "./lib"
-  },
-  "dependencies": {},
-  "devDependencies": {
-    "coffee-script": "~1.12.6",
-    "nodeunit": "^0.11.3",
-    "uglify-js": "~3.0.19"
-  },
-  "scripts": {
-    "test": "cake build test"
-  },
-  "files": [
-    "lib/",
-    "LICENSE",
-    "ipaddr.min.js"
-  ],
-  "keywords": [
-    "ip",
-    "ipv4",
-    "ipv6"
-  ],
-  "repository": "git://github.com/whitequark/ipaddr.js",
-  "main": "./lib/ipaddr.js",
-  "engines": {
-    "node": ">= 0.10"
-  },
-  "license": "MIT",
-  "types": "./lib/ipaddr.js.d.ts"
-}

@@ -1,4 +1,163 @@
-‡­/src/cache.jsÅÖvar path = require('path');
+‡ª/README.mdÅ
+É# flat-cache
+> A stupidly simple key/value storage using files to persist the data
+
+[![NPM Version](http://img.shields.io/npm/v/flat-cache.svg?style=flat)](https://npmjs.org/package/flat-cache)
+[![Build Status](https://api.travis-ci.org/royriojas/flat-cache.svg?branch=master)](https://travis-ci.org/royriojas/flat-cache)
+
+## install
+
+```bash
+npm i --save flat-cache
+```
+
+## Usage
+
+```js
+var flatCache = require('flat-cache')
+// loads the cache, if one does not exists for the given
+// Id a new one will be prepared to be created
+var cache = flatCache.load('cacheId');
+
+// sets a key on the cache
+cache.setKey('key', { foo: 'var' });
+
+// get a key from the cache
+cache.getKey('key') // { foo: 'var' }
+
+// fetch the entire persisted object
+cache.all() // { 'key': { foo: 'var' } }
+
+// remove a key
+cache.removeKey('key'); // removes a key from the cache
+
+// save it to disk
+cache.save(); // very important, if you don't save no changes will be persisted.
+// cache.save( true /* noPrune */) // can be used to prevent the removal of non visited keys
+
+// loads the cache from a given directory, if one does
+// not exists for the given Id a new one will be prepared to be created
+var cache = flatCache.load('cacheId', path.resolve('./path/to/folder'));
+
+// The following methods are useful to clear the cache
+// delete a given cache
+flatCache.clearCacheById('cacheId') // removes the cacheId document if one exists.
+
+// delete all cache
+flatCache.clearAll(); // remove the cache directory
+```
+
+## Motivation for this module
+
+I needed a super simple and dumb **in-memory cache** with optional disk persistance in order to make
+a script that will beutify files with `esformatter` only execute on the files that were changed since the last run.
+To make that possible we need to store the `fileSize` and `modificationTime` of the files. So a simple `key/value`
+storage was needed and Bam! this module was born.
+
+## Important notes
+- If no directory is especified when the `load` method is called, a folder named `.cache` will be created
+  inside the module directory when `cache.save` is called. If you're committing your `node_modules` to any vcs, you
+  might want to ignore the default `.cache` folder, or specify a custom directory.
+- The values set on the keys of the cache should be `stringify-able` ones, meaning no circular references
+- All the changes to the cache state are done to memory
+- I could have used a timer or `Object.observe` to deliver the changes to disk, but I wanted to keep this module
+  intentionally dumb and simple
+- Non visited keys are removed when `cache.save()` is called. If this is not desired, you can pass `true` to the save call
+  like: `cache.save( true /* noPrune */ )`.
+
+## License
+
+MIT
+
+## Changelog
+
+[changelog](./changelog.md)
+­/package.jsonÅ
+°{
+  "name": "flat-cache",
+  "version": "3.0.4",
+  "description": "A stupidly simple key/value storage using files to persist some data",
+  "repository": "royriojas/flat-cache",
+  "license": "MIT",
+  "author": {
+    "name": "Roy Riojas",
+    "url": "http://royriojas.com"
+  },
+  "main": "src/cache.js",
+  "files": [
+    "src/cache.js",
+    "src/del.js",
+    "src/utils.js"
+  ],
+  "engines": {
+    "node": "^10.12.0 || >=12.0.0"
+  },
+  "precommit": [
+    "npm run verify --silent"
+  ],
+  "prepush": [
+    "npm run verify --silent"
+  ],
+  "scripts": {
+    "eslint": "eslint --cache --cache-location=node_modules/.cache/ ./src/**/*.js ./test/**/*.js",
+    "eslint-fix": "npm run eslint -- --fix",
+    "autofix": "npm run eslint-fix",
+    "check": "npm run eslint",
+    "verify": "npm run eslint && npm run test:cache",
+    "install-hooks": "prepush install && changelogx install-hook && precommit install",
+    "changelog": "changelogx -f markdown -o ./changelog.md",
+    "do-changelog": "npm run changelog && git add ./changelog.md && git commit -m 'DOC: Generate changelog' --no-verify",
+    "pre-v": "npm run verify",
+    "post-v": "npm run do-changelog && git push --no-verify && git push --tags --no-verify",
+    "bump-major": "npm run pre-v && npm version major -m 'BLD: Release v%s' && npm run post-v",
+    "bump-minor": "npm run pre-v && npm version minor -m 'BLD: Release v%s' && npm run post-v",
+    "bump-patch": "npm run pre-v && npm version patch -m 'BLD: Release v%s' && npm run post-v",
+    "test:cache": "mocha -R spec test/specs",
+    "test": "npm run verify --silent",
+    "cover": "istanbul cover test/runner.js html text-summary",
+    "watch": "watch-run -i -p 'test/specs/**/*.js' istanbul cover test/runner.js html text-summary"
+  },
+  "keywords": [
+    "json cache",
+    "simple cache",
+    "file cache",
+    "key par",
+    "key value",
+    "cache"
+  ],
+  "changelogx": {
+    "ignoreRegExp": [
+      "BLD: Release",
+      "DOC: Generate Changelog",
+      "Generated Changelog"
+    ],
+    "issueIDRegExp": "#(\\d+)",
+    "commitURL": "https://github.com/royriojas/flat-cache/commit/{0}",
+    "authorURL": "https://github.com/{0}",
+    "issueIDURL": "https://github.com/royriojas/flat-cache/issues/{0}",
+    "projectName": "flat-cache"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "changelogx": "^5.0.6",
+    "eslint": "^7.13.0",
+    "eslint-config-prettier": "^6.15.0",
+    "eslint-plugin-mocha": "^8.0.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "glob-expand": "^0.2.1",
+    "istanbul": "^0.4.5",
+    "mocha": "^8.2.1",
+    "precommit": "^1.2.2",
+    "prepush": "^3.1.11",
+    "prettier": "^2.1.2",
+    "watch-run": "^1.2.5"
+  },
+  "dependencies": {
+    "flatted": "^3.1.0",
+    "rimraf": "^3.0.2"
+  }
+}
+­/src/cache.jsÅÖvar path = require('path');
 var fs = require('fs');
 var utils = require('./utils');
 var del = require('./del');
@@ -238,93 +397,6 @@ module.exports = {
     });
     fs.writeFileSync(filePath, flatted.stringify(data));
   },
-};
-ª/README.mdÅ
-É# flat-cache
-> A stupidly simple key/value storage using files to persist the data
-
-[![NPM Version](http://img.shields.io/npm/v/flat-cache.svg?style=flat)](https://npmjs.org/package/flat-cache)
-[![Build Status](https://api.travis-ci.org/royriojas/flat-cache.svg?branch=master)](https://travis-ci.org/royriojas/flat-cache)
-
-## install
-
-```bash
-npm i --save flat-cache
-```
-
-## Usage
-
-```js
-var flatCache = require('flat-cache')
-// loads the cache, if one does not exists for the given
-// Id a new one will be prepared to be created
-var cache = flatCache.load('cacheId');
-
-// sets a key on the cache
-cache.setKey('key', { foo: 'var' });
-
-// get a key from the cache
-cache.getKey('key') // { foo: 'var' }
-
-// fetch the entire persisted object
-cache.all() // { 'key': { foo: 'var' } }
-
-// remove a key
-cache.removeKey('key'); // removes a key from the cache
-
-// save it to disk
-cache.save(); // very important, if you don't save no changes will be persisted.
-// cache.save( true /* noPrune */) // can be used to prevent the removal of non visited keys
-
-// loads the cache from a given directory, if one does
-// not exists for the given Id a new one will be prepared to be created
-var cache = flatCache.load('cacheId', path.resolve('./path/to/folder'));
-
-// The following methods are useful to clear the cache
-// delete a given cache
-flatCache.clearCacheById('cacheId') // removes the cacheId document if one exists.
-
-// delete all cache
-flatCache.clearAll(); // remove the cache directory
-```
-
-## Motivation for this module
-
-I needed a super simple and dumb **in-memory cache** with optional disk persistance in order to make
-a script that will beutify files with `esformatter` only execute on the files that were changed since the last run.
-To make that possible we need to store the `fileSize` and `modificationTime` of the files. So a simple `key/value`
-storage was needed and Bam! this module was born.
-
-## Important notes
-- If no directory is especified when the `load` method is called, a folder named `.cache` will be created
-  inside the module directory when `cache.save` is called. If you're committing your `node_modules` to any vcs, you
-  might want to ignore the default `.cache` folder, or specify a custom directory.
-- The values set on the keys of the cache should be `stringify-able` ones, meaning no circular references
-- All the changes to the cache state are done to memory
-- I could have used a timer or `Object.observe` to deliver the changes to disk, but I wanted to keep this module
-  intentionally dumb and simple
-- Non visited keys are removed when `cache.save()` is called. If this is not desired, you can pass `true` to the save call
-  like: `cache.save( true /* noPrune */ )`.
-
-## License
-
-MIT
-
-## Changelog
-
-[changelog](./changelog.md)
-«/src/del.jsÅ$var rimraf = require('rimraf').sync;
-var fs = require('fs');
-
-module.exports = function del(file) {
-  if (fs.existsSync(file)) {
-    //if rimraf doesn't throw then the file has been deleted or didn't exist
-    rimraf(file, {
-      glob: false,
-    });
-    return true;
-  }
-  return false;
 };
 ­/changelog.mdÅ@Ê
 # flat-cache - Changelog
@@ -654,91 +726,6 @@ module.exports = function del(file) {
   - Initial commit - [d43cccf]( https://github.com/royriojas/flat-cache/commit/d43cccf ), [Roy Riojas](https://github.com/Roy Riojas), 26/02/2015 01:12:16
 
     
-­/package.jsonÅ
-°{
-  "name": "flat-cache",
-  "version": "3.0.4",
-  "description": "A stupidly simple key/value storage using files to persist some data",
-  "repository": "royriojas/flat-cache",
-  "license": "MIT",
-  "author": {
-    "name": "Roy Riojas",
-    "url": "http://royriojas.com"
-  },
-  "main": "src/cache.js",
-  "files": [
-    "src/cache.js",
-    "src/del.js",
-    "src/utils.js"
-  ],
-  "engines": {
-    "node": "^10.12.0 || >=12.0.0"
-  },
-  "precommit": [
-    "npm run verify --silent"
-  ],
-  "prepush": [
-    "npm run verify --silent"
-  ],
-  "scripts": {
-    "eslint": "eslint --cache --cache-location=node_modules/.cache/ ./src/**/*.js ./test/**/*.js",
-    "eslint-fix": "npm run eslint -- --fix",
-    "autofix": "npm run eslint-fix",
-    "check": "npm run eslint",
-    "verify": "npm run eslint && npm run test:cache",
-    "install-hooks": "prepush install && changelogx install-hook && precommit install",
-    "changelog": "changelogx -f markdown -o ./changelog.md",
-    "do-changelog": "npm run changelog && git add ./changelog.md && git commit -m 'DOC: Generate changelog' --no-verify",
-    "pre-v": "npm run verify",
-    "post-v": "npm run do-changelog && git push --no-verify && git push --tags --no-verify",
-    "bump-major": "npm run pre-v && npm version major -m 'BLD: Release v%s' && npm run post-v",
-    "bump-minor": "npm run pre-v && npm version minor -m 'BLD: Release v%s' && npm run post-v",
-    "bump-patch": "npm run pre-v && npm version patch -m 'BLD: Release v%s' && npm run post-v",
-    "test:cache": "mocha -R spec test/specs",
-    "test": "npm run verify --silent",
-    "cover": "istanbul cover test/runner.js html text-summary",
-    "watch": "watch-run -i -p 'test/specs/**/*.js' istanbul cover test/runner.js html text-summary"
-  },
-  "keywords": [
-    "json cache",
-    "simple cache",
-    "file cache",
-    "key par",
-    "key value",
-    "cache"
-  ],
-  "changelogx": {
-    "ignoreRegExp": [
-      "BLD: Release",
-      "DOC: Generate Changelog",
-      "Generated Changelog"
-    ],
-    "issueIDRegExp": "#(\\d+)",
-    "commitURL": "https://github.com/royriojas/flat-cache/commit/{0}",
-    "authorURL": "https://github.com/{0}",
-    "issueIDURL": "https://github.com/royriojas/flat-cache/issues/{0}",
-    "projectName": "flat-cache"
-  },
-  "devDependencies": {
-    "chai": "^4.2.0",
-    "changelogx": "^5.0.6",
-    "eslint": "^7.13.0",
-    "eslint-config-prettier": "^6.15.0",
-    "eslint-plugin-mocha": "^8.0.0",
-    "eslint-plugin-prettier": "^3.1.4",
-    "glob-expand": "^0.2.1",
-    "istanbul": "^0.4.5",
-    "mocha": "^8.2.1",
-    "precommit": "^1.2.2",
-    "prepush": "^3.1.11",
-    "prettier": "^2.1.2",
-    "watch-run": "^1.2.5"
-  },
-  "dependencies": {
-    "flatted": "^3.1.0",
-    "rimraf": "^3.0.2"
-  }
-}
 ¨/LICENSEÅ6The MIT License (MIT)
 
 Copyright (c) 2015 Roy Riojas
@@ -761,3 +748,16 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+«/src/del.jsÅ$var rimraf = require('rimraf').sync;
+var fs = require('fs');
+
+module.exports = function del(file) {
+  if (fs.existsSync(file)) {
+    //if rimraf doesn't throw then the file has been deleted or didn't exist
+    rimraf(file, {
+      glob: false,
+    });
+    return true;
+  }
+  return false;
+};

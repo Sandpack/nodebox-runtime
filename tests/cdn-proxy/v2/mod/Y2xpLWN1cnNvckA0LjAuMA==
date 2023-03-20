@@ -1,103 +1,4 @@
-Ö©/index.js≈∂import process from 'node:process';
-import restoreCursor from 'restore-cursor';
-
-let isHidden = false;
-
-const cliCursor = {};
-
-cliCursor.show = (writableStream = process.stderr) => {
-	if (!writableStream.isTTY) {
-		return;
-	}
-
-	isHidden = false;
-	writableStream.write('\u001B[?25h');
-};
-
-cliCursor.hide = (writableStream = process.stderr) => {
-	if (!writableStream.isTTY) {
-		return;
-	}
-
-	restoreCursor();
-	isHidden = true;
-	writableStream.write('\u001B[?25l');
-};
-
-cliCursor.toggle = (force, writableStream) => {
-	if (force !== undefined) {
-		isHidden = force;
-	}
-
-	if (isHidden) {
-		cliCursor.show(writableStream);
-	} else {
-		cliCursor.hide(writableStream);
-	}
-};
-
-export default cliCursor;
-®/license≈]MIT License
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-™/readme.md≈·# cli-cursor
-
-> Toggle the CLI cursor
-
-The cursor is [gracefully restored](https://github.com/sindresorhus/restore-cursor) if the process exits.
-
-## Install
-
-```
-$ npm install cli-cursor
-```
-
-## Usage
-
-```js
-import cliCursor from 'cli-cursor';
-
-cliCursor.hide();
-
-const unicornsAreAwesome = true;
-cliCursor.toggle(unicornsAreAwesome);
-```
-
-## API
-
-### .show(stream?)
-
-### .hide(stream?)
-
-### .toggle(force?, stream?)
-
-#### force
-
-Useful for showing or hiding the cursor based on a boolean.
-
-#### stream
-
-Type: `stream.Writable`\
-Default: `process.stderr`
-
----
-
-<div align="center">
-	<b>
-		<a href="https://tidelift.com/subscription/pkg/npm-cli-cursor?utm_source=npm-cli-cursor&utm_medium=referral&utm_campaign=readme">Get professional support for this package with a Tidelift subscription</a>
-	</b>
-	<br>
-	<sub>
-		Tidelift helps make open source sustainable for maintainers while giving companies<br>assurances about security, maintenance, and licensing for their dependencies.
-	</sub>
-</div>
-≠/package.json≈W{
+Ö≠/package.json≈W{
 	"name": "cli-cursor",
 	"version": "4.0.0",
 	"description": "Toggle the CLI cursor",
@@ -190,6 +91,105 @@ Default: `process.stderr`
 	```
 	*/
 	toggle(force?: boolean, stream?: NodeJS.WritableStream): void;
+};
+
+export default cliCursor;
+™/readme.md≈·# cli-cursor
+
+> Toggle the CLI cursor
+
+The cursor is [gracefully restored](https://github.com/sindresorhus/restore-cursor) if the process exits.
+
+## Install
+
+```
+$ npm install cli-cursor
+```
+
+## Usage
+
+```js
+import cliCursor from 'cli-cursor';
+
+cliCursor.hide();
+
+const unicornsAreAwesome = true;
+cliCursor.toggle(unicornsAreAwesome);
+```
+
+## API
+
+### .show(stream?)
+
+### .hide(stream?)
+
+### .toggle(force?, stream?)
+
+#### force
+
+Useful for showing or hiding the cursor based on a boolean.
+
+#### stream
+
+Type: `stream.Writable`\
+Default: `process.stderr`
+
+---
+
+<div align="center">
+	<b>
+		<a href="https://tidelift.com/subscription/pkg/npm-cli-cursor?utm_source=npm-cli-cursor&utm_medium=referral&utm_campaign=readme">Get professional support for this package with a Tidelift subscription</a>
+	</b>
+	<br>
+	<sub>
+		Tidelift helps make open source sustainable for maintainers while giving companies<br>assurances about security, maintenance, and licensing for their dependencies.
+	</sub>
+</div>
+®/license≈]MIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+©/index.js≈∂import process from 'node:process';
+import restoreCursor from 'restore-cursor';
+
+let isHidden = false;
+
+const cliCursor = {};
+
+cliCursor.show = (writableStream = process.stderr) => {
+	if (!writableStream.isTTY) {
+		return;
+	}
+
+	isHidden = false;
+	writableStream.write('\u001B[?25h');
+};
+
+cliCursor.hide = (writableStream = process.stderr) => {
+	if (!writableStream.isTTY) {
+		return;
+	}
+
+	restoreCursor();
+	isHidden = true;
+	writableStream.write('\u001B[?25l');
+};
+
+cliCursor.toggle = (force, writableStream) => {
+	if (force !== undefined) {
+		isHidden = force;
+	}
+
+	if (isHidden) {
+		cliCursor.show(writableStream);
+	} else {
+		cliCursor.hide(writableStream);
+	}
 };
 
 export default cliCursor;

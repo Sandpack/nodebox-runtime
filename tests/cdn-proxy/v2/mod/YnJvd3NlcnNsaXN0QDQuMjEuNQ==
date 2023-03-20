@@ -1,4 +1,16 @@
-‹«/error.d.tsÄ›declare class BrowserslistError extends Error {
+‹©/error.jsÅ+function BrowserslistError(message) {
+  this.name = 'BrowserslistError'
+  this.message = message
+  this.browserslist = true
+  if (Error.captureStackTrace) {
+    Error.captureStackTrace(this, BrowserslistError)
+  }
+}
+
+BrowserslistError.prototype = Error.prototype
+
+module.exports = BrowserslistError
+«/error.d.tsÄ›declare class BrowserslistError extends Error {
   constructor(message: any)
   name: 'BrowserslistError'
   browserslist: true
@@ -1194,6 +1206,620 @@ var QUERIES = {
 })()
 
 module.exports = browserslist
+ª/README.mdÅo# Browserslist [![Cult Of Martians][cult-img]][cult]
+
+<img width="120" height="120" alt="Browserslist logo by Anton Popov"
+     src="https://browsersl.ist/logo.svg" align="right">
+
+The config to share target browsers and Node.js versions between different
+front-end tools. It is used in:
+
+* [Autoprefixer]
+* [Babel]
+* [postcss-preset-env]
+* [eslint-plugin-compat]
+* [stylelint-no-unsupported-browser-features]
+* [postcss-normalize]
+* [obsolete-webpack-plugin]
+
+All tools will find target browsers automatically,
+whenÂ youÂ addÂ theÂ following to `package.json`:
+
+```json
+  "browserslist": [
+    "defaults and supports es6-module",
+    "maintained node versions"
+  ]
+```
+
+Or in `.browserslistrc` config:
+
+```yaml
+# Browsers that we support
+
+defaults and supports es6-module
+maintained node versions
+```
+
+Developers set their version lists using queries like `last 2 versions`
+to be free from updating versions manually.
+BrowserslistÂ willÂ use [`caniuse-lite`] withÂ [Can I Use] data for this queries.
+
+You can check how config works at our playground: [`browsersl.ist`](https://browsersl.ist/)
+
+<a href="https://browsersl.ist/">
+  <img src="/img/screenshot.webp" alt="browsersl.ist website">
+</a>
+
+<br>
+<br>
+<div align="center">
+  <a href="https://evilmartians.com/?utm_source=browserslist">
+    <img src="https://evilmartians.com/badges/sponsored-by-evil-martians.svg"
+        alt="Sponsored by Evil Martians" width="236" height="54">
+  </a>
+
+  <a href="https://cube.dev/?ref=eco-browserslist-github">
+    <img src="https://user-images.githubusercontent.com/986756/154330861-d79ab8ec-aacb-4af8-9e17-1b28f1eccb01.svg"
+        alt="Supported by Cube" width="227" height="46">
+  </a>
+</div>
+
+[stylelint-no-unsupported-browser-features]: https://github.com/ismay/stylelint-no-unsupported-browser-features
+[obsolete-webpack-plugin]:                   https://github.com/ElemeFE/obsolete-webpack-plugin
+[eslint-plugin-compat]:                      https://github.com/amilajack/eslint-plugin-compat
+[Browserslist Example]:                      https://github.com/browserslist/browserslist-example
+[postcss-preset-env]:                        https://github.com/csstools/postcss-plugins/tree/main/plugin-packs/postcss-preset-env
+[postcss-normalize]:                         https://github.com/csstools/postcss-normalize
+[`browsersl.ist`]:                           https://browsersl.ist/
+[`caniuse-lite`]:                            https://github.com/ben-eb/caniuse-lite
+[Autoprefixer]:                              https://github.com/postcss/autoprefixer
+[Can I Use]:                                 https://caniuse.com/
+[Babel]:                                     https://github.com/babel/babel/tree/master/packages/babel-preset-env
+[cult-img]: https://cultofmartians.com/assets/badges/badge.svg
+[cult]: https://cultofmartians.com/done.html
+
+## Docs
+Read full docs **[here](https://github.com/browserslist/browserslist#readme)**.
+§/cli.jsÅ'#!/usr/bin/env node
+
+var updateDb = require('update-browserslist-db')
+var fs = require('fs')
+
+var browserslist = require('./')
+var pkg = require('./package.json')
+
+var args = process.argv.slice(2)
+
+var USAGE =
+  'Usage:\n' +
+  '  npx browserslist\n' +
+  '  npx browserslist "QUERIES"\n' +
+  '  npx browserslist --json "QUERIES"\n' +
+  '  npx browserslist --config="path/to/browserlist/file"\n' +
+  '  npx browserslist --coverage "QUERIES"\n' +
+  '  npx browserslist --coverage=US "QUERIES"\n' +
+  '  npx browserslist --coverage=US,RU,global "QUERIES"\n' +
+  '  npx browserslist --env="environment name defined in config"\n' +
+  '  npx browserslist --stats="path/to/browserlist/stats/file"\n' +
+  '  npx browserslist --mobile-to-desktop\n' +
+  '  npx browserslist --ignore-unknown-versions\n'
+
+function isArg(arg) {
+  return args.some(function (str) {
+    return str === arg || str.indexOf(arg + '=') === 0
+  })
+}
+
+function error(msg) {
+  process.stderr.write('browserslist: ' + msg + '\n')
+  process.exit(1)
+}
+
+if (isArg('--help') || isArg('-h')) {
+  process.stdout.write(pkg.description + '.\n\n' + USAGE + '\n')
+} else if (isArg('--version') || isArg('-v')) {
+  process.stdout.write('browserslist ' + pkg.version + '\n')
+} else if (isArg('--update-db')) {
+  /* c8 ignore next 3 */
+  updateDb(function (str) {
+    process.stdout.write(str)
+  })
+} else {
+  var mode = 'browsers'
+  var opts = {}
+  var queries
+  var areas
+
+  for (var i = 0; i < args.length; i++) {
+    if (args[i][0] !== '-') {
+      queries = args[i].replace(/^["']|["']$/g, '')
+      continue
+    }
+
+    var arg = args[i].split('=')
+    var name = arg[0]
+    var value = arg[1]
+
+    if (value) value = value.replace(/^["']|["']$/g, '')
+
+    if (name === '--config' || name === '-b') {
+      opts.config = value
+    } else if (name === '--env' || name === '-e') {
+      opts.env = value
+    } else if (name === '--stats' || name === '-s') {
+      opts.stats = value
+    } else if (name === '--coverage' || name === '-c') {
+      if (mode !== 'json') mode = 'coverage'
+      if (value) {
+        areas = value.split(',')
+      } else {
+        areas = ['global']
+      }
+    } else if (name === '--json') {
+      mode = 'json'
+    } else if (name === '--mobile-to-desktop') {
+      /* c8 ignore next */
+      opts.mobileToDesktop = true
+    } else if (name === '--ignore-unknown-versions') {
+      /* c8 ignore next */
+      opts.ignoreUnknownVersions = true
+    } else {
+      error('Unknown arguments ' + args[i] + '.\n\n' + USAGE)
+    }
+  }
+
+  var browsers
+  try {
+    browsers = browserslist(queries, opts)
+  } catch (e) {
+    if (e.name === 'BrowserslistError') {
+      error(e.message)
+    } /* c8 ignore start */ else {
+      throw e
+    } /* c8 ignore end */
+  }
+
+  var coverage
+  if (mode === 'browsers') {
+    browsers.forEach(function (browser) {
+      process.stdout.write(browser + '\n')
+    })
+  } else if (areas) {
+    coverage = areas.map(function (area) {
+      var stats
+      if (area !== 'global') {
+        stats = area
+      } else if (opts.stats) {
+        stats = JSON.parse(fs.readFileSync(opts.stats))
+      }
+      var result = browserslist.coverage(browsers, stats)
+      var round = Math.round(result * 100) / 100.0
+
+      return [area, round]
+    })
+
+    if (mode === 'coverage') {
+      var prefix = 'These browsers account for '
+      process.stdout.write(prefix)
+      coverage.forEach(function (data, index) {
+        var area = data[0]
+        var round = data[1]
+        var end = 'globally'
+        if (area && area !== 'global') {
+          end = 'in the ' + area.toUpperCase()
+        } else if (opts.stats) {
+          end = 'in custom statistics'
+        }
+
+        if (index !== 0) {
+          process.stdout.write(prefix.replace(/./g, ' '))
+        }
+
+        process.stdout.write(round + '% of all users ' + end + '\n')
+      })
+    }
+  }
+
+  if (mode === 'json') {
+    var data = { browsers: browsers }
+    if (coverage) {
+      data.coverage = coverage.reduce(function (object, j) {
+        object[j[0]] = j[1]
+        return object
+      }, {})
+    }
+    process.stdout.write(JSON.stringify(data, null, '  ') + '\n')
+  }
+}
+«/index.d.tsÅ=/**
+ * Return array of browsers by selection queries.
+ *
+ * ```js
+ * browserslist('IE >= 10, IE 8') //=> ['ie 11', 'ie 10', 'ie 8']
+ * ```
+ *
+ * @param queries Browser queries.
+ * @param opts Options.
+ * @returns Array with browser names in Can I Use.
+ */
+declare function browserslist(
+  queries?: string | readonly string[] | null,
+  opts?: browserslist.Options
+): string[]
+
+declare namespace browserslist {
+  interface Query {
+    compose: 'or' | 'and'
+    type: string
+    query: string
+    not?: true
+  }
+
+  interface Options {
+    /**
+     * Path to processed file. It will be used to find config files.
+     */
+    path?: string | false
+    /**
+     * Processing environment. It will be used to take right queries
+     * from config file.
+     */
+    env?: string
+    /**
+     * Custom browser usage statistics for "> 1% in my stats" query.
+     */
+    stats?: Stats | string
+    /**
+     * Path to config file with queries.
+     */
+    config?: string
+    /**
+     * Do not throw on unknown version in direct query.
+     */
+    ignoreUnknownVersions?: boolean
+    /**
+     * Throw an error if env is not found.
+     */
+    throwOnMissing?: boolean
+    /**
+     * Disable security checks for extend query.
+     */
+    dangerousExtend?: boolean
+    /**
+     * Alias mobile browsers to the desktop version when Can I Use
+     * doesnâ€™t have data about the specified version.
+     */
+    mobileToDesktop?: boolean
+  }
+
+  type Config = {
+    defaults: string[]
+    [section: string]: string[] | undefined
+  }
+
+  interface Stats {
+    [browser: string]: {
+      [version: string]: number
+    }
+  }
+
+  /**
+   * Browser names aliases.
+   */
+  let aliases: {
+    [alias: string]: string | undefined
+  }
+
+  /**
+   * Aliases to work with joined versions like `ios_saf 7.0-7.1`.
+   */
+  let versionAliases: {
+    [browser: string]:
+      | {
+          [version: string]: string | undefined
+        }
+      | undefined
+  }
+
+  /**
+   * Can I Use only provides a few versions for some browsers (e.g. `and_chr`).
+   *
+   * Fallback to a similar browser for unknown versions.
+   */
+  let desktopNames: {
+    [browser: string]: string | undefined
+  }
+
+  let data: {
+    [browser: string]:
+      | {
+          name: string
+          versions: string[]
+          released: string[]
+          releaseDate: {
+            [version: string]: number | undefined | null
+          }
+        }
+      | undefined
+  }
+
+  let nodeVersions: string[]
+
+  interface Usage {
+    [version: string]: number
+  }
+
+  let usage: {
+    global?: Usage
+    custom?: Usage | null
+    [country: string]: Usage | undefined | null
+  }
+
+  let cache: {
+    [feature: string]: {
+      [name: string]: 'y' | 'n'
+    }
+  }
+
+  /**
+   * Default browsers query
+   */
+  let defaults: readonly string[]
+
+  /**
+   * Which statistics should be used. Country code or custom statistics.
+   * Pass `"my stats"` to load statistics from `Browserslist` files.
+   */
+  type StatsOptions = string | 'my stats' | Stats | { dataByBrowser: Stats }
+
+  /**
+   * Return browsers market coverage.
+   *
+   * ```js
+   * browserslist.coverage(browserslist('> 1% in US'), 'US') //=> 83.1
+   * ```
+   *
+   * @param browsers Browsers names in Can I Use.
+   * @param stats Which statistics should be used.
+   * @returns Total market coverage for all selected browsers.
+   */
+  function coverage(browsers: readonly string[], stats?: StatsOptions): number
+
+  /**
+   * Get queries AST to analyze the config content.
+   *
+   * @param queries Browser queries.
+   * @param opts Options.
+   * @returns An array of the data of each query in the config.
+   */
+  function parse(
+    queries?: string | readonly string[] | null,
+    opts?: browserslist.Options
+  ): Query[]
+
+  function clearCaches(): void
+
+  function parseConfig(string: string): Config
+
+  function readConfig(file: string): Config
+
+  function findConfig(...pathSegments: string[]): Config | undefined
+
+  interface LoadConfigOptions {
+    config?: string
+    path?: string
+    env?: string
+  }
+
+  function loadConfig(options: LoadConfigOptions): string[] | undefined
+}
+
+declare global {
+  namespace NodeJS {
+    interface ProcessEnv {
+      BROWSERSLIST?: string
+      BROWSERSLIST_CONFIG?: string
+      BROWSERSLIST_DANGEROUS_EXTEND?: string
+      BROWSERSLIST_DISABLE_CACHE?: string
+      BROWSERSLIST_ENV?: string
+      BROWSERSLIST_IGNORE_OLD_DATA?: string
+      BROWSERSLIST_STATS?: string
+    }
+  }
+}
+
+export = browserslist
+¨/LICENSEÅ^The MIT License (MIT)
+
+Copyright 2014 Andrey Sitnik <andrey@sitnik.ru> and other contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+«/browser.jsÅDvar BrowserslistError = require('./error')
+
+function noop() {}
+
+module.exports = {
+  loadQueries: function loadQueries() {
+    throw new BrowserslistError(
+      'Sharable configs are not supported in client-side build of Browserslist'
+    )
+  },
+
+  getStat: function getStat(opts) {
+    return opts.stats
+  },
+
+  loadConfig: function loadConfig(opts) {
+    if (opts.config) {
+      throw new BrowserslistError(
+        'Browserslist config are not supported in client-side build'
+      )
+    }
+  },
+
+  loadCountry: function loadCountry() {
+    throw new BrowserslistError(
+      'Country statistics are not supported ' +
+        'in client-side build of Browserslist'
+    )
+  },
+
+  loadFeature: function loadFeature() {
+    throw new BrowserslistError(
+      'Supports queries are not available in client-side build of Browserslist'
+    )
+  },
+
+  currentNode: function currentNode(resolve, context) {
+    return resolve(['maintained node versions'], context)[0]
+  },
+
+  parseConfig: noop,
+
+  readConfig: noop,
+
+  findConfig: noop,
+
+  clearCaches: noop,
+
+  oldDataWarning: noop,
+
+  env: {}
+}
+©/parse.jsÅývar AND_REGEXP = /^\s+and\s+(.*)/i
+var OR_REGEXP = /^(?:,\s*|\s+or\s+)(.*)/i
+
+function flatten(array) {
+  if (!Array.isArray(array)) return [array]
+  return array.reduce(function (a, b) {
+    return a.concat(flatten(b))
+  }, [])
+}
+
+function find(string, predicate) {
+  for (var n = 1, max = string.length; n <= max; n++) {
+    var parsed = string.substr(-n, n)
+    if (predicate(parsed, n, max)) {
+      return string.slice(0, -n)
+    }
+  }
+  return ''
+}
+
+function matchQuery(all, query) {
+  var node = { query: query }
+  if (query.indexOf('not ') === 0) {
+    node.not = true
+    query = query.slice(4)
+  }
+
+  for (var name in all) {
+    var type = all[name]
+    var match = query.match(type.regexp)
+    if (match) {
+      node.type = name
+      for (var i = 0; i < type.matches.length; i++) {
+        node[type.matches[i]] = match[i + 1]
+      }
+      return node
+    }
+  }
+
+  node.type = 'unknown'
+  return node
+}
+
+function matchBlock(all, string, qs) {
+  var node
+  return find(string, function (parsed, n, max) {
+    if (AND_REGEXP.test(parsed)) {
+      node = matchQuery(all, parsed.match(AND_REGEXP)[1])
+      node.compose = 'and'
+      qs.unshift(node)
+      return true
+    } else if (OR_REGEXP.test(parsed)) {
+      node = matchQuery(all, parsed.match(OR_REGEXP)[1])
+      node.compose = 'or'
+      qs.unshift(node)
+      return true
+    } else if (n === max) {
+      node = matchQuery(all, parsed.trim())
+      node.compose = 'or'
+      qs.unshift(node)
+      return true
+    }
+    return false
+  })
+}
+
+module.exports = function parse(all, queries) {
+  if (!Array.isArray(queries)) queries = [queries]
+  return flatten(
+    queries.map(function (block) {
+      var qs = []
+      do {
+        block = matchBlock(all, block, qs)
+      } while (block)
+      return qs
+    })
+  )
+}
+­/package.jsonÅÙ{
+  "name": "browserslist",
+  "version": "4.21.5",
+  "description": "Share target browsers between different front-end tools, like Autoprefixer, Stylelint and babel-env-preset",
+  "keywords": [
+    "caniuse",
+    "browsers",
+    "target"
+  ],
+  "funding": [
+    {
+      "type": "opencollective",
+      "url": "https://opencollective.com/browserslist"
+    },
+    {
+      "type": "tidelift",
+      "url": "https://tidelift.com/funding/github/npm/browserslist"
+    }
+  ],
+  "author": "Andrey Sitnik <andrey@sitnik.ru>",
+  "license": "MIT",
+  "repository": "browserslist/browserslist",
+  "dependencies": {
+    "caniuse-lite": "^1.0.30001449",
+    "electron-to-chromium": "^1.4.284",
+    "node-releases": "^2.0.8",
+    "update-browserslist-db": "^1.0.10"
+  },
+  "engines": {
+    "node": "^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7"
+  },
+  "bin": {
+    "browserslist": "cli.js"
+  },
+  "types": "./index.d.ts",
+  "browser": {
+    "./node.js": "./browser.js",
+    "path": false
+  }
+}
 ¨/node.jsÅ,Yvar feature = require('caniuse-lite/dist/unpacker/feature').default
 var region = require('caniuse-lite/dist/unpacker/region').default
 var path = require('path')
@@ -1602,630 +2228,4 @@ module.exports = {
   },
 
   env: process.env
-}
-¨/LICENSEÅ^The MIT License (MIT)
-
-Copyright 2014 Andrey Sitnik <andrey@sitnik.ru> and other contributors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-©/parse.jsÅývar AND_REGEXP = /^\s+and\s+(.*)/i
-var OR_REGEXP = /^(?:,\s*|\s+or\s+)(.*)/i
-
-function flatten(array) {
-  if (!Array.isArray(array)) return [array]
-  return array.reduce(function (a, b) {
-    return a.concat(flatten(b))
-  }, [])
-}
-
-function find(string, predicate) {
-  for (var n = 1, max = string.length; n <= max; n++) {
-    var parsed = string.substr(-n, n)
-    if (predicate(parsed, n, max)) {
-      return string.slice(0, -n)
-    }
-  }
-  return ''
-}
-
-function matchQuery(all, query) {
-  var node = { query: query }
-  if (query.indexOf('not ') === 0) {
-    node.not = true
-    query = query.slice(4)
-  }
-
-  for (var name in all) {
-    var type = all[name]
-    var match = query.match(type.regexp)
-    if (match) {
-      node.type = name
-      for (var i = 0; i < type.matches.length; i++) {
-        node[type.matches[i]] = match[i + 1]
-      }
-      return node
-    }
-  }
-
-  node.type = 'unknown'
-  return node
-}
-
-function matchBlock(all, string, qs) {
-  var node
-  return find(string, function (parsed, n, max) {
-    if (AND_REGEXP.test(parsed)) {
-      node = matchQuery(all, parsed.match(AND_REGEXP)[1])
-      node.compose = 'and'
-      qs.unshift(node)
-      return true
-    } else if (OR_REGEXP.test(parsed)) {
-      node = matchQuery(all, parsed.match(OR_REGEXP)[1])
-      node.compose = 'or'
-      qs.unshift(node)
-      return true
-    } else if (n === max) {
-      node = matchQuery(all, parsed.trim())
-      node.compose = 'or'
-      qs.unshift(node)
-      return true
-    }
-    return false
-  })
-}
-
-module.exports = function parse(all, queries) {
-  if (!Array.isArray(queries)) queries = [queries]
-  return flatten(
-    queries.map(function (block) {
-      var qs = []
-      do {
-        block = matchBlock(all, block, qs)
-      } while (block)
-      return qs
-    })
-  )
-}
-«/index.d.tsÅ=/**
- * Return array of browsers by selection queries.
- *
- * ```js
- * browserslist('IE >= 10, IE 8') //=> ['ie 11', 'ie 10', 'ie 8']
- * ```
- *
- * @param queries Browser queries.
- * @param opts Options.
- * @returns Array with browser names in Can I Use.
- */
-declare function browserslist(
-  queries?: string | readonly string[] | null,
-  opts?: browserslist.Options
-): string[]
-
-declare namespace browserslist {
-  interface Query {
-    compose: 'or' | 'and'
-    type: string
-    query: string
-    not?: true
-  }
-
-  interface Options {
-    /**
-     * Path to processed file. It will be used to find config files.
-     */
-    path?: string | false
-    /**
-     * Processing environment. It will be used to take right queries
-     * from config file.
-     */
-    env?: string
-    /**
-     * Custom browser usage statistics for "> 1% in my stats" query.
-     */
-    stats?: Stats | string
-    /**
-     * Path to config file with queries.
-     */
-    config?: string
-    /**
-     * Do not throw on unknown version in direct query.
-     */
-    ignoreUnknownVersions?: boolean
-    /**
-     * Throw an error if env is not found.
-     */
-    throwOnMissing?: boolean
-    /**
-     * Disable security checks for extend query.
-     */
-    dangerousExtend?: boolean
-    /**
-     * Alias mobile browsers to the desktop version when Can I Use
-     * doesnâ€™t have data about the specified version.
-     */
-    mobileToDesktop?: boolean
-  }
-
-  type Config = {
-    defaults: string[]
-    [section: string]: string[] | undefined
-  }
-
-  interface Stats {
-    [browser: string]: {
-      [version: string]: number
-    }
-  }
-
-  /**
-   * Browser names aliases.
-   */
-  let aliases: {
-    [alias: string]: string | undefined
-  }
-
-  /**
-   * Aliases to work with joined versions like `ios_saf 7.0-7.1`.
-   */
-  let versionAliases: {
-    [browser: string]:
-      | {
-          [version: string]: string | undefined
-        }
-      | undefined
-  }
-
-  /**
-   * Can I Use only provides a few versions for some browsers (e.g. `and_chr`).
-   *
-   * Fallback to a similar browser for unknown versions.
-   */
-  let desktopNames: {
-    [browser: string]: string | undefined
-  }
-
-  let data: {
-    [browser: string]:
-      | {
-          name: string
-          versions: string[]
-          released: string[]
-          releaseDate: {
-            [version: string]: number | undefined | null
-          }
-        }
-      | undefined
-  }
-
-  let nodeVersions: string[]
-
-  interface Usage {
-    [version: string]: number
-  }
-
-  let usage: {
-    global?: Usage
-    custom?: Usage | null
-    [country: string]: Usage | undefined | null
-  }
-
-  let cache: {
-    [feature: string]: {
-      [name: string]: 'y' | 'n'
-    }
-  }
-
-  /**
-   * Default browsers query
-   */
-  let defaults: readonly string[]
-
-  /**
-   * Which statistics should be used. Country code or custom statistics.
-   * Pass `"my stats"` to load statistics from `Browserslist` files.
-   */
-  type StatsOptions = string | 'my stats' | Stats | { dataByBrowser: Stats }
-
-  /**
-   * Return browsers market coverage.
-   *
-   * ```js
-   * browserslist.coverage(browserslist('> 1% in US'), 'US') //=> 83.1
-   * ```
-   *
-   * @param browsers Browsers names in Can I Use.
-   * @param stats Which statistics should be used.
-   * @returns Total market coverage for all selected browsers.
-   */
-  function coverage(browsers: readonly string[], stats?: StatsOptions): number
-
-  /**
-   * Get queries AST to analyze the config content.
-   *
-   * @param queries Browser queries.
-   * @param opts Options.
-   * @returns An array of the data of each query in the config.
-   */
-  function parse(
-    queries?: string | readonly string[] | null,
-    opts?: browserslist.Options
-  ): Query[]
-
-  function clearCaches(): void
-
-  function parseConfig(string: string): Config
-
-  function readConfig(file: string): Config
-
-  function findConfig(...pathSegments: string[]): Config | undefined
-
-  interface LoadConfigOptions {
-    config?: string
-    path?: string
-    env?: string
-  }
-
-  function loadConfig(options: LoadConfigOptions): string[] | undefined
-}
-
-declare global {
-  namespace NodeJS {
-    interface ProcessEnv {
-      BROWSERSLIST?: string
-      BROWSERSLIST_CONFIG?: string
-      BROWSERSLIST_DANGEROUS_EXTEND?: string
-      BROWSERSLIST_DISABLE_CACHE?: string
-      BROWSERSLIST_ENV?: string
-      BROWSERSLIST_IGNORE_OLD_DATA?: string
-      BROWSERSLIST_STATS?: string
-    }
-  }
-}
-
-export = browserslist
-ª/README.mdÅo# Browserslist [![Cult Of Martians][cult-img]][cult]
-
-<img width="120" height="120" alt="Browserslist logo by Anton Popov"
-     src="https://browsersl.ist/logo.svg" align="right">
-
-The config to share target browsers and Node.js versions between different
-front-end tools. It is used in:
-
-* [Autoprefixer]
-* [Babel]
-* [postcss-preset-env]
-* [eslint-plugin-compat]
-* [stylelint-no-unsupported-browser-features]
-* [postcss-normalize]
-* [obsolete-webpack-plugin]
-
-All tools will find target browsers automatically,
-whenÂ youÂ addÂ theÂ following to `package.json`:
-
-```json
-  "browserslist": [
-    "defaults and supports es6-module",
-    "maintained node versions"
-  ]
-```
-
-Or in `.browserslistrc` config:
-
-```yaml
-# Browsers that we support
-
-defaults and supports es6-module
-maintained node versions
-```
-
-Developers set their version lists using queries like `last 2 versions`
-to be free from updating versions manually.
-BrowserslistÂ willÂ use [`caniuse-lite`] withÂ [Can I Use] data for this queries.
-
-You can check how config works at our playground: [`browsersl.ist`](https://browsersl.ist/)
-
-<a href="https://browsersl.ist/">
-  <img src="/img/screenshot.webp" alt="browsersl.ist website">
-</a>
-
-<br>
-<br>
-<div align="center">
-  <a href="https://evilmartians.com/?utm_source=browserslist">
-    <img src="https://evilmartians.com/badges/sponsored-by-evil-martians.svg"
-        alt="Sponsored by Evil Martians" width="236" height="54">
-  </a>
-
-  <a href="https://cube.dev/?ref=eco-browserslist-github">
-    <img src="https://user-images.githubusercontent.com/986756/154330861-d79ab8ec-aacb-4af8-9e17-1b28f1eccb01.svg"
-        alt="Supported by Cube" width="227" height="46">
-  </a>
-</div>
-
-[stylelint-no-unsupported-browser-features]: https://github.com/ismay/stylelint-no-unsupported-browser-features
-[obsolete-webpack-plugin]:                   https://github.com/ElemeFE/obsolete-webpack-plugin
-[eslint-plugin-compat]:                      https://github.com/amilajack/eslint-plugin-compat
-[Browserslist Example]:                      https://github.com/browserslist/browserslist-example
-[postcss-preset-env]:                        https://github.com/csstools/postcss-plugins/tree/main/plugin-packs/postcss-preset-env
-[postcss-normalize]:                         https://github.com/csstools/postcss-normalize
-[`browsersl.ist`]:                           https://browsersl.ist/
-[`caniuse-lite`]:                            https://github.com/ben-eb/caniuse-lite
-[Autoprefixer]:                              https://github.com/postcss/autoprefixer
-[Can I Use]:                                 https://caniuse.com/
-[Babel]:                                     https://github.com/babel/babel/tree/master/packages/babel-preset-env
-[cult-img]: https://cultofmartians.com/assets/badges/badge.svg
-[cult]: https://cultofmartians.com/done.html
-
-## Docs
-Read full docs **[here](https://github.com/browserslist/browserslist#readme)**.
-«/browser.jsÅDvar BrowserslistError = require('./error')
-
-function noop() {}
-
-module.exports = {
-  loadQueries: function loadQueries() {
-    throw new BrowserslistError(
-      'Sharable configs are not supported in client-side build of Browserslist'
-    )
-  },
-
-  getStat: function getStat(opts) {
-    return opts.stats
-  },
-
-  loadConfig: function loadConfig(opts) {
-    if (opts.config) {
-      throw new BrowserslistError(
-        'Browserslist config are not supported in client-side build'
-      )
-    }
-  },
-
-  loadCountry: function loadCountry() {
-    throw new BrowserslistError(
-      'Country statistics are not supported ' +
-        'in client-side build of Browserslist'
-    )
-  },
-
-  loadFeature: function loadFeature() {
-    throw new BrowserslistError(
-      'Supports queries are not available in client-side build of Browserslist'
-    )
-  },
-
-  currentNode: function currentNode(resolve, context) {
-    return resolve(['maintained node versions'], context)[0]
-  },
-
-  parseConfig: noop,
-
-  readConfig: noop,
-
-  findConfig: noop,
-
-  clearCaches: noop,
-
-  oldDataWarning: noop,
-
-  env: {}
-}
-§/cli.jsÅ'#!/usr/bin/env node
-
-var updateDb = require('update-browserslist-db')
-var fs = require('fs')
-
-var browserslist = require('./')
-var pkg = require('./package.json')
-
-var args = process.argv.slice(2)
-
-var USAGE =
-  'Usage:\n' +
-  '  npx browserslist\n' +
-  '  npx browserslist "QUERIES"\n' +
-  '  npx browserslist --json "QUERIES"\n' +
-  '  npx browserslist --config="path/to/browserlist/file"\n' +
-  '  npx browserslist --coverage "QUERIES"\n' +
-  '  npx browserslist --coverage=US "QUERIES"\n' +
-  '  npx browserslist --coverage=US,RU,global "QUERIES"\n' +
-  '  npx browserslist --env="environment name defined in config"\n' +
-  '  npx browserslist --stats="path/to/browserlist/stats/file"\n' +
-  '  npx browserslist --mobile-to-desktop\n' +
-  '  npx browserslist --ignore-unknown-versions\n'
-
-function isArg(arg) {
-  return args.some(function (str) {
-    return str === arg || str.indexOf(arg + '=') === 0
-  })
-}
-
-function error(msg) {
-  process.stderr.write('browserslist: ' + msg + '\n')
-  process.exit(1)
-}
-
-if (isArg('--help') || isArg('-h')) {
-  process.stdout.write(pkg.description + '.\n\n' + USAGE + '\n')
-} else if (isArg('--version') || isArg('-v')) {
-  process.stdout.write('browserslist ' + pkg.version + '\n')
-} else if (isArg('--update-db')) {
-  /* c8 ignore next 3 */
-  updateDb(function (str) {
-    process.stdout.write(str)
-  })
-} else {
-  var mode = 'browsers'
-  var opts = {}
-  var queries
-  var areas
-
-  for (var i = 0; i < args.length; i++) {
-    if (args[i][0] !== '-') {
-      queries = args[i].replace(/^["']|["']$/g, '')
-      continue
-    }
-
-    var arg = args[i].split('=')
-    var name = arg[0]
-    var value = arg[1]
-
-    if (value) value = value.replace(/^["']|["']$/g, '')
-
-    if (name === '--config' || name === '-b') {
-      opts.config = value
-    } else if (name === '--env' || name === '-e') {
-      opts.env = value
-    } else if (name === '--stats' || name === '-s') {
-      opts.stats = value
-    } else if (name === '--coverage' || name === '-c') {
-      if (mode !== 'json') mode = 'coverage'
-      if (value) {
-        areas = value.split(',')
-      } else {
-        areas = ['global']
-      }
-    } else if (name === '--json') {
-      mode = 'json'
-    } else if (name === '--mobile-to-desktop') {
-      /* c8 ignore next */
-      opts.mobileToDesktop = true
-    } else if (name === '--ignore-unknown-versions') {
-      /* c8 ignore next */
-      opts.ignoreUnknownVersions = true
-    } else {
-      error('Unknown arguments ' + args[i] + '.\n\n' + USAGE)
-    }
-  }
-
-  var browsers
-  try {
-    browsers = browserslist(queries, opts)
-  } catch (e) {
-    if (e.name === 'BrowserslistError') {
-      error(e.message)
-    } /* c8 ignore start */ else {
-      throw e
-    } /* c8 ignore end */
-  }
-
-  var coverage
-  if (mode === 'browsers') {
-    browsers.forEach(function (browser) {
-      process.stdout.write(browser + '\n')
-    })
-  } else if (areas) {
-    coverage = areas.map(function (area) {
-      var stats
-      if (area !== 'global') {
-        stats = area
-      } else if (opts.stats) {
-        stats = JSON.parse(fs.readFileSync(opts.stats))
-      }
-      var result = browserslist.coverage(browsers, stats)
-      var round = Math.round(result * 100) / 100.0
-
-      return [area, round]
-    })
-
-    if (mode === 'coverage') {
-      var prefix = 'These browsers account for '
-      process.stdout.write(prefix)
-      coverage.forEach(function (data, index) {
-        var area = data[0]
-        var round = data[1]
-        var end = 'globally'
-        if (area && area !== 'global') {
-          end = 'in the ' + area.toUpperCase()
-        } else if (opts.stats) {
-          end = 'in custom statistics'
-        }
-
-        if (index !== 0) {
-          process.stdout.write(prefix.replace(/./g, ' '))
-        }
-
-        process.stdout.write(round + '% of all users ' + end + '\n')
-      })
-    }
-  }
-
-  if (mode === 'json') {
-    var data = { browsers: browsers }
-    if (coverage) {
-      data.coverage = coverage.reduce(function (object, j) {
-        object[j[0]] = j[1]
-        return object
-      }, {})
-    }
-    process.stdout.write(JSON.stringify(data, null, '  ') + '\n')
-  }
-}
-©/error.jsÅ+function BrowserslistError(message) {
-  this.name = 'BrowserslistError'
-  this.message = message
-  this.browserslist = true
-  if (Error.captureStackTrace) {
-    Error.captureStackTrace(this, BrowserslistError)
-  }
-}
-
-BrowserslistError.prototype = Error.prototype
-
-module.exports = BrowserslistError
-­/package.jsonÅÙ{
-  "name": "browserslist",
-  "version": "4.21.5",
-  "description": "Share target browsers between different front-end tools, like Autoprefixer, Stylelint and babel-env-preset",
-  "keywords": [
-    "caniuse",
-    "browsers",
-    "target"
-  ],
-  "funding": [
-    {
-      "type": "opencollective",
-      "url": "https://opencollective.com/browserslist"
-    },
-    {
-      "type": "tidelift",
-      "url": "https://tidelift.com/funding/github/npm/browserslist"
-    }
-  ],
-  "author": "Andrey Sitnik <andrey@sitnik.ru>",
-  "license": "MIT",
-  "repository": "browserslist/browserslist",
-  "dependencies": {
-    "caniuse-lite": "^1.0.30001449",
-    "electron-to-chromium": "^1.4.284",
-    "node-releases": "^2.0.8",
-    "update-browserslist-db": "^1.0.10"
-  },
-  "engines": {
-    "node": "^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7"
-  },
-  "bin": {
-    "browserslist": "cli.js"
-  },
-  "types": "./index.d.ts",
-  "browser": {
-    "./node.js": "./browser.js",
-    "path": false
-  }
 }

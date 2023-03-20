@@ -1,140 +1,4 @@
-ˆ«/windows.jsÅzmodule.exports = isexe
-isexe.sync = sync
-
-var fs = require('fs')
-
-function checkPathExt (path, options) {
-  var pathext = options.pathExt !== undefined ?
-    options.pathExt : process.env.PATHEXT
-
-  if (!pathext) {
-    return true
-  }
-
-  pathext = pathext.split(';')
-  if (pathext.indexOf('') !== -1) {
-    return true
-  }
-  for (var i = 0; i < pathext.length; i++) {
-    var p = pathext[i].toLowerCase()
-    if (p && path.substr(-p.length).toLowerCase() === p) {
-      return true
-    }
-  }
-  return false
-}
-
-function checkStat (stat, path, options) {
-  if (!stat.isSymbolicLink() && !stat.isFile()) {
-    return false
-  }
-  return checkPathExt(path, options)
-}
-
-function isexe (path, options, cb) {
-  fs.stat(path, function (er, stat) {
-    cb(er, er ? false : checkStat(stat, path, options))
-  })
-}
-
-function sync (path, options) {
-  return checkStat(fs.statSync(path), path, options)
-}
-¨/mode.jsÅmodule.exports = isexe
-isexe.sync = sync
-
-var fs = require('fs')
-
-function isexe (path, options, cb) {
-  fs.stat(path, function (er, stat) {
-    cb(er, er ? false : checkStat(stat, options))
-  })
-}
-
-function sync (path, options) {
-  return checkStat(fs.statSync(path), options)
-}
-
-function checkStat (stat, options) {
-  return stat.isFile() && checkMode(stat, options)
-}
-
-function checkMode (stat, options) {
-  var mod = stat.mode
-  var uid = stat.uid
-  var gid = stat.gid
-
-  var myUid = options.uid !== undefined ?
-    options.uid : process.getuid && process.getuid()
-  var myGid = options.gid !== undefined ?
-    options.gid : process.getgid && process.getgid()
-
-  var u = parseInt('100', 8)
-  var g = parseInt('010', 8)
-  var o = parseInt('001', 8)
-  var ug = u | g
-
-  var ret = (mod & o) ||
-    (mod & g) && gid === myGid ||
-    (mod & u) && uid === myUid ||
-    (mod & ug) && myUid === 0
-
-  return ret
-}
-ª/README.mdÅs# isexe
-
-Minimal module to check if a file is executable, and a normal file.
-
-Uses `fs.stat` and tests against the `PATHEXT` environment variable on
-Windows.
-
-## USAGE
-
-```javascript
-var isexe = require('isexe')
-isexe('some-file-name', function (err, isExe) {
-  if (err) {
-    console.error('probably file does not exist or something', err)
-  } else if (isExe) {
-    console.error('this thing can be run')
-  } else {
-    console.error('cannot be run')
-  }
-})
-
-// same thing but synchronous, throws errors
-var isExe = isexe.sync('some-file-name')
-
-// treat errors as just "not executable"
-isexe('maybe-missing-file', { ignoreErrors: true }, callback)
-var isExe = isexe.sync('maybe-missing-file', { ignoreErrors: true })
-```
-
-## API
-
-### `isexe(path, [options], [callback])`
-
-Check if the path is executable.  If no callback provided, and a
-global `Promise` object is available, then a Promise will be returned.
-
-Will raise whatever errors may be raised by `fs.stat`, unless
-`options.ignoreErrors` is set to true.
-
-### `isexe.sync(path, [options])`
-
-Same as `isexe` but returns the value and throws any errors raised.
-
-### Options
-
-* `ignoreErrors` Treat all errors as "no, this is not executable", but
-  don't raise them.
-* `uid` Number to use as the user id
-* `gid` Number to use as the group id
-* `pathExt` List of path extensions to use instead of `PATHEXT`
-  environment variable on Windows.
-«/.npmignoreÄ.nyc_output/
-coverage/
-®/test/basic.jsÅ„var t = require('tap')
+ˆ®/test/basic.jsÅ„var t = require('tap')
 var fs = require('fs')
 var path = require('path')
 var fixture = path.resolve(__dirname, 'fixtures')
@@ -355,51 +219,46 @@ function runTest (t, options) {
 
   t.end()
 }
-¨/LICENSEÅýThe ISC License
+¨/mode.jsÅmodule.exports = isexe
+isexe.sync = sync
 
-Copyright (c) Isaac Z. Schlueter and Contributors
+var fs = require('fs')
 
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted, provided that the above
-copyright notice and this permission notice appear in all copies.
+function isexe (path, options, cb) {
+  fs.stat(path, function (er, stat) {
+    cb(er, er ? false : checkStat(stat, options))
+  })
+}
 
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
-IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-­/package.jsonÅ{
-  "name": "isexe",
-  "version": "2.0.0",
-  "description": "Minimal module to check if a file is executable.",
-  "main": "index.js",
-  "directories": {
-    "test": "test"
-  },
-  "devDependencies": {
-    "mkdirp": "^0.5.1",
-    "rimraf": "^2.5.0",
-    "tap": "^10.3.0"
-  },
-  "scripts": {
-    "test": "tap test/*.js --100",
-    "preversion": "npm test",
-    "postversion": "npm publish",
-    "postpublish": "git push origin --all; git push origin --tags"
-  },
-  "author": "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me/)",
-  "license": "ISC",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/isaacs/isexe.git"
-  },
-  "keywords": [],
-  "bugs": {
-    "url": "https://github.com/isaacs/isexe/issues"
-  },
-  "homepage": "https://github.com/isaacs/isexe#readme"
+function sync (path, options) {
+  return checkStat(fs.statSync(path), options)
+}
+
+function checkStat (stat, options) {
+  return stat.isFile() && checkMode(stat, options)
+}
+
+function checkMode (stat, options) {
+  var mod = stat.mode
+  var uid = stat.uid
+  var gid = stat.gid
+
+  var myUid = options.uid !== undefined ?
+    options.uid : process.getuid && process.getuid()
+  var myGid = options.gid !== undefined ?
+    options.gid : process.getgid && process.getgid()
+
+  var u = parseInt('100', 8)
+  var g = parseInt('010', 8)
+  var o = parseInt('001', 8)
+  var ug = u | g
+
+  var ret = (mod & o) ||
+    (mod & g) && gid === myGid ||
+    (mod & u) && uid === myUid ||
+    (mod & ug) && myUid === 0
+
+  return ret
 }
 ©/index.jsÅ¨var fs = require('fs')
 var core
@@ -458,3 +317,144 @@ function sync (path, options) {
     }
   }
 }
+«/windows.jsÅzmodule.exports = isexe
+isexe.sync = sync
+
+var fs = require('fs')
+
+function checkPathExt (path, options) {
+  var pathext = options.pathExt !== undefined ?
+    options.pathExt : process.env.PATHEXT
+
+  if (!pathext) {
+    return true
+  }
+
+  pathext = pathext.split(';')
+  if (pathext.indexOf('') !== -1) {
+    return true
+  }
+  for (var i = 0; i < pathext.length; i++) {
+    var p = pathext[i].toLowerCase()
+    if (p && path.substr(-p.length).toLowerCase() === p) {
+      return true
+    }
+  }
+  return false
+}
+
+function checkStat (stat, path, options) {
+  if (!stat.isSymbolicLink() && !stat.isFile()) {
+    return false
+  }
+  return checkPathExt(path, options)
+}
+
+function isexe (path, options, cb) {
+  fs.stat(path, function (er, stat) {
+    cb(er, er ? false : checkStat(stat, path, options))
+  })
+}
+
+function sync (path, options) {
+  return checkStat(fs.statSync(path), path, options)
+}
+ª/README.mdÅs# isexe
+
+Minimal module to check if a file is executable, and a normal file.
+
+Uses `fs.stat` and tests against the `PATHEXT` environment variable on
+Windows.
+
+## USAGE
+
+```javascript
+var isexe = require('isexe')
+isexe('some-file-name', function (err, isExe) {
+  if (err) {
+    console.error('probably file does not exist or something', err)
+  } else if (isExe) {
+    console.error('this thing can be run')
+  } else {
+    console.error('cannot be run')
+  }
+})
+
+// same thing but synchronous, throws errors
+var isExe = isexe.sync('some-file-name')
+
+// treat errors as just "not executable"
+isexe('maybe-missing-file', { ignoreErrors: true }, callback)
+var isExe = isexe.sync('maybe-missing-file', { ignoreErrors: true })
+```
+
+## API
+
+### `isexe(path, [options], [callback])`
+
+Check if the path is executable.  If no callback provided, and a
+global `Promise` object is available, then a Promise will be returned.
+
+Will raise whatever errors may be raised by `fs.stat`, unless
+`options.ignoreErrors` is set to true.
+
+### `isexe.sync(path, [options])`
+
+Same as `isexe` but returns the value and throws any errors raised.
+
+### Options
+
+* `ignoreErrors` Treat all errors as "no, this is not executable", but
+  don't raise them.
+* `uid` Number to use as the user id
+* `gid` Number to use as the group id
+* `pathExt` List of path extensions to use instead of `PATHEXT`
+  environment variable on Windows.
+¨/LICENSEÅýThe ISC License
+
+Copyright (c) Isaac Z. Schlueter and Contributors
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+­/package.jsonÅ{
+  "name": "isexe",
+  "version": "2.0.0",
+  "description": "Minimal module to check if a file is executable.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "devDependencies": {
+    "mkdirp": "^0.5.1",
+    "rimraf": "^2.5.0",
+    "tap": "^10.3.0"
+  },
+  "scripts": {
+    "test": "tap test/*.js --100",
+    "preversion": "npm test",
+    "postversion": "npm publish",
+    "postpublish": "git push origin --all; git push origin --tags"
+  },
+  "author": "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me/)",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/isaacs/isexe.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/isaacs/isexe/issues"
+  },
+  "homepage": "https://github.com/isaacs/isexe#readme"
+}
+«/.npmignoreÄ.nyc_output/
+coverage/

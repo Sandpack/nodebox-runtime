@@ -1,77 +1,72 @@
-‰ª/readme.mdÅ*# hash-sum
+‰ª/.jshintrcÅY{
+  "curly": true,
+  "eqeqeq": true,
+  "newcap": true,
+  "noarg": true,
+  "noempty": true,
+  "nonew": true,
+  "sub": true,
+  "validthis": true,
+  "undef": true,
+  "trailing": true,
+  "boss": true,
+  "eqnull": true,
+  "strict": true,
+  "immed": true,
+  "expr": true,
+  "latedef": "nofunc",
+  "quotmark": "single",
+  "indent": 2,
+  "node": true
+}
+­/package.jsonÅˆ{
+  "name": "hash-sum",
+  "description": "Blazing fast unique hash generator",
+  "version": "2.0.0",
+  "homepage": "https://github.com/bevacqua/hash-sum",
+  "authors": [
+    "Nicolas Bevacqua <nicolasbevacqua@gmail.com>"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/bevacqua/hash-sum.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bevacqua/hash-sum/issues"
+  },
+  "main": "hash-sum.js",
+  "scripts": {
+    "test": "jshint . && tape test.js"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "jshint": "2.5.0",
+    "jshint-stylish": "0.2.0",
+    "lodash": "4.17.11",
+    "tape": "3.0.3"
+  }
+}
+¨/licenseÅ:The MIT License (MIT)
 
-> blazing fast unique hash generator
+Copyright Â© 2014 Nicolas Bevacqua
 
-# install
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
 
-```shell
-npm i hash-sum -S
-```
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-# features
-
-- no dependencies
-- minimal footprint
-- works in all of node.js, io.js, and the browser
-- hashes functions based on their source code
-- produces different hashes for different object types
-- support for circular references in objects
-- ignores property assignment order
-
-# `sum(value)`
-
-yields a four-byte hexadecimal hash based off of `value`.
-
-```
-# creates unique hashes
-00a34759 from: [ 0, 1, 2, 3 ]
-a8996f0c from: { '0': 0, '1': 1, '2': 2, '3': 3 }
-5b4c2116 from: { '0': 0, '1': 1, '2': 2, '3': 3, length: 4 }
-2c937c45 from: { url: 12 }
-31d55010 from: { headers: 12 }
-2d2e11bc from: { headers: 122 }
-ec99d958 from: { headers: '122' }
-18c00eee from: { headers: { accept: 'text/plain' } }
-6cb332c8 from: { payload: [ 0, 1, 2, 3 ], headers: [ { a: 'b' } ] }
-12ff55db from: { a: [Function: a] }
-46f806d2 from: { b: [Function: b] }
-0660d9c4 from: { b: [Function: b] }
-6c95fc65 from: function () {}
-2941766e from: function (a) {}
-294f8def from: function (b) {}
-2d9c0cb8 from: function (a) { return a;}
-ed5c63fc from: function (a) {return a;}
-bba68bf6 from: ''
-2d27667d from: 'null'
-774b96ed from: 'false'
-2d2a1684 from: 'true'
-8daa1a0c from: '0'
-8daa1a0a from: '1'
-e38f07cc from: 'void 0'
-6037ea1a from: 'undefined'
-9b7df12e from: null
-3c206f76 from: false
-01e34ba8 from: true
-8a8f9624 from: Infinity
-0315bf8f from: -Infinity
-64a48b16 from: NaN
-1a96284a from: 0
-1a96284b from: 1
-29172c1a from: undefined
-59322f29 from: {}
-095b3a22 from: { a: {}, b: {} }
-63be56dd from: { valueOf: [Function: valueOf] }
-63be4f5c from: { valueOf: [Function: valueOf] }
-5d844489 from: []
-ba0bfa14 from: 2019-06-28T21:24:31.215Z
-49324d16 from: 2019-06-28T03:00:00.000Z
-434c9188 from: 1988-06-09T03:00:00.000Z
-ce1b5e44 from: global
-```
-
-# license
-
-MIT
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ¨/test.jsÅ†'use strict';
 
 var _ = require('lodash');
@@ -152,70 +147,94 @@ test('hashes clash if same properties', function (t) {
     t.equal(sum(a), sum(b));
   }
 });
-ª/.jshintrcÅY{
-  "curly": true,
-  "eqeqeq": true,
-  "newcap": true,
-  "noarg": true,
-  "noempty": true,
-  "nonew": true,
-  "sub": true,
-  "validthis": true,
-  "undef": true,
-  "trailing": true,
-  "boss": true,
-  "eqnull": true,
-  "strict": true,
-  "immed": true,
-  "expr": true,
-  "latedef": "nofunc",
-  "quotmark": "single",
-  "indent": 2,
-  "node": true
-}
-³/changelog.markdownÅ# 2.0.0
+®/.jshintignoreÄnode_modules
+ª/readme.mdÅ*# hash-sum
 
-- Now takes into account result of calling `valueOf` functions when they exist
+> blazing fast unique hash generator
 
-# 1.0.2 Quick Sort
+# install
 
-- Sorts object keys so that property order doesn't affect outcome
+```shell
+npm i hash-sum -S
+```
 
-# 1.0.1 Perfect Circle
+# features
 
-- Guard against circular references
+- no dependencies
+- minimal footprint
+- works in all of node.js, io.js, and the browser
+- hashes functions based on their source code
+- produces different hashes for different object types
+- support for circular references in objects
+- ignores property assignment order
 
-# 1.0.0 IPO
+# `sum(value)`
 
-- Initial Public Release
-­/package.jsonÅˆ{
-  "name": "hash-sum",
-  "description": "Blazing fast unique hash generator",
-  "version": "2.0.0",
-  "homepage": "https://github.com/bevacqua/hash-sum",
-  "authors": [
-    "Nicolas Bevacqua <nicolasbevacqua@gmail.com>"
-  ],
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/bevacqua/hash-sum.git"
-  },
-  "bugs": {
-    "url": "https://github.com/bevacqua/hash-sum/issues"
-  },
-  "main": "hash-sum.js",
-  "scripts": {
-    "test": "jshint . && tape test.js"
-  },
-  "dependencies": {},
-  "devDependencies": {
-    "jshint": "2.5.0",
-    "jshint-stylish": "0.2.0",
-    "lodash": "4.17.11",
-    "tape": "3.0.3"
-  }
-}
+yields a four-byte hexadecimal hash based off of `value`.
+
+```
+# creates unique hashes
+00a34759 from: [ 0, 1, 2, 3 ]
+a8996f0c from: { '0': 0, '1': 1, '2': 2, '3': 3 }
+5b4c2116 from: { '0': 0, '1': 1, '2': 2, '3': 3, length: 4 }
+2c937c45 from: { url: 12 }
+31d55010 from: { headers: 12 }
+2d2e11bc from: { headers: 122 }
+ec99d958 from: { headers: '122' }
+18c00eee from: { headers: { accept: 'text/plain' } }
+6cb332c8 from: { payload: [ 0, 1, 2, 3 ], headers: [ { a: 'b' } ] }
+12ff55db from: { a: [Function: a] }
+46f806d2 from: { b: [Function: b] }
+0660d9c4 from: { b: [Function: b] }
+6c95fc65 from: function () {}
+2941766e from: function (a) {}
+294f8def from: function (b) {}
+2d9c0cb8 from: function (a) { return a;}
+ed5c63fc from: function (a) {return a;}
+bba68bf6 from: ''
+2d27667d from: 'null'
+774b96ed from: 'false'
+2d2a1684 from: 'true'
+8daa1a0c from: '0'
+8daa1a0a from: '1'
+e38f07cc from: 'void 0'
+6037ea1a from: 'undefined'
+9b7df12e from: null
+3c206f76 from: false
+01e34ba8 from: true
+8a8f9624 from: Infinity
+0315bf8f from: -Infinity
+64a48b16 from: NaN
+1a96284a from: 0
+1a96284b from: 1
+29172c1a from: undefined
+59322f29 from: {}
+095b3a22 from: { a: {}, b: {} }
+63be56dd from: { valueOf: [Function: valueOf] }
+63be4f5c from: { valueOf: [Function: valueOf] }
+5d844489 from: []
+ba0bfa14 from: 2019-06-28T21:24:31.215Z
+49324d16 from: 2019-06-28T03:00:00.000Z
+434c9188 from: 1988-06-09T03:00:00.000Z
+ce1b5e44 from: global
+```
+
+# license
+
+MIT
+®/.editorconfigÄÏ# editorconfig.org
+root = true
+
+[*]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.md]
+trim_trailing_whitespace = false
 ¬/hash-sum.jsÅ'use strict';
 
 function pad (hash, len) {
@@ -285,37 +304,18 @@ function sum (o) {
 }
 
 module.exports = sum;
-®/.editorconfigÄÏ# editorconfig.org
-root = true
+³/changelog.markdownÅ# 2.0.0
 
-[*]
-indent_style = space
-indent_size = 2
-end_of_line = lf
-charset = utf-8
-trim_trailing_whitespace = true
-insert_final_newline = true
+- Now takes into account result of calling `valueOf` functions when they exist
 
-[*.md]
-trim_trailing_whitespace = false
-¨/licenseÅ:The MIT License (MIT)
+# 1.0.2 Quick Sort
 
-Copyright Â© 2014 Nicolas Bevacqua
+- Sorts object keys so that property order doesn't affect outcome
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
+# 1.0.1 Perfect Circle
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+- Guard against circular references
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-®/.jshintignoreÄnode_modules
+# 1.0.0 IPO
+
+- Initial Public Release

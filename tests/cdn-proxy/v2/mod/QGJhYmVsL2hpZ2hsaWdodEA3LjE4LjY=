@@ -20,36 +20,26 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-­/package.jsonÅû{
-  "name": "@babel/highlight",
-  "version": "7.18.6",
-  "description": "Syntax highlight JavaScript strings for output in terminals.",
-  "author": "The Babel Team (https://babel.dev/team)",
-  "homepage": "https://babel.dev/docs/en/next/babel-highlight",
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/babel/babel.git",
-    "directory": "packages/babel-highlight"
-  },
-  "main": "./lib/index.js",
-  "dependencies": {
-    "@babel/helper-validator-identifier": "^7.18.6",
-    "chalk": "^2.0.0",
-    "js-tokens": "^4.0.0"
-  },
-  "devDependencies": {
-    "@types/chalk": "^2.0.0",
-    "strip-ansi": "^4.0.0"
-  },
-  "engines": {
-    "node": ">=6.9.0"
-  },
-  "type": "commonjs"
-}­/lib/index.jsÅ
+ª/README.mdÅ?# @babel/highlight
+
+> Syntax highlight JavaScript strings for output in terminals.
+
+See our website [@babel/highlight](https://babeljs.io/docs/en/babel-highlight) for more information.
+
+## Install
+
+Using npm:
+
+```sh
+npm install --save-dev @babel/highlight
+```
+
+or using yarn:
+
+```sh
+yarn add @babel/highlight --dev
+```
+­/lib/index.jsÅ
 Ÿ"use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -165,22 +155,33 @@ function highlight(code, options = {}) {
   } else {
     return code;
   }
-}ª/README.mdÅ?# @babel/highlight
-
-> Syntax highlight JavaScript strings for output in terminals.
-
-See our website [@babel/highlight](https://babeljs.io/docs/en/babel-highlight) for more information.
-
-## Install
-
-Using npm:
-
-```sh
-npm install --save-dev @babel/highlight
-```
-
-or using yarn:
-
-```sh
-yarn add @babel/highlight --dev
-```
+}­/package.jsonÅû{
+  "name": "@babel/highlight",
+  "version": "7.18.6",
+  "description": "Syntax highlight JavaScript strings for output in terminals.",
+  "author": "The Babel Team (https://babel.dev/team)",
+  "homepage": "https://babel.dev/docs/en/next/babel-highlight",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/babel/babel.git",
+    "directory": "packages/babel-highlight"
+  },
+  "main": "./lib/index.js",
+  "dependencies": {
+    "@babel/helper-validator-identifier": "^7.18.6",
+    "chalk": "^2.0.0",
+    "js-tokens": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/chalk": "^2.0.0",
+    "strip-ansi": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=6.9.0"
+  },
+  "type": "commonjs"
+}

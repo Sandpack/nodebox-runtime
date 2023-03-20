@@ -1,4 +1,286 @@
-é±/lib/stringify.js≈ì'use strict';
+é©/index.js≈¸'use strict';
+
+const fs = require('fs');
+const sections = require('section-matter');
+const defaults = require('./lib/defaults');
+const stringify = require('./lib/stringify');
+const excerpt = require('./lib/excerpt');
+const engines = require('./lib/engines');
+const toFile = require('./lib/to-file');
+const parse = require('./lib/parse');
+const utils = require('./lib/utils');
+
+/**
+ * Takes a string or object with `content` property, extracts
+ * and parses front-matter from the string, then returns an object
+ * with `data`, `content` and other [useful properties](#returned-object).
+ *
+ * ```js
+ * const matter = require('gray-matter');
+ * console.log(matter('---\ntitle: Home\n---\nOther stuff'));
+ * //=> { data: { title: 'Home'}, content: 'Other stuff' }
+ * ```
+ * @param {Object|String} `input` String, or object with `content` string
+ * @param {Object} `options`
+ * @return {Object}
+ * @api public
+ */
+
+function matter(input, options) {
+  if (input === '') {
+    return { data: {}, content: input, excerpt: '', orig: input };
+  }
+
+  let file = toFile(input);
+  const cached = matter.cache[file.content];
+
+  if (!options) {
+    if (cached) {
+      file = Object.assign({}, cached);
+      file.orig = cached.orig;
+      return file;
+    }
+
+    // only cache if there are no options passed. if we cache when options
+    // are passed, we would need to also cache options values, which would
+    // negate any performance benefits of caching
+    matter.cache[file.content] = file;
+  }
+
+  return parseMatter(file, options);
+}
+
+/**
+ * Parse front matter
+ */
+
+function parseMatter(file, options) {
+  const opts = defaults(options);
+  const open = opts.delimiters[0];
+  const close = '\n' + opts.delimiters[1];
+  let str = file.content;
+
+  if (opts.language) {
+    file.language = opts.language;
+  }
+
+  // get the length of the opening delimiter
+  const openLen = open.length;
+  if (!utils.startsWith(str, open, openLen)) {
+    excerpt(file, opts);
+    return file;
+  }
+
+  // if the next character after the opening delimiter is
+  // a character from the delimiter, then it's not a front-
+  // matter delimiter
+  if (str.charAt(openLen) === open.slice(-1)) {
+    return file;
+  }
+
+  // strip the opening delimiter
+  str = str.slice(openLen);
+  const len = str.length;
+
+  // use the language defined after first delimiter, if it exists
+  const language = matter.language(str, opts);
+  if (language.name) {
+    file.language = language.name;
+    str = str.slice(language.raw.length);
+  }
+
+  // get the index of the closing delimiter
+  let closeIndex = str.indexOf(close);
+  if (closeIndex === -1) {
+    closeIndex = len;
+  }
+
+  // get the raw front-matter block
+  file.matter = str.slice(0, closeIndex);
+
+  const block = file.matter.replace(/^\s*#[^\n]+/gm, '').trim();
+  if (block === '') {
+    file.isEmpty = true;
+    file.empty = file.content;
+    file.data = {};
+  } else {
+
+    // create file.data by parsing the raw file.matter block
+    file.data = parse(file.language, file.matter, opts);
+  }
+
+  // update file.content
+  if (closeIndex === len) {
+    file.content = '';
+  } else {
+    file.content = str.slice(closeIndex + close.length);
+    if (file.content[0] === '\r') {
+      file.content = file.content.slice(1);
+    }
+    if (file.content[0] === '\n') {
+      file.content = file.content.slice(1);
+    }
+  }
+
+  excerpt(file, opts);
+
+  if (opts.sections === true || typeof opts.section === 'function') {
+    sections(file, opts.section);
+  }
+  return file;
+}
+
+/**
+ * Expose engines
+ */
+
+matter.engines = engines;
+
+/**
+ * Stringify an object to YAML or the specified language, and
+ * append it to the given string. By default, only YAML and JSON
+ * can be stringified. See the [engines](#engines) section to learn
+ * how to stringify other languages.
+ *
+ * ```js
+ * console.log(matter.stringify('foo bar baz', {title: 'Home'}));
+ * // results in:
+ * // ---
+ * // title: Home
+ * // ---
+ * // foo bar baz
+ * ```
+ * @param {String|Object} `file` The content string to append to stringified front-matter, or a file object with `file.content` string.
+ * @param {Object} `data` Front matter to stringify.
+ * @param {Object} `options` [Options](#options) to pass to gray-matter and [js-yaml].
+ * @return {String} Returns a string created by wrapping stringified yaml with delimiters, and appending that to the given string.
+ * @api public
+ */
+
+matter.stringify = function(file, data, options) {
+  if (typeof file === 'string') file = matter(file, options);
+  return stringify(file, data, options);
+};
+
+/**
+ * Synchronously read a file from the file system and parse
+ * front matter. Returns the same object as the [main function](#matter).
+ *
+ * ```js
+ * const file = matter.read('./content/blog-post.md');
+ * ```
+ * @param {String} `filepath` file path of the file to read.
+ * @param {Object} `options` [Options](#options) to pass to gray-matter.
+ * @return {Object} Returns [an object](#returned-object) with `data` and `content`
+ * @api public
+ */
+
+matter.read = function(filepath, options) {
+  const str = fs.readFileSync(filepath, 'utf8');
+  const file = matter(str, options);
+  file.path = filepath;
+  return file;
+};
+
+/**
+ * Returns true if the given `string` has front matter.
+ * @param  {String} `string`
+ * @param  {Object} `options`
+ * @return {Boolean} True if front matter exists.
+ * @api public
+ */
+
+matter.test = function(str, options) {
+  return utils.startsWith(str, defaults(options).delimiters[0]);
+};
+
+/**
+ * Detect the language to use, if one is defined after the
+ * first front-matter delimiter.
+ * @param  {String} `string`
+ * @param  {Object} `options`
+ * @return {Object} Object with `raw` (actual language string), and `name`, the language with whitespace trimmed
+ */
+
+matter.language = function(str, options) {
+  const opts = defaults(options);
+  const open = opts.delimiters[0];
+
+  if (matter.test(str)) {
+    str = str.slice(open.length);
+  }
+
+  const language = str.slice(0, str.search(/\r?\n/));
+  return {
+    raw: language,
+    name: language ? language.trim() : ''
+  };
+};
+
+/**
+ * Expose `matter`
+ */
+
+matter.cache = {};
+matter.clearCache = function() {
+  matter.cache = {};
+};
+module.exports = matter;
+Æ/lib/engine.js≈à'use strict';
+
+module.exports = function(name, options) {
+  let engine = options.engines[name] || options.engines[aliase(name)];
+  if (typeof engine === 'undefined') {
+    throw new Error('gray-matter engine "' + name + '" is not registered');
+  }
+  if (typeof engine === 'function') {
+    engine = { parse: engine };
+  }
+  return engine;
+};
+
+function aliase(name) {
+  switch (name.toLowerCase()) {
+    case 'js':
+    case 'javascript':
+      return 'javascript';
+    case 'coffee':
+    case 'coffeescript':
+    case 'cson':
+      return 'coffee';
+    case 'yaml':
+    case 'yml':
+      return 'yaml';
+    default: {
+      return name;
+    }
+  }
+}
+≠/CHANGELOG.md≈è# Release history
+
+## 4.0.0 - 2018-04-01
+
+### Breaking changes
+
+- Now requires node v4 or higher. 
+
+
+## 3.0.0 - 2017-06-30
+
+### Breaking changes
+
+- `toml`, `coffee` and `cson` are no longer supported by default. Please see [`options.engines`](README.md#optionsengines) and the [examples](./examples) to learn how to add engines.
+
+### Added
+
+- Support for [excerpts](README.md#optionsexcerpt).
+- The returned object now has non-enumerable `matter` and `stringify` properties.
+
+### Changed
+
+- Refactored engines (parsers), so that it's easier to add parsers and stringifiers.
+- `options.parsers` was renamed to [`options.engines`](README.md#optionsengines)
+±/lib/stringify.js≈ì'use strict';
 
 const typeOf = require('kind-of');
 const getEngine = require('./engine');
@@ -54,6 +336,228 @@ module.exports = function(file, data, options) {
 function newline(str) {
   return str.slice(-1) !== '\n' ? str + '\n' : str;
 }
+Ø/lib/to-file.js≈y'use strict';
+
+const typeOf = require('kind-of');
+const stringify = require('./stringify');
+const utils = require('./utils');
+
+/**
+ * Normalize the given value to ensure an object is returned
+ * with the expected properties.
+ */
+
+module.exports = function(file) {
+  if (typeOf(file) !== 'object') {
+    file = { content: file };
+  }
+
+  if (typeOf(file.data) !== 'object') {
+    file.data = {};
+  }
+
+  // if file was passed as an object, ensure that
+  // "file.content" is set
+  if (file.contents && file.content == null) {
+    file.content = file.contents;
+  }
+
+  // set non-enumerable properties on the file object
+  utils.define(file, 'orig', utils.toBuffer(file.content));
+  utils.define(file, 'language', file.language || '');
+  utils.define(file, 'matter', file.matter || '');
+  utils.define(file, 'stringify', function(data, options) {
+    if (options && options.language) {
+      file.language = options.language;
+    }
+    return stringify(file, data, options);
+  });
+
+  // strip BOM and ensure that "file.content" is a string
+  file.content = utils.toString(file.content);
+  file.isEmpty = false;
+  file.excerpt = '';
+  return file;
+};
+≠/lib/parse.js≈Ö'use strict';
+
+const getEngine = require('./engine');
+const defaults = require('./defaults');
+
+module.exports = function(language, str, options) {
+  const opts = defaults(options);
+  const engine = getEngine(language, opts);
+  if (typeof engine.parse !== 'function') {
+    throw new TypeError('expected "' + language + '.parse" to be a function');
+  }
+  return engine.parse(str, opts);
+};
+∞/lib/defaults.js≈'use strict';
+
+const engines = require('./engines');
+const utils = require('./utils');
+
+module.exports = function(options) {
+  const opts = Object.assign({}, options);
+
+  // ensure that delimiters are an array
+  opts.delimiters = utils.arrayify(opts.delims || opts.delimiters || '---');
+  if (opts.delimiters.length === 1) {
+    opts.delimiters.push(opts.delimiters[0]);
+  }
+
+  opts.language = (opts.language || opts.lang || 'yaml').toLowerCase();
+  opts.engines = Object.assign({}, engines, opts.parsers, opts.engines);
+  return opts;
+};
+®/LICENSE≈@The MIT License (MIT)
+
+Copyright (c) 2014-2018, Jon Schlinkert.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+≠/package.json≈.{
+  "name": "gray-matter",
+  "description": "Parse front-matter from a string or file. Fast, reliable and easy to use. Parses YAML front matter by default, but also has support for YAML, JSON, TOML or Coffee Front-Matter, with options to set custom delimiters. Used by metalsmith, assemble, verb and many other projects.",
+  "version": "4.0.3",
+  "homepage": "https://github.com/jonschlinkert/gray-matter",
+  "author": "Jon Schlinkert (https://github.com/jonschlinkert)",
+  "contributors": [
+    "Andrew Meyer (https://github.com/Ajedi32)",
+    "Brian Woodward (https://twitter.com/doowb)",
+    "Caesar Schinas (https://caesarschinas.com)",
+    "Ian Storm Taylor (http://ianstormtaylor.com)",
+    "Jon Schlinkert (http://twitter.com/jonschlinkert)",
+    "Osman Nuri Okumu≈ü (http://onokumus.com)",
+    "Pawel Kadluczka (http://blog.3d-logic.com)",
+    "Rob Loach (http://robloach.net)",
+    "(https://github.com/heymind)",
+    "Zach Whaley (http://zachwhaleys.website)"
+  ],
+  "repository": "jonschlinkert/gray-matter",
+  "bugs": {
+    "url": "https://github.com/jonschlinkert/gray-matter/issues"
+  },
+  "license": "MIT",
+  "files": [
+    "gray-matter.d.ts",
+    "index.js",
+    "lib"
+  ],
+  "main": "index.js",
+  "engines": {
+    "node": ">=6.0"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "dependencies": {
+    "js-yaml": "^3.13.1",
+    "kind-of": "^6.0.2",
+    "section-matter": "^1.0.0",
+    "strip-bom-string": "^1.0.0"
+  },
+  "devDependencies": {
+    "ansi-green": "^0.1.1",
+    "benchmarked": "^2.0.0",
+    "coffeescript": "^2.2.3",
+    "delimiter-regex": "^2.0.0",
+    "extend-shallow": "^3.0.2",
+    "front-matter": "^2.3.0",
+    "gulp-format-md": "^1.0.0",
+    "minimist": "^1.2.0",
+    "mocha": "^6.1.4",
+    "toml": "^2.3.3",
+    "vinyl": "^2.1.0",
+    "write": "^1.0.3"
+  },
+  "keywords": [
+    "assemble",
+    "coffee",
+    "coffee-script",
+    "data",
+    "docs",
+    "documentation",
+    "extract",
+    "extracting",
+    "front",
+    "front-matter",
+    "frontmatter",
+    "generate",
+    "generator",
+    "gh-pages",
+    "gray",
+    "javascript",
+    "jekyll",
+    "js",
+    "JSON",
+    "markdown",
+    "matter",
+    "parse",
+    "parser",
+    "parsing",
+    "site",
+    "static",
+    "template",
+    "toml",
+    "yaml",
+    "yfm"
+  ],
+  "browser": {
+    "fs": false
+  },
+  "typings": "gray-matter.d.ts",
+  "eslintConfig": {
+    "rules": {
+      "no-console": 0
+    }
+  },
+  "verb": {
+    "toc": false,
+    "layout": "default",
+    "tasks": [
+      "readme"
+    ],
+    "plugins": [
+      "gulp-format-md"
+    ],
+    "helpers": {
+      "examples": "./examples/helper.js"
+    },
+    "lint": {
+      "reflinks": true
+    },
+    "related": {
+      "list": [
+        "assemble",
+        "metalsmith",
+        "verb"
+      ]
+    },
+    "reflinks": [
+      "coffe-script",
+      "generate",
+      "js-yaml",
+      "toml",
+      "update"
+    ]
+  }
+}
 Ø/lib/engines.js≈ˇ'use strict';
 
 const yaml = require('js-yaml');
@@ -108,40 +612,186 @@ engines.javascript = {
     throw new Error('stringifying JavaScript is not supported');
   }
 };
-≠/lib/parse.js≈Ö'use strict';
+≠/lib/utils.js≈È'use strict';
 
-const getEngine = require('./engine');
-const defaults = require('./defaults');
+const stripBom = require('strip-bom-string');
+const typeOf = require('kind-of');
 
-module.exports = function(language, str, options) {
-  const opts = defaults(options);
-  const engine = getEngine(language, opts);
-  if (typeof engine.parse !== 'function') {
-    throw new TypeError('expected "' + language + '.parse" to be a function');
-  }
-  return engine.parse(str, opts);
+exports.define = function(obj, key, val) {
+  Reflect.defineProperty(obj, key, {
+    enumerable: false,
+    configurable: true,
+    writable: true,
+    value: val
+  });
 };
-®/LICENSE≈@The MIT License (MIT)
 
-Copyright (c) 2014-2018, Jon Schlinkert.
+/**
+ * Returns true if `val` is a buffer
+ */
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+exports.isBuffer = function(val) {
+  return typeOf(val) === 'buffer';
+};
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+/**
+ * Returns true if `val` is an object
+ */
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+exports.isObject = function(val) {
+  return typeOf(val) === 'object';
+};
+
+/**
+ * Cast `input` to a buffer
+ */
+
+exports.toBuffer = function(input) {
+  return typeof input === 'string' ? Buffer.from(input) : input;
+};
+
+/**
+ * Cast `val` to a string.
+ */
+
+exports.toString = function(input) {
+  if (exports.isBuffer(input)) return stripBom(String(input));
+  if (typeof input !== 'string') {
+    throw new TypeError('expected input to be a string or buffer');
+  }
+  return stripBom(input);
+};
+
+/**
+ * Cast `val` to an array.
+ */
+
+exports.arrayify = function(val) {
+  return val ? (Array.isArray(val) ? val : [val]) : [];
+};
+
+/**
+ * Returns true if `str` starts with `substr`.
+ */
+
+exports.startsWith = function(str, substr, len) {
+  if (typeof len !== 'number') len = substr.length;
+  return str.slice(0, len) === substr;
+};
+±/gray-matter.d.ts≈#/**
+ * Takes a string or object with `content` property, extracts
+ * and parses front-matter from the string, then returns an object
+ * with `data`, `content` and other [useful properties](#returned-object).
+ *
+ * ```js
+ * var matter = require('gray-matter');
+ * console.log(matter('---\ntitle: Home\n---\nOther stuff'));
+ * //=> { data: { title: 'Home'}, content: 'Other stuff' }
+ * ```
+ * @param {Object|String} `input` String, or object with `content` string
+ * @param {Object} `options`
+ * @return {Object}
+ * @api public
+ */
+declare function matter<
+  I extends matter.Input,
+  O extends matter.GrayMatterOption<I, O>
+>(input: I | { content: I }, options?: O): matter.GrayMatterFile<I>
+
+declare namespace matter {
+  type Input = string | Buffer
+  interface GrayMatterOption<
+    I extends Input,
+    O extends GrayMatterOption<I, O>
+  > {
+    parser?: () => void
+    eval?: boolean
+    excerpt?: boolean | ((input: I, options: O) => string)
+    excerpt_separator?: string
+    engines?: {
+      [index: string]:
+        | ((input: string) => object)
+        | { parse: (input: string) => object; stringify?: (data: object) => string }
+    }
+    language?: string
+    delimiters?: string | [string, string]
+  }
+  interface GrayMatterFile<I extends Input> {
+    data: { [key: string]: any }
+    content: string
+    excerpt?: string
+    orig: Buffer | I
+    language: string
+    matter: string
+    stringify(lang: string): string
+  }
+  
+  /**
+   * Stringify an object to YAML or the specified language, and
+   * append it to the given string. By default, only YAML and JSON
+   * can be stringified. See the [engines](#engines) section to learn
+   * how to stringify other languages.
+   *
+   * ```js
+   * console.log(matter.stringify('foo bar baz', {title: 'Home'}));
+   * // results in:
+   * // ---
+   * // title: Home
+   * // ---
+   * // foo bar baz
+   * ```
+   * @param {String|Object} `file` The content string to append to stringified front-matter, or a file object with `file.content` string.
+   * @param {Object} `data` Front matter to stringify.
+   * @param {Object} `options` [Options](#options) to pass to gray-matter and [js-yaml].
+   * @return {String} Returns a string created by wrapping stringified yaml with delimiters, and appending that to the given string.
+   */
+  export function stringify<O extends GrayMatterOption<string, O>>(
+    file: string | { content: string },
+    data: object,
+    options?: GrayMatterOption<string, O>
+  ): string
+
+  /**
+   * Synchronously read a file from the file system and parse
+   * front matter. Returns the same object as the [main function](#matter).
+   *
+   * ```js
+   * var file = matter.read('./content/blog-post.md');
+   * ```
+   * @param {String} `filepath` file path of the file to read.
+   * @param {Object} `options` [Options](#options) to pass to gray-matter.
+   * @return {Object} Returns [an object](#returned-object) with `data` and `content`
+   */
+  export function read<O extends GrayMatterOption<string, O>>(
+    fp: string,
+    options?: GrayMatterOption<string, O>
+  ): matter.GrayMatterFile<string>
+
+  /**
+   * Returns true if the given `string` has front matter.
+   * @param  {String} `string`
+   * @param  {Object} `options`
+   * @return {Boolean} True if front matter exists.
+   */
+  export function test<O extends matter.GrayMatterOption<string, O>>(
+    str: string,
+    options?: GrayMatterOption<string, O>
+  ): boolean
+
+  /**
+   * Detect the language to use, if one is defined after the
+   * first front-matter delimiter.
+   * @param  {String} `string`
+   * @param  {Object} `options`
+   * @return {Object} Object with `raw` (actual language string), and `name`, the language with whitespace trimmed
+   */
+  export function language<O extends matter.GrayMatterOption<string, O>>(
+    str: string,
+    options?: GrayMatterOption<string, O>
+  ): { name: string; raw: string }
+}
+
+export = matter
 ™/README.md≈A¿# gray-matter [![NPM version](https://img.shields.io/npm/v/gray-matter.svg?style=flat)](https://www.npmjs.com/package/gray-matter) [![NPM monthly downloads](https://img.shields.io/npm/dm/gray-matter.svg?style=flat)](https://npmjs.org/package/gray-matter) [![NPM total downloads](https://img.shields.io/npm/dt/gray-matter.svg?style=flat)](https://npmjs.org/package/gray-matter) [![Linux Build Status](https://img.shields.io/travis/jonschlinkert/gray-matter.svg?style=flat&label=Travis)](https://travis-ci.org/jonschlinkert/gray-matter)
 
 > Parse front-matter from a string or file. Fast, reliable and easy to use. Parses YAML front matter by default, but also has support for YAML, JSON, TOML or Coffee Front-Matter, with options to set custom delimiters. Used by metalsmith, assemble, verb and many other projects.
@@ -706,506 +1356,7 @@ Released under the [MIT License](LICENSE).
 
 ***
 
-_This file was generated by [verb-generate-readme](https://github.com/verbose/verb-generate-readme), v0.6.0, on April 01, 2018._Ø/lib/to-file.js≈y'use strict';
-
-const typeOf = require('kind-of');
-const stringify = require('./stringify');
-const utils = require('./utils');
-
-/**
- * Normalize the given value to ensure an object is returned
- * with the expected properties.
- */
-
-module.exports = function(file) {
-  if (typeOf(file) !== 'object') {
-    file = { content: file };
-  }
-
-  if (typeOf(file.data) !== 'object') {
-    file.data = {};
-  }
-
-  // if file was passed as an object, ensure that
-  // "file.content" is set
-  if (file.contents && file.content == null) {
-    file.content = file.contents;
-  }
-
-  // set non-enumerable properties on the file object
-  utils.define(file, 'orig', utils.toBuffer(file.content));
-  utils.define(file, 'language', file.language || '');
-  utils.define(file, 'matter', file.matter || '');
-  utils.define(file, 'stringify', function(data, options) {
-    if (options && options.language) {
-      file.language = options.language;
-    }
-    return stringify(file, data, options);
-  });
-
-  // strip BOM and ensure that "file.content" is a string
-  file.content = utils.toString(file.content);
-  file.isEmpty = false;
-  file.excerpt = '';
-  return file;
-};
-±/gray-matter.d.ts≈#/**
- * Takes a string or object with `content` property, extracts
- * and parses front-matter from the string, then returns an object
- * with `data`, `content` and other [useful properties](#returned-object).
- *
- * ```js
- * var matter = require('gray-matter');
- * console.log(matter('---\ntitle: Home\n---\nOther stuff'));
- * //=> { data: { title: 'Home'}, content: 'Other stuff' }
- * ```
- * @param {Object|String} `input` String, or object with `content` string
- * @param {Object} `options`
- * @return {Object}
- * @api public
- */
-declare function matter<
-  I extends matter.Input,
-  O extends matter.GrayMatterOption<I, O>
->(input: I | { content: I }, options?: O): matter.GrayMatterFile<I>
-
-declare namespace matter {
-  type Input = string | Buffer
-  interface GrayMatterOption<
-    I extends Input,
-    O extends GrayMatterOption<I, O>
-  > {
-    parser?: () => void
-    eval?: boolean
-    excerpt?: boolean | ((input: I, options: O) => string)
-    excerpt_separator?: string
-    engines?: {
-      [index: string]:
-        | ((input: string) => object)
-        | { parse: (input: string) => object; stringify?: (data: object) => string }
-    }
-    language?: string
-    delimiters?: string | [string, string]
-  }
-  interface GrayMatterFile<I extends Input> {
-    data: { [key: string]: any }
-    content: string
-    excerpt?: string
-    orig: Buffer | I
-    language: string
-    matter: string
-    stringify(lang: string): string
-  }
-  
-  /**
-   * Stringify an object to YAML or the specified language, and
-   * append it to the given string. By default, only YAML and JSON
-   * can be stringified. See the [engines](#engines) section to learn
-   * how to stringify other languages.
-   *
-   * ```js
-   * console.log(matter.stringify('foo bar baz', {title: 'Home'}));
-   * // results in:
-   * // ---
-   * // title: Home
-   * // ---
-   * // foo bar baz
-   * ```
-   * @param {String|Object} `file` The content string to append to stringified front-matter, or a file object with `file.content` string.
-   * @param {Object} `data` Front matter to stringify.
-   * @param {Object} `options` [Options](#options) to pass to gray-matter and [js-yaml].
-   * @return {String} Returns a string created by wrapping stringified yaml with delimiters, and appending that to the given string.
-   */
-  export function stringify<O extends GrayMatterOption<string, O>>(
-    file: string | { content: string },
-    data: object,
-    options?: GrayMatterOption<string, O>
-  ): string
-
-  /**
-   * Synchronously read a file from the file system and parse
-   * front matter. Returns the same object as the [main function](#matter).
-   *
-   * ```js
-   * var file = matter.read('./content/blog-post.md');
-   * ```
-   * @param {String} `filepath` file path of the file to read.
-   * @param {Object} `options` [Options](#options) to pass to gray-matter.
-   * @return {Object} Returns [an object](#returned-object) with `data` and `content`
-   */
-  export function read<O extends GrayMatterOption<string, O>>(
-    fp: string,
-    options?: GrayMatterOption<string, O>
-  ): matter.GrayMatterFile<string>
-
-  /**
-   * Returns true if the given `string` has front matter.
-   * @param  {String} `string`
-   * @param  {Object} `options`
-   * @return {Boolean} True if front matter exists.
-   */
-  export function test<O extends matter.GrayMatterOption<string, O>>(
-    str: string,
-    options?: GrayMatterOption<string, O>
-  ): boolean
-
-  /**
-   * Detect the language to use, if one is defined after the
-   * first front-matter delimiter.
-   * @param  {String} `string`
-   * @param  {Object} `options`
-   * @return {Object} Object with `raw` (actual language string), and `name`, the language with whitespace trimmed
-   */
-  export function language<O extends matter.GrayMatterOption<string, O>>(
-    str: string,
-    options?: GrayMatterOption<string, O>
-  ): { name: string; raw: string }
-}
-
-export = matter
-©/index.js≈¸'use strict';
-
-const fs = require('fs');
-const sections = require('section-matter');
-const defaults = require('./lib/defaults');
-const stringify = require('./lib/stringify');
-const excerpt = require('./lib/excerpt');
-const engines = require('./lib/engines');
-const toFile = require('./lib/to-file');
-const parse = require('./lib/parse');
-const utils = require('./lib/utils');
-
-/**
- * Takes a string or object with `content` property, extracts
- * and parses front-matter from the string, then returns an object
- * with `data`, `content` and other [useful properties](#returned-object).
- *
- * ```js
- * const matter = require('gray-matter');
- * console.log(matter('---\ntitle: Home\n---\nOther stuff'));
- * //=> { data: { title: 'Home'}, content: 'Other stuff' }
- * ```
- * @param {Object|String} `input` String, or object with `content` string
- * @param {Object} `options`
- * @return {Object}
- * @api public
- */
-
-function matter(input, options) {
-  if (input === '') {
-    return { data: {}, content: input, excerpt: '', orig: input };
-  }
-
-  let file = toFile(input);
-  const cached = matter.cache[file.content];
-
-  if (!options) {
-    if (cached) {
-      file = Object.assign({}, cached);
-      file.orig = cached.orig;
-      return file;
-    }
-
-    // only cache if there are no options passed. if we cache when options
-    // are passed, we would need to also cache options values, which would
-    // negate any performance benefits of caching
-    matter.cache[file.content] = file;
-  }
-
-  return parseMatter(file, options);
-}
-
-/**
- * Parse front matter
- */
-
-function parseMatter(file, options) {
-  const opts = defaults(options);
-  const open = opts.delimiters[0];
-  const close = '\n' + opts.delimiters[1];
-  let str = file.content;
-
-  if (opts.language) {
-    file.language = opts.language;
-  }
-
-  // get the length of the opening delimiter
-  const openLen = open.length;
-  if (!utils.startsWith(str, open, openLen)) {
-    excerpt(file, opts);
-    return file;
-  }
-
-  // if the next character after the opening delimiter is
-  // a character from the delimiter, then it's not a front-
-  // matter delimiter
-  if (str.charAt(openLen) === open.slice(-1)) {
-    return file;
-  }
-
-  // strip the opening delimiter
-  str = str.slice(openLen);
-  const len = str.length;
-
-  // use the language defined after first delimiter, if it exists
-  const language = matter.language(str, opts);
-  if (language.name) {
-    file.language = language.name;
-    str = str.slice(language.raw.length);
-  }
-
-  // get the index of the closing delimiter
-  let closeIndex = str.indexOf(close);
-  if (closeIndex === -1) {
-    closeIndex = len;
-  }
-
-  // get the raw front-matter block
-  file.matter = str.slice(0, closeIndex);
-
-  const block = file.matter.replace(/^\s*#[^\n]+/gm, '').trim();
-  if (block === '') {
-    file.isEmpty = true;
-    file.empty = file.content;
-    file.data = {};
-  } else {
-
-    // create file.data by parsing the raw file.matter block
-    file.data = parse(file.language, file.matter, opts);
-  }
-
-  // update file.content
-  if (closeIndex === len) {
-    file.content = '';
-  } else {
-    file.content = str.slice(closeIndex + close.length);
-    if (file.content[0] === '\r') {
-      file.content = file.content.slice(1);
-    }
-    if (file.content[0] === '\n') {
-      file.content = file.content.slice(1);
-    }
-  }
-
-  excerpt(file, opts);
-
-  if (opts.sections === true || typeof opts.section === 'function') {
-    sections(file, opts.section);
-  }
-  return file;
-}
-
-/**
- * Expose engines
- */
-
-matter.engines = engines;
-
-/**
- * Stringify an object to YAML or the specified language, and
- * append it to the given string. By default, only YAML and JSON
- * can be stringified. See the [engines](#engines) section to learn
- * how to stringify other languages.
- *
- * ```js
- * console.log(matter.stringify('foo bar baz', {title: 'Home'}));
- * // results in:
- * // ---
- * // title: Home
- * // ---
- * // foo bar baz
- * ```
- * @param {String|Object} `file` The content string to append to stringified front-matter, or a file object with `file.content` string.
- * @param {Object} `data` Front matter to stringify.
- * @param {Object} `options` [Options](#options) to pass to gray-matter and [js-yaml].
- * @return {String} Returns a string created by wrapping stringified yaml with delimiters, and appending that to the given string.
- * @api public
- */
-
-matter.stringify = function(file, data, options) {
-  if (typeof file === 'string') file = matter(file, options);
-  return stringify(file, data, options);
-};
-
-/**
- * Synchronously read a file from the file system and parse
- * front matter. Returns the same object as the [main function](#matter).
- *
- * ```js
- * const file = matter.read('./content/blog-post.md');
- * ```
- * @param {String} `filepath` file path of the file to read.
- * @param {Object} `options` [Options](#options) to pass to gray-matter.
- * @return {Object} Returns [an object](#returned-object) with `data` and `content`
- * @api public
- */
-
-matter.read = function(filepath, options) {
-  const str = fs.readFileSync(filepath, 'utf8');
-  const file = matter(str, options);
-  file.path = filepath;
-  return file;
-};
-
-/**
- * Returns true if the given `string` has front matter.
- * @param  {String} `string`
- * @param  {Object} `options`
- * @return {Boolean} True if front matter exists.
- * @api public
- */
-
-matter.test = function(str, options) {
-  return utils.startsWith(str, defaults(options).delimiters[0]);
-};
-
-/**
- * Detect the language to use, if one is defined after the
- * first front-matter delimiter.
- * @param  {String} `string`
- * @param  {Object} `options`
- * @return {Object} Object with `raw` (actual language string), and `name`, the language with whitespace trimmed
- */
-
-matter.language = function(str, options) {
-  const opts = defaults(options);
-  const open = opts.delimiters[0];
-
-  if (matter.test(str)) {
-    str = str.slice(open.length);
-  }
-
-  const language = str.slice(0, str.search(/\r?\n/));
-  return {
-    raw: language,
-    name: language ? language.trim() : ''
-  };
-};
-
-/**
- * Expose `matter`
- */
-
-matter.cache = {};
-matter.clearCache = function() {
-  matter.cache = {};
-};
-module.exports = matter;
-Æ/lib/engine.js≈à'use strict';
-
-module.exports = function(name, options) {
-  let engine = options.engines[name] || options.engines[aliase(name)];
-  if (typeof engine === 'undefined') {
-    throw new Error('gray-matter engine "' + name + '" is not registered');
-  }
-  if (typeof engine === 'function') {
-    engine = { parse: engine };
-  }
-  return engine;
-};
-
-function aliase(name) {
-  switch (name.toLowerCase()) {
-    case 'js':
-    case 'javascript':
-      return 'javascript';
-    case 'coffee':
-    case 'coffeescript':
-    case 'cson':
-      return 'coffee';
-    case 'yaml':
-    case 'yml':
-      return 'yaml';
-    default: {
-      return name;
-    }
-  }
-}
-≠/lib/utils.js≈È'use strict';
-
-const stripBom = require('strip-bom-string');
-const typeOf = require('kind-of');
-
-exports.define = function(obj, key, val) {
-  Reflect.defineProperty(obj, key, {
-    enumerable: false,
-    configurable: true,
-    writable: true,
-    value: val
-  });
-};
-
-/**
- * Returns true if `val` is a buffer
- */
-
-exports.isBuffer = function(val) {
-  return typeOf(val) === 'buffer';
-};
-
-/**
- * Returns true if `val` is an object
- */
-
-exports.isObject = function(val) {
-  return typeOf(val) === 'object';
-};
-
-/**
- * Cast `input` to a buffer
- */
-
-exports.toBuffer = function(input) {
-  return typeof input === 'string' ? Buffer.from(input) : input;
-};
-
-/**
- * Cast `val` to a string.
- */
-
-exports.toString = function(input) {
-  if (exports.isBuffer(input)) return stripBom(String(input));
-  if (typeof input !== 'string') {
-    throw new TypeError('expected input to be a string or buffer');
-  }
-  return stripBom(input);
-};
-
-/**
- * Cast `val` to an array.
- */
-
-exports.arrayify = function(val) {
-  return val ? (Array.isArray(val) ? val : [val]) : [];
-};
-
-/**
- * Returns true if `str` starts with `substr`.
- */
-
-exports.startsWith = function(str, substr, len) {
-  if (typeof len !== 'number') len = substr.length;
-  return str.slice(0, len) === substr;
-};
-∞/lib/defaults.js≈'use strict';
-
-const engines = require('./engines');
-const utils = require('./utils');
-
-module.exports = function(options) {
-  const opts = Object.assign({}, options);
-
-  // ensure that delimiters are an array
-  opts.delimiters = utils.arrayify(opts.delims || opts.delimiters || '---');
-  if (opts.delimiters.length === 1) {
-    opts.delimiters.push(opts.delimiters[0]);
-  }
-
-  opts.language = (opts.language || opts.lang || 'yaml').toLowerCase();
-  opts.engines = Object.assign({}, engines, opts.parsers, opts.engines);
-  return opts;
-};
-Ø/lib/excerpt.js≈Â'use strict';
+_This file was generated by [verb-generate-readme](https://github.com/verbose/verb-generate-readme), v0.6.0, on April 01, 2018._Ø/lib/excerpt.js≈Â'use strict';
 
 const defaults = require('./defaults');
 
@@ -1237,154 +1388,3 @@ module.exports = function(file, options) {
 
   return file;
 };
-≠/package.json≈.{
-  "name": "gray-matter",
-  "description": "Parse front-matter from a string or file. Fast, reliable and easy to use. Parses YAML front matter by default, but also has support for YAML, JSON, TOML or Coffee Front-Matter, with options to set custom delimiters. Used by metalsmith, assemble, verb and many other projects.",
-  "version": "4.0.3",
-  "homepage": "https://github.com/jonschlinkert/gray-matter",
-  "author": "Jon Schlinkert (https://github.com/jonschlinkert)",
-  "contributors": [
-    "Andrew Meyer (https://github.com/Ajedi32)",
-    "Brian Woodward (https://twitter.com/doowb)",
-    "Caesar Schinas (https://caesarschinas.com)",
-    "Ian Storm Taylor (http://ianstormtaylor.com)",
-    "Jon Schlinkert (http://twitter.com/jonschlinkert)",
-    "Osman Nuri Okumu≈ü (http://onokumus.com)",
-    "Pawel Kadluczka (http://blog.3d-logic.com)",
-    "Rob Loach (http://robloach.net)",
-    "(https://github.com/heymind)",
-    "Zach Whaley (http://zachwhaleys.website)"
-  ],
-  "repository": "jonschlinkert/gray-matter",
-  "bugs": {
-    "url": "https://github.com/jonschlinkert/gray-matter/issues"
-  },
-  "license": "MIT",
-  "files": [
-    "gray-matter.d.ts",
-    "index.js",
-    "lib"
-  ],
-  "main": "index.js",
-  "engines": {
-    "node": ">=6.0"
-  },
-  "scripts": {
-    "test": "mocha"
-  },
-  "dependencies": {
-    "js-yaml": "^3.13.1",
-    "kind-of": "^6.0.2",
-    "section-matter": "^1.0.0",
-    "strip-bom-string": "^1.0.0"
-  },
-  "devDependencies": {
-    "ansi-green": "^0.1.1",
-    "benchmarked": "^2.0.0",
-    "coffeescript": "^2.2.3",
-    "delimiter-regex": "^2.0.0",
-    "extend-shallow": "^3.0.2",
-    "front-matter": "^2.3.0",
-    "gulp-format-md": "^1.0.0",
-    "minimist": "^1.2.0",
-    "mocha": "^6.1.4",
-    "toml": "^2.3.3",
-    "vinyl": "^2.1.0",
-    "write": "^1.0.3"
-  },
-  "keywords": [
-    "assemble",
-    "coffee",
-    "coffee-script",
-    "data",
-    "docs",
-    "documentation",
-    "extract",
-    "extracting",
-    "front",
-    "front-matter",
-    "frontmatter",
-    "generate",
-    "generator",
-    "gh-pages",
-    "gray",
-    "javascript",
-    "jekyll",
-    "js",
-    "JSON",
-    "markdown",
-    "matter",
-    "parse",
-    "parser",
-    "parsing",
-    "site",
-    "static",
-    "template",
-    "toml",
-    "yaml",
-    "yfm"
-  ],
-  "browser": {
-    "fs": false
-  },
-  "typings": "gray-matter.d.ts",
-  "eslintConfig": {
-    "rules": {
-      "no-console": 0
-    }
-  },
-  "verb": {
-    "toc": false,
-    "layout": "default",
-    "tasks": [
-      "readme"
-    ],
-    "plugins": [
-      "gulp-format-md"
-    ],
-    "helpers": {
-      "examples": "./examples/helper.js"
-    },
-    "lint": {
-      "reflinks": true
-    },
-    "related": {
-      "list": [
-        "assemble",
-        "metalsmith",
-        "verb"
-      ]
-    },
-    "reflinks": [
-      "coffe-script",
-      "generate",
-      "js-yaml",
-      "toml",
-      "update"
-    ]
-  }
-}
-≠/CHANGELOG.md≈è# Release history
-
-## 4.0.0 - 2018-04-01
-
-### Breaking changes
-
-- Now requires node v4 or higher. 
-
-
-## 3.0.0 - 2017-06-30
-
-### Breaking changes
-
-- `toml`, `coffee` and `cson` are no longer supported by default. Please see [`options.engines`](README.md#optionsengines) and the [examples](./examples) to learn how to add engines.
-
-### Added
-
-- Support for [excerpts](README.md#optionsexcerpt).
-- The returned object now has non-enumerable `matter` and `stringify` properties.
-
-### Changed
-
-- Refactored engines (parsers), so that it's easier to add parsers and stringifiers.
-- `options.parsers` was renamed to [`options.engines`](README.md#optionsengines)

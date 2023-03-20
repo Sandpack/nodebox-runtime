@@ -1,45 +1,4 @@
-Ö©/index.js≈˛import mimicFunction from 'mimic-fn';
-
-const calledFunctions = new WeakMap();
-
-const onetime = (function_, options = {}) => {
-	if (typeof function_ !== 'function') {
-		throw new TypeError('Expected a function');
-	}
-
-	let returnValue;
-	let callCount = 0;
-	const functionName = function_.displayName || function_.name || '<anonymous>';
-
-	const onetime = function (...arguments_) {
-		calledFunctions.set(onetime, ++callCount);
-
-		if (callCount === 1) {
-			returnValue = function_.apply(this, arguments_);
-			function_ = null;
-		} else if (options.throw === true) {
-			throw new Error(`Function \`${functionName}\` can only be called once`);
-		}
-
-		return returnValue;
-	};
-
-	mimicFunction(onetime, function_);
-	calledFunctions.set(onetime, callCount);
-
-	return onetime;
-};
-
-onetime.callCount = function_ => {
-	if (!calledFunctions.has(function_)) {
-		throw new Error(`The given function \`${function_.name}\` is not wrapped by the \`onetime\` package`);
-	}
-
-	return calledFunctions.get(function_);
-};
-
-export default onetime;
-´/index.d.ts≈Ñexport interface Options {
+Ö´/index.d.ts≈Ñexport interface Options {
 	/**
 	Throw an error when called more than once.
 
@@ -98,6 +57,101 @@ declare const onetime: {
 };
 
 export default onetime;
+≠/package.json≈˚{
+	"name": "onetime",
+	"version": "6.0.0",
+	"description": "Ensure a function is only called once",
+	"license": "MIT",
+	"repository": "sindresorhus/onetime",
+	"funding": "https://github.com/sponsors/sindresorhus",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "https://sindresorhus.com"
+	},
+	"type": "module",
+	"exports": "./index.js",
+	"engines": {
+		"node": ">=12"
+	},
+	"scripts": {
+		"test": "xo && ava && tsd"
+	},
+	"files": [
+		"index.js",
+		"index.d.ts"
+	],
+	"keywords": [
+		"once",
+		"function",
+		"one",
+		"onetime",
+		"func",
+		"fn",
+		"single",
+		"call",
+		"called",
+		"prevent"
+	],
+	"dependencies": {
+		"mimic-fn": "^4.0.0"
+	},
+	"devDependencies": {
+		"ava": "^3.15.0",
+		"tsd": "^0.14.0",
+		"xo": "^0.38.2"
+	}
+}
+©/index.js≈˛import mimicFunction from 'mimic-fn';
+
+const calledFunctions = new WeakMap();
+
+const onetime = (function_, options = {}) => {
+	if (typeof function_ !== 'function') {
+		throw new TypeError('Expected a function');
+	}
+
+	let returnValue;
+	let callCount = 0;
+	const functionName = function_.displayName || function_.name || '<anonymous>';
+
+	const onetime = function (...arguments_) {
+		calledFunctions.set(onetime, ++callCount);
+
+		if (callCount === 1) {
+			returnValue = function_.apply(this, arguments_);
+			function_ = null;
+		} else if (options.throw === true) {
+			throw new Error(`Function \`${functionName}\` can only be called once`);
+		}
+
+		return returnValue;
+	};
+
+	mimicFunction(onetime, function_);
+	calledFunctions.set(onetime, callCount);
+
+	return onetime;
+};
+
+onetime.callCount = function_ => {
+	if (!calledFunctions.has(function_)) {
+		throw new Error(`The given function \`${function_.name}\` is not wrapped by the \`onetime\` package`);
+	}
+
+	return calledFunctions.get(function_);
+};
+
+export default onetime;
+®/license≈]MIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ™/readme.md≈ # onetime
 
 > Ensure a function is only called once
@@ -192,57 +246,3 @@ Function to get call count from.
 Available as part of the Tidelift Subscription.
 
 The maintainers of onetime and thousands of other packages are working with Tidelift to deliver commercial support and maintenance for the open source dependencies you use to build your applications. Save time, reduce risk, and improve code health, while paying the maintainers of the exact dependencies you use. [Learn more.](https://tidelift.com/subscription/pkg/npm-onetime?utm_source=npm-onetime&utm_medium=referral&utm_campaign=enterprise&utm_term=repo)
-®/license≈]MIT License
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-≠/package.json≈˚{
-	"name": "onetime",
-	"version": "6.0.0",
-	"description": "Ensure a function is only called once",
-	"license": "MIT",
-	"repository": "sindresorhus/onetime",
-	"funding": "https://github.com/sponsors/sindresorhus",
-	"author": {
-		"name": "Sindre Sorhus",
-		"email": "sindresorhus@gmail.com",
-		"url": "https://sindresorhus.com"
-	},
-	"type": "module",
-	"exports": "./index.js",
-	"engines": {
-		"node": ">=12"
-	},
-	"scripts": {
-		"test": "xo && ava && tsd"
-	},
-	"files": [
-		"index.js",
-		"index.d.ts"
-	],
-	"keywords": [
-		"once",
-		"function",
-		"one",
-		"onetime",
-		"func",
-		"fn",
-		"single",
-		"call",
-		"called",
-		"prevent"
-	],
-	"dependencies": {
-		"mimic-fn": "^4.0.0"
-	},
-	"devDependencies": {
-		"ava": "^3.15.0",
-		"tsd": "^0.14.0",
-		"xo": "^0.38.2"
-	}
-}

@@ -1,38 +1,4 @@
-Ö®/LICENSE≈XThe MIT License (MIT)
-
-Copyright (c) 2022 Sindre Sorhus
-Copyright (c) 2015 Elijah Insua
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-©/index.js≈var clone = require('clone');
-
-module.exports = function(options, defaults) {
-  options = options || {};
-
-  Object.keys(defaults).forEach(function(key) {
-    if (typeof options[key] === 'undefined') {
-      options[key] = clone(defaults[key]);
-    }
-  });
-
-  return options;
-};≠/package.json≈x{
+Ö≠/package.json≈x{
 	"name": "defaults",
 	"version": "1.0.4",
 	"description": "merge single level defaults over a config object",
@@ -65,6 +31,28 @@ module.exports = function(options, defaults) {
 		"tap": "^2.0.0"
 	}
 }
+®/LICENSE≈XThe MIT License (MIT)
+
+Copyright (c) 2022 Sindre Sorhus
+Copyright (c) 2015 Elijah Insua
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 ®/test.js≈var defaults = require('./'),
     test = require('tap').test;
 
@@ -138,3 +126,16 @@ handle({timeout: 10000}, () => {
 this module exports a function that takes 2 arguments: `options` and `defaults`.  When called, it overrides all of `undefined` properties in `options` with the clones of properties defined in `defaults`
 
 Sidecases: if called with a falsy `options` value, options will be initialized to a new object before being merged onto.
+©/index.js≈var clone = require('clone');
+
+module.exports = function(options, defaults) {
+  options = options || {};
+
+  Object.keys(defaults).forEach(function(key) {
+    if (typeof options[key] === 'undefined') {
+      options[key] = clone(defaults[key]);
+    }
+  });
+
+  return options;
+};

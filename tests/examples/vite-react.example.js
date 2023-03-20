@@ -58,8 +58,15 @@ root.render(
 </html>`,
     '/package.json': JSON.stringify({
       scripts: { dev: 'vite' },
-      dependencies: { react: '^18.2.0', 'react-dom': '^18.2.0' },
-      devDependencies: { vite: '^4.0.0', '@vitejs/plugin-react': '3.1.0', 'esbuild-wasm': '0.15.12' },
+      dependencies: {
+        react: '^18.2.0',
+        'react-dom': '^18.2.0',
+      },
+      devDependencies: {
+        vite: '4.2.0',
+        '@vitejs/plugin-react': '3.1.0',
+        'esbuild-wasm': '0.17.12',
+      },
     }),
     'vite.config.js': `import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";

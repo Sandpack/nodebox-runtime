@@ -1,82 +1,4 @@
-‡¨/LICENSEÅ–MIT License
-
-Copyright (c) 2018 Tomas Della Vedova
-Copyright (c) 2017 Justin Ridgewell
-Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-¬/.travis.ymlÄ„language: node_js
-
-node_js:
-  - "11"
-  - "10"
-  - "8"
-  - "6"
-
-notifications:
-  email:
-    on_success: never
-    on_failure: always
-ª/README.mdÅ•# fast-decode-uri-component
-
-[![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](http://standardjs.com/)  [![Build Status](https://travis-ci.org/delvedor/fast-decode-uri-component.svg?branch=master)](https://travis-ci.org/delvedor/fast-decode-uri-component)
-
-Decodes strings encoded by `encodeURI` and `encodeURIComponent`, without throwing errors on invalid escapes, instead, it returns `null`.
-
-
-## Installation
-```
-npm install fast-decode-uri-component
-```
-
-## Usage
-```js
-const fastDecode = require('fast-decode-uri-component')
-
-console.log(fastDecode('test')) // 'test'
-console.log(fastDecode('%25')) // '%'
-console.log(fastDecode('/test/hel%2Flo')) // '/test/hel/lo'
-
-console.log(fastDecode('/test/hel%"Flo')) // null
-console.log(fastDecode('%7B%ab%7C%de%7D')) // null
-console.log(fastDecode('%ab')) // null
-```
-
-## Benchmarks
-You can find the benchmark file [here](https://github.com/delvedor/fast-decode-uri-component/blob/master/bench.js).
-```
-# fast-decode-uri-component
-ok ~539 ms (0 s + 539114308 ns)
-
-# decodeURIComponent
-ok ~6.06 s (6 s + 62305153 ns)
-```
-
-## Acknowledgements
-This project has been forked from [`jridgewell/safe-decode-uri-component`](https://github.com/jridgewell/safe-decode-uri-component) because I wanted to change the behaviour of the library on invalid inputs, plus change some internals.<br>
-All the credits before the commit [`53000fe`](https://github.com/delvedor/fast-decode-uri-component/commit/53000feb8c268eec7a24620fd440fdd540be32b7) goes to the `jridgewell/safe-decode-uri-component` project [contributors](https://github.com/delvedor/fast-decode-uri-component/graphs/contributors).<br>
-Since the commit [`9673ab7`](https://github.com/delvedor/fast-decode-uri-component/commit/9673ab7820ef92081206a9f4fd158ffe9a352861) the project will be maintained by [**@delvedor**](https://github.com/delvedor).
-
-## License
-
-Licensed under [MIT](./LICENSE).
-¨/test.jsÅï'use strict'
+‡¨/test.jsÅï'use strict'
 
 const { test } = require('tap')
 const randomstring = require('randomstring')
@@ -108,6 +30,39 @@ test('Basic', t => {
 
   t.end()
 })
+­/package.jsonÅ2{
+  "name": "fast-decode-uri-component",
+  "version": "1.0.1",
+  "description": "Fast and safe decodeURIComponent",
+  "main": "index.js",
+  "scripts": {
+    "test": "standard && tap test.js",
+    "bench": "node bench.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/delvedor/fast-decode-uri-component.git"
+  },
+  "keywords": [
+    "decode",
+    "uri",
+    "component",
+    "fast",
+    "safe"
+  ],
+  "author": "Tomas Della Vedova - @delvedor (http://delved.org)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/delvedor/fast-decode-uri-component/issues"
+  },
+  "homepage": "https://github.com/delvedor/fast-decode-uri-component#readme",
+  "devDependencies": {
+    "nanobench": "^2.1.1",
+    "randomstring": "^1.1.5",
+    "standard": "^11.0.1",
+    "tap": "^11.1.2"
+  }
+}
 ©/index.jsÅ“'use strict'
 
 var UTF8_ACCEPT = 12
@@ -223,6 +178,84 @@ function hexCodeToInt (c, shift) {
 }
 
 module.exports = decodeURIComponent
+¨/LICENSEÅ–MIT License
+
+Copyright (c) 2018 Tomas Della Vedova
+Copyright (c) 2017 Justin Ridgewell
+Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+¬/.travis.ymlÄ„language: node_js
+
+node_js:
+  - "11"
+  - "10"
+  - "8"
+  - "6"
+
+notifications:
+  email:
+    on_success: never
+    on_failure: always
+ª/README.mdÅ•# fast-decode-uri-component
+
+[![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](http://standardjs.com/)  [![Build Status](https://travis-ci.org/delvedor/fast-decode-uri-component.svg?branch=master)](https://travis-ci.org/delvedor/fast-decode-uri-component)
+
+Decodes strings encoded by `encodeURI` and `encodeURIComponent`, without throwing errors on invalid escapes, instead, it returns `null`.
+
+
+## Installation
+```
+npm install fast-decode-uri-component
+```
+
+## Usage
+```js
+const fastDecode = require('fast-decode-uri-component')
+
+console.log(fastDecode('test')) // 'test'
+console.log(fastDecode('%25')) // '%'
+console.log(fastDecode('/test/hel%2Flo')) // '/test/hel/lo'
+
+console.log(fastDecode('/test/hel%"Flo')) // null
+console.log(fastDecode('%7B%ab%7C%de%7D')) // null
+console.log(fastDecode('%ab')) // null
+```
+
+## Benchmarks
+You can find the benchmark file [here](https://github.com/delvedor/fast-decode-uri-component/blob/master/bench.js).
+```
+# fast-decode-uri-component
+ok ~539 ms (0 s + 539114308 ns)
+
+# decodeURIComponent
+ok ~6.06 s (6 s + 62305153 ns)
+```
+
+## Acknowledgements
+This project has been forked from [`jridgewell/safe-decode-uri-component`](https://github.com/jridgewell/safe-decode-uri-component) because I wanted to change the behaviour of the library on invalid inputs, plus change some internals.<br>
+All the credits before the commit [`53000fe`](https://github.com/delvedor/fast-decode-uri-component/commit/53000feb8c268eec7a24620fd440fdd540be32b7) goes to the `jridgewell/safe-decode-uri-component` project [contributors](https://github.com/delvedor/fast-decode-uri-component/graphs/contributors).<br>
+Since the commit [`9673ab7`](https://github.com/delvedor/fast-decode-uri-component/commit/9673ab7820ef92081206a9f4fd158ffe9a352861) the project will be maintained by [**@delvedor**](https://github.com/delvedor).
+
+## License
+
+Licensed under [MIT](./LICENSE).
 ©/bench.jsÅ­'use strict'
 
 const bench = require('nanobench')
@@ -258,36 +291,3 @@ bench('decodeURIComponent', b => {
   }
   b.end()
 })
-­/package.jsonÅ2{
-  "name": "fast-decode-uri-component",
-  "version": "1.0.1",
-  "description": "Fast and safe decodeURIComponent",
-  "main": "index.js",
-  "scripts": {
-    "test": "standard && tap test.js",
-    "bench": "node bench.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/delvedor/fast-decode-uri-component.git"
-  },
-  "keywords": [
-    "decode",
-    "uri",
-    "component",
-    "fast",
-    "safe"
-  ],
-  "author": "Tomas Della Vedova - @delvedor (http://delved.org)",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/delvedor/fast-decode-uri-component/issues"
-  },
-  "homepage": "https://github.com/delvedor/fast-decode-uri-component#readme",
-  "devDependencies": {
-    "nanobench": "^2.1.1",
-    "randomstring": "^1.1.5",
-    "standard": "^11.0.1",
-    "tap": "^11.1.2"
-  }
-}

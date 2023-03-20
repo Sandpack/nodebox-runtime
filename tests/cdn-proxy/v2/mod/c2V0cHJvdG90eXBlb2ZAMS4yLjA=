@@ -1,4 +1,66 @@
-†¨/LICENSEÅ×Copyright (c) 2015, Wes Todd
+†®/test/index.jsÅ²'use strict'
+/* eslint-env mocha */
+/* eslint no-proto: 0 */
+var assert = require('assert')
+var setPrototypeOf = require('..')
+
+describe('setProtoOf(obj, proto)', function () {
+  it('should merge objects', function () {
+    var obj = { a: 1, b: 2 }
+    var proto = { b: 3, c: 4 }
+    var mergeObj = setPrototypeOf(obj, proto)
+
+    if (Object.getPrototypeOf) {
+      assert.strictEqual(Object.getPrototypeOf(obj), proto)
+    } else if ({ __proto__: [] } instanceof Array) {
+      assert.strictEqual(obj.__proto__, proto)
+    } else {
+      assert.strictEqual(obj.a, 1)
+      assert.strictEqual(obj.b, 2)
+      assert.strictEqual(obj.c, 4)
+    }
+    assert.strictEqual(mergeObj, obj)
+  })
+})
+­/package.jsonÅð{
+  "name": "setprototypeof",
+  "version": "1.2.0",
+  "description": "A small polyfill for Object.setprototypeof",
+  "main": "index.js",
+  "typings": "index.d.ts",
+  "scripts": {
+    "test": "standard && mocha",
+    "testallversions": "npm run node010 && npm run node4 && npm run node6 && npm run node9 && npm run node11",
+    "testversion": "docker run -it --rm -v $(PWD):/usr/src/app -w /usr/src/app node:${NODE_VER} npm install mocha@${MOCHA_VER:-latest} && npm t",
+    "node010": "NODE_VER=0.10 MOCHA_VER=3 npm run testversion",
+    "node4": "NODE_VER=4 npm run testversion",
+    "node6": "NODE_VER=6 npm run testversion",
+    "node9": "NODE_VER=9 npm run testversion",
+    "node11": "NODE_VER=11 npm run testversion",
+    "prepublishOnly": "npm t",
+    "postpublish": "git push origin && git push origin --tags"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wesleytodd/setprototypeof.git"
+  },
+  "keywords": [
+    "polyfill",
+    "object",
+    "setprototypeof"
+  ],
+  "author": "Wes Todd",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wesleytodd/setprototypeof/issues"
+  },
+  "homepage": "https://github.com/wesleytodd/setprototypeof",
+  "devDependencies": {
+    "mocha": "^6.1.4",
+    "standard": "^13.0.2"
+  }
+}
+¨/LICENSEÅ×Copyright (c) 2015, Wes Todd
 
 Permission to use, copy, modify, and/or distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -42,8 +104,6 @@ TypeScript is also supported:
 ```typescript
 import setPrototypeOf from 'setprototypeof'
 ```
-«/index.d.tsÄ]declare function setPrototypeOf(o: any, proto: object | null): any;
-export = setPrototypeOf;
 ©/index.jsÅ—'use strict'
 /* eslint no-proto: 0 */
 module.exports = Object.setPrototypeOf || ({ __proto__: [] } instanceof Array ? setProtoOf : mixinProperties)
@@ -61,65 +121,5 @@ function mixinProperties (obj, proto) {
   }
   return obj
 }
-­/package.jsonÅð{
-  "name": "setprototypeof",
-  "version": "1.2.0",
-  "description": "A small polyfill for Object.setprototypeof",
-  "main": "index.js",
-  "typings": "index.d.ts",
-  "scripts": {
-    "test": "standard && mocha",
-    "testallversions": "npm run node010 && npm run node4 && npm run node6 && npm run node9 && npm run node11",
-    "testversion": "docker run -it --rm -v $(PWD):/usr/src/app -w /usr/src/app node:${NODE_VER} npm install mocha@${MOCHA_VER:-latest} && npm t",
-    "node010": "NODE_VER=0.10 MOCHA_VER=3 npm run testversion",
-    "node4": "NODE_VER=4 npm run testversion",
-    "node6": "NODE_VER=6 npm run testversion",
-    "node9": "NODE_VER=9 npm run testversion",
-    "node11": "NODE_VER=11 npm run testversion",
-    "prepublishOnly": "npm t",
-    "postpublish": "git push origin && git push origin --tags"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/wesleytodd/setprototypeof.git"
-  },
-  "keywords": [
-    "polyfill",
-    "object",
-    "setprototypeof"
-  ],
-  "author": "Wes Todd",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/wesleytodd/setprototypeof/issues"
-  },
-  "homepage": "https://github.com/wesleytodd/setprototypeof",
-  "devDependencies": {
-    "mocha": "^6.1.4",
-    "standard": "^13.0.2"
-  }
-}
-®/test/index.jsÅ²'use strict'
-/* eslint-env mocha */
-/* eslint no-proto: 0 */
-var assert = require('assert')
-var setPrototypeOf = require('..')
-
-describe('setProtoOf(obj, proto)', function () {
-  it('should merge objects', function () {
-    var obj = { a: 1, b: 2 }
-    var proto = { b: 3, c: 4 }
-    var mergeObj = setPrototypeOf(obj, proto)
-
-    if (Object.getPrototypeOf) {
-      assert.strictEqual(Object.getPrototypeOf(obj), proto)
-    } else if ({ __proto__: [] } instanceof Array) {
-      assert.strictEqual(obj.__proto__, proto)
-    } else {
-      assert.strictEqual(obj.a, 1)
-      assert.strictEqual(obj.b, 2)
-      assert.strictEqual(obj.c, 4)
-    }
-    assert.strictEqual(mergeObj, obj)
-  })
-})
+«/index.d.tsÄ]declare function setPrototypeOf(o: any, proto: object | null): any;
+export = setPrototypeOf;

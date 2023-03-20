@@ -1,0 +1,489 @@
+„²/lib/set-cookie.jsÅ"use strict";
+
+var defaultParseOptions = {
+  decodeValues: true,
+  map: false,
+  silent: false,
+};
+
+function isNonEmptyString(str) {
+  return typeof str === "string" && !!str.trim();
+}
+
+function parseString(setCookieValue, options) {
+  var parts = setCookieValue.split(";").filter(isNonEmptyString);
+
+  var nameValuePairStr = parts.shift();
+  var parsed = parseNameValuePair(nameValuePairStr);
+  var name = parsed.name;
+  var value = parsed.value;
+
+  options = options
+    ? Object.assign({}, defaultParseOptions, options)
+    : defaultParseOptions;
+
+  try {
+    value = options.decodeValues ? decodeURIComponent(value) : value; // decode cookie value
+  } catch (e) {
+    console.error(
+      "set-cookie-parser encountered an error while decoding a cookie with value '" +
+        value +
+        "'. Set options.decodeValues to false to disable this feature.",
+      e
+    );
+  }
+
+  var cookie = {
+    name: name,
+    value: value,
+  };
+
+  parts.forEach(function (part) {
+    var sides = part.split("=");
+    var key = sides.shift().trimLeft().toLowerCase();
+    var value = sides.join("=");
+    if (key === "expires") {
+      cookie.expires = new Date(value);
+    } else if (key === "max-age") {
+      cookie.maxAge = parseInt(value, 10);
+    } else if (key === "secure") {
+      cookie.secure = true;
+    } else if (key === "httponly") {
+      cookie.httpOnly = true;
+    } else if (key === "samesite") {
+      cookie.sameSite = value;
+    } else {
+      cookie[key] = value;
+    }
+  });
+
+  return cookie;
+}
+
+function parseNameValuePair(nameValuePairStr) {
+  // Parses name-value-pair according to rfc6265bis draft
+
+  var name = "";
+  var value = "";
+  var nameValueArr = nameValuePairStr.split("=");
+  if (nameValueArr.length > 1) {
+    name = nameValueArr.shift();
+    value = nameValueArr.join("="); // everything after the first =, joined by a "=" if there was more than one part
+  } else {
+    value = nameValuePairStr;
+  }
+
+  return { name: name, value: value };
+}
+
+function parse(input, options) {
+  options = options
+    ? Object.assign({}, defaultParseOptions, options)
+    : defaultParseOptions;
+
+  if (!input) {
+    if (!options.map) {
+      return [];
+    } else {
+      return {};
+    }
+  }
+
+  if (input.headers) {
+    if (typeof input.headers.getSetCookie === "function") {
+      // for fetch responses - they combine headers of the same type in the headers array,
+      // but getSetCookie returns an uncombined array
+      input = input.headers.getSetCookie();
+    } else if (input.headers["set-cookie"]) {
+      // fast-path for node.js (which automatically normalizes header names to lower-case
+      input = input.headers["set-cookie"];
+    } else {
+      // slow-path for other environments - see #25
+      var sch =
+        input.headers[
+          Object.keys(input.headers).find(function (key) {
+            return key.toLowerCase() === "set-cookie";
+          })
+        ];
+      // warn if called on a request-like object with a cookie header rather than a set-cookie header - see #34, 36
+      if (!sch && input.headers.cookie && !options.silent) {
+        console.warn(
+          "Warning: set-cookie-parser appears to have been called on a request object. It is designed to parse Set-Cookie headers from responses, not Cookie headers from requests. Set the option {silent: true} to suppress this warning."
+        );
+      }
+      input = sch;
+    }
+  }
+  if (!Array.isArray(input)) {
+    input = [input];
+  }
+
+  options = options
+    ? Object.assign({}, defaultParseOptions, options)
+    : defaultParseOptions;
+
+  if (!options.map) {
+    return input.filter(isNonEmptyString).map(function (str) {
+      return parseString(str, options);
+    });
+  } else {
+    var cookies = {};
+    return input.filter(isNonEmptyString).reduce(function (cookies, str) {
+      var cookie = parseString(str, options);
+      cookies[cookie.name] = cookie;
+      return cookies;
+    }, cookies);
+  }
+}
+
+/*
+  Set-Cookie header field-values are sometimes comma joined in one string. This splits them without choking on commas
+  that are within a single set-cookie field-value, such as in the Expires portion.
+
+  This is uncommon, but explicitly allowed - see https://tools.ietf.org/html/rfc2616#section-4.2
+  Node.js does this for every header *except* set-cookie - see https://github.com/nodejs/node/blob/d5e363b77ebaf1caf67cd7528224b651c86815c1/lib/_http_incoming.js#L128
+  React Native's fetch does this for *every* header, including set-cookie.
+
+  Based on: https://github.com/google/j2objc/commit/16820fdbc8f76ca0c33472810ce0cb03d20efe25
+  Credits to: https://github.com/tomball for original and https://github.com/chrusart for JavaScript implementation
+*/
+function splitCookiesString(cookiesString) {
+  if (Array.isArray(cookiesString)) {
+    return cookiesString;
+  }
+  if (typeof cookiesString !== "string") {
+    return [];
+  }
+
+  var cookiesStrings = [];
+  var pos = 0;
+  var start;
+  var ch;
+  var lastComma;
+  var nextStart;
+  var cookiesSeparatorFound;
+
+  function skipWhitespace() {
+    while (pos < cookiesString.length && /\s/.test(cookiesString.charAt(pos))) {
+      pos += 1;
+    }
+    return pos < cookiesString.length;
+  }
+
+  function notSpecialChar() {
+    ch = cookiesString.charAt(pos);
+
+    return ch !== "=" && ch !== ";" && ch !== ",";
+  }
+
+  while (pos < cookiesString.length) {
+    start = pos;
+    cookiesSeparatorFound = false;
+
+    while (skipWhitespace()) {
+      ch = cookiesString.charAt(pos);
+      if (ch === ",") {
+        // ',' is a cookie separator if we have later first '=', not ';' or ','
+        lastComma = pos;
+        pos += 1;
+
+        skipWhitespace();
+        nextStart = pos;
+
+        while (pos < cookiesString.length && notSpecialChar()) {
+          pos += 1;
+        }
+
+        // currently special character
+        if (pos < cookiesString.length && cookiesString.charAt(pos) === "=") {
+          // we found cookies separator
+          cookiesSeparatorFound = true;
+          // pos is inside the next cookie, so back up and return it.
+          pos = nextStart;
+          cookiesStrings.push(cookiesString.substring(start, lastComma));
+          start = pos;
+        } else {
+          // in param ',' or param separator ';',
+          // we continue from that comma
+          pos = lastComma + 1;
+        }
+      } else {
+        pos += 1;
+      }
+    }
+
+    if (!cookiesSeparatorFound || pos >= cookiesString.length) {
+      cookiesStrings.push(cookiesString.substring(start, cookiesString.length));
+    }
+  }
+
+  return cookiesStrings;
+}
+
+module.exports = parse;
+module.exports.parse = parse;
+module.exports.parseString = parseString;
+module.exports.splitCookiesString = splitCookiesString;
+­/package.jsonÅ{
+  "name": "set-cookie-parser",
+  "version": "2.6.0",
+  "description": "Parses set-cookie headers into objects",
+  "homepage": "https://github.com/nfriedly/set-cookie-parser",
+  "repository": "nfriedly/set-cookie-parser",
+  "author": {
+    "name": "Nathan Friedly",
+    "email": "",
+    "url": "http://nfriedly.com/"
+  },
+  "files": [
+    "lib"
+  ],
+  "main": "./lib/set-cookie.js",
+  "sideEffects": false,
+  "keywords": [
+    "set-cookie",
+    "set",
+    "cookie",
+    "cookies",
+    "header",
+    "parser"
+  ],
+  "devDependencies": {
+    "eslint": "^8.17.0",
+    "eslint-config-prettier": "^6.10.1",
+    "eslint-plugin-prettier": "^3.1.2",
+    "husky": "^4.2.3",
+    "mocha": "^10.0.0",
+    "prettier": "^2.0.2",
+    "pretty-quick": "^2.0.1",
+    "sinon": "^9.0.1"
+  },
+  "scripts": {
+    "lint": "eslint . --ignore-pattern '!.eslintrc.js'",
+    "test": "npm run lint && mocha",
+    "autofix": "npm run lint -- --fix",
+    "precommit": "npm test"
+  },
+  "license": "MIT",
+  "dependencies": {}
+}
+¨/LICENSEÅ{The MIT License (MIT)
+
+Copyright (c) 2015 Nathan Friedly <nathan@nfriedly.com> (http://nfriedly.com/)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+ª/README.mdÅ # set-cookie-parser 
+
+[![Node.js CI](https://github.com/nfriedly/set-cookie-parser/actions/workflows/node.js.yml/badge.svg)](https://github.com/nfriedly/set-cookie-parser/actions/workflows/node.js.yml)
+[![NPM version][npm-image]][npm-url] 
+[![npm downloads](https://img.shields.io/npm/dm/set-cookie-parser)][npm-url]
+
+Parses set-cookie headers into objects
+
+Accepts a single `set-cookie` header value, an array of `set-cookie` header values, a Node.js response object, or a `fetch()` `Response` object that may have 0 or more `set-cookie` headers.
+
+Also accepts an optional options object. Defaults:
+
+```js
+{
+    decodeValues: true,  // Calls decodeURIComponent on each value - default: true
+    map: false,          // Return an object instead of an array - default: false
+    silent: false,       // Suppress the warning that is logged when called on a request instead of a response - default: false
+}
+```
+
+Returns either an array of cookie objects or a map of name => cookie object with `{map: true}`. Each cookie object will have, at a minimum `name` and `value` properties, and may have additional properties depending on the set-cookie header:
+
+* `name` - cookie name (string)
+* `value` - cookie value (string)
+* `path` - cookie path (string or undefined)
+* `domain` - domain for the cookie (string or undefined, may begin with "." to indicate the named domain or any subdomain of it)
+* `expires` - absolute expiration date for the cookie (Date object or undefined)
+* `maxAge` - relative max age of the cookie in seconds from when the client receives it (integer or undefined)
+  * Note: when using with [express's res.cookie() method](http://expressjs.com/en/4x/api.html#res.cookie), multiply `maxAge` by 1000 to convert to milliseconds.
+* `secure` - indicates that this cookie should only be sent over HTTPs (true or undefined)
+* `httpOnly` - indicates that this cookie should *not* be accessible to client-side JavaScript (true or undefined)
+* `sameSite` - indicates a cookie ought not to be sent along with cross-site requests (string or undefined)
+
+(The output format is loosely based on the input format of https://www.npmjs.com/package/cookie)
+
+## Install
+
+```sh
+$ npm install --save set-cookie-parser
+```
+
+
+## Usage
+
+### Get array of cookie objects
+
+```js
+var http = require('http');
+var setCookie = require('set-cookie-parser');
+
+http.get('http://example.com', function(res) {
+  var cookies = setCookie.parse(res, {
+    decodeValues: true  // default: true
+  });
+
+  cookies.forEach(console.log);
+}
+```
+
+Example output:
+
+```js
+[
+    {
+        name: 'bam',
+        value: 'baz'
+    },
+    {
+        name: 'foo',
+        value: 'bar',
+        path: '/',
+        expires: new Date('Tue Jul 01 2025 06:01:11 GMT-0400 (EDT)'),
+        maxAge: 1000,
+        domain: '.example.com',
+        secure: true,
+        httpOnly: true,
+        sameSite: 'lax'
+    }
+]
+```
+
+### Get map of cookie objects
+
+```js
+var http = require('http');
+var setCookie = require('set-cookie-parser');
+
+http.get('http://example.com', function(res) {
+  var cookies = setCookie.parse(res, {
+    decodeValues: true,  // default: true
+    map: true            // default: false
+  });
+
+  var desiredCookie = cookies['session'];
+  console.log(desiredCookie);
+});
+```
+Example output:
+```js
+{
+    bam: {
+        name: 'bam',
+        value: 'baz'
+    },
+    foo: {
+        name: 'foo',
+        value: 'bar',
+        path: '/',
+        expires: new Date('Tue Jul 01 2025 06:01:11 GMT-0400 (EDT)'),
+        maxAge: 1000,
+        domain: '.example.com',
+        secure: true,
+        httpOnly: true,
+        sameSite: 'lax'
+    }
+}
+```
+
+### Creating a new, modified set-cookie header
+
+This library can be used in conjunction with the [cookie](https://www.npmjs.com/package/cookie) library to modify and replace set-cookie headers:
+
+```js
+const libCookie = require('cookie');
+const setCookie = require('set-cookie-parser');
+
+function modifySetCookie(res){
+  // parse the set-cookie headers with this library
+  let cookies = setCookie.parse(res);
+  
+  // modify the cookies here
+  // ...
+  
+  // create new set-cookie headers using the cookie library
+  res.headers['set-cookie'] = cookies.map(function(cookie) {
+      return libCookie.serialize(cookie.name, cookie.value, cookie);
+  });
+}
+```
+
+See a real-world example of this in [unblocker](https://github.com/nfriedly/node-unblocker/blob/08a89ec27274b46dcd80d0a324a59406f2bdad3d/lib/cookies.js#L67-L85)
+
+## Usage in React Native (and with some other fetch implementations)
+
+React Native follows the Fetch spec more closely and combines all of the Set-Cookie header values into a single string.
+The `splitCookiesString` method reverses this.
+
+```js
+var setCookie = require('set-cookie-parser');
+
+var response = fetch(/*...*/);
+
+// This is mainly for React Native; Node.js does not combine set-cookie headers.
+var combinedCookieHeader = response.headers.get('Set-Cookie');
+var splitCookieHeaders = setCookie.splitCookiesString(combinedCookieHeader)
+var cookies = setCookie.parse(splitCookieHeaders);
+
+console.log(cookies); // should be an array of cookies
+```
+
+This behavior may become a default part of parse in the next major release, but requires the extra step for now.
+
+Note that the `fetch()` spec now includes a `getSetCookie()` method that provides un-combined `Set-Cookie` headers. This library will automatically use that method if it is present.
+
+## API
+
+### parse(input, [options])
+
+Parses cookies from a string, array of strings, or a http response object. 
+Always returns an array, regardless of input format. (Unless the `map` option is set, in which case it always returns an object.)
+
+### parseString(individualSetCookieHeader, [options])
+
+Parses a single set-cookie header value string. Options default is `{decodeValues: true}`. Used under-the-hood by `parse()`. 
+Returns an object.
+
+### splitCookiesString(combinedSetCookieHeader)
+
+It's uncommon, but the HTTP spec does allow for multiple of the same header to have their values combined (comma-separated) into a single header. 
+This method splits apart a combined header without choking on commas that appear within a cookie's value (or expiration date).
+Returns an array of strings that may be passed to `parse()`.
+
+## V2 Changes
+
+* Added decodeValues option (calls `decodeURIComponent()` on each cookie value), enabled by default.
+* Added `splitCookiesString` method.
+
+## References
+
+* [RFC 6265: HTTP State Management Mechanism](https://tools.ietf.org/html/rfc6265)
+* [draft-ietf-httpbis-rfc6265bis-10](https://httpwg.org/http-extensions/draft-ietf-httpbis-rfc6265bis.html)
+
+## License
+
+MIT Â© [Nathan Friedly](http://www.nfriedly.com/)
+
+
+[npm-image]: https://badge.fury.io/js/set-cookie-parser.svg
+[npm-url]: https://npmjs.org/package/set-cookie-parser

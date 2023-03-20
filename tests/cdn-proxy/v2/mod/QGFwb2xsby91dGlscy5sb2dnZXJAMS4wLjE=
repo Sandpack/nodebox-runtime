@@ -1,4 +1,32 @@
-Šª/README.mdÅè# Logger interface
+Š¨/LICENSEÅ]MIT License
+
+Copyright (c) 2022 Apollo Graph, Inc. (Formerly Meteor Development Group, Inc.)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+¼/src/__tests__/tsconfig.jsonÄq{
+  "extends": "../../../../tsconfig.test.base",
+  "include": ["**/*"],
+  "references": [{ "path": "../../" }]
+}
+®/dist/index.jsÄn"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+//# sourceMappingURL=index.js.mapª/README.mdÅè# Logger interface
 
 > ```
 > interface Logger {
@@ -40,54 +68,7 @@ const logger = winston.createLogger();
   warn(message?: any): void;
   error(message?: any): void;
 }
-­/package.jsonÅ¼{
-  "name": "@apollo/utils.logger",
-  "version": "1.0.1",
-  "description": "Generic logger interface",
-  "main": "",
-  "types": "dist/index.d.ts",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/apollographql/apollo-utils.git",
-    "directory": "packages/logger/"
-  },
-  "keywords": [
-    "apollo",
-    "graphql",
-    "typescript",
-    "node"
-  ],
-  "author": "Apollo <packages@apollographql.com>",
-  "license": "MIT"
-}
-²/dist/index.js.mapÄf{"version":3,"file":"index.js","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":""}¨/LICENSEÅ]MIT License
-
-Copyright (c) 2022 Apollo Graph, Inc. (Formerly Meteor Development Group, Inc.)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-°/dist/index.d.tsÄ½export interface Logger {
-    debug(message?: any): void;
-    info(message?: any): void;
-    warn(message?: any): void;
-    error(message?: any): void;
-}
-//# sourceMappingURL=index.d.ts.map¼/src/__tests__/index.test.tsÅÏimport { PassThrough } from "stream";
+´/dist/index.d.ts.mapÅM{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,MAAM;IACrB,KAAK,CAAC,OAAO,CAAC,EAAE,GAAG,GAAG,IAAI,CAAC;IAC3B,IAAI,CAAC,OAAO,CAAC,EAAE,GAAG,GAAG,IAAI,CAAC;IAC1B,IAAI,CAAC,OAAO,CAAC,EAAE,GAAG,GAAG,IAAI,CAAC;IAC1B,KAAK,CAAC,OAAO,CAAC,EAAE,GAAG,GAAG,IAAI,CAAC;CAC5B"}¼/src/__tests__/index.test.tsÅÏimport { PassThrough } from "stream";
 import * as winston from "winston";
 import WinstonTransport from "winston-transport";
 import * as bunyan from "bunyan";
@@ -266,10 +247,29 @@ describe("Logger interface incompatibility", () => {
     };
   });
 });
-´/dist/index.d.ts.mapÅM{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,MAAM;IACrB,KAAK,CAAC,OAAO,CAAC,EAAE,GAAG,GAAG,IAAI,CAAC;IAC3B,IAAI,CAAC,OAAO,CAAC,EAAE,GAAG,GAAG,IAAI,CAAC;IAC1B,IAAI,CAAC,OAAO,CAAC,EAAE,GAAG,GAAG,IAAI,CAAC;IAC1B,KAAK,CAAC,OAAO,CAAC,EAAE,GAAG,GAAG,IAAI,CAAC;CAC5B"}®/dist/index.jsÄn"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-//# sourceMappingURL=index.js.map¼/src/__tests__/tsconfig.jsonÄq{
-  "extends": "../../../../tsconfig.test.base",
-  "include": ["**/*"],
-  "references": [{ "path": "../../" }]
+°/dist/index.d.tsÄ½export interface Logger {
+    debug(message?: any): void;
+    info(message?: any): void;
+    warn(message?: any): void;
+    error(message?: any): void;
+}
+//# sourceMappingURL=index.d.ts.map²/dist/index.js.mapÄf{"version":3,"file":"index.js","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":""}­/package.jsonÅ¼{
+  "name": "@apollo/utils.logger",
+  "version": "1.0.1",
+  "description": "Generic logger interface",
+  "main": "",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apollographql/apollo-utils.git",
+    "directory": "packages/logger/"
+  },
+  "keywords": [
+    "apollo",
+    "graphql",
+    "typescript",
+    "node"
+  ],
+  "author": "Apollo <packages@apollographql.com>",
+  "license": "MIT"
 }

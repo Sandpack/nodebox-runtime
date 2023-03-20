@@ -1,4 +1,22 @@
-Ñ®/LICENSE≈†Copyright OpenJS Foundation and other contributors <https://openjsf.org/>
+Ñ™/README.md≈æ# lodash.merge v4.6.2
+
+The [Lodash](https://lodash.com/) method `_.merge` exported as a [Node.js](https://nodejs.org/) module.
+
+## Installation
+
+Using npm:
+```bash
+$ {sudo -H} npm i -g npm
+$ npm i --save lodash.merge
+```
+
+In Node.js:
+```js
+var merge = require('lodash.merge');
+```
+
+See the [documentation](https://lodash.com/docs#merge) or [package source](https://github.com/lodash/lodash/blob/4.6.2-npm-packages/lodash.merge) for more details.
+®/LICENSE≈†Copyright OpenJS Foundation and other contributors <https://openjsf.org/>
 
 Based on Underscore.js, copyright Jeremy Ashkenas,
 DocumentCloud and Investigative Reporters & Editors <http://underscorejs.org/>
@@ -45,40 +63,6 @@ Files located in the node_modules and vendor directories are externally
 maintained libraries used by this software which have their own
 licenses; we recommend you read them, as their terms may differ from the
 terms above.
-≠/package.json≈C{
-  "name": "lodash.merge",
-  "version": "4.6.2",
-  "description": "The Lodash method `_.merge` exported as a module.",
-  "homepage": "https://lodash.com/",
-  "icon": "https://lodash.com/icon.svg",
-  "license": "MIT",
-  "keywords": "lodash-modularized, merge",
-  "author": "John-David Dalton <john.david.dalton@gmail.com>",
-  "contributors": [
-    "John-David Dalton <john.david.dalton@gmail.com>",
-    "Mathias Bynens <mathias@qiwi.be>"
-  ],
-  "repository": "lodash/lodash",
-  "scripts": { "test": "echo \"See https://travis-ci.org/lodash/lodash-cli for testing details.\"" }
-}
-™/README.md≈æ# lodash.merge v4.6.2
-
-The [Lodash](https://lodash.com/) method `_.merge` exported as a [Node.js](https://nodejs.org/) module.
-
-## Installation
-
-Using npm:
-```bash
-$ {sudo -H} npm i -g npm
-$ npm i --save lodash.merge
-```
-
-In Node.js:
-```js
-var merge = require('lodash.merge');
-```
-
-See the [documentation](https://lodash.com/docs#merge) or [package source](https://github.com/lodash/lodash/blob/4.6.2-npm-packages/lodash.merge) for more details.
 ©/index.js≈«”/**
  * Lodash (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -2056,3 +2040,19 @@ function stubFalse() {
 }
 
 module.exports = merge;
+≠/package.json≈C{
+  "name": "lodash.merge",
+  "version": "4.6.2",
+  "description": "The Lodash method `_.merge` exported as a module.",
+  "homepage": "https://lodash.com/",
+  "icon": "https://lodash.com/icon.svg",
+  "license": "MIT",
+  "keywords": "lodash-modularized, merge",
+  "author": "John-David Dalton <john.david.dalton@gmail.com>",
+  "contributors": [
+    "John-David Dalton <john.david.dalton@gmail.com>",
+    "Mathias Bynens <mathias@qiwi.be>"
+  ],
+  "repository": "lodash/lodash",
+  "scripts": { "test": "echo \"See https://travis-ci.org/lodash/lodash-cli for testing details.\"" }
+}

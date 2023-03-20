@@ -1,4 +1,25 @@
-Š´/dist/index.d.ts.mapÅM{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,MAAM;IACrB,KAAK,CAAC,OAAO,CAAC,EAAE,GAAG,GAAG,IAAI,CAAC;IAC3B,IAAI,CAAC,OAAO,CAAC,EAAE,GAAG,GAAG,IAAI,CAAC;IAC1B,IAAI,CAAC,OAAO,CAAC,EAAE,GAAG,GAAG,IAAI,CAAC;IAC1B,KAAK,CAAC,OAAO,CAAC,EAAE,GAAG,GAAG,IAAI,CAAC;CAC5B"}¼/src/__tests__/index.test.tsÅÏimport { PassThrough } from "stream";
+Š¨/LICENSEÅ]MIT License
+
+Copyright (c) 2022 Apollo Graph, Inc. (Formerly Meteor Development Group, Inc.)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+¼/src/__tests__/index.test.tsÅÏimport { PassThrough } from "stream";
 import * as winston from "winston";
 import WinstonTransport from "winston-transport";
 import * as bunyan from "bunyan";
@@ -182,13 +203,9 @@ describe("Logger interface incompatibility", () => {
   "include": ["**/*"],
   "references": [{ "path": "../../" }]
 }
-­/src/index.tsÄ’export interface Logger {
-  debug(message?: any): void;
-  info(message?: any): void;
-  warn(message?: any): void;
-  error(message?: any): void;
-}
-²/dist/index.js.mapÄf{"version":3,"file":"index.js","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":""}ª/README.mdÅè# Logger interface
+´/dist/index.d.ts.mapÅM{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,MAAM;IACrB,KAAK,CAAC,OAAO,CAAC,EAAE,GAAG,GAAG,IAAI,CAAC;IAC3B,IAAI,CAAC,OAAO,CAAC,EAAE,GAAG,GAAG,IAAI,CAAC;IAC1B,IAAI,CAAC,OAAO,CAAC,EAAE,GAAG,GAAG,IAAI,CAAC;IAC1B,KAAK,CAAC,OAAO,CAAC,EAAE,GAAG,GAAG,IAAI,CAAC;CAC5B"}®/dist/index.jsÄn"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+//# sourceMappingURL=index.js.mapª/README.mdÅè# Logger interface
 
 > ```
 > interface Logger {
@@ -224,7 +241,13 @@ const logger = loglevel.getLogger();
 ```
 const logger = winston.createLogger();
 ```
-­/package.jsonÅã{
+°/dist/index.d.tsÄ½export interface Logger {
+    debug(message?: any): void;
+    info(message?: any): void;
+    warn(message?: any): void;
+    error(message?: any): void;
+}
+//# sourceMappingURL=index.d.ts.map­/package.jsonÅã{
   "name": "@apollo/utils.logger",
   "version": "2.0.0",
   "description": "Generic logger interface",
@@ -247,33 +270,9 @@ const logger = winston.createLogger();
     "node": ">=14"
   }
 }
-°/dist/index.d.tsÄ½export interface Logger {
-    debug(message?: any): void;
-    info(message?: any): void;
-    warn(message?: any): void;
-    error(message?: any): void;
+²/dist/index.js.mapÄf{"version":3,"file":"index.js","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":""}­/src/index.tsÄ’export interface Logger {
+  debug(message?: any): void;
+  info(message?: any): void;
+  warn(message?: any): void;
+  error(message?: any): void;
 }
-//# sourceMappingURL=index.d.ts.map¨/LICENSEÅ]MIT License
-
-Copyright (c) 2022 Apollo Graph, Inc. (Formerly Meteor Development Group, Inc.)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-®/dist/index.jsÄn"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-//# sourceMappingURL=index.js.map

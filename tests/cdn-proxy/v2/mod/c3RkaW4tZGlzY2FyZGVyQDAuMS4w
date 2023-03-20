@@ -1,0 +1,193 @@
+Ö™/readme.md≈∞# stdin-discarder
+
+> Discard stdin input except for Ctrl+C
+
+This can be useful to prevent stdin input from interfering with stdout output. For example, you are showing a spinner, and if the user presses a key, it would interfere with the spinner, causing visual glitches. This package prevents such problems.
+
+This has no effect on Windows as there is no good way to implement discarding stdin properly there.
+
+This package is used by [`ora`](https://github.com/sindresorhus/ora) for its [`discardStdin`](https://github.com/sindresorhus/ora#discardstdin) option.
+
+**Work in progress**
+
+## Install
+
+```sh
+npm install stdin-discarder
+```
+
+## Usage
+
+```js
+import stdinDiscarder from 'stdin-discarder';
+
+stdinDiscarder.start();
+```
+
+## API
+
+### stdinDiscarder.start()
+
+Start discarding stdin.
+
+### stdinDiscarder.stop()
+
+Stop discarding stdin.
+
+## Related
+
+- [hook-std](https://github.com/sindresorhus/hook-std) - Hook and modify stdout and stderr
+®/license≈]MIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+´/index.d.tsƒ¶declare const stdinDiscarder: {
+	/**
+	Start discarding stdin.
+	*/
+	start(): void;
+
+	/**
+	Stop discarding stdin.
+	*/
+	stop(): void;
+};
+
+export default stdinDiscarder;
+©/index.js≈4import process from 'node:process';
+import readline from 'node:readline';
+import {BufferListStream} from 'bl';
+
+const ASCII_ETX_CODE = 0x03; // Ctrl+C emits this code
+
+class StdinDiscarder {
+	#requests = 0;
+	#mutedStream = new BufferListStream();
+	#ourEmit;
+	#rl;
+
+	constructor() {
+		this.#mutedStream.pipe(process.stdout);
+
+		const self = this; // eslint-disable-line unicorn/no-this-assignment
+		this.#ourEmit = function (event, data, ...arguments_) {
+			const {stdin} = process;
+			if (self.#requests > 0 || stdin.emit === self.#ourEmit) {
+				if (event === 'keypress') { // Fixes readline behavior
+					return;
+				}
+
+				if (event === 'data' && data.includes(ASCII_ETX_CODE)) {
+					process.emit('SIGINT');
+				}
+
+				Reflect.apply(self.#ourEmit, this, [event, data, ...arguments_]);
+			} else {
+				Reflect.apply(process.stdin.emit, this, [event, data, ...arguments_]);
+			}
+		};
+	}
+
+	start() {
+		this.#requests++;
+
+		if (this.#requests === 1) {
+			this._realStart();
+		}
+	}
+
+	stop() {
+		if (this.#requests <= 0) {
+			throw new Error('`stop` called more times than `start`');
+		}
+
+		this.#requests--;
+
+		if (this.#requests === 0) {
+			this._realStop();
+		}
+	}
+
+	// TODO: Use private methods when targeting Node.js 14.
+	_realStart() {
+		// No known way to make it work reliably on Windows
+		if (process.platform === 'win32') {
+			return;
+		}
+
+		this.#rl = readline.createInterface({
+			input: process.stdin,
+			output: this.#mutedStream,
+		});
+
+		this.#rl.on('SIGINT', () => {
+			if (process.listenerCount('SIGINT') === 0) {
+				process.emit('SIGINT');
+			} else {
+				this.#rl.close();
+				process.kill(process.pid, 'SIGINT');
+			}
+		});
+	}
+
+	_realStop() {
+		if (process.platform === 'win32') {
+			return;
+		}
+
+		this.#rl.close();
+		this.#rl = undefined;
+	}
+}
+
+const stdinDiscarder = new StdinDiscarder();
+
+export default stdinDiscarder;
+≠/package.json≈-{
+	"name": "stdin-discarder",
+	"version": "0.1.0",
+	"description": "Discard stdin input except for Ctrl+C",
+	"license": "MIT",
+	"repository": "sindresorhus/stdin-discarder",
+	"funding": "https://github.com/sponsors/sindresorhus",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "https://sindresorhus.com"
+	},
+	"type": "module",
+	"exports": "./index.js",
+	"types": "./index.d.ts",
+	"engines": {
+		"node": "^12.20.0 || ^14.13.1 || >=16.0.0"
+	},
+	"scripts": {
+		"test": "xo && ava && tsd"
+	},
+	"files": [
+		"index.js",
+		"index.d.ts"
+	],
+	"keywords": [
+		"stdin",
+		"process",
+		"standard",
+		"discard",
+		"ignore",
+		"input"
+	],
+	"dependencies": {
+		"bl": "^5.0.0"
+	},
+	"devDependencies": {
+		"ava": "^4.3.0",
+		"hook-std": "^3.0.0",
+		"tsd": "^0.21.0",
+		"xo": "^0.50.0"
+	}
+}

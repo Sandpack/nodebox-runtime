@@ -1,4 +1,50 @@
-„­/package.jsonÅÈ{
+„©/index.jsÅ'use strict';
+const callsites = require('callsites');
+
+module.exports = filepath => {
+	const stacks = callsites();
+
+	if (!filepath) {
+		return stacks[2].getFileName();
+	}
+
+	let seenVal = false;
+
+	// Skip the first stack as it's this function
+	stacks.shift();
+
+	for (const stack of stacks) {
+		const parentFilepath = stack.getFileName();
+
+		if (typeof parentFilepath !== 'string') {
+			continue;
+		}
+
+		if (parentFilepath === filepath) {
+			seenVal = true;
+			continue;
+		}
+
+		// Skip native modules
+		if (parentFilepath === 'module.js') {
+			continue;
+		}
+
+		if (seenVal && parentFilepath !== filepath) {
+			return parentFilepath;
+		}
+	}
+};
+¨/licenseÅUMIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+­/package.jsonÅÈ{
 	"name": "parent-module",
 	"version": "1.0.1",
 	"description": "Get the path of the parent module",
@@ -44,43 +90,6 @@
 		"xo": "^0.24.0"
 	}
 }
-©/index.jsÅ'use strict';
-const callsites = require('callsites');
-
-module.exports = filepath => {
-	const stacks = callsites();
-
-	if (!filepath) {
-		return stacks[2].getFileName();
-	}
-
-	let seenVal = false;
-
-	// Skip the first stack as it's this function
-	stacks.shift();
-
-	for (const stack of stacks) {
-		const parentFilepath = stack.getFileName();
-
-		if (typeof parentFilepath !== 'string') {
-			continue;
-		}
-
-		if (parentFilepath === filepath) {
-			seenVal = true;
-			continue;
-		}
-
-		// Skip native modules
-		if (parentFilepath === 'module.js') {
-			continue;
-		}
-
-		if (seenVal && parentFilepath !== filepath) {
-			return parentFilepath;
-		}
-	}
-};
 ª/readme.mdÅ´# parent-module [![Build Status](https://travis-ci.org/sindresorhus/parent-module.svg?branch=master)](https://travis-ci.org/sindresorhus/parent-module)
 
 > Get the path of the parent module
@@ -148,12 +157,3 @@ console.log(readPkgUp.sync({cwd: path.dirname(parentModule())}).pkg);
 ## License
 
 MIT Â© [Sindre Sorhus](https://sindresorhus.com)
-¨/licenseÅUMIT License
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

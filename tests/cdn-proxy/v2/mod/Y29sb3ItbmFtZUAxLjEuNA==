@@ -1,4 +1,43 @@
-Ñ©/index.js≈	'use strict'
+Ñ™/README.md≈ÄA JSON with color names and its values. Based on http://dev.w3.org/csswg/css-color/#named-colors.
+
+[![NPM](https://nodei.co/npm/color-name.png?mini=true)](https://nodei.co/npm/color-name/)
+
+
+```js
+var colors = require('color-name');
+colors.red //[255,0,0]
+```
+
+<a href="LICENSE"><img src="https://upload.wikimedia.org/wikipedia/commons/0/0c/MIT_logo.svg" width="120"/></a>
+≠/package.json≈_{
+  "name": "color-name",
+  "version": "1.1.4",
+  "description": "A list of color names and its values",
+  "main": "index.js",
+  "files": [
+    "index.js"
+  ],
+  "scripts": {
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:colorjs/color-name.git"
+  },
+  "keywords": [
+    "color-name",
+    "color",
+    "color-keyword",
+    "keyword"
+  ],
+  "author": "DY <dfcreative@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/colorjs/color-name/issues"
+  },
+  "homepage": "https://github.com/colorjs/color-name"
+}
+©/index.js≈	'use strict'
 
 module.exports = {
 	"aliceblue": [240, 248, 255],
@@ -150,45 +189,6 @@ module.exports = {
 	"yellow": [255, 255, 0],
 	"yellowgreen": [154, 205, 50]
 };
-™/README.md≈ÄA JSON with color names and its values. Based on http://dev.w3.org/csswg/css-color/#named-colors.
-
-[![NPM](https://nodei.co/npm/color-name.png?mini=true)](https://nodei.co/npm/color-name/)
-
-
-```js
-var colors = require('color-name');
-colors.red //[255,0,0]
-```
-
-<a href="LICENSE"><img src="https://upload.wikimedia.org/wikipedia/commons/0/0c/MIT_logo.svg" width="120"/></a>
-≠/package.json≈_{
-  "name": "color-name",
-  "version": "1.1.4",
-  "description": "A list of color names and its values",
-  "main": "index.js",
-  "files": [
-    "index.js"
-  ],
-  "scripts": {
-    "test": "node test.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:colorjs/color-name.git"
-  },
-  "keywords": [
-    "color-name",
-    "color",
-    "color-keyword",
-    "keyword"
-  ],
-  "author": "DY <dfcreative@gmail.com>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/colorjs/color-name/issues"
-  },
-  "homepage": "https://github.com/colorjs/color-name"
-}
 ®/LICENSE≈=The MIT License (MIT)
 Copyright (c) 2015 Dmitry Ivanov
 

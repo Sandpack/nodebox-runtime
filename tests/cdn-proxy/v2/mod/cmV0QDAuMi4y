@@ -1,38 +1,57 @@
-ˆ­/package.jsonÅœ{
-  "name": "ret",
-  "description": "Tokenizes a string that represents a regular expression.",
-  "keywords": [
-    "regex",
-    "regexp",
-    "regular expression",
-    "parser",
-    "tokenizer"
-  ],
-  "version": "0.2.2",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/fent/ret.js.git"
-  },
-  "author": "fent (https://github.com/fent)",
-  "main": "./lib/index.js",
-  "files": [
-    "lib"
-  ],
-  "scripts": {
-    "test": "istanbul cover vows -- --spec test/*-test.js"
-  },
-  "directories": {
-    "lib": "./lib"
-  },
-  "devDependencies": {
-    "istanbul": "^0.4.5",
-    "vows": "^0.8.1"
-  },
-  "engines": {
-    "node": ">=4"
-  },
-  "license": "MIT"
-}
+ˆ¬/lib/sets.jsÅconst types = require('./types');
+
+const INTS = () => [{ type: types.RANGE , from: 48, to: 57 }];
+
+const WORDS = () => {
+  return [
+    { type: types.CHAR, value: 95 },
+    { type: types.RANGE, from: 97, to: 122 },
+    { type: types.RANGE, from: 65, to: 90 }
+  ].concat(INTS());
+};
+
+const WHITESPACE = () => {
+  return [
+    { type: types.CHAR, value: 9 },
+    { type: types.CHAR, value: 10 },
+    { type: types.CHAR, value: 11 },
+    { type: types.CHAR, value: 12 },
+    { type: types.CHAR, value: 13 },
+    { type: types.CHAR, value: 32 },
+    { type: types.CHAR, value: 160 },
+    { type: types.CHAR, value: 5760 },
+    { type: types.RANGE, from: 8192, to: 8202 },
+    { type: types.CHAR, value: 8232 },
+    { type: types.CHAR, value: 8233 },
+    { type: types.CHAR, value: 8239 },
+    { type: types.CHAR, value: 8287 },
+    { type: types.CHAR, value: 12288 },
+    { type: types.CHAR, value: 65279 }
+  ];
+};
+
+const NOTANYCHAR = () => {
+  return [
+    { type: types.CHAR, value: 10 },
+    { type: types.CHAR, value: 13 },
+    { type: types.CHAR, value: 8232 },
+    { type: types.CHAR, value: 8233 },
+  ];
+};
+
+// Predefined class objects.
+exports.words = () => ({ type: types.SET, set: WORDS(), not: false });
+exports.notWords = () => ({ type: types.SET, set: WORDS(), not: true });
+exports.ints = () => ({ type: types.SET, set: INTS(), not: false });
+exports.notInts = () => ({ type: types.SET, set: INTS(), not: true });
+exports.whitespace = () => ({ type: types.SET, set: WHITESPACE(), not: false });
+exports.notWhitespace = () => ({ type: types.SET, set: WHITESPACE(), not: true });
+exports.anyChar = () => ({ type: types.SET, set: NOTANYCHAR(), not: true });
+±/lib/positions.jsÅ)const types = require('./types');
+exports.wordBoundary = () => ({ type: types.POSITION, value: 'b' });
+exports.nonWordBoundary = () => ({ type: types.POSITION, value: 'B' });
+exports.begin = () => ({ type: types.POSITION, value: '^' });
+exports.end = () => ({ type: types.POSITION, value: '$' });
 ¬/lib/util.jsÅ	„const types = require('./types');
 const sets  = require('./sets');
 
@@ -141,6 +160,72 @@ exports.tokenizeClass = (str, regexpStr) => {
 exports.error = (regexp, msg) => {
   throw new SyntaxError('Invalid regular expression: /' + regexp + '/: ' + msg);
 };
+­/lib/types.jsÄ¦module.exports = {
+  ROOT       : 0,
+  GROUP      : 1,
+  POSITION   : 2,
+  SET        : 3,
+  RANGE      : 4,
+  REPETITION : 5,
+  REFERENCE  : 6,
+  CHAR       : 7,
+};
+¨/LICENSEÅ)MIT License
+
+Copyright (C) 2011 by fent
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE. 
+­/package.jsonÅœ{
+  "name": "ret",
+  "description": "Tokenizes a string that represents a regular expression.",
+  "keywords": [
+    "regex",
+    "regexp",
+    "regular expression",
+    "parser",
+    "tokenizer"
+  ],
+  "version": "0.2.2",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/fent/ret.js.git"
+  },
+  "author": "fent (https://github.com/fent)",
+  "main": "./lib/index.js",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "test": "istanbul cover vows -- --spec test/*-test.js"
+  },
+  "directories": {
+    "lib": "./lib"
+  },
+  "devDependencies": {
+    "istanbul": "^0.4.5",
+    "vows": "^0.8.1"
+  },
+  "engines": {
+    "node": ">=4"
+  },
+  "license": "MIT"
+}
 ­/lib/index.jsÅrconst util      = require('./util');
 const types     = require('./types');
 const sets      = require('./sets');
@@ -423,86 +508,6 @@ module.exports = (regexpStr) => {
 };
 
 module.exports.types = types;
-­/lib/types.jsÄ¦module.exports = {
-  ROOT       : 0,
-  GROUP      : 1,
-  POSITION   : 2,
-  SET        : 3,
-  RANGE      : 4,
-  REPETITION : 5,
-  REFERENCE  : 6,
-  CHAR       : 7,
-};
-¨/LICENSEÅ)MIT License
-
-Copyright (C) 2011 by fent
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE. 
-¬/lib/sets.jsÅconst types = require('./types');
-
-const INTS = () => [{ type: types.RANGE , from: 48, to: 57 }];
-
-const WORDS = () => {
-  return [
-    { type: types.CHAR, value: 95 },
-    { type: types.RANGE, from: 97, to: 122 },
-    { type: types.RANGE, from: 65, to: 90 }
-  ].concat(INTS());
-};
-
-const WHITESPACE = () => {
-  return [
-    { type: types.CHAR, value: 9 },
-    { type: types.CHAR, value: 10 },
-    { type: types.CHAR, value: 11 },
-    { type: types.CHAR, value: 12 },
-    { type: types.CHAR, value: 13 },
-    { type: types.CHAR, value: 32 },
-    { type: types.CHAR, value: 160 },
-    { type: types.CHAR, value: 5760 },
-    { type: types.RANGE, from: 8192, to: 8202 },
-    { type: types.CHAR, value: 8232 },
-    { type: types.CHAR, value: 8233 },
-    { type: types.CHAR, value: 8239 },
-    { type: types.CHAR, value: 8287 },
-    { type: types.CHAR, value: 12288 },
-    { type: types.CHAR, value: 65279 }
-  ];
-};
-
-const NOTANYCHAR = () => {
-  return [
-    { type: types.CHAR, value: 10 },
-    { type: types.CHAR, value: 13 },
-    { type: types.CHAR, value: 8232 },
-    { type: types.CHAR, value: 8233 },
-  ];
-};
-
-// Predefined class objects.
-exports.words = () => ({ type: types.SET, set: WORDS(), not: false });
-exports.notWords = () => ({ type: types.SET, set: WORDS(), not: true });
-exports.ints = () => ({ type: types.SET, set: INTS(), not: false });
-exports.notInts = () => ({ type: types.SET, set: INTS(), not: true });
-exports.whitespace = () => ({ type: types.SET, set: WHITESPACE(), not: false });
-exports.notWhitespace = () => ({ type: types.SET, set: WHITESPACE(), not: true });
-exports.anyChar = () => ({ type: types.SET, set: NOTANYCHAR(), not: true });
 ª/README.mdÅƒ# Regular Expression Tokenizer
 
 Tokenizes strings that represent a regular expressions.
@@ -682,8 +687,3 @@ Tests are written with [vows](http://vowsjs.org/)
 ```bash
 npm test
 ```
-±/lib/positions.jsÅ)const types = require('./types');
-exports.wordBoundary = () => ({ type: types.POSITION, value: 'b' });
-exports.nonWordBoundary = () => ({ type: types.POSITION, value: 'B' });
-exports.begin = () => ({ type: types.POSITION, value: '^' });
-exports.end = () => ({ type: types.POSITION, value: '$' });

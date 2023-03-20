@@ -1,16 +1,4 @@
-â¥/.github/FUNDING.yml≈H# These are supported funding model platforms
-
-github: [ljharb]
-patreon: # Replace with a single Patreon username
-open_collective: # Replace with a single Open Collective username
-ko_fi: # Replace with a single Ko-fi username
-tidelift: npm/get-intrinsic
-community_bridge: # Replace with a single Community Bridge project-name e.g., cloud-foundry
-liberapay: # Replace with a single Liberapay username
-issuehunt: # Replace with a single IssueHunt username
-otechie: # Replace with a single Otechie username
-custom: # Replace with up to 4 custom sponsorship URLs e.g., ['link1', 'link2']
-™/.eslintrc≈[{
+â™/.eslintrc≈[{
 	"root": true,
 
 	"extends": "@ljharb",
@@ -48,15 +36,111 @@ custom: # Replace with up to 4 custom sponsorship URLs e.g., ['link1', 'link2']
 		},
 	],
 }
-ß/.nycrcƒã{
-	"all": true,
-	"check-coverage": false,
-	"reporter": ["text-summary", "text", "html", "json"],
-	"exclude": [
-		"coverage",
-		"test"
-	]
-}
+¥/.github/FUNDING.yml≈H# These are supported funding model platforms
+
+github: [ljharb]
+patreon: # Replace with a single Patreon username
+open_collective: # Replace with a single Open Collective username
+ko_fi: # Replace with a single Ko-fi username
+tidelift: npm/get-intrinsic
+community_bridge: # Replace with a single Community Bridge project-name e.g., cloud-foundry
+liberapay: # Replace with a single Liberapay username
+issuehunt: # Replace with a single IssueHunt username
+otechie: # Replace with a single Otechie username
+custom: # Replace with up to 4 custom sponsorship URLs e.g., ['link1', 'link2']
+™/README.md≈
+Á# get-intrinsic <sup>[![Version Badge][npm-version-svg]][package-url]</sup>
+
+[![github actions][actions-image]][actions-url]
+[![coverage][codecov-image]][codecov-url]
+[![dependency status][deps-svg]][deps-url]
+[![dev dependency status][dev-deps-svg]][dev-deps-url]
+[![License][license-image]][license-url]
+[![Downloads][downloads-image]][downloads-url]
+
+[![npm badge][npm-badge-png]][package-url]
+
+Get and robustly cache all JS language-level intrinsics at first require time.
+
+See the syntax described [in the JS spec](https://tc39.es/ecma262/#sec-well-known-intrinsic-objects) for reference.
+
+## Example
+
+```js
+var GetIntrinsic = require('get-intrinsic');
+var assert = require('assert');
+
+// static methods
+assert.equal(GetIntrinsic('%Math.pow%'), Math.pow);
+assert.equal(Math.pow(2, 3), 8);
+assert.equal(GetIntrinsic('%Math.pow%')(2, 3), 8);
+delete Math.pow;
+assert.equal(GetIntrinsic('%Math.pow%')(2, 3), 8);
+
+// instance methods
+var arr = [1];
+assert.equal(GetIntrinsic('%Array.prototype.push%'), Array.prototype.push);
+assert.deepEqual(arr, [1]);
+
+arr.push(2);
+assert.deepEqual(arr, [1, 2]);
+
+GetIntrinsic('%Array.prototype.push%').call(arr, 3);
+assert.deepEqual(arr, [1, 2, 3]);
+
+delete Array.prototype.push;
+GetIntrinsic('%Array.prototype.push%').call(arr, 4);
+assert.deepEqual(arr, [1, 2, 3, 4]);
+
+// missing features
+delete JSON.parse; // to simulate a real intrinsic that is missing in the environment
+assert.throws(() => GetIntrinsic('%JSON.parse%'));
+assert.equal(undefined, GetIntrinsic('%JSON.parse%', true));
+```
+
+## Tests
+Simply clone the repo, `npm install`, and run `npm test`
+
+## Security
+
+Please email [@ljharb](https://github.com/ljharb) or see https://tidelift.com/security if you have a potential security vulnerability to report.
+
+[package-url]: https://npmjs.org/package/get-intrinsic
+[npm-version-svg]: https://versionbadg.es/ljharb/get-intrinsic.svg
+[deps-svg]: https://david-dm.org/ljharb/get-intrinsic.svg
+[deps-url]: https://david-dm.org/ljharb/get-intrinsic
+[dev-deps-svg]: https://david-dm.org/ljharb/get-intrinsic/dev-status.svg
+[dev-deps-url]: https://david-dm.org/ljharb/get-intrinsic#info=devDependencies
+[npm-badge-png]: https://nodei.co/npm/get-intrinsic.png?downloads=true&stars=true
+[license-image]: https://img.shields.io/npm/l/get-intrinsic.svg
+[license-url]: LICENSE
+[downloads-image]: https://img.shields.io/npm/dm/get-intrinsic.svg
+[downloads-url]: https://npm-stat.com/charts.html?package=get-intrinsic
+[codecov-image]: https://codecov.io/gh/ljharb/get-intrinsic/branch/main/graphs/badge.svg
+[codecov-url]: https://app.codecov.io/gh/ljharb/get-intrinsic/
+[actions-image]: https://img.shields.io/endpoint?url=https://github-actions-badge-u3jn4tfpocch.runkit.sh/ljharb/get-intrinsic
+[actions-url]: https://github.com/ljharb/get-intrinsic/actions
+®/LICENSE≈/MIT License
+
+Copyright (c) 2020 Jordan Harband
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ≠/CHANGELOG.md≈$# Changelog
 
 All notable changes to this project will be documented in this file.
@@ -167,6 +251,98 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [meta] add "funding"; create `FUNDING.yml` [`c2bbdde`](https://github.com/ljharb/get-intrinsic/commit/c2bbddeba73a875be61484ee4680b129a6d4e0a1)
 - [Tests] add `npm run lint` [`0a84b98`](https://github.com/ljharb/get-intrinsic/commit/0a84b98b22b7cf7a748666f705b0003a493c35fd)
 - Only apps should have lockfiles [`9586c75`](https://github.com/ljharb/get-intrinsic/commit/9586c75866c1ee678e4d5d4dbbdef6997e511b05)
+≠/package.json≈	-{
+	"name": "get-intrinsic",
+	"version": "1.2.0",
+	"description": "Get and robustly cache all JS language-level intrinsics at first require time",
+	"main": "index.js",
+	"exports": {
+		".": [
+			{
+				"default": "./index.js"
+			},
+			"./index.js"
+		],
+		"./package.json": "./package.json"
+	},
+	"scripts": {
+		"prepack": "npmignore --auto --commentLines=autogenerated",
+		"prepublish": "not-in-publish || npm run prepublishOnly",
+		"prepublishOnly": "safe-publish-latest",
+		"prelint": "evalmd README.md",
+		"lint": "eslint --ext=.js,.mjs .",
+		"pretest": "npm run lint",
+		"tests-only": "nyc tape 'test/**/*.js'",
+		"test": "npm run tests-only",
+		"posttest": "aud --production",
+		"version": "auto-changelog && git add CHANGELOG.md",
+		"postversion": "auto-changelog && git add CHANGELOG.md && git commit --no-edit --amend && git tag -f \"v$(node -e \"console.log(require('./package.json').version)\")\""
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ljharb/get-intrinsic.git"
+	},
+	"keywords": [
+		"javascript",
+		"ecmascript",
+		"es",
+		"js",
+		"intrinsic",
+		"getintrinsic",
+		"es-abstract"
+	],
+	"author": "Jordan Harband <ljharb@gmail.com>",
+	"funding": {
+		"url": "https://github.com/sponsors/ljharb"
+	},
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/ljharb/get-intrinsic/issues"
+	},
+	"homepage": "https://github.com/ljharb/get-intrinsic#readme",
+	"devDependencies": {
+		"@ljharb/eslint-config": "^21.0.1",
+		"aud": "^2.0.2",
+		"auto-changelog": "^2.4.0",
+		"call-bind": "^1.0.2",
+		"es-abstract": "^1.21.1",
+		"es-value-fixtures": "^1.4.2",
+		"eslint": "=8.8.0",
+		"evalmd": "^0.0.19",
+		"for-each": "^0.3.3",
+		"gopd": "^1.0.1",
+		"make-async-function": "^1.0.0",
+		"make-async-generator-function": "^1.0.0",
+		"make-generator-function": "^2.0.0",
+		"mock-property": "^1.0.0",
+		"npmignore": "^0.3.0",
+		"nyc": "^10.3.2",
+		"object-inspect": "^1.12.3",
+		"safe-publish-latest": "^2.0.0",
+		"tape": "^5.6.3"
+	},
+	"auto-changelog": {
+		"output": "CHANGELOG.md",
+		"template": "keepachangelog",
+		"unreleased": false,
+		"commitLimit": false,
+		"backfillLimit": false,
+		"hideCredit": true
+	},
+	"dependencies": {
+		"function-bind": "^1.1.1",
+		"has": "^1.0.3",
+		"has-symbols": "^1.0.3"
+	},
+	"testling": {
+		"files": "test/GetIntrinsic.js"
+	},
+	"publishConfig": {
+		"ignore": [
+			".github/workflows"
+		]
+	}
+}
 ©/index.js≈3Y'use strict';
 
 var undefined;
@@ -511,99 +687,15 @@ module.exports = function GetIntrinsic(name, allowMissing) {
 	}
 	return value;
 };
-®/LICENSE≈/MIT License
-
-Copyright (c) 2020 Jordan Harband
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-™/README.md≈
-Á# get-intrinsic <sup>[![Version Badge][npm-version-svg]][package-url]</sup>
-
-[![github actions][actions-image]][actions-url]
-[![coverage][codecov-image]][codecov-url]
-[![dependency status][deps-svg]][deps-url]
-[![dev dependency status][dev-deps-svg]][dev-deps-url]
-[![License][license-image]][license-url]
-[![Downloads][downloads-image]][downloads-url]
-
-[![npm badge][npm-badge-png]][package-url]
-
-Get and robustly cache all JS language-level intrinsics at first require time.
-
-See the syntax described [in the JS spec](https://tc39.es/ecma262/#sec-well-known-intrinsic-objects) for reference.
-
-## Example
-
-```js
-var GetIntrinsic = require('get-intrinsic');
-var assert = require('assert');
-
-// static methods
-assert.equal(GetIntrinsic('%Math.pow%'), Math.pow);
-assert.equal(Math.pow(2, 3), 8);
-assert.equal(GetIntrinsic('%Math.pow%')(2, 3), 8);
-delete Math.pow;
-assert.equal(GetIntrinsic('%Math.pow%')(2, 3), 8);
-
-// instance methods
-var arr = [1];
-assert.equal(GetIntrinsic('%Array.prototype.push%'), Array.prototype.push);
-assert.deepEqual(arr, [1]);
-
-arr.push(2);
-assert.deepEqual(arr, [1, 2]);
-
-GetIntrinsic('%Array.prototype.push%').call(arr, 3);
-assert.deepEqual(arr, [1, 2, 3]);
-
-delete Array.prototype.push;
-GetIntrinsic('%Array.prototype.push%').call(arr, 4);
-assert.deepEqual(arr, [1, 2, 3, 4]);
-
-// missing features
-delete JSON.parse; // to simulate a real intrinsic that is missing in the environment
-assert.throws(() => GetIntrinsic('%JSON.parse%'));
-assert.equal(undefined, GetIntrinsic('%JSON.parse%', true));
-```
-
-## Tests
-Simply clone the repo, `npm install`, and run `npm test`
-
-## Security
-
-Please email [@ljharb](https://github.com/ljharb) or see https://tidelift.com/security if you have a potential security vulnerability to report.
-
-[package-url]: https://npmjs.org/package/get-intrinsic
-[npm-version-svg]: https://versionbadg.es/ljharb/get-intrinsic.svg
-[deps-svg]: https://david-dm.org/ljharb/get-intrinsic.svg
-[deps-url]: https://david-dm.org/ljharb/get-intrinsic
-[dev-deps-svg]: https://david-dm.org/ljharb/get-intrinsic/dev-status.svg
-[dev-deps-url]: https://david-dm.org/ljharb/get-intrinsic#info=devDependencies
-[npm-badge-png]: https://nodei.co/npm/get-intrinsic.png?downloads=true&stars=true
-[license-image]: https://img.shields.io/npm/l/get-intrinsic.svg
-[license-url]: LICENSE
-[downloads-image]: https://img.shields.io/npm/dm/get-intrinsic.svg
-[downloads-url]: https://npm-stat.com/charts.html?package=get-intrinsic
-[codecov-image]: https://codecov.io/gh/ljharb/get-intrinsic/branch/main/graphs/badge.svg
-[codecov-url]: https://app.codecov.io/gh/ljharb/get-intrinsic/
-[actions-image]: https://img.shields.io/endpoint?url=https://github-actions-badge-u3jn4tfpocch.runkit.sh/ljharb/get-intrinsic
-[actions-url]: https://github.com/ljharb/get-intrinsic/actions
+ß/.nycrcƒã{
+	"all": true,
+	"check-coverage": false,
+	"reporter": ["text-summary", "text", "html", "json"],
+	"exclude": [
+		"coverage",
+		"test"
+	]
+}
 µ/test/GetIntrinsic.js≈"?'use strict';
 
 var GetIntrinsic = require('../');
@@ -878,95 +970,3 @@ test('allowMissing', { skip: asyncGenFns.length > 0 }, function (t) {
 
 	t.end();
 });
-≠/package.json≈	-{
-	"name": "get-intrinsic",
-	"version": "1.2.0",
-	"description": "Get and robustly cache all JS language-level intrinsics at first require time",
-	"main": "index.js",
-	"exports": {
-		".": [
-			{
-				"default": "./index.js"
-			},
-			"./index.js"
-		],
-		"./package.json": "./package.json"
-	},
-	"scripts": {
-		"prepack": "npmignore --auto --commentLines=autogenerated",
-		"prepublish": "not-in-publish || npm run prepublishOnly",
-		"prepublishOnly": "safe-publish-latest",
-		"prelint": "evalmd README.md",
-		"lint": "eslint --ext=.js,.mjs .",
-		"pretest": "npm run lint",
-		"tests-only": "nyc tape 'test/**/*.js'",
-		"test": "npm run tests-only",
-		"posttest": "aud --production",
-		"version": "auto-changelog && git add CHANGELOG.md",
-		"postversion": "auto-changelog && git add CHANGELOG.md && git commit --no-edit --amend && git tag -f \"v$(node -e \"console.log(require('./package.json').version)\")\""
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/ljharb/get-intrinsic.git"
-	},
-	"keywords": [
-		"javascript",
-		"ecmascript",
-		"es",
-		"js",
-		"intrinsic",
-		"getintrinsic",
-		"es-abstract"
-	],
-	"author": "Jordan Harband <ljharb@gmail.com>",
-	"funding": {
-		"url": "https://github.com/sponsors/ljharb"
-	},
-	"license": "MIT",
-	"bugs": {
-		"url": "https://github.com/ljharb/get-intrinsic/issues"
-	},
-	"homepage": "https://github.com/ljharb/get-intrinsic#readme",
-	"devDependencies": {
-		"@ljharb/eslint-config": "^21.0.1",
-		"aud": "^2.0.2",
-		"auto-changelog": "^2.4.0",
-		"call-bind": "^1.0.2",
-		"es-abstract": "^1.21.1",
-		"es-value-fixtures": "^1.4.2",
-		"eslint": "=8.8.0",
-		"evalmd": "^0.0.19",
-		"for-each": "^0.3.3",
-		"gopd": "^1.0.1",
-		"make-async-function": "^1.0.0",
-		"make-async-generator-function": "^1.0.0",
-		"make-generator-function": "^2.0.0",
-		"mock-property": "^1.0.0",
-		"npmignore": "^0.3.0",
-		"nyc": "^10.3.2",
-		"object-inspect": "^1.12.3",
-		"safe-publish-latest": "^2.0.0",
-		"tape": "^5.6.3"
-	},
-	"auto-changelog": {
-		"output": "CHANGELOG.md",
-		"template": "keepachangelog",
-		"unreleased": false,
-		"commitLimit": false,
-		"backfillLimit": false,
-		"hideCredit": true
-	},
-	"dependencies": {
-		"function-bind": "^1.1.1",
-		"has": "^1.0.3",
-		"has-symbols": "^1.0.3"
-	},
-	"testling": {
-		"files": "test/GetIntrinsic.js"
-	},
-	"publishConfig": {
-		"ignore": [
-			".github/workflows"
-		]
-	}
-}

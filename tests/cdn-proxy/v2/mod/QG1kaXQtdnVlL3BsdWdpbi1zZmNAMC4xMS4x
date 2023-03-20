@@ -1,25 +1,4 @@
-Ü®/LICENSE≈IThe MIT License (MIT)
-
-Copyright (c) 2022-present, mdit-vue Contributors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-≠/package.json≈O{
+Ü≠/package.json≈O{
   "name": "@mdit-vue/plugin-sfc",
   "version": "0.11.1",
   "description": "A markdown-it plugin to help transforming markdown tu vue sfc",
@@ -67,211 +46,6 @@ THE SOFTWARE.
   },
   "gitHead": "98828479d07c7bc52d178a00cdb92c166eff09ee"
 }
-Ø/dist/index.cjs≈	}'use strict';
-
-Object.defineProperty(exports, '__esModule', { value: true });
-
-const TAG_NAME_SCRIPT = "script";
-const TAG_NAME_STYLE = "style";
-const TAG_NAME_TEMPLATE = "template";
-
-const SCRIPT_SETUP_TAG_OPEN_REGEXP = /^<script\s+.*?\bsetup\b.*?>$/is;
-const createSfcRegexp = ({
-  customBlocks
-}) => {
-  const sfcTags = Array.from(
-    /* @__PURE__ */ new Set([TAG_NAME_SCRIPT, TAG_NAME_STYLE, ...customBlocks])
-  ).join("|");
-  return new RegExp(
-    `^\\s*(?<content>(?<tagOpen><(?<type>${sfcTags})\\s?.*?>)(?<contentStripped>.*)(?<tagClose><\\/\\k<type>\\s*>))\\s*$`,
-    "is"
-  );
-};
-
-const sfcPlugin = (md, { customBlocks = [] } = {}) => {
-  const sfcRegexp = createSfcRegexp({ customBlocks });
-  const render = md.render.bind(md);
-  md.render = (src, env = {}) => {
-    env.sfcBlocks = {
-      template: null,
-      script: null,
-      scriptSetup: null,
-      scripts: [],
-      styles: [],
-      customBlocks: []
-    };
-    const rendered = render(src, env);
-    env.sfcBlocks.template = {
-      type: TAG_NAME_TEMPLATE,
-      content: `<${TAG_NAME_TEMPLATE}>${rendered}</${TAG_NAME_TEMPLATE}>`,
-      contentStripped: rendered,
-      tagOpen: `<${TAG_NAME_TEMPLATE}>`,
-      tagClose: `</${TAG_NAME_TEMPLATE}>`
-    };
-    return rendered;
-  };
-  const htmlBlockRule = md.renderer.rules.html_block;
-  md.renderer.rules.html_block = (tokens, idx, options, env, self) => {
-    if (!env.sfcBlocks) {
-      return htmlBlockRule(tokens, idx, options, env, self);
-    }
-    const token = tokens[idx];
-    const content = token.content;
-    const match = content.match(sfcRegexp);
-    if (!match) {
-      return htmlBlockRule(tokens, idx, options, env, self);
-    }
-    const sfcBlock = match.groups;
-    if (sfcBlock.type === TAG_NAME_SCRIPT) {
-      env.sfcBlocks.scripts.push(sfcBlock);
-      if (SCRIPT_SETUP_TAG_OPEN_REGEXP.test(sfcBlock.tagOpen)) {
-        env.sfcBlocks.scriptSetup = sfcBlock;
-      } else {
-        env.sfcBlocks.script = sfcBlock;
-      }
-    } else if (sfcBlock.type === TAG_NAME_STYLE) {
-      env.sfcBlocks.styles.push(sfcBlock);
-    } else {
-      env.sfcBlocks.customBlocks.push(sfcBlock);
-    }
-    return "";
-  };
-};
-
-exports.SCRIPT_SETUP_TAG_OPEN_REGEXP = SCRIPT_SETUP_TAG_OPEN_REGEXP;
-exports.TAG_NAME_SCRIPT = TAG_NAME_SCRIPT;
-exports.TAG_NAME_STYLE = TAG_NAME_STYLE;
-exports.TAG_NAME_TEMPLATE = TAG_NAME_TEMPLATE;
-exports.createSfcRegexp = createSfcRegexp;
-exports.sfcPlugin = sfcPlugin;
-Ø/dist/index.mjs≈ïconst TAG_NAME_SCRIPT = "script";
-const TAG_NAME_STYLE = "style";
-const TAG_NAME_TEMPLATE = "template";
-
-const SCRIPT_SETUP_TAG_OPEN_REGEXP = /^<script\s+.*?\bsetup\b.*?>$/is;
-const createSfcRegexp = ({
-  customBlocks
-}) => {
-  const sfcTags = Array.from(
-    /* @__PURE__ */ new Set([TAG_NAME_SCRIPT, TAG_NAME_STYLE, ...customBlocks])
-  ).join("|");
-  return new RegExp(
-    `^\\s*(?<content>(?<tagOpen><(?<type>${sfcTags})\\s?.*?>)(?<contentStripped>.*)(?<tagClose><\\/\\k<type>\\s*>))\\s*$`,
-    "is"
-  );
-};
-
-const sfcPlugin = (md, { customBlocks = [] } = {}) => {
-  const sfcRegexp = createSfcRegexp({ customBlocks });
-  const render = md.render.bind(md);
-  md.render = (src, env = {}) => {
-    env.sfcBlocks = {
-      template: null,
-      script: null,
-      scriptSetup: null,
-      scripts: [],
-      styles: [],
-      customBlocks: []
-    };
-    const rendered = render(src, env);
-    env.sfcBlocks.template = {
-      type: TAG_NAME_TEMPLATE,
-      content: `<${TAG_NAME_TEMPLATE}>${rendered}</${TAG_NAME_TEMPLATE}>`,
-      contentStripped: rendered,
-      tagOpen: `<${TAG_NAME_TEMPLATE}>`,
-      tagClose: `</${TAG_NAME_TEMPLATE}>`
-    };
-    return rendered;
-  };
-  const htmlBlockRule = md.renderer.rules.html_block;
-  md.renderer.rules.html_block = (tokens, idx, options, env, self) => {
-    if (!env.sfcBlocks) {
-      return htmlBlockRule(tokens, idx, options, env, self);
-    }
-    const token = tokens[idx];
-    const content = token.content;
-    const match = content.match(sfcRegexp);
-    if (!match) {
-      return htmlBlockRule(tokens, idx, options, env, self);
-    }
-    const sfcBlock = match.groups;
-    if (sfcBlock.type === TAG_NAME_SCRIPT) {
-      env.sfcBlocks.scripts.push(sfcBlock);
-      if (SCRIPT_SETUP_TAG_OPEN_REGEXP.test(sfcBlock.tagOpen)) {
-        env.sfcBlocks.scriptSetup = sfcBlock;
-      } else {
-        env.sfcBlocks.script = sfcBlock;
-      }
-    } else if (sfcBlock.type === TAG_NAME_STYLE) {
-      env.sfcBlocks.styles.push(sfcBlock);
-    } else {
-      env.sfcBlocks.customBlocks.push(sfcBlock);
-    }
-    return "";
-  };
-};
-
-export { SCRIPT_SETUP_TAG_OPEN_REGEXP, TAG_NAME_SCRIPT, TAG_NAME_STYLE, TAG_NAME_TEMPLATE, createSfcRegexp, sfcPlugin };
-™/README.md≈ # @mdit-vue/plugin-sfc
-
-[![npm](https://badgen.net/npm/v/@mdit-vue/plugin-sfc)](https://www.npmjs.com/package/@mdit-vue/plugin-sfc)
-[![license](https://badgen.net/github/license/mdit-vue/mdit-vue)](https://github.com/mdit-vue/mdit-vue/blob/main/LICENSE)
-
-A [markdown-it](https://github.com/markdown-it/markdown-it) plugin to help transforming markdown to [Vue SFC](https://vuejs.org/guide/scaling-up/sfc.html).
-
-- Avoids rendering `<script>` and `<style>` tags and extract them into to markdown-it `env.sfcBlocks`.
-- Supports extracting custom blocks.
-- Provides `env.sfcBlocks.template` for convenience.
-
-## Install
-
-```sh
-npm i @mdit-vue/plugin-sfc
-```
-
-## Usage
-
-This plugin will only take effects when the `html` option of markdown-it is enabled:
-
-```ts
-import MarkdownIt from 'markdown-it';
-import { sfcPlugin } from '@mdit-vue/plugin-sfc';
-import type { MarkdownItEnv } from '@mdit-vue/types';
-
-const md = MarkdownIt({ html: true }).use(sfcPlugin, {
-  // options
-});
-const env: MarkdownItEnv = {};
-
-const rendered = md.render(
-  `\
-# foo
-
-<script>
-console.log('bar')
-</script>
-`,
-  env,
-);
-
-console.log(env.sfcBlocks);
-```
-
-## Options
-
-### customBlocks
-
-- Type: `string[]`
-
-- Default: `[]`
-
-- Details:
-
-  SFC custom blocks to be extracted.
-
-  By default, only `<script>` and `<style>` tags will be extracted. You can set this option to support SFC custom blocks in markdown.
-
-  For example, if you set this option to `['i18n']`, the `<i18n>` tag in your markdown content will be extracted to `env.sfcBlocks.customBlocks` and won't appear in the rendered result.
 ∞/dist/index.d.ts≈	import MarkdownIt from 'markdown-it';
 
 declare const TAG_NAME_SCRIPT = "script";
@@ -369,3 +143,229 @@ interface SfcRegExpMatchArray extends Omit<RegExpMatchArray, 'groups'> {
 declare const createSfcRegexp: ({ customBlocks, }: Required<Pick<SfcPluginOptions, 'customBlocks'>>) => RegExp;
 
 export { MarkdownSfcBlocks, SCRIPT_SETUP_TAG_OPEN_REGEXP, SfcBlock, SfcPluginOptions, SfcRegExpMatchArray, TAG_NAME_SCRIPT, TAG_NAME_STYLE, TAG_NAME_TEMPLATE, createSfcRegexp, sfcPlugin };
+Ø/dist/index.mjs≈ïconst TAG_NAME_SCRIPT = "script";
+const TAG_NAME_STYLE = "style";
+const TAG_NAME_TEMPLATE = "template";
+
+const SCRIPT_SETUP_TAG_OPEN_REGEXP = /^<script\s+.*?\bsetup\b.*?>$/is;
+const createSfcRegexp = ({
+  customBlocks
+}) => {
+  const sfcTags = Array.from(
+    /* @__PURE__ */ new Set([TAG_NAME_SCRIPT, TAG_NAME_STYLE, ...customBlocks])
+  ).join("|");
+  return new RegExp(
+    `^\\s*(?<content>(?<tagOpen><(?<type>${sfcTags})\\s?.*?>)(?<contentStripped>.*)(?<tagClose><\\/\\k<type>\\s*>))\\s*$`,
+    "is"
+  );
+};
+
+const sfcPlugin = (md, { customBlocks = [] } = {}) => {
+  const sfcRegexp = createSfcRegexp({ customBlocks });
+  const render = md.render.bind(md);
+  md.render = (src, env = {}) => {
+    env.sfcBlocks = {
+      template: null,
+      script: null,
+      scriptSetup: null,
+      scripts: [],
+      styles: [],
+      customBlocks: []
+    };
+    const rendered = render(src, env);
+    env.sfcBlocks.template = {
+      type: TAG_NAME_TEMPLATE,
+      content: `<${TAG_NAME_TEMPLATE}>${rendered}</${TAG_NAME_TEMPLATE}>`,
+      contentStripped: rendered,
+      tagOpen: `<${TAG_NAME_TEMPLATE}>`,
+      tagClose: `</${TAG_NAME_TEMPLATE}>`
+    };
+    return rendered;
+  };
+  const htmlBlockRule = md.renderer.rules.html_block;
+  md.renderer.rules.html_block = (tokens, idx, options, env, self) => {
+    if (!env.sfcBlocks) {
+      return htmlBlockRule(tokens, idx, options, env, self);
+    }
+    const token = tokens[idx];
+    const content = token.content;
+    const match = content.match(sfcRegexp);
+    if (!match) {
+      return htmlBlockRule(tokens, idx, options, env, self);
+    }
+    const sfcBlock = match.groups;
+    if (sfcBlock.type === TAG_NAME_SCRIPT) {
+      env.sfcBlocks.scripts.push(sfcBlock);
+      if (SCRIPT_SETUP_TAG_OPEN_REGEXP.test(sfcBlock.tagOpen)) {
+        env.sfcBlocks.scriptSetup = sfcBlock;
+      } else {
+        env.sfcBlocks.script = sfcBlock;
+      }
+    } else if (sfcBlock.type === TAG_NAME_STYLE) {
+      env.sfcBlocks.styles.push(sfcBlock);
+    } else {
+      env.sfcBlocks.customBlocks.push(sfcBlock);
+    }
+    return "";
+  };
+};
+
+export { SCRIPT_SETUP_TAG_OPEN_REGEXP, TAG_NAME_SCRIPT, TAG_NAME_STYLE, TAG_NAME_TEMPLATE, createSfcRegexp, sfcPlugin };
+®/LICENSE≈IThe MIT License (MIT)
+
+Copyright (c) 2022-present, mdit-vue Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+™/README.md≈ # @mdit-vue/plugin-sfc
+
+[![npm](https://badgen.net/npm/v/@mdit-vue/plugin-sfc)](https://www.npmjs.com/package/@mdit-vue/plugin-sfc)
+[![license](https://badgen.net/github/license/mdit-vue/mdit-vue)](https://github.com/mdit-vue/mdit-vue/blob/main/LICENSE)
+
+A [markdown-it](https://github.com/markdown-it/markdown-it) plugin to help transforming markdown to [Vue SFC](https://vuejs.org/guide/scaling-up/sfc.html).
+
+- Avoids rendering `<script>` and `<style>` tags and extract them into to markdown-it `env.sfcBlocks`.
+- Supports extracting custom blocks.
+- Provides `env.sfcBlocks.template` for convenience.
+
+## Install
+
+```sh
+npm i @mdit-vue/plugin-sfc
+```
+
+## Usage
+
+This plugin will only take effects when the `html` option of markdown-it is enabled:
+
+```ts
+import MarkdownIt from 'markdown-it';
+import { sfcPlugin } from '@mdit-vue/plugin-sfc';
+import type { MarkdownItEnv } from '@mdit-vue/types';
+
+const md = MarkdownIt({ html: true }).use(sfcPlugin, {
+  // options
+});
+const env: MarkdownItEnv = {};
+
+const rendered = md.render(
+  `\
+# foo
+
+<script>
+console.log('bar')
+</script>
+`,
+  env,
+);
+
+console.log(env.sfcBlocks);
+```
+
+## Options
+
+### customBlocks
+
+- Type: `string[]`
+
+- Default: `[]`
+
+- Details:
+
+  SFC custom blocks to be extracted.
+
+  By default, only `<script>` and `<style>` tags will be extracted. You can set this option to support SFC custom blocks in markdown.
+
+  For example, if you set this option to `['i18n']`, the `<i18n>` tag in your markdown content will be extracted to `env.sfcBlocks.customBlocks` and won't appear in the rendered result.
+Ø/dist/index.cjs≈	}'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+const TAG_NAME_SCRIPT = "script";
+const TAG_NAME_STYLE = "style";
+const TAG_NAME_TEMPLATE = "template";
+
+const SCRIPT_SETUP_TAG_OPEN_REGEXP = /^<script\s+.*?\bsetup\b.*?>$/is;
+const createSfcRegexp = ({
+  customBlocks
+}) => {
+  const sfcTags = Array.from(
+    /* @__PURE__ */ new Set([TAG_NAME_SCRIPT, TAG_NAME_STYLE, ...customBlocks])
+  ).join("|");
+  return new RegExp(
+    `^\\s*(?<content>(?<tagOpen><(?<type>${sfcTags})\\s?.*?>)(?<contentStripped>.*)(?<tagClose><\\/\\k<type>\\s*>))\\s*$`,
+    "is"
+  );
+};
+
+const sfcPlugin = (md, { customBlocks = [] } = {}) => {
+  const sfcRegexp = createSfcRegexp({ customBlocks });
+  const render = md.render.bind(md);
+  md.render = (src, env = {}) => {
+    env.sfcBlocks = {
+      template: null,
+      script: null,
+      scriptSetup: null,
+      scripts: [],
+      styles: [],
+      customBlocks: []
+    };
+    const rendered = render(src, env);
+    env.sfcBlocks.template = {
+      type: TAG_NAME_TEMPLATE,
+      content: `<${TAG_NAME_TEMPLATE}>${rendered}</${TAG_NAME_TEMPLATE}>`,
+      contentStripped: rendered,
+      tagOpen: `<${TAG_NAME_TEMPLATE}>`,
+      tagClose: `</${TAG_NAME_TEMPLATE}>`
+    };
+    return rendered;
+  };
+  const htmlBlockRule = md.renderer.rules.html_block;
+  md.renderer.rules.html_block = (tokens, idx, options, env, self) => {
+    if (!env.sfcBlocks) {
+      return htmlBlockRule(tokens, idx, options, env, self);
+    }
+    const token = tokens[idx];
+    const content = token.content;
+    const match = content.match(sfcRegexp);
+    if (!match) {
+      return htmlBlockRule(tokens, idx, options, env, self);
+    }
+    const sfcBlock = match.groups;
+    if (sfcBlock.type === TAG_NAME_SCRIPT) {
+      env.sfcBlocks.scripts.push(sfcBlock);
+      if (SCRIPT_SETUP_TAG_OPEN_REGEXP.test(sfcBlock.tagOpen)) {
+        env.sfcBlocks.scriptSetup = sfcBlock;
+      } else {
+        env.sfcBlocks.script = sfcBlock;
+      }
+    } else if (sfcBlock.type === TAG_NAME_STYLE) {
+      env.sfcBlocks.styles.push(sfcBlock);
+    } else {
+      env.sfcBlocks.customBlocks.push(sfcBlock);
+    }
+    return "";
+  };
+};
+
+exports.SCRIPT_SETUP_TAG_OPEN_REGEXP = SCRIPT_SETUP_TAG_OPEN_REGEXP;
+exports.TAG_NAME_SCRIPT = TAG_NAME_SCRIPT;
+exports.TAG_NAME_STYLE = TAG_NAME_STYLE;
+exports.TAG_NAME_TEMPLATE = TAG_NAME_TEMPLATE;
+exports.createSfcRegexp = createSfcRegexp;
+exports.sfcPlugin = sfcPlugin;

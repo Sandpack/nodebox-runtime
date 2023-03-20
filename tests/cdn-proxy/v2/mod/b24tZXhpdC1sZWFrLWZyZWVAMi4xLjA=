@@ -1,101 +1,51 @@
-å≠/package.json≈A{
-  "name": "on-exit-leak-free",
-  "version": "2.1.0",
-  "description": "Execute a function on exit without leaking memory, allowing all objects to be garbage collected",
-  "main": "index.js",
-  "scripts": {
-    "test": "standard | snazzy && tap test/*.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/mcollina/on-exit-or-gc.git"
-  },
-  "keywords": [
-    "weak",
-    "reference",
-    "finalization",
-    "registry",
-    "process",
-    "exit",
-    "garbage",
-    "collector"
-  ],
-  "author": "Matteo Collina <hello@matteocollina.com>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/mcollina/on-exit-or-gc/issues"
-  },
-  "homepage": "https://github.com/mcollina/on-exit-or-gc#readme",
-  "devDependencies": {
-    "snazzy": "^9.0.0",
-    "standard": "^17.0.0",
-    "tap": "^16.0.0"
-  }
-}
-≤/test/base.test.js≈['use strict'
+åº/test/fixtures/unregister.js≈√'use strict'
 
-const { test } = require('tap')
-const { fork } = require('child_process')
-const { join } = require('path')
-const { once } = require('events')
-const { register } = require('..')
+const { register, unregister } = require('../..')
+const assert = require('assert')
 
-const files = [
-  'close.js',
-  'beforeExit',
-  'gc-not-close.js',
-  'unregister.js'
-]
-
-for (const file of files) {
-  test(file, async ({ equal }) => {
-    const child = fork(join(__dirname, 'fixtures', file), [], {
-      execArgv: ['--expose-gc']
-    })
-
-    const [code] = await once(child, 'close')
-
-    equal(code, 0)
+function setup () {
+  const obj = { foo: 'bar' }
+  register(obj, shutdown)
+  setImmediate(function () {
+    unregister(obj)
+    unregister(obj) // twice, this should not throw
   })
 }
 
-test('undefined', async ({ throws }) => {
-  throws(() => register(undefined))
+let shutdownCalled = false
+function shutdown (obj) {
+  shutdownCalled = true
+}
+
+setup()
+
+process.on('exit', function () {
+  assert.strictEqual(shutdownCalled, false)
 })
-∑/.github/dependabot.ymlƒversion: 2
-updates:
-- package-ecosystem: github-actions
-  directory: '/'
-  schedule:
-    interval: daily
-  open-pull-requests-limit: 10
-- package-ecosystem: npm
-  directory: '/'
-  schedule:
-    interval: daily
-  open-pull-requests-limit: 10Ÿ /test/event-emitter-leak.test.js≈b'use strict'
+æ/test/fixtures/gc-not-close.js≈°'use strict'
 
-const t = require('tap')
-const { register, unregister } = require('..')
+const { register } = require('../..')
+const assert = require('assert')
 
-process.on('warning', () => {
-  t.fail('warning emitted')
-})
-
-const objs = []
-for (let i = 0; i < 20; i++) {
-  const obj = { i }
-  objs.push(obj)
+function setup () {
+  let obj = { foo: 'bar' }
   register(obj, shutdown)
+  setImmediate(function () {
+    obj = undefined
+    gc() // eslint-disable-line
+  })
 }
 
-for (const obj of objs) {
-  unregister(obj)
+let shutdownCalled = false
+function shutdown (obj) {
+  shutdownCalled = true
 }
 
-t.pass('completed')
+setup()
 
-function shutdown () {}
+process.on('exit', function () {
+  assert.strictEqual(shutdownCalled, false)
+})
 π/.github/workflows/ci.yml≈4name: CI
 on:
   push:
@@ -139,27 +89,6 @@ jobs:
       - uses: fastify/github-action-merge-dependabot@v3.2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-∑/test/fixtures/close.js≈q'use strict'
-
-const { register } = require('../..')
-const assert = require('assert')
-
-function setup () {
-  const obj = { foo: 'bar' }
-  register(obj, shutdown)
-}
-
-let shutdownCalled = false
-function shutdown (obj) {
-  shutdownCalled = true
-  assert.strictEqual(obj.foo, 'bar')
-}
-
-setup()
-
-process.on('exit', function () {
-  assert.strictEqual(shutdownCalled, true)
-})
 ©/index.js≈™'use strict'
 
 const refs = {
@@ -253,64 +182,27 @@ module.exports = {
   registerBeforeExit,
   unregister
 }
-º/test/fixtures/beforeExit.js≈·'use strict'
+®/LICENSE≈/MIT License
 
-const { unregister, registerBeforeExit } = require('../..')
-const assert = require('assert')
+Copyright (c) 2021 Matteo Collina
 
-function setup () {
-  const obj = { foo: 'bar' }
-  registerBeforeExit(obj, shutdown)
-}
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-let shutdownCalled = false
-let timeoutFinished = false
-function shutdown (obj, event) {
-  console.log(event)
-  shutdownCalled = true
-  if (event === 'beforeExit') {
-    setTimeout(function () {
-      timeoutFinished = true
-      assert.strictEqual(obj.foo, 'bar')
-      unregister(obj)
-    }, 100)
-    process.on('beforeExit', function () {
-      assert.strictEqual(timeoutFinished, true)
-    })
-  } else {
-    throw new Error('different event')
-  }
-}
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-setup()
-
-process.on('exit', function () {
-  assert.strictEqual(shutdownCalled, true)
-})
-æ/test/fixtures/gc-not-close.js≈°'use strict'
-
-const { register } = require('../..')
-const assert = require('assert')
-
-function setup () {
-  let obj = { foo: 'bar' }
-  register(obj, shutdown)
-  setImmediate(function () {
-    obj = undefined
-    gc() // eslint-disable-line
-  })
-}
-
-let shutdownCalled = false
-function shutdown (obj) {
-  shutdownCalled = true
-}
-
-setup()
-
-process.on('exit', function () {
-  assert.strictEqual(shutdownCalled, false)
-})
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ™/README.md≈# on-exit-leak-free
 
 This module helps dispose of an object gracefully when the Node.js process exits.
@@ -365,48 +257,157 @@ process.on('exit', function () {
 ## License
 
 MIT
-®/LICENSE≈/MIT License
+∑/test/fixtures/close.js≈q'use strict'
 
-Copyright (c) 2021 Matteo Collina
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-º/test/fixtures/unregister.js≈√'use strict'
-
-const { register, unregister } = require('../..')
+const { register } = require('../..')
 const assert = require('assert')
 
 function setup () {
   const obj = { foo: 'bar' }
   register(obj, shutdown)
-  setImmediate(function () {
-    unregister(obj)
-    unregister(obj) // twice, this should not throw
-  })
 }
 
 let shutdownCalled = false
 function shutdown (obj) {
   shutdownCalled = true
+  assert.strictEqual(obj.foo, 'bar')
 }
 
 setup()
 
 process.on('exit', function () {
-  assert.strictEqual(shutdownCalled, false)
+  assert.strictEqual(shutdownCalled, true)
 })
+≤/test/base.test.js≈['use strict'
+
+const { test } = require('tap')
+const { fork } = require('child_process')
+const { join } = require('path')
+const { once } = require('events')
+const { register } = require('..')
+
+const files = [
+  'close.js',
+  'beforeExit',
+  'gc-not-close.js',
+  'unregister.js'
+]
+
+for (const file of files) {
+  test(file, async ({ equal }) => {
+    const child = fork(join(__dirname, 'fixtures', file), [], {
+      execArgv: ['--expose-gc']
+    })
+
+    const [code] = await once(child, 'close')
+
+    equal(code, 0)
+  })
+}
+
+test('undefined', async ({ throws }) => {
+  throws(() => register(undefined))
+})
+º/test/fixtures/beforeExit.js≈·'use strict'
+
+const { unregister, registerBeforeExit } = require('../..')
+const assert = require('assert')
+
+function setup () {
+  const obj = { foo: 'bar' }
+  registerBeforeExit(obj, shutdown)
+}
+
+let shutdownCalled = false
+let timeoutFinished = false
+function shutdown (obj, event) {
+  console.log(event)
+  shutdownCalled = true
+  if (event === 'beforeExit') {
+    setTimeout(function () {
+      timeoutFinished = true
+      assert.strictEqual(obj.foo, 'bar')
+      unregister(obj)
+    }, 100)
+    process.on('beforeExit', function () {
+      assert.strictEqual(timeoutFinished, true)
+    })
+  } else {
+    throw new Error('different event')
+  }
+}
+
+setup()
+
+process.on('exit', function () {
+  assert.strictEqual(shutdownCalled, true)
+})
+≠/package.json≈A{
+  "name": "on-exit-leak-free",
+  "version": "2.1.0",
+  "description": "Execute a function on exit without leaking memory, allowing all objects to be garbage collected",
+  "main": "index.js",
+  "scripts": {
+    "test": "standard | snazzy && tap test/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mcollina/on-exit-or-gc.git"
+  },
+  "keywords": [
+    "weak",
+    "reference",
+    "finalization",
+    "registry",
+    "process",
+    "exit",
+    "garbage",
+    "collector"
+  ],
+  "author": "Matteo Collina <hello@matteocollina.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mcollina/on-exit-or-gc/issues"
+  },
+  "homepage": "https://github.com/mcollina/on-exit-or-gc#readme",
+  "devDependencies": {
+    "snazzy": "^9.0.0",
+    "standard": "^17.0.0",
+    "tap": "^16.0.0"
+  }
+}
+Ÿ /test/event-emitter-leak.test.js≈b'use strict'
+
+const t = require('tap')
+const { register, unregister } = require('..')
+
+process.on('warning', () => {
+  t.fail('warning emitted')
+})
+
+const objs = []
+for (let i = 0; i < 20; i++) {
+  const obj = { i }
+  objs.push(obj)
+  register(obj, shutdown)
+}
+
+for (const obj of objs) {
+  unregister(obj)
+}
+
+t.pass('completed')
+
+function shutdown () {}
+∑/.github/dependabot.ymlƒversion: 2
+updates:
+- package-ecosystem: github-actions
+  directory: '/'
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+- package-ecosystem: npm
+  directory: '/'
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10

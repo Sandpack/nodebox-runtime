@@ -1,26 +1,42 @@
-Ö®/LICENSE≈è(The MIT License)
-
-Copyright (c) 2013 Jonathan Ong <me@jongleberry.com>
-Copyright (c) 2014 Douglas Christopher Wilson <doug@somethingdoug.com>
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-'Software'), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+Ö≠/package.json≈!{
+  "name": "on-finished",
+  "description": "Execute a callback when a request closes, finishes, or errors",
+  "version": "2.4.1",
+  "contributors": [
+    "Douglas Christopher Wilson <doug@somethingdoug.com>",
+    "Jonathan Ong <me@jongleberry.com> (http://jongleberry.com)"
+  ],
+  "license": "MIT",
+  "repository": "jshttp/on-finished",
+  "dependencies": {
+    "ee-first": "1.1.1"
+  },
+  "devDependencies": {
+    "eslint": "7.32.0",
+    "eslint-config-standard": "14.1.1",
+    "eslint-plugin-import": "2.25.4",
+    "eslint-plugin-markdown": "2.2.1",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-promise": "5.2.0",
+    "eslint-plugin-standard": "4.1.0",
+    "mocha": "9.2.1",
+    "nyc": "15.1.0"
+  },
+  "engines": {
+    "node": ">= 0.8"
+  },
+  "files": [
+    "HISTORY.md",
+    "LICENSE",
+    "index.js"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "test": "mocha --reporter spec --bail --check-leaks test/",
+    "test-ci": "nyc --reporter=lcovonly --reporter=text npm test",
+    "test-cov": "nyc --reporter=html --reporter=text npm test"
+  }
+}
 ©/index.js≈N/*!
  * on-finished
  * Copyright(c) 2013 Jonathan Ong
@@ -255,6 +271,29 @@ function wrap (fn) {
   // return bound function
   return res.runInAsyncScope.bind(res, fn, null)
 }
+®/LICENSE≈è(The MIT License)
+
+Copyright (c) 2013 Jonathan Ong <me@jongleberry.com>
+Copyright (c) 2014 Douglas Christopher Wilson <doug@somethingdoug.com>
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ´/HISTORY.md≈I2.4.1 / 2022-02-22
 ==================
 
@@ -353,45 +392,6 @@ function wrap (fn) {
 ==================
 
   * Initial release
-≠/package.json≈!{
-  "name": "on-finished",
-  "description": "Execute a callback when a request closes, finishes, or errors",
-  "version": "2.4.1",
-  "contributors": [
-    "Douglas Christopher Wilson <doug@somethingdoug.com>",
-    "Jonathan Ong <me@jongleberry.com> (http://jongleberry.com)"
-  ],
-  "license": "MIT",
-  "repository": "jshttp/on-finished",
-  "dependencies": {
-    "ee-first": "1.1.1"
-  },
-  "devDependencies": {
-    "eslint": "7.32.0",
-    "eslint-config-standard": "14.1.1",
-    "eslint-plugin-import": "2.25.4",
-    "eslint-plugin-markdown": "2.2.1",
-    "eslint-plugin-node": "11.1.0",
-    "eslint-plugin-promise": "5.2.0",
-    "eslint-plugin-standard": "4.1.0",
-    "mocha": "9.2.1",
-    "nyc": "15.1.0"
-  },
-  "engines": {
-    "node": ">= 0.8"
-  },
-  "files": [
-    "HISTORY.md",
-    "LICENSE",
-    "index.js"
-  ],
-  "scripts": {
-    "lint": "eslint .",
-    "test": "mocha --reporter spec --bail --check-leaks test/",
-    "test-ci": "nyc --reporter=lcovonly --reporter=text npm test",
-    "test-cov": "nyc --reporter=html --reporter=text npm test"
-  }
-}
 ™/README.md≈(# on-finished
 
 [![NPM Version][npm-version-image]][npm-url]

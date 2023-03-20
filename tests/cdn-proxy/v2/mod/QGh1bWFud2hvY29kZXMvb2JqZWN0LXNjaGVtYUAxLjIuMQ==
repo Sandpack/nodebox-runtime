@@ -1,189 +1,63 @@
-Ž½/tests/validation-strategy.jsÅS/**
- * @filedescription Merge Strategy Tests
- */
-/* global it, describe, beforeEach */
+Ž­/package.jsonÅå{
+  "name": "@humanwhocodes/object-schema",
+  "version": "1.2.1",
+  "description": "An object schema merger/validator",
+  "main": "src/index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "mocha tests/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/humanwhocodes/object-schema.git"
+  },
+  "keywords": [
+    "object",
+    "validation",
+    "schema",
+    "merge"
+  ],
+  "author": "Nicholas C. Zakas",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/humanwhocodes/object-schema/issues"
+  },
+  "homepage": "https://github.com/humanwhocodes/object-schema#readme",
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "eslint": "^5.13.0",
+    "mocha": "^5.2.0"
+  }
+}
+Ù"/.github/workflows/nodejs-test.ymlÅ,name: Node CI
 
-"use strict";
+on: [push, pull_request]
 
-//-----------------------------------------------------------------------------
-// Requirements
-//-----------------------------------------------------------------------------
+jobs:
+  build:
 
-const assert = require("chai").assert;
-const { ValidationStrategy } = require("../src/");
+    runs-on: ${{ matrix.os }}
 
-//-----------------------------------------------------------------------------
-// Class
-//-----------------------------------------------------------------------------
+    strategy:
+      matrix:
+        os: [windows-latest, macOS-latest, ubuntu-latest]
+        node: [8.x, 10.x, 12.x, 14.x]
 
-describe("ValidationStrategy", () => {
-
-    describe("boolean", () => {
-        it("should not throw an error when the value is a boolean", () => {
-            ValidationStrategy.boolean(true);
-        });
-
-        it("should throw an error when the value is null", () => {
-            assert.throws(() => {
-                ValidationStrategy.boolean(null);
-            }, /Expected a Boolean/);
-        });
-
-        it("should throw an error when the value is a string", () => {
-            assert.throws(() => {
-                ValidationStrategy.boolean("foo");
-            }, /Expected a Boolean/);
-        });
-
-        it("should throw an error when the value is a number", () => {
-            assert.throws(() => {
-                ValidationStrategy.boolean(123);
-            }, /Expected a Boolean/);
-        });
-
-        it("should throw an error when the value is an object", () => {
-            assert.throws(() => {
-                ValidationStrategy.boolean({});
-            }, /Expected a Boolean/);
-        });
-    });
-
-    describe("number", () => {
-        it("should not throw an error when the value is a number", () => {
-            ValidationStrategy.number(25);
-        });
-
-        it("should throw an error when the value is null", () => {
-            assert.throws(() => {
-                ValidationStrategy.number(null);
-            }, /Expected a number/);
-        });
-
-        it("should throw an error when the value is a string", () => {
-            assert.throws(() => {
-                ValidationStrategy.number("foo");
-            }, /Expected a number/);
-        });
-
-        it("should throw an error when the value is a boolean", () => {
-            assert.throws(() => {
-                ValidationStrategy.number(true);
-            }, /Expected a number/);
-        });
-
-        it("should throw an error when the value is an object", () => {
-            assert.throws(() => {
-                ValidationStrategy.number({});
-            }, /Expected a number/);
-        });
-    });
-
-    describe("object", () => {
-        it("should not throw an error when the value is an object", () => {
-            ValidationStrategy.object({});
-        });
-
-        it("should throw an error when the value is null", () => {
-            assert.throws(() => {
-                ValidationStrategy.object(null);
-            }, /Expected an object/);
-        });
-
-        it("should throw an error when the value is a string", () => {
-            assert.throws(() => {
-                ValidationStrategy.object("");
-            }, /Expected an object/);
-        });
-    });
-
-    describe("array", () => {
-        it("should not throw an error when the value is an array", () => {
-            ValidationStrategy.array([]);
-        });
-
-        it("should throw an error when the value is null", () => {
-            assert.throws(() => {
-                ValidationStrategy.array(null);
-            }, /Expected an array/);
-        });
-
-        it("should throw an error when the value is a string", () => {
-            assert.throws(() => {
-                ValidationStrategy.array("");
-            }, /Expected an array/);
-        });
-
-        it("should throw an error when the value is an object", () => {
-            assert.throws(() => {
-                ValidationStrategy.array({});
-            }, /Expected an array/);
-        });
-    });
-
-    describe("object?", () => {
-        it("should not throw an error when the value is an object", () => {
-            ValidationStrategy["object?"]({});
-        });
-
-        it("should not throw an error when the value is null", () => {
-            ValidationStrategy["object?"](null);
-        });
-
-        it("should throw an error when the value is a string", () => {
-            assert.throws(() => {
-                ValidationStrategy["object?"]("");
-            }, /Expected an object/);
-        });
-    });
-
-    describe("string", () => {
-        it("should not throw an error when the value is a string", () => {
-            ValidationStrategy.string("foo");
-        });
-
-        it("should not throw an error when the value is an empty string", () => {
-            ValidationStrategy.string("");
-        });
-
-        it("should throw an error when the value is null", () => {
-            assert.throws(() => {
-                ValidationStrategy.string(null);
-            }, /Expected a string/);
-        });
-
-        it("should throw an error when the value is an object", () => {
-            assert.throws(() => {
-                ValidationStrategy.string({});
-            }, /Expected a string/);
-        });
-    });
-
-    describe("string!", () => {
-        it("should not throw an error when the value is an string", () => {
-            ValidationStrategy["string!"]("foo");
-        });
-
-        it("should throw an error when the value is an empty string", () => {
-            assert.throws(() => {
-                ValidationStrategy["string!"]("");
-            }, /Expected a non-empty string/);
-        });
-
-        it("should throw an error when the value is null", () => {
-            assert.throws(() => {
-                ValidationStrategy["string!"](null);
-            }, /Expected a non-empty string/);
-        });
-
-        it("should throw an error when the value is an object", () => {
-            assert.throws(() => {
-                ValidationStrategy["string!"]({});
-            }, /Expected a non-empty string/);
-        });
-    });
-
-
-});
+    steps:
+    - uses: actions/checkout@v1
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: npm install, build, and test
+      run: |
+        npm install
+        npm run build --if-present
+        npm test
+      env:
+        CI: true
 ¸/tests/merge-strategy.jsÅ“/**
  * @filedescription Merge Strategy Tests
  */
@@ -250,187 +124,6 @@ describe("MergeStrategy", () => {
     });
 
 });
-¨/LICENSEÅëBSD 3-Clause License
-
-Copyright (c) 2019, Human Who Codes
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-* Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-
-* Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
-* Neither the name of the copyright holder nor the names of its
-  contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-¶/src/merge-strategy.jsÅþ/**
- * @filedescription Merge Strategy
- */
-
-"use strict";
-
-//-----------------------------------------------------------------------------
-// Class
-//-----------------------------------------------------------------------------
-
-/**
- * Container class for several different merge strategies.
- */
-class MergeStrategy {
-
-    /**
-     * Merges two keys by overwriting the first with the second.
-     * @param {*} value1 The value from the first object key. 
-     * @param {*} value2 The value from the second object key.
-     * @returns {*} The second value.
-     */
-    static overwrite(value1, value2) {
-        return value2;
-    }
-
-    /**
-     * Merges two keys by replacing the first with the second only if the
-     * second is defined.
-     * @param {*} value1 The value from the first object key. 
-     * @param {*} value2 The value from the second object key.
-     * @returns {*} The second value if it is defined.
-     */
-    static replace(value1, value2) {
-        if (typeof value2 !== "undefined") {
-            return value2;
-        }
-
-        return value1;
-    }
-
-    /**
-     * Merges two properties by assigning properties from the second to the first.
-     * @param {*} value1 The value from the first object key.
-     * @param {*} value2 The value from the second object key.
-     * @returns {*} A new object containing properties from both value1 and
-     *      value2.
-     */
-    static assign(value1, value2) {
-        return Object.assign({}, value1, value2);
-    }
-}
-
-exports.MergeStrategy = MergeStrategy;
-­/package.jsonÅå{
-  "name": "@humanwhocodes/object-schema",
-  "version": "1.2.1",
-  "description": "An object schema merger/validator",
-  "main": "src/index.js",
-  "directories": {
-    "test": "tests"
-  },
-  "scripts": {
-    "test": "mocha tests/"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/humanwhocodes/object-schema.git"
-  },
-  "keywords": [
-    "object",
-    "validation",
-    "schema",
-    "merge"
-  ],
-  "author": "Nicholas C. Zakas",
-  "license": "BSD-3-Clause",
-  "bugs": {
-    "url": "https://github.com/humanwhocodes/object-schema/issues"
-  },
-  "homepage": "https://github.com/humanwhocodes/object-schema#readme",
-  "devDependencies": {
-    "chai": "^4.2.0",
-    "eslint": "^5.13.0",
-    "mocha": "^5.2.0"
-  }
-}
-Ù"/.github/workflows/nodejs-test.ymlÅ,name: Node CI
-
-on: [push, pull_request]
-
-jobs:
-  build:
-
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [windows-latest, macOS-latest, ubuntu-latest]
-        node: [8.x, 10.x, 12.x, 14.x]
-
-    steps:
-    - uses: actions/checkout@v1
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-    - name: npm install, build, and test
-      run: |
-        npm install
-        npm run build --if-present
-        npm test
-      env:
-        CI: true
-Ù%/.github/workflows/release-please.ymlÅ.on:
-  push:
-    branches:
-      - main
-name: release-please
-jobs:
-  release-please:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: GoogleCloudPlatform/release-please-action@v2
-        id: release
-        with:
-          release-type: node
-          package-name: test-release-please
-      # The logic below handles the npm publication:
-      - uses: actions/checkout@v2
-        # these if statements ensure that a publication only occurs when
-        # a new release is created:
-        if: ${{ steps.release.outputs.release_created }}
-      - uses: actions/setup-node@v1
-        with:
-          node-version: 12
-          registry-url: 'https://registry.npmjs.org'
-        if: ${{ steps.release.outputs.release_created }}
-      - run: npm ci
-        if: ${{ steps.release.outputs.release_created }}
-      - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
-        if: ${{ steps.release.outputs.release_created }}
-
-      # Tweets out release announcement
-      - run: 'npx @humanwhocodes/tweet "Object Schema v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }} has been released!\n\n${{ github.event.release.html_url }}"'
-        if: ${{ steps.release.outputs.release_created }}
-        env:
-          TWITTER_CONSUMER_KEY: ${{ secrets.TWITTER_CONSUMER_KEY }}
-          TWITTER_CONSUMER_SECRET: ${{ secrets.TWITTER_CONSUMER_SECRET }}
-          TWITTER_ACCESS_TOKEN_KEY: ${{ secrets.TWITTER_ACCESS_TOKEN_KEY }}
-          TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
 µ/src/object-schema.jsÅ@/**
  * @filedescription Object Schema
  */
@@ -666,13 +359,269 @@ class ObjectSchema {
 }
 
 exports.ObjectSchema = ObjectSchema;
-­/src/index.jsÅ/**
- * @filedescription Object Schema Package
- */
+ª/README.mdÅ½# JavaScript ObjectSchema Package
 
-exports.ObjectSchema = require("./object-schema").ObjectSchema;
-exports.MergeStrategy = require("./merge-strategy").MergeStrategy;
-exports.ValidationStrategy = require("./validation-strategy").ValidationStrategy;
+by [Nicholas C. Zakas](https://humanwhocodes.com)
+
+If you find this useful, please consider supporting my work with a [donation](https://humanwhocodes.com/donate).
+
+## Overview
+
+A JavaScript object merge/validation utility where you can define a different merge and validation strategy for each key. This is helpful when you need to validate complex data structures and then merge them in a way that is more complex than `Object.assign()`.
+
+## Installation
+
+You can install using either npm:
+
+```
+npm install @humanwhocodes/object-schema
+```
+
+Or Yarn:
+
+```
+yarn add @humanwhocodes/object-schema
+```
+
+## Usage
+
+Use CommonJS to get access to the `ObjectSchema` constructor:
+
+```js
+const { ObjectSchema } = require("@humanwhocodes/object-schema");
+
+const schema = new ObjectSchema({
+
+    // define a definition for the "downloads" key
+    downloads: {
+        required: true,
+        merge(value1, value2) {
+            return value1 + value2;
+        },
+        validate(value) {
+            if (typeof value !== "number") {
+                throw new Error("Expected downloads to be a number.");
+            }
+        }
+    },
+
+    // define a strategy for the "versions" key
+    version: {
+        required: true,
+        merge(value1, value2) {
+            return value1.concat(value2);
+        },
+        validate(value) {
+            if (!Array.isArray(value)) {
+                throw new Error("Expected versions to be an array.");
+            }
+        }
+    }
+});
+
+const record1 = {
+    downloads: 25,
+    versions: [
+        "v1.0.0",
+        "v1.1.0",
+        "v1.2.0"
+    ]
+};
+
+const record2 = {
+    downloads: 125,
+    versions: [
+        "v2.0.0",
+        "v2.1.0",
+        "v3.0.0"
+    ]
+};
+
+// make sure the records are valid
+schema.validate(record1);
+schema.validate(record2);
+
+// merge together (schema.merge() accepts any number of objects)
+const result = schema.merge(record1, record2);
+
+// result looks like this:
+
+const result = {
+    downloads: 75,
+    versions: [
+        "v1.0.0",
+        "v1.1.0",
+        "v1.2.0",
+        "v2.0.0",
+        "v2.1.0",
+        "v3.0.0"
+    ]
+};
+```
+
+## Tips and Tricks
+
+### Named merge strategies
+
+Instead of specifying a `merge()` method, you can specify one of the following strings to use a default merge strategy:
+
+* `"assign"` - use `Object.assign()` to merge the two values into one object.
+* `"overwrite"` - the second value always replaces the first.
+* `"replace"` - the second value replaces the first if the second is not `undefined`.
+
+For example:
+
+```js
+const schema = new ObjectSchema({
+    name: {
+        merge: "replace",
+        validate() {}
+    }
+});
+```
+
+### Named validation strategies
+
+Instead of specifying a `validate()` method, you can specify one of the following strings to use a default validation strategy:
+
+* `"array"` - value must be an array.
+* `"boolean"` - value must be a boolean.
+* `"number"` - value must be a number.
+* `"object"` - value must be an object.
+* `"object?"` - value must be an object or null.
+* `"string"` - value must be a string.
+* `"string!"` - value must be a non-empty string.
+
+For example:
+
+```js
+const schema = new ObjectSchema({
+    name: {
+        merge: "replace",
+        validate: "string"
+    }
+});
+```
+
+### Subschemas
+
+If you are defining a key that is, itself, an object, you can simplify the process by using a subschema. Instead of defining `merge()` and `validate()`, assign a `schema` key that contains a schema definition, like this:
+
+```js
+const schema = new ObjectSchema({
+    name: {
+        schema: {
+            first: {
+                merge: "replace",
+                validate: "string"
+            },
+            last: {
+                merge: "replace",
+                validate: "string"
+            }
+        }
+    }
+});
+
+schema.validate({
+    name: {
+        first: "n",
+        last: "z"
+    }
+});
+```
+
+### Remove Keys During Merge
+
+If the merge strategy for a key returns `undefined`, then the key will not appear in the final object. For example:
+
+```js
+const schema = new ObjectSchema({
+    date: {
+        merge() {
+            return undefined;
+        },
+        validate(value) {
+            Date.parse(value);  // throws an error when invalid
+        }
+    }
+});
+
+const object1 = { date: "5/5/2005" };
+const object2 = { date: "6/6/2006" };
+
+const result = schema.merge(object1, object2);
+
+console.log("date" in result);  // false
+```
+
+### Requiring Another Key Be Present
+
+If you'd like the presence of one key to require the presence of another key, you can use the `requires` property to specify an array of other properties that any key requires. For example:
+
+```js
+const schema = new ObjectSchema();
+
+const schema = new ObjectSchema({
+    date: {
+        merge() {
+            return undefined;
+        },
+        validate(value) {
+            Date.parse(value);  // throws an error when invalid
+        }
+    },
+    time: {
+        requires: ["date"],
+        merge(first, second) {
+            return second;
+        },
+        validate(value) {
+            // ...
+        }
+    }
+});
+
+// throws error: Key "time" requires keys "date"
+schema.validate({
+    time: "13:45"
+});
+```
+
+In this example, even though `date` is an optional key, it is required to be present whenever `time` is present.
+
+## License
+
+BSD 3-Clause
+¨/LICENSEÅëBSD 3-Clause License
+
+Copyright (c) 2019, Human Who Codes
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ·/tests/object-schema.jsÅH/**
  * @filedescription Object Schema Tests
  */
@@ -1284,240 +1233,80 @@ describe("ObjectSchema", () => {
     });
 
 });
-ª/README.mdÅ½# JavaScript ObjectSchema Package
+Ù%/.github/workflows/release-please.ymlÅ.on:
+  push:
+    branches:
+      - main
+name: release-please
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: GoogleCloudPlatform/release-please-action@v2
+        id: release
+        with:
+          release-type: node
+          package-name: test-release-please
+      # The logic below handles the npm publication:
+      - uses: actions/checkout@v2
+        # these if statements ensure that a publication only occurs when
+        # a new release is created:
+        if: ${{ steps.release.outputs.release_created }}
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+          registry-url: 'https://registry.npmjs.org'
+        if: ${{ steps.release.outputs.release_created }}
+      - run: npm ci
+        if: ${{ steps.release.outputs.release_created }}
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+        if: ${{ steps.release.outputs.release_created }}
 
-by [Nicholas C. Zakas](https://humanwhocodes.com)
-
-If you find this useful, please consider supporting my work with a [donation](https://humanwhocodes.com/donate).
-
-## Overview
-
-A JavaScript object merge/validation utility where you can define a different merge and validation strategy for each key. This is helpful when you need to validate complex data structures and then merge them in a way that is more complex than `Object.assign()`.
-
-## Installation
-
-You can install using either npm:
-
-```
-npm install @humanwhocodes/object-schema
-```
-
-Or Yarn:
-
-```
-yarn add @humanwhocodes/object-schema
-```
-
-## Usage
-
-Use CommonJS to get access to the `ObjectSchema` constructor:
-
-```js
-const { ObjectSchema } = require("@humanwhocodes/object-schema");
-
-const schema = new ObjectSchema({
-
-    // define a definition for the "downloads" key
-    downloads: {
-        required: true,
-        merge(value1, value2) {
-            return value1 + value2;
-        },
-        validate(value) {
-            if (typeof value !== "number") {
-                throw new Error("Expected downloads to be a number.");
-            }
-        }
+      # Tweets out release announcement
+      - run: 'npx @humanwhocodes/tweet "Object Schema v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }} has been released!\n\n${{ github.event.release.html_url }}"'
+        if: ${{ steps.release.outputs.release_created }}
+        env:
+          TWITTER_CONSUMER_KEY: ${{ secrets.TWITTER_CONSUMER_KEY }}
+          TWITTER_CONSUMER_SECRET: ${{ secrets.TWITTER_CONSUMER_SECRET }}
+          TWITTER_ACCESS_TOKEN_KEY: ${{ secrets.TWITTER_ACCESS_TOKEN_KEY }}
+          TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
+­/.eslintrc.jsÅmodule.exports = {
+    "env": {
+        "commonjs": true,
+        "es6": true,
+        "node": true
     },
-
-    // define a strategy for the "versions" key
-    version: {
-        required: true,
-        merge(value1, value2) {
-            return value1.concat(value2);
-        },
-        validate(value) {
-            if (!Array.isArray(value)) {
-                throw new Error("Expected versions to be an array.");
-            }
-        }
-    }
-});
-
-const record1 = {
-    downloads: 25,
-    versions: [
-        "v1.0.0",
-        "v1.1.0",
-        "v1.2.0"
-    ]
-};
-
-const record2 = {
-    downloads: 125,
-    versions: [
-        "v2.0.0",
-        "v2.1.0",
-        "v3.0.0"
-    ]
-};
-
-// make sure the records are valid
-schema.validate(record1);
-schema.validate(record2);
-
-// merge together (schema.merge() accepts any number of objects)
-const result = schema.merge(record1, record2);
-
-// result looks like this:
-
-const result = {
-    downloads: 75,
-    versions: [
-        "v1.0.0",
-        "v1.1.0",
-        "v1.2.0",
-        "v2.0.0",
-        "v2.1.0",
-        "v3.0.0"
-    ]
-};
-```
-
-## Tips and Tricks
-
-### Named merge strategies
-
-Instead of specifying a `merge()` method, you can specify one of the following strings to use a default merge strategy:
-
-* `"assign"` - use `Object.assign()` to merge the two values into one object.
-* `"overwrite"` - the second value always replaces the first.
-* `"replace"` - the second value replaces the first if the second is not `undefined`.
-
-For example:
-
-```js
-const schema = new ObjectSchema({
-    name: {
-        merge: "replace",
-        validate() {}
-    }
-});
-```
-
-### Named validation strategies
-
-Instead of specifying a `validate()` method, you can specify one of the following strings to use a default validation strategy:
-
-* `"array"` - value must be an array.
-* `"boolean"` - value must be a boolean.
-* `"number"` - value must be a number.
-* `"object"` - value must be an object.
-* `"object?"` - value must be an object or null.
-* `"string"` - value must be a string.
-* `"string!"` - value must be a non-empty string.
-
-For example:
-
-```js
-const schema = new ObjectSchema({
-    name: {
-        merge: "replace",
-        validate: "string"
-    }
-});
-```
-
-### Subschemas
-
-If you are defining a key that is, itself, an object, you can simplify the process by using a subschema. Instead of defining `merge()` and `validate()`, assign a `schema` key that contains a schema definition, like this:
-
-```js
-const schema = new ObjectSchema({
-    name: {
-        schema: {
-            first: {
-                merge: "replace",
-                validate: "string"
-            },
-            last: {
-                merge: "replace",
-                validate: "string"
-            }
-        }
-    }
-});
-
-schema.validate({
-    name: {
-        first: "n",
-        last: "z"
-    }
-});
-```
-
-### Remove Keys During Merge
-
-If the merge strategy for a key returns `undefined`, then the key will not appear in the final object. For example:
-
-```js
-const schema = new ObjectSchema({
-    date: {
-        merge() {
-            return undefined;
-        },
-        validate(value) {
-            Date.parse(value);  // throws an error when invalid
-        }
-    }
-});
-
-const object1 = { date: "5/5/2005" };
-const object2 = { date: "6/6/2006" };
-
-const result = schema.merge(object1, object2);
-
-console.log("date" in result);  // false
-```
-
-### Requiring Another Key Be Present
-
-If you'd like the presence of one key to require the presence of another key, you can use the `requires` property to specify an array of other properties that any key requires. For example:
-
-```js
-const schema = new ObjectSchema();
-
-const schema = new ObjectSchema({
-    date: {
-        merge() {
-            return undefined;
-        },
-        validate(value) {
-            Date.parse(value);  // throws an error when invalid
-        }
+    "extends": "eslint:recommended",
+    "parserOptions": {
+        "ecmaVersion": 2018
     },
-    time: {
-        requires: ["date"],
-        merge(first, second) {
-            return second;
-        },
-        validate(value) {
-            // ...
-        }
+    "rules": {
+        "indent": [
+            "error",
+            4
+        ],
+        "linebreak-style": [
+            "error",
+            "unix"
+        ],
+        "quotes": [
+            "error",
+            "double"
+        ],
+        "semi": [
+            "error",
+            "always"
+        ]
     }
-});
+};­/src/index.jsÅ/**
+ * @filedescription Object Schema Package
+ */
 
-// throws error: Key "time" requires keys "date"
-schema.validate({
-    time: "13:45"
-});
-```
-
-In this example, even though `date` is an optional key, it is required to be present whenever `time` is present.
-
-## License
-
-BSD 3-Clause
+exports.ObjectSchema = require("./object-schema").ObjectSchema;
+exports.MergeStrategy = require("./merge-strategy").MergeStrategy;
+exports.ValidationStrategy = require("./validation-strategy").ValidationStrategy;
 »/src/validation-strategy.jsÅ
 ›/**
  * @filedescription Validation Strategy
@@ -1629,32 +1418,242 @@ exports.ValidationStrategy = ValidationStrategy;
 ### Bug Fixes
 
 * Never return original object from individual config ([5463c5c](https://www.github.com/humanwhocodes/object-schema/commit/5463c5c6d2cb35a7b7948dffc37c899a41d1775f))
-­/.eslintrc.jsÅmodule.exports = {
-    "env": {
-        "commonjs": true,
-        "es6": true,
-        "node": true
-    },
-    "extends": "eslint:recommended",
-    "parserOptions": {
-        "ecmaVersion": 2018
-    },
-    "rules": {
-        "indent": [
-            "error",
-            4
-        ],
-        "linebreak-style": [
-            "error",
-            "unix"
-        ],
-        "quotes": [
-            "error",
-            "double"
-        ],
-        "semi": [
-            "error",
-            "always"
-        ]
+¶/src/merge-strategy.jsÅþ/**
+ * @filedescription Merge Strategy
+ */
+
+"use strict";
+
+//-----------------------------------------------------------------------------
+// Class
+//-----------------------------------------------------------------------------
+
+/**
+ * Container class for several different merge strategies.
+ */
+class MergeStrategy {
+
+    /**
+     * Merges two keys by overwriting the first with the second.
+     * @param {*} value1 The value from the first object key. 
+     * @param {*} value2 The value from the second object key.
+     * @returns {*} The second value.
+     */
+    static overwrite(value1, value2) {
+        return value2;
     }
-};
+
+    /**
+     * Merges two keys by replacing the first with the second only if the
+     * second is defined.
+     * @param {*} value1 The value from the first object key. 
+     * @param {*} value2 The value from the second object key.
+     * @returns {*} The second value if it is defined.
+     */
+    static replace(value1, value2) {
+        if (typeof value2 !== "undefined") {
+            return value2;
+        }
+
+        return value1;
+    }
+
+    /**
+     * Merges two properties by assigning properties from the second to the first.
+     * @param {*} value1 The value from the first object key.
+     * @param {*} value2 The value from the second object key.
+     * @returns {*} A new object containing properties from both value1 and
+     *      value2.
+     */
+    static assign(value1, value2) {
+        return Object.assign({}, value1, value2);
+    }
+}
+
+exports.MergeStrategy = MergeStrategy;
+½/tests/validation-strategy.jsÅS/**
+ * @filedescription Merge Strategy Tests
+ */
+/* global it, describe, beforeEach */
+
+"use strict";
+
+//-----------------------------------------------------------------------------
+// Requirements
+//-----------------------------------------------------------------------------
+
+const assert = require("chai").assert;
+const { ValidationStrategy } = require("../src/");
+
+//-----------------------------------------------------------------------------
+// Class
+//-----------------------------------------------------------------------------
+
+describe("ValidationStrategy", () => {
+
+    describe("boolean", () => {
+        it("should not throw an error when the value is a boolean", () => {
+            ValidationStrategy.boolean(true);
+        });
+
+        it("should throw an error when the value is null", () => {
+            assert.throws(() => {
+                ValidationStrategy.boolean(null);
+            }, /Expected a Boolean/);
+        });
+
+        it("should throw an error when the value is a string", () => {
+            assert.throws(() => {
+                ValidationStrategy.boolean("foo");
+            }, /Expected a Boolean/);
+        });
+
+        it("should throw an error when the value is a number", () => {
+            assert.throws(() => {
+                ValidationStrategy.boolean(123);
+            }, /Expected a Boolean/);
+        });
+
+        it("should throw an error when the value is an object", () => {
+            assert.throws(() => {
+                ValidationStrategy.boolean({});
+            }, /Expected a Boolean/);
+        });
+    });
+
+    describe("number", () => {
+        it("should not throw an error when the value is a number", () => {
+            ValidationStrategy.number(25);
+        });
+
+        it("should throw an error when the value is null", () => {
+            assert.throws(() => {
+                ValidationStrategy.number(null);
+            }, /Expected a number/);
+        });
+
+        it("should throw an error when the value is a string", () => {
+            assert.throws(() => {
+                ValidationStrategy.number("foo");
+            }, /Expected a number/);
+        });
+
+        it("should throw an error when the value is a boolean", () => {
+            assert.throws(() => {
+                ValidationStrategy.number(true);
+            }, /Expected a number/);
+        });
+
+        it("should throw an error when the value is an object", () => {
+            assert.throws(() => {
+                ValidationStrategy.number({});
+            }, /Expected a number/);
+        });
+    });
+
+    describe("object", () => {
+        it("should not throw an error when the value is an object", () => {
+            ValidationStrategy.object({});
+        });
+
+        it("should throw an error when the value is null", () => {
+            assert.throws(() => {
+                ValidationStrategy.object(null);
+            }, /Expected an object/);
+        });
+
+        it("should throw an error when the value is a string", () => {
+            assert.throws(() => {
+                ValidationStrategy.object("");
+            }, /Expected an object/);
+        });
+    });
+
+    describe("array", () => {
+        it("should not throw an error when the value is an array", () => {
+            ValidationStrategy.array([]);
+        });
+
+        it("should throw an error when the value is null", () => {
+            assert.throws(() => {
+                ValidationStrategy.array(null);
+            }, /Expected an array/);
+        });
+
+        it("should throw an error when the value is a string", () => {
+            assert.throws(() => {
+                ValidationStrategy.array("");
+            }, /Expected an array/);
+        });
+
+        it("should throw an error when the value is an object", () => {
+            assert.throws(() => {
+                ValidationStrategy.array({});
+            }, /Expected an array/);
+        });
+    });
+
+    describe("object?", () => {
+        it("should not throw an error when the value is an object", () => {
+            ValidationStrategy["object?"]({});
+        });
+
+        it("should not throw an error when the value is null", () => {
+            ValidationStrategy["object?"](null);
+        });
+
+        it("should throw an error when the value is a string", () => {
+            assert.throws(() => {
+                ValidationStrategy["object?"]("");
+            }, /Expected an object/);
+        });
+    });
+
+    describe("string", () => {
+        it("should not throw an error when the value is a string", () => {
+            ValidationStrategy.string("foo");
+        });
+
+        it("should not throw an error when the value is an empty string", () => {
+            ValidationStrategy.string("");
+        });
+
+        it("should throw an error when the value is null", () => {
+            assert.throws(() => {
+                ValidationStrategy.string(null);
+            }, /Expected a string/);
+        });
+
+        it("should throw an error when the value is an object", () => {
+            assert.throws(() => {
+                ValidationStrategy.string({});
+            }, /Expected a string/);
+        });
+    });
+
+    describe("string!", () => {
+        it("should not throw an error when the value is an string", () => {
+            ValidationStrategy["string!"]("foo");
+        });
+
+        it("should throw an error when the value is an empty string", () => {
+            assert.throws(() => {
+                ValidationStrategy["string!"]("");
+            }, /Expected a non-empty string/);
+        });
+
+        it("should throw an error when the value is null", () => {
+            assert.throws(() => {
+                ValidationStrategy["string!"](null);
+            }, /Expected a non-empty string/);
+        });
+
+        it("should throw an error when the value is an object", () => {
+            assert.throws(() => {
+                ValidationStrategy["string!"]({});
+            }, /Expected a non-empty string/);
+        });
+    });
+
+
+});

@@ -1,0 +1,855 @@
+ã™/README.md≈l# Tiny LRU
+
+Least Recently Used cache for Client or Server.
+
+```javascript
+import {lru} from "tiny-lru";
+const cache = lru(max, ttl = 0, resetTtl = false);
+```
+
+Lodash provides a `memoize` function with a cache that can be swapped out as long as it implements the right interface.
+See the [lodash docs](https://lodash.com/docs#memoize) for more on `memoize`.
+
+#### Example
+```javascript
+_.memoize.Cache = lru().constructor;
+const memoized = _.memoize(myFunc);
+memoized.cache.max = 10;
+```
+
+## clear
+### Method
+
+Clears the contents of the cache
+
+	return {Object} LRU instance
+
+**Example**
+
+```javascript
+cache.clear();
+```
+
+## delete
+### Method
+
+Removes item from cache
+
+	param  {String} key Item key
+	return {Object}     LRU instance
+
+**Example**
+
+```javascript
+cache.delete("myKey");
+```
+
+## evict
+### Method
+
+Evicts the least recently used item from cache
+
+	return {Object} LRU instance
+
+**Example**
+
+```javascript
+cache.evict();
+```
+
+## expiresAt
+### Method
+
+Gets expiration time for cached item
+
+	param  {String} key Item key
+	return {Mixed}      Undefined or number (epoch time)
+
+**Example**
+
+```javascript
+const item = cache.expiresAt("myKey");
+```
+
+## first
+### Property
+
+Item in "first" or "bottom" position
+
+**Example**
+
+```javascript
+const cache = lru();
+
+cache.first; // null - it's a new cache!
+```
+
+## get
+### Method
+
+Gets cached item and moves it to the front
+
+	param  {String} key Item key
+	return {Mixed}      Undefined or Item value
+
+**Example**
+
+```javascript
+const item = cache.get("myKey");
+```
+
+## keys
+### Method
+
+Returns an `Array` of cache item keys.
+
+	return {Array} Array of keys
+
+**Example**
+
+```javascript
+console.log(cache.keys());
+```
+
+## max
+### Property
+
+Max items to hold in cache (1000)
+
+**Example**
+
+```javascript
+const cache = lru(500);
+
+cache.max; // 500
+```
+
+## last
+### Property
+
+Item in "last" or "top" position
+
+**Example**
+
+```javascript
+const cache = lru();
+
+cache.last; // null - it's a new cache!
+```
+
+## resetTtl
+### Property
+
+Resets `item.expiry` with each `set()` if `true` (false)
+
+**Example**
+
+```javascript
+const cache = lru();
+
+cache.resetTtl; // false
+```
+
+## set
+### Method
+
+Sets item in cache as `first`
+
+	param  {String} key   Item key
+	param  {Mixed}  value Item value
+	return {Object}       LRU instance
+
+**Example**
+
+```javascript
+cache.set("myKey", {prop: true});
+```
+
+## size
+### Property
+
+Number of items in cache
+
+**Example**
+
+```javascript
+const cache = lru();
+
+cache.size; // 0 - it's a new cache!
+```
+
+## ttl
+### Property
+
+Milliseconds an item will remain in cache; lazy expiration upon next `get()` of an item
+
+**Example**
+
+```javascript
+const cache = lru();
+
+cache.ttl = 3e4;
+```
+
+## License
+Copyright (c) 2023 Jason Mulligan
+Licensed under the BSD-3 license.
+π/dist/tiny-lru.min.js.map≈Û{"version":3,"file":"tiny-lru.min.js","sources":["../src/lru.js"],"sourcesContent":["class LRU {\r\n\tconstructor (max = 0, ttl = 0, resetTtl = false) {\r\n\t\tthis.first = null;\r\n\t\tthis.items = Object.create(null);\r\n\t\tthis.last = null;\r\n\t\tthis.max = max;\r\n\t\tthis.resetTtl = resetTtl;\r\n\t\tthis.size = 0;\r\n\t\tthis.ttl = ttl;\r\n\t}\r\n\r\n\t#has (key) {\r\n\t\treturn key in this.items;\r\n\t}\r\n\r\n\tclear () {\r\n\t\tthis.first = null;\r\n\t\tthis.items = Object.create(null);\r\n\t\tthis.last = null;\r\n\t\tthis.size = 0;\r\n\r\n\t\treturn this;\r\n\t}\r\n\r\n\tdelete (key) {\r\n\t\tif (this.#has(key)) {\r\n\t\t\tconst item = this.items[key];\r\n\r\n\t\t\tdelete this.items[key];\r\n\t\t\tthis.size--;\r\n\r\n\t\t\tif (item.prev !== null) {\r\n\t\t\t\titem.prev.next = item.next;\r\n\t\t\t}\r\n\r\n\t\t\tif (item.next !== null) {\r\n\t\t\t\titem.next.prev = item.prev;\r\n\t\t\t}\r\n\r\n\t\t\tif (this.first === item) {\r\n\t\t\t\tthis.first = item.next;\r\n\t\t\t}\r\n\r\n\t\t\tif (this.last === item) {\r\n\t\t\t\tthis.last = item.prev;\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\treturn this;\r\n\t}\r\n\r\n\tevict (bypass = false) {\r\n\t\tif (bypass || this.size > 0) {\r\n\t\t\tconst item = this.first;\r\n\r\n\t\t\tdelete this.items[item.key];\r\n\t\t\tthis.size--;\r\n\r\n\t\t\tif (this.size === 0) {\r\n\t\t\t\tthis.first = null;\r\n\t\t\t\tthis.last = null;\r\n\t\t\t} else {\r\n\t\t\t\tthis.first = item.next;\r\n\t\t\t\tthis.first.prev = null;\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\treturn this;\r\n\t}\r\n\r\n\tget (key) {\r\n\t\tlet result;\r\n\r\n\t\tif (this.#has(key)) {\r\n\t\t\tconst item = this.items[key];\r\n\r\n\t\t\tif (this.ttl > 0 && item.expiry <= Date.now()) {\r\n\t\t\t\tthis.delete(key);\r\n\t\t\t} else {\r\n\t\t\t\tresult = item.value;\r\n\t\t\t\tthis.set(key, result, true);\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\treturn result;\r\n\t}\r\n\r\n\texpiresAt (key) {\r\n\t\tlet result;\r\n\r\n\t\tif (this.#has(key)) {\r\n\t\t\tresult = this.items[key].expiry;\r\n\t\t}\r\n\r\n\t\treturn result;\r\n\t}\r\n\r\n\tkeys () {\r\n\t\treturn Object.keys(this.items);\r\n\t}\r\n\r\n\tset (key, value, bypass = false, resetTtl = this.resetTtl) {\r\n\t\tlet item;\r\n\r\n\t\tif (bypass || this.#has(key)) {\r\n\t\t\titem = this.items[key];\r\n\t\t\titem.value = value;\r\n\r\n\t\t\tif (resetTtl) {\r\n\t\t\t\titem.expiry = this.ttl > 0 ? Date.now() + this.ttl : this.ttl;\r\n\t\t\t}\r\n\r\n\t\t\tif (this.last !== item) {\r\n\t\t\t\tconst last = this.last,\r\n\t\t\t\t\tnext = item.next,\r\n\t\t\t\t\tprev = item.prev;\r\n\r\n\t\t\t\tif (this.first === item) {\r\n\t\t\t\t\tthis.first = item.next;\r\n\t\t\t\t}\r\n\r\n\t\t\t\titem.next = null;\r\n\t\t\t\titem.prev = this.last;\r\n\t\t\t\tlast.next = item;\r\n\r\n\t\t\t\tif (prev !== null) {\r\n\t\t\t\t\tprev.next = next;\r\n\t\t\t\t}\r\n\r\n\t\t\t\tif (next !== null) {\r\n\t\t\t\t\tnext.prev = prev;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t} else {\r\n\t\t\tif (this.max > 0 && this.size === this.max) {\r\n\t\t\t\tthis.evict(true);\r\n\t\t\t}\r\n\r\n\t\t\titem = this.items[key] = {\r\n\t\t\t\texpiry: this.ttl > 0 ? Date.now() + this.ttl : this.ttl,\r\n\t\t\t\tkey: key,\r\n\t\t\t\tprev: this.last,\r\n\t\t\t\tnext: null,\r\n\t\t\t\tvalue\r\n\t\t\t};\r\n\r\n\t\t\tif (++this.size === 1) {\r\n\t\t\t\tthis.first = item;\r\n\t\t\t} else {\r\n\t\t\t\tthis.last.next = item;\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\tthis.last = item;\r\n\r\n\t\treturn this;\r\n\t}\r\n}\r\n\r\nexport function lru (max = 1000, ttl = 0, resetTtl = false) {\r\n\tif (isNaN(max) || max < 0) {\r\n\t\tthrow new TypeError(\"Invalid max value\");\r\n\t}\r\n\r\n\tif (isNaN(ttl) || ttl < 0) {\r\n\t\tthrow new TypeError(\"Invalid ttl value\");\r\n\t}\r\n\r\n\tif (typeof resetTtl !== \"boolean\") {\r\n\t\tthrow new TypeError(\"Invalid resetTtl value\");\r\n\t}\r\n\r\n\treturn new LRU(max, ttl, resetTtl);\r\n}\r\n"],"names":["g","f","exports","module","define","amd","globalThis","self","lru","this","LRU","constructor","max","ttl","resetTtl","first","items","Object","create","last","size","has","key","clear","delete","item","prev","next","evict","bypass","get","result","expiry","Date","now","value","set","expiresAt","keys","isNaN","TypeError"],"mappings":";;;;CAAA,SAAAA,EAAAC,GAAA,iBAAAC,SAAA,oBAAAC,OAAAF,EAAAC,SAAA,mBAAAE,QAAAA,OAAAC,IAAAD,OAAA,CAAA,WAAAH,GAAAA,GAAAD,EAAA,oBAAAM,WAAAA,WAAAN,GAAAO,MAAAC,IAAA,CAAA,EAAA,CAAA,CAAAC,MAAA,SAAAP,GAAA,aAAA,MAAMQ,EACLC,YAAaC,EAAM,EAAGC,EAAM,EAAGC,GAAW,GACzCL,KAAKM,MAAQ,KACbN,KAAKO,MAAQC,OAAOC,OAAO,MAC3BT,KAAKU,KAAO,KACZV,KAAKG,IAAMA,EACXH,KAAKK,SAAWA,EAChBL,KAAKW,KAAO,EACZX,KAAKI,IAAMA,CACX,CAEDQ,GAAMC,GACL,OAAOA,KAAOb,KAAKO,KACnB,CAEDO,QAMC,OALAd,KAAKM,MAAQ,KACbN,KAAKO,MAAQC,OAAOC,OAAO,MAC3BT,KAAKU,KAAO,KACZV,KAAKW,KAAO,EAELX,IACP,CAEDe,OAAQF,GACP,GAAIb,MAAKY,EAAKC,GAAM,CACnB,MAAMG,EAAOhB,KAAKO,MAAMM,UAEjBb,KAAKO,MAAMM,GAClBb,KAAKW,OAEa,OAAdK,EAAKC,OACRD,EAAKC,KAAKC,KAAOF,EAAKE,MAGL,OAAdF,EAAKE,OACRF,EAAKE,KAAKD,KAAOD,EAAKC,MAGnBjB,KAAKM,QAAUU,IAClBhB,KAAKM,MAAQU,EAAKE,MAGflB,KAAKU,OAASM,IACjBhB,KAAKU,KAAOM,EAAKC,KAElB,CAED,OAAOjB,IACP,CAEDmB,MAAOC,GAAS,GACf,GAAIA,GAAUpB,KAAKW,KAAO,EAAG,CAC5B,MAAMK,EAAOhB,KAAKM,aAEXN,KAAKO,MAAMS,EAAKH,KACvBb,KAAKW,OAEa,IAAdX,KAAKW,MACRX,KAAKM,MAAQ,KACbN,KAAKU,KAAO,OAEZV,KAAKM,MAAQU,EAAKE,KAClBlB,KAAKM,MAAMW,KAAO,KAEnB,CAED,OAAOjB,IACP,CAEDqB,IAAKR,GACJ,IAAIS,EAEJ,GAAItB,MAAKY,EAAKC,GAAM,CACnB,MAAMG,EAAOhB,KAAKO,MAAMM,GAEpBb,KAAKI,IAAM,GAAKY,EAAKO,QAAUC,KAAKC,MACvCzB,KAAKe,OAAOF,IAEZS,EAASN,EAAKU,MACd1B,KAAK2B,IAAId,EAAKS,GAAQ,GAEvB,CAED,OAAOA,CACP,CAEDM,UAAWf,GACV,IAAIS,EAMJ,OAJItB,MAAKY,EAAKC,KACbS,EAAStB,KAAKO,MAAMM,GAAKU,QAGnBD,CACP,CAEDO,OACC,OAAOrB,OAAOqB,KAAK7B,KAAKO,MACxB,CAEDoB,IAAKd,EAAKa,EAAON,GAAS,EAAOf,EAAWL,KAAKK,UAChD,IAAIW,EAEJ,GAAII,GAAUpB,MAAKY,EAAKC,IAQvB,GAPAG,EAAOhB,KAAKO,MAAMM,GAClBG,EAAKU,MAAQA,EAETrB,IACHW,EAAKO,OAASvB,KAAKI,IAAM,EAAIoB,KAAKC,MAAQzB,KAAKI,IAAMJ,KAAKI,KAGvDJ,KAAKU,OAASM,EAAM,CACvB,MAAMN,EAAOV,KAAKU,KACjBQ,EAAOF,EAAKE,KACZD,EAAOD,EAAKC,KAETjB,KAAKM,QAAUU,IAClBhB,KAAKM,MAAQU,EAAKE,MAGnBF,EAAKE,KAAO,KACZF,EAAKC,KAAOjB,KAAKU,KACjBA,EAAKQ,KAAOF,EAEC,OAATC,IACHA,EAAKC,KAAOA,GAGA,OAATA,IACHA,EAAKD,KAAOA,EAEb,OAEGjB,KAAKG,IAAM,GAAKH,KAAKW,OAASX,KAAKG,KACtCH,KAAKmB,OAAM,GAGZH,EAAOhB,KAAKO,MAAMM,GAAO,CACxBU,OAAQvB,KAAKI,IAAM,EAAIoB,KAAKC,MAAQzB,KAAKI,IAAMJ,KAAKI,IACpDS,IAAKA,EACLI,KAAMjB,KAAKU,KACXQ,KAAM,KACNQ,SAGmB,KAAd1B,KAAKW,KACVX,KAAKM,MAAQU,EAEbhB,KAAKU,KAAKQ,KAAOF,EAMnB,OAFAhB,KAAKU,KAAOM,EAELhB,IACP,EAiBFP,EAAAM,IAdO,SAAcI,EAAM,IAAMC,EAAM,EAAGC,GAAW,GACpD,GAAIyB,MAAM3B,IAAQA,EAAM,EACvB,MAAM,IAAI4B,UAAU,qBAGrB,GAAID,MAAM1B,IAAQA,EAAM,EACvB,MAAM,IAAI2B,UAAU,qBAGrB,GAAwB,kBAAb1B,EACV,MAAM,IAAI0B,UAAU,0BAGrB,OAAO,IAAI9B,EAAIE,EAAKC,EAAKC,EAC1B,CAAA"}±/dist/tiny-lru.js≈v/**
+ * tiny-lru
+ *
+ * @copyright 2023 Jason Mulligan <jason.mulligan@avoidwork.com>
+ * @license BSD-3-Clause
+ * @version 10.2.2
+ */
+(function(g,f){typeof exports==='object'&&typeof module!=='undefined'?f(exports):typeof define==='function'&&define.amd?define(['exports'],f):(g=typeof globalThis!=='undefined'?globalThis:g||self,f(g.lru={}));})(this,(function(exports){'use strict';class LRU {
+	constructor (max = 0, ttl = 0, resetTtl = false) {
+		this.first = null;
+		this.items = Object.create(null);
+		this.last = null;
+		this.max = max;
+		this.resetTtl = resetTtl;
+		this.size = 0;
+		this.ttl = ttl;
+	}
+
+	#has (key) {
+		return key in this.items;
+	}
+
+	clear () {
+		this.first = null;
+		this.items = Object.create(null);
+		this.last = null;
+		this.size = 0;
+
+		return this;
+	}
+
+	delete (key) {
+		if (this.#has(key)) {
+			const item = this.items[key];
+
+			delete this.items[key];
+			this.size--;
+
+			if (item.prev !== null) {
+				item.prev.next = item.next;
+			}
+
+			if (item.next !== null) {
+				item.next.prev = item.prev;
+			}
+
+			if (this.first === item) {
+				this.first = item.next;
+			}
+
+			if (this.last === item) {
+				this.last = item.prev;
+			}
+		}
+
+		return this;
+	}
+
+	evict (bypass = false) {
+		if (bypass || this.size > 0) {
+			const item = this.first;
+
+			delete this.items[item.key];
+			this.size--;
+
+			if (this.size === 0) {
+				this.first = null;
+				this.last = null;
+			} else {
+				this.first = item.next;
+				this.first.prev = null;
+			}
+		}
+
+		return this;
+	}
+
+	get (key) {
+		let result;
+
+		if (this.#has(key)) {
+			const item = this.items[key];
+
+			if (this.ttl > 0 && item.expiry <= Date.now()) {
+				this.delete(key);
+			} else {
+				result = item.value;
+				this.set(key, result, true);
+			}
+		}
+
+		return result;
+	}
+
+	expiresAt (key) {
+		let result;
+
+		if (this.#has(key)) {
+			result = this.items[key].expiry;
+		}
+
+		return result;
+	}
+
+	keys () {
+		return Object.keys(this.items);
+	}
+
+	set (key, value, bypass = false, resetTtl = this.resetTtl) {
+		let item;
+
+		if (bypass || this.#has(key)) {
+			item = this.items[key];
+			item.value = value;
+
+			if (resetTtl) {
+				item.expiry = this.ttl > 0 ? Date.now() + this.ttl : this.ttl;
+			}
+
+			if (this.last !== item) {
+				const last = this.last,
+					next = item.next,
+					prev = item.prev;
+
+				if (this.first === item) {
+					this.first = item.next;
+				}
+
+				item.next = null;
+				item.prev = this.last;
+				last.next = item;
+
+				if (prev !== null) {
+					prev.next = next;
+				}
+
+				if (next !== null) {
+					next.prev = prev;
+				}
+			}
+		} else {
+			if (this.max > 0 && this.size === this.max) {
+				this.evict(true);
+			}
+
+			item = this.items[key] = {
+				expiry: this.ttl > 0 ? Date.now() + this.ttl : this.ttl,
+				key: key,
+				prev: this.last,
+				next: null,
+				value
+			};
+
+			if (++this.size === 1) {
+				this.first = item;
+			} else {
+				this.last.next = item;
+			}
+		}
+
+		this.last = item;
+
+		return this;
+	}
+}
+
+function lru (max = 1000, ttl = 0, resetTtl = false) {
+	if (isNaN(max) || max < 0) {
+		throw new TypeError("Invalid max value");
+	}
+
+	if (isNaN(ttl) || ttl < 0) {
+		throw new TypeError("Invalid ttl value");
+	}
+
+	if (typeof resetTtl !== "boolean") {
+		throw new TypeError("Invalid resetTtl value");
+	}
+
+	return new LRU(max, ttl, resetTtl);
+}exports.lru=lru;}));®/LICENSE≈„Copyright (c) 2023, Jason Mulligan
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of tiny-lru nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+µ/dist/tiny-lru.min.js≈/*!
+ 2023 Jason Mulligan <jason.mulligan@avoidwork.com>
+ @version 10.2.2
+*/
+!function(t,s){"object"==typeof exports&&"undefined"!=typeof module?s(exports):"function"==typeof define&&define.amd?define(["exports"],s):s((t="undefined"!=typeof globalThis?globalThis:t||self).lru={})}(this,(function(t){"use strict";class s{constructor(t=0,s=0,e=!1){this.first=null,this.items=Object.create(null),this.last=null,this.max=t,this.resetTtl=e,this.size=0,this.ttl=s}#t(t){return t in this.items}clear(){return this.first=null,this.items=Object.create(null),this.last=null,this.size=0,this}delete(t){if(this.#t(t)){const s=this.items[t];delete this.items[t],this.size--,null!==s.prev&&(s.prev.next=s.next),null!==s.next&&(s.next.prev=s.prev),this.first===s&&(this.first=s.next),this.last===s&&(this.last=s.prev)}return this}evict(t=!1){if(t||this.size>0){const t=this.first;delete this.items[t.key],this.size--,0===this.size?(this.first=null,this.last=null):(this.first=t.next,this.first.prev=null)}return this}get(t){let s;if(this.#t(t)){const e=this.items[t];this.ttl>0&&e.expiry<=Date.now()?this.delete(t):(s=e.value,this.set(t,s,!0))}return s}expiresAt(t){let s;return this.#t(t)&&(s=this.items[t].expiry),s}keys(){return Object.keys(this.items)}set(t,s,e=!1,i=this.resetTtl){let l;if(e||this.#t(t)){if(l=this.items[t],l.value=s,i&&(l.expiry=this.ttl>0?Date.now()+this.ttl:this.ttl),this.last!==l){const t=this.last,s=l.next,e=l.prev;this.first===l&&(this.first=l.next),l.next=null,l.prev=this.last,t.next=l,null!==e&&(e.next=s),null!==s&&(s.prev=e)}}else this.max>0&&this.size===this.max&&this.evict(!0),l=this.items[t]={expiry:this.ttl>0?Date.now()+this.ttl:this.ttl,key:t,prev:this.last,next:null,value:s},1==++this.size?this.first=l:this.last.next=l;return this.last=l,this}}t.lru=function(t=1e3,e=0,i=!1){if(isNaN(t)||t<0)throw new TypeError("Invalid max value");if(isNaN(e)||e<0)throw new TypeError("Invalid ttl value");if("boolean"!=typeof i)throw new TypeError("Invalid resetTtl value");return new s(t,e,i)}}));//# sourceMappingURL=tiny-lru.min.js.map
+©/lru.d.ts≈export function lru<T = any>(max?: number, ttl?: number, resetTtl?: boolean): LRU<T>;
+export interface LRU<T> {
+    first: T | null;
+    last: T | null;
+    max: number;
+    resetTtl: boolean;
+    size: number;
+    ttl: number;
+
+    clear(): this;
+    delete(key: any): this;
+    evict(bypass?: boolean): this;
+    expiresAt(key: any): number | undefined;
+    get(key: any): T | undefined;
+    keys(): string[];
+    set(key: any, value: T, bypass?: boolean, resetTtl?: boolean): this;
+}
+export { };
+
+µ/dist/tiny-lru.esm.js≈u/**
+ * tiny-lru
+ *
+ * @copyright 2023 Jason Mulligan <jason.mulligan@avoidwork.com>
+ * @license BSD-3-Clause
+ * @version 10.2.2
+ */
+class LRU {
+	constructor (max = 0, ttl = 0, resetTtl = false) {
+		this.first = null;
+		this.items = Object.create(null);
+		this.last = null;
+		this.max = max;
+		this.resetTtl = resetTtl;
+		this.size = 0;
+		this.ttl = ttl;
+	}
+
+	#has (key) {
+		return key in this.items;
+	}
+
+	clear () {
+		this.first = null;
+		this.items = Object.create(null);
+		this.last = null;
+		this.size = 0;
+
+		return this;
+	}
+
+	delete (key) {
+		if (this.#has(key)) {
+			const item = this.items[key];
+
+			delete this.items[key];
+			this.size--;
+
+			if (item.prev !== null) {
+				item.prev.next = item.next;
+			}
+
+			if (item.next !== null) {
+				item.next.prev = item.prev;
+			}
+
+			if (this.first === item) {
+				this.first = item.next;
+			}
+
+			if (this.last === item) {
+				this.last = item.prev;
+			}
+		}
+
+		return this;
+	}
+
+	evict (bypass = false) {
+		if (bypass || this.size > 0) {
+			const item = this.first;
+
+			delete this.items[item.key];
+			this.size--;
+
+			if (this.size === 0) {
+				this.first = null;
+				this.last = null;
+			} else {
+				this.first = item.next;
+				this.first.prev = null;
+			}
+		}
+
+		return this;
+	}
+
+	get (key) {
+		let result;
+
+		if (this.#has(key)) {
+			const item = this.items[key];
+
+			if (this.ttl > 0 && item.expiry <= Date.now()) {
+				this.delete(key);
+			} else {
+				result = item.value;
+				this.set(key, result, true);
+			}
+		}
+
+		return result;
+	}
+
+	expiresAt (key) {
+		let result;
+
+		if (this.#has(key)) {
+			result = this.items[key].expiry;
+		}
+
+		return result;
+	}
+
+	keys () {
+		return Object.keys(this.items);
+	}
+
+	set (key, value, bypass = false, resetTtl = this.resetTtl) {
+		let item;
+
+		if (bypass || this.#has(key)) {
+			item = this.items[key];
+			item.value = value;
+
+			if (resetTtl) {
+				item.expiry = this.ttl > 0 ? Date.now() + this.ttl : this.ttl;
+			}
+
+			if (this.last !== item) {
+				const last = this.last,
+					next = item.next,
+					prev = item.prev;
+
+				if (this.first === item) {
+					this.first = item.next;
+				}
+
+				item.next = null;
+				item.prev = this.last;
+				last.next = item;
+
+				if (prev !== null) {
+					prev.next = next;
+				}
+
+				if (next !== null) {
+					next.prev = prev;
+				}
+			}
+		} else {
+			if (this.max > 0 && this.size === this.max) {
+				this.evict(true);
+			}
+
+			item = this.items[key] = {
+				expiry: this.ttl > 0 ? Date.now() + this.ttl : this.ttl,
+				key: key,
+				prev: this.last,
+				next: null,
+				value
+			};
+
+			if (++this.size === 1) {
+				this.first = item;
+			} else {
+				this.last.next = item;
+			}
+		}
+
+		this.last = item;
+
+		return this;
+	}
+}
+
+function lru (max = 1000, ttl = 0, resetTtl = false) {
+	if (isNaN(max) || max < 0) {
+		throw new TypeError("Invalid max value");
+	}
+
+	if (isNaN(ttl) || ttl < 0) {
+		throw new TypeError("Invalid ttl value");
+	}
+
+	if (typeof resetTtl !== "boolean") {
+		throw new TypeError("Invalid resetTtl value");
+	}
+
+	return new LRU(max, ttl, resetTtl);
+}export{lru};Ω/dist/tiny-lru.esm.min.js.map≈‚{"version":3,"file":"tiny-lru.esm.min.js","sources":["../src/lru.js"],"sourcesContent":["class LRU {\r\n\tconstructor (max = 0, ttl = 0, resetTtl = false) {\r\n\t\tthis.first = null;\r\n\t\tthis.items = Object.create(null);\r\n\t\tthis.last = null;\r\n\t\tthis.max = max;\r\n\t\tthis.resetTtl = resetTtl;\r\n\t\tthis.size = 0;\r\n\t\tthis.ttl = ttl;\r\n\t}\r\n\r\n\t#has (key) {\r\n\t\treturn key in this.items;\r\n\t}\r\n\r\n\tclear () {\r\n\t\tthis.first = null;\r\n\t\tthis.items = Object.create(null);\r\n\t\tthis.last = null;\r\n\t\tthis.size = 0;\r\n\r\n\t\treturn this;\r\n\t}\r\n\r\n\tdelete (key) {\r\n\t\tif (this.#has(key)) {\r\n\t\t\tconst item = this.items[key];\r\n\r\n\t\t\tdelete this.items[key];\r\n\t\t\tthis.size--;\r\n\r\n\t\t\tif (item.prev !== null) {\r\n\t\t\t\titem.prev.next = item.next;\r\n\t\t\t}\r\n\r\n\t\t\tif (item.next !== null) {\r\n\t\t\t\titem.next.prev = item.prev;\r\n\t\t\t}\r\n\r\n\t\t\tif (this.first === item) {\r\n\t\t\t\tthis.first = item.next;\r\n\t\t\t}\r\n\r\n\t\t\tif (this.last === item) {\r\n\t\t\t\tthis.last = item.prev;\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\treturn this;\r\n\t}\r\n\r\n\tevict (bypass = false) {\r\n\t\tif (bypass || this.size > 0) {\r\n\t\t\tconst item = this.first;\r\n\r\n\t\t\tdelete this.items[item.key];\r\n\t\t\tthis.size--;\r\n\r\n\t\t\tif (this.size === 0) {\r\n\t\t\t\tthis.first = null;\r\n\t\t\t\tthis.last = null;\r\n\t\t\t} else {\r\n\t\t\t\tthis.first = item.next;\r\n\t\t\t\tthis.first.prev = null;\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\treturn this;\r\n\t}\r\n\r\n\tget (key) {\r\n\t\tlet result;\r\n\r\n\t\tif (this.#has(key)) {\r\n\t\t\tconst item = this.items[key];\r\n\r\n\t\t\tif (this.ttl > 0 && item.expiry <= Date.now()) {\r\n\t\t\t\tthis.delete(key);\r\n\t\t\t} else {\r\n\t\t\t\tresult = item.value;\r\n\t\t\t\tthis.set(key, result, true);\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\treturn result;\r\n\t}\r\n\r\n\texpiresAt (key) {\r\n\t\tlet result;\r\n\r\n\t\tif (this.#has(key)) {\r\n\t\t\tresult = this.items[key].expiry;\r\n\t\t}\r\n\r\n\t\treturn result;\r\n\t}\r\n\r\n\tkeys () {\r\n\t\treturn Object.keys(this.items);\r\n\t}\r\n\r\n\tset (key, value, bypass = false, resetTtl = this.resetTtl) {\r\n\t\tlet item;\r\n\r\n\t\tif (bypass || this.#has(key)) {\r\n\t\t\titem = this.items[key];\r\n\t\t\titem.value = value;\r\n\r\n\t\t\tif (resetTtl) {\r\n\t\t\t\titem.expiry = this.ttl > 0 ? Date.now() + this.ttl : this.ttl;\r\n\t\t\t}\r\n\r\n\t\t\tif (this.last !== item) {\r\n\t\t\t\tconst last = this.last,\r\n\t\t\t\t\tnext = item.next,\r\n\t\t\t\t\tprev = item.prev;\r\n\r\n\t\t\t\tif (this.first === item) {\r\n\t\t\t\t\tthis.first = item.next;\r\n\t\t\t\t}\r\n\r\n\t\t\t\titem.next = null;\r\n\t\t\t\titem.prev = this.last;\r\n\t\t\t\tlast.next = item;\r\n\r\n\t\t\t\tif (prev !== null) {\r\n\t\t\t\t\tprev.next = next;\r\n\t\t\t\t}\r\n\r\n\t\t\t\tif (next !== null) {\r\n\t\t\t\t\tnext.prev = prev;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t} else {\r\n\t\t\tif (this.max > 0 && this.size === this.max) {\r\n\t\t\t\tthis.evict(true);\r\n\t\t\t}\r\n\r\n\t\t\titem = this.items[key] = {\r\n\t\t\t\texpiry: this.ttl > 0 ? Date.now() + this.ttl : this.ttl,\r\n\t\t\t\tkey: key,\r\n\t\t\t\tprev: this.last,\r\n\t\t\t\tnext: null,\r\n\t\t\t\tvalue\r\n\t\t\t};\r\n\r\n\t\t\tif (++this.size === 1) {\r\n\t\t\t\tthis.first = item;\r\n\t\t\t} else {\r\n\t\t\t\tthis.last.next = item;\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\tthis.last = item;\r\n\r\n\t\treturn this;\r\n\t}\r\n}\r\n\r\nexport function lru (max = 1000, ttl = 0, resetTtl = false) {\r\n\tif (isNaN(max) || max < 0) {\r\n\t\tthrow new TypeError(\"Invalid max value\");\r\n\t}\r\n\r\n\tif (isNaN(ttl) || ttl < 0) {\r\n\t\tthrow new TypeError(\"Invalid ttl value\");\r\n\t}\r\n\r\n\tif (typeof resetTtl !== \"boolean\") {\r\n\t\tthrow new TypeError(\"Invalid resetTtl value\");\r\n\t}\r\n\r\n\treturn new LRU(max, ttl, resetTtl);\r\n}\r\n"],"names":["LRU","constructor","max","ttl","resetTtl","this","first","items","Object","create","last","size","has","key","clear","delete","item","prev","next","evict","bypass","get","result","expiry","Date","now","value","set","expiresAt","keys","lru","isNaN","TypeError"],"mappings":"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"}≠/package.json≈˝{
+  "name": "tiny-lru",
+  "description": "Tiny LRU cache for Client or Server",
+  "version": "10.2.2",
+  "homepage": "https://github.com/avoidwork/tiny-lru",
+  "author": "Jason Mulligan <jason.mulligan@avoidwork.com>",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/avoidwork/tiny-lru.git"
+  },
+  "bugs": {
+    "url": "https://github.com/avoidwork/tiny-lru/issues"
+  },
+  "files": [
+    "dist",
+    "*.d.ts"
+  ],
+  "license": "BSD-3-Clause",
+  "source": "src/lru.js",
+  "main": "dist/tiny-lru.cjs",
+  "module": "dist/tiny-lru.esm.js",
+  "type": "module",
+  "sourceType": "module",
+  "types": "lru.d.ts",
+  "engines": {
+    "node": ">=12"
+  },
+  "engineStrict": true,
+  "scripts": {
+    "build": "npm run lint && rm -rf dist/* && npm run rollup && npm run mocha",
+    "benchmark": "node benchmark.js",
+    "changelog": "auto-changelog -p",
+    "lint": "eslint *.js src/*.js test/*.js",
+    "mocha": "mocha test/*.js",
+    "rollup": "rollup --config",
+    "test": "npm run lint && npm run mocha",
+    "types": "npx -p typescript tsc src/lru.js --declaration --allowJs --emitDeclarationOnly --outDir ."
+  },
+  "devDependencies": {
+    "@rollup/plugin-terser": "^0.4.0",
+    "auto-changelog": "^2.4.0",
+    "eslint": "^8.36.0",
+    "mocha": "^10.2.0",
+    "precise": "^2.0.1",
+    "rollup": "^3.19.1",
+    "typescript": "^5.0.2"
+  },
+  "keywords": [
+    "LRU",
+    "cache",
+    "tiny",
+    "client",
+    "server",
+    "least",
+    "recently",
+    "used"
+  ]
+}
+π/dist/tiny-lru.esm.min.js≈(/*!
+ 2023 Jason Mulligan <jason.mulligan@avoidwork.com>
+ @version 10.2.2
+*/
+class t{constructor(t=0,s=0,e=!1){this.first=null,this.items=Object.create(null),this.last=null,this.max=t,this.resetTtl=e,this.size=0,this.ttl=s}#t(t){return t in this.items}clear(){return this.first=null,this.items=Object.create(null),this.last=null,this.size=0,this}delete(t){if(this.#t(t)){const s=this.items[t];delete this.items[t],this.size--,null!==s.prev&&(s.prev.next=s.next),null!==s.next&&(s.next.prev=s.prev),this.first===s&&(this.first=s.next),this.last===s&&(this.last=s.prev)}return this}evict(t=!1){if(t||this.size>0){const t=this.first;delete this.items[t.key],this.size--,0===this.size?(this.first=null,this.last=null):(this.first=t.next,this.first.prev=null)}return this}get(t){let s;if(this.#t(t)){const e=this.items[t];this.ttl>0&&e.expiry<=Date.now()?this.delete(t):(s=e.value,this.set(t,s,!0))}return s}expiresAt(t){let s;return this.#t(t)&&(s=this.items[t].expiry),s}keys(){return Object.keys(this.items)}set(t,s,e=!1,i=this.resetTtl){let h;if(e||this.#t(t)){if(h=this.items[t],h.value=s,i&&(h.expiry=this.ttl>0?Date.now()+this.ttl:this.ttl),this.last!==h){const t=this.last,s=h.next,e=h.prev;this.first===h&&(this.first=h.next),h.next=null,h.prev=this.last,t.next=h,null!==e&&(e.next=s),null!==s&&(s.prev=e)}}else this.max>0&&this.size===this.max&&this.evict(!0),h=this.items[t]={expiry:this.ttl>0?Date.now()+this.ttl:this.ttl,key:t,prev:this.last,next:null,value:s},1==++this.size?this.first=h:this.last.next=h;return this.last=h,this}}function s(s=1e3,e=0,i=!1){if(isNaN(s)||s<0)throw new TypeError("Invalid max value");if(isNaN(e)||e<0)throw new TypeError("Invalid ttl value");if("boolean"!=typeof i)throw new TypeError("Invalid resetTtl value");return new t(s,e,i)}export{s as lru};//# sourceMappingURL=tiny-lru.esm.min.js.map
+≤/dist/tiny-lru.cjs≈ç/**
+ * tiny-lru
+ *
+ * @copyright 2023 Jason Mulligan <jason.mulligan@avoidwork.com>
+ * @license BSD-3-Clause
+ * @version 10.2.2
+ */
+'use strict';
+
+class LRU {
+	constructor (max = 0, ttl = 0, resetTtl = false) {
+		this.first = null;
+		this.items = Object.create(null);
+		this.last = null;
+		this.max = max;
+		this.resetTtl = resetTtl;
+		this.size = 0;
+		this.ttl = ttl;
+	}
+
+	#has (key) {
+		return key in this.items;
+	}
+
+	clear () {
+		this.first = null;
+		this.items = Object.create(null);
+		this.last = null;
+		this.size = 0;
+
+		return this;
+	}
+
+	delete (key) {
+		if (this.#has(key)) {
+			const item = this.items[key];
+
+			delete this.items[key];
+			this.size--;
+
+			if (item.prev !== null) {
+				item.prev.next = item.next;
+			}
+
+			if (item.next !== null) {
+				item.next.prev = item.prev;
+			}
+
+			if (this.first === item) {
+				this.first = item.next;
+			}
+
+			if (this.last === item) {
+				this.last = item.prev;
+			}
+		}
+
+		return this;
+	}
+
+	evict (bypass = false) {
+		if (bypass || this.size > 0) {
+			const item = this.first;
+
+			delete this.items[item.key];
+			this.size--;
+
+			if (this.size === 0) {
+				this.first = null;
+				this.last = null;
+			} else {
+				this.first = item.next;
+				this.first.prev = null;
+			}
+		}
+
+		return this;
+	}
+
+	get (key) {
+		let result;
+
+		if (this.#has(key)) {
+			const item = this.items[key];
+
+			if (this.ttl > 0 && item.expiry <= Date.now()) {
+				this.delete(key);
+			} else {
+				result = item.value;
+				this.set(key, result, true);
+			}
+		}
+
+		return result;
+	}
+
+	expiresAt (key) {
+		let result;
+
+		if (this.#has(key)) {
+			result = this.items[key].expiry;
+		}
+
+		return result;
+	}
+
+	keys () {
+		return Object.keys(this.items);
+	}
+
+	set (key, value, bypass = false, resetTtl = this.resetTtl) {
+		let item;
+
+		if (bypass || this.#has(key)) {
+			item = this.items[key];
+			item.value = value;
+
+			if (resetTtl) {
+				item.expiry = this.ttl > 0 ? Date.now() + this.ttl : this.ttl;
+			}
+
+			if (this.last !== item) {
+				const last = this.last,
+					next = item.next,
+					prev = item.prev;
+
+				if (this.first === item) {
+					this.first = item.next;
+				}
+
+				item.next = null;
+				item.prev = this.last;
+				last.next = item;
+
+				if (prev !== null) {
+					prev.next = next;
+				}
+
+				if (next !== null) {
+					next.prev = prev;
+				}
+			}
+		} else {
+			if (this.max > 0 && this.size === this.max) {
+				this.evict(true);
+			}
+
+			item = this.items[key] = {
+				expiry: this.ttl > 0 ? Date.now() + this.ttl : this.ttl,
+				key: key,
+				prev: this.last,
+				next: null,
+				value
+			};
+
+			if (++this.size === 1) {
+				this.first = item;
+			} else {
+				this.last.next = item;
+			}
+		}
+
+		this.last = item;
+
+		return this;
+	}
+}
+
+function lru (max = 1000, ttl = 0, resetTtl = false) {
+	if (isNaN(max) || max < 0) {
+		throw new TypeError("Invalid max value");
+	}
+
+	if (isNaN(ttl) || ttl < 0) {
+		throw new TypeError("Invalid ttl value");
+	}
+
+	if (typeof resetTtl !== "boolean") {
+		throw new TypeError("Invalid resetTtl value");
+	}
+
+	return new LRU(max, ttl, resetTtl);
+}
+
+exports.lru = lru;

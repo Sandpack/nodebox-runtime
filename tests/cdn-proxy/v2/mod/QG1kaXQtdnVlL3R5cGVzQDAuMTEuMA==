@@ -30,62 +30,6 @@ const md = MarkdownIt({ html: true });
 const env: MarkdownItEnv = {};
 const rendered = md.render('raw markdown text', env);
 ```
-¯/dist/index.cjsÄ'use strict';
-
-¯/dist/index.mjsÄ
-°/dist/index.d.tsÅainterface MarkdownItEnv {
-}
-interface MarkdownItHeader {
-    /**
-     * The level of the header
-     *
-     * `1` to `6` for `<h1>` to `<h6>`
-     */
-    level: number;
-    /**
-     * The title of the header
-     */
-    title: string;
-    /**
-     * The slug of the header
-     *
-     * Typically the `id` attr of the header anchor
-     */
-    slug: string;
-    /**
-     * Link of the header
-     *
-     * Typically using `#${slug}` as the anchor hash
-     */
-    link: string;
-    /**
-     * The children of the header
-     */
-    children: MarkdownItHeader[];
-}
-
-export { MarkdownItEnv, MarkdownItHeader };
-¨/LICENSEÅIThe MIT License (MIT)
-
-Copyright (c) 2022-present, mdit-vue Contributors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
 ­/package.jsonÅ†{
   "name": "@mdit-vue/types",
   "version": "0.11.0",
@@ -127,3 +71,59 @@ THE SOFTWARE.
   },
   "gitHead": "6e4f18dacc06e0aa5d3108df8925f6b0aa885150"
 }
+¨/LICENSEÅIThe MIT License (MIT)
+
+Copyright (c) 2022-present, mdit-vue Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+°/dist/index.d.tsÅainterface MarkdownItEnv {
+}
+interface MarkdownItHeader {
+    /**
+     * The level of the header
+     *
+     * `1` to `6` for `<h1>` to `<h6>`
+     */
+    level: number;
+    /**
+     * The title of the header
+     */
+    title: string;
+    /**
+     * The slug of the header
+     *
+     * Typically the `id` attr of the header anchor
+     */
+    slug: string;
+    /**
+     * Link of the header
+     *
+     * Typically using `#${slug}` as the anchor hash
+     */
+    link: string;
+    /**
+     * The children of the header
+     */
+    children: MarkdownItHeader[];
+}
+
+export { MarkdownItEnv, MarkdownItHeader };
+¯/dist/index.mjsÄ
+¯/dist/index.cjsÄ'use strict';
+

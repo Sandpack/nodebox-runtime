@@ -1,71 +1,57 @@
-á™/README.md≈%# color-convert
+á≠/CHANGELOG.md≈â# 1.0.0 - 2016-01-07
 
-[![Build Status](https://travis-ci.org/Qix-/color-convert.svg?branch=master)](https://travis-ci.org/Qix-/color-convert)
+- Removed: unused speed test
+- Added: Automatic routing between previously unsupported conversions
+([#27](https://github.com/Qix-/color-convert/pull/27))
+- Removed: `xxx2xxx()` and `xxx2xxxRaw()` functions
+([#27](https://github.com/Qix-/color-convert/pull/27))
+- Removed: `convert()` class
+([#27](https://github.com/Qix-/color-convert/pull/27))
+- Changed: all functions to lookup dictionary
+([#27](https://github.com/Qix-/color-convert/pull/27))
+- Changed: `ansi` to `ansi256`
+([#27](https://github.com/Qix-/color-convert/pull/27))
+- Fixed: argument grouping for functions requiring only one argument
+([#27](https://github.com/Qix-/color-convert/pull/27))
 
-Color-convert is a color conversion library for JavaScript and node.
-It converts all ways between `rgb`, `hsl`, `hsv`, `hwb`, `cmyk`, `ansi`, `ansi16`, `hex` strings, and CSS `keyword`s (will round to closest):
+# 0.6.0 - 2015-07-23
 
-```js
-var convert = require('color-convert');
+- Added: methods to handle
+[ANSI](https://en.wikipedia.org/wiki/ANSI_escape_code#Colors) 16/256 colors:
+  - rgb2ansi16
+  - rgb2ansi
+  - hsl2ansi16
+  - hsl2ansi
+  - hsv2ansi16
+  - hsv2ansi
+  - hwb2ansi16
+  - hwb2ansi
+  - cmyk2ansi16
+  - cmyk2ansi
+  - keyword2ansi16
+  - keyword2ansi
+  - ansi162rgb
+  - ansi162hsl
+  - ansi162hsv
+  - ansi162hwb
+  - ansi162cmyk
+  - ansi162keyword
+  - ansi2rgb
+  - ansi2hsl
+  - ansi2hsv
+  - ansi2hwb
+  - ansi2cmyk
+  - ansi2keyword
+([#18](https://github.com/harthur/color-convert/pull/18))
 
-convert.rgb.hsl(140, 200, 100);             // [96, 48, 59]
-convert.keyword.rgb('blue');                // [0, 0, 255]
+# 0.5.3 - 2015-06-02
 
-var rgbChannels = convert.rgb.channels;     // 3
-var cmykChannels = convert.cmyk.channels;   // 4
-var ansiChannels = convert.ansi16.channels; // 1
-```
+- Fixed: hsl2hsv does not return `NaN` anymore when using `[0,0,0]`
+([#15](https://github.com/harthur/color-convert/issues/15))
 
-# Install
+---
 
-```console
-$ npm install color-convert
-```
-
-# API
-
-Simply get the property of the _from_ and _to_ conversion that you're looking for.
-
-All functions have a rounded and unrounded variant. By default, return values are rounded. To get the unrounded (raw) results, simply tack on `.raw` to the function.
-
-All 'from' functions have a hidden property called `.channels` that indicates the number of channels the function expects (not including alpha).
-
-```js
-var convert = require('color-convert');
-
-// Hex to LAB
-convert.hex.lab('DEADBF');         // [ 76, 21, -2 ]
-convert.hex.lab.raw('DEADBF');     // [ 75.56213190997677, 20.653827952644754, -2.290532499330533 ]
-
-// RGB to CMYK
-convert.rgb.cmyk(167, 255, 4);     // [ 35, 0, 98, 0 ]
-convert.rgb.cmyk.raw(167, 255, 4); // [ 34.509803921568626, 0, 98.43137254901961, 0 ]
-```
-
-### Arrays
-All functions that accept multiple arguments also support passing an array.
-
-Note that this does **not** apply to functions that convert from a color that only requires one value (e.g. `keyword`, `ansi256`, `hex`, etc.)
-
-```js
-var convert = require('color-convert');
-
-convert.rgb.hex(123, 45, 67);      // '7B2D43'
-convert.rgb.hex([123, 45, 67]);    // '7B2D43'
-```
-
-## Routing
-
-Conversions that don't have an _explicitly_ defined conversion (in [conversions.js](conversions.js)), but can be converted by means of sub-conversions (e.g. XYZ -> **RGB** -> CMYK), are automatically routed together. This allows just about any color model supported by `color-convert` to be converted to any other model, so long as a sub-conversion path exists. This is also true for conversions requiring more than one step in between (e.g. LCH -> **LAB** -> **XYZ** -> **RGB** -> Hex).
-
-Keep in mind that extensive conversions _may_ result in a loss of precision, and exist only to be complete. For a list of "direct" (single-step) conversions, see [conversions.js](conversions.js).
-
-# Contribute
-
-If there is a new model you would like to support, or want to add a direct conversion between two existing models, please send us a pull request.
-
-# License
-Copyright &copy; 2011-2016, Heather Arthur and Josh Junon. Licensed under the [MIT License](LICENSE).
+Check out commit logs for older releases
 ©/route.js≈—const conversions = require('./conversions');
 
 /*
@@ -163,6 +149,143 @@ module.exports = function (fromModel) {
 	return conversion;
 };
 
+≠/package.json≈;{
+  "name": "color-convert",
+  "description": "Plain color conversion functions",
+  "version": "2.0.1",
+  "author": "Heather Arthur <fayearthur@gmail.com>",
+  "license": "MIT",
+  "repository": "Qix-/color-convert",
+  "scripts": {
+    "pretest": "xo",
+    "test": "node test/basic.js"
+  },
+  "engines": {
+    "node": ">=7.0.0"
+  },
+  "keywords": [
+    "color",
+    "colour",
+    "convert",
+    "converter",
+    "conversion",
+    "rgb",
+    "hsl",
+    "hsv",
+    "hwb",
+    "cmyk",
+    "ansi",
+    "ansi16"
+  ],
+  "files": [
+    "index.js",
+    "conversions.js",
+    "route.js"
+  ],
+  "xo": {
+    "rules": {
+      "default-case": 0,
+      "no-inline-comments": 0,
+      "operator-linebreak": 0
+    }
+  },
+  "devDependencies": {
+    "chalk": "^2.4.2",
+    "xo": "^0.24.0"
+  },
+  "dependencies": {
+    "color-name": "~1.1.4"
+  }
+}
+®/LICENSE≈?Copyright (c) 2011-2016 Heather Arthur <fayearthur@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+™/README.md≈%# color-convert
+
+[![Build Status](https://travis-ci.org/Qix-/color-convert.svg?branch=master)](https://travis-ci.org/Qix-/color-convert)
+
+Color-convert is a color conversion library for JavaScript and node.
+It converts all ways between `rgb`, `hsl`, `hsv`, `hwb`, `cmyk`, `ansi`, `ansi16`, `hex` strings, and CSS `keyword`s (will round to closest):
+
+```js
+var convert = require('color-convert');
+
+convert.rgb.hsl(140, 200, 100);             // [96, 48, 59]
+convert.keyword.rgb('blue');                // [0, 0, 255]
+
+var rgbChannels = convert.rgb.channels;     // 3
+var cmykChannels = convert.cmyk.channels;   // 4
+var ansiChannels = convert.ansi16.channels; // 1
+```
+
+# Install
+
+```console
+$ npm install color-convert
+```
+
+# API
+
+Simply get the property of the _from_ and _to_ conversion that you're looking for.
+
+All functions have a rounded and unrounded variant. By default, return values are rounded. To get the unrounded (raw) results, simply tack on `.raw` to the function.
+
+All 'from' functions have a hidden property called `.channels` that indicates the number of channels the function expects (not including alpha).
+
+```js
+var convert = require('color-convert');
+
+// Hex to LAB
+convert.hex.lab('DEADBF');         // [ 76, 21, -2 ]
+convert.hex.lab.raw('DEADBF');     // [ 75.56213190997677, 20.653827952644754, -2.290532499330533 ]
+
+// RGB to CMYK
+convert.rgb.cmyk(167, 255, 4);     // [ 35, 0, 98, 0 ]
+convert.rgb.cmyk.raw(167, 255, 4); // [ 34.509803921568626, 0, 98.43137254901961, 0 ]
+```
+
+### Arrays
+All functions that accept multiple arguments also support passing an array.
+
+Note that this does **not** apply to functions that convert from a color that only requires one value (e.g. `keyword`, `ansi256`, `hex`, etc.)
+
+```js
+var convert = require('color-convert');
+
+convert.rgb.hex(123, 45, 67);      // '7B2D43'
+convert.rgb.hex([123, 45, 67]);    // '7B2D43'
+```
+
+## Routing
+
+Conversions that don't have an _explicitly_ defined conversion (in [conversions.js](conversions.js)), but can be converted by means of sub-conversions (e.g. XYZ -> **RGB** -> CMYK), are automatically routed together. This allows just about any color model supported by `color-convert` to be converted to any other model, so long as a sub-conversion path exists. This is also true for conversions requiring more than one step in between (e.g. LCH -> **LAB** -> **XYZ** -> **RGB** -> Hex).
+
+Keep in mind that extensive conversions _may_ result in a loss of precision, and exist only to be complete. For a list of "direct" (single-step) conversions, see [conversions.js](conversions.js).
+
+# Contribute
+
+If there is a new model you would like to support, or want to add a direct conversion between two existing models, please send us a pull request.
+
+# License
+Copyright &copy; 2011-2016, Heather Arthur and Josh Junon. Licensed under the [MIT License](LICENSE).
 Ø/conversions.js≈Bê/* MIT license */
 /* eslint-disable no-mixed-operators */
 const cssKeywords = require('color-name');
@@ -1002,108 +1125,6 @@ convert.rgb.gray = function (rgb) {
 	const val = (rgb[0] + rgb[1] + rgb[2]) / 3;
 	return [val / 255 * 100];
 };
-≠/package.json≈;{
-  "name": "color-convert",
-  "description": "Plain color conversion functions",
-  "version": "2.0.1",
-  "author": "Heather Arthur <fayearthur@gmail.com>",
-  "license": "MIT",
-  "repository": "Qix-/color-convert",
-  "scripts": {
-    "pretest": "xo",
-    "test": "node test/basic.js"
-  },
-  "engines": {
-    "node": ">=7.0.0"
-  },
-  "keywords": [
-    "color",
-    "colour",
-    "convert",
-    "converter",
-    "conversion",
-    "rgb",
-    "hsl",
-    "hsv",
-    "hwb",
-    "cmyk",
-    "ansi",
-    "ansi16"
-  ],
-  "files": [
-    "index.js",
-    "conversions.js",
-    "route.js"
-  ],
-  "xo": {
-    "rules": {
-      "default-case": 0,
-      "no-inline-comments": 0,
-      "operator-linebreak": 0
-    }
-  },
-  "devDependencies": {
-    "chalk": "^2.4.2",
-    "xo": "^0.24.0"
-  },
-  "dependencies": {
-    "color-name": "~1.1.4"
-  }
-}
-≠/CHANGELOG.md≈â# 1.0.0 - 2016-01-07
-
-- Removed: unused speed test
-- Added: Automatic routing between previously unsupported conversions
-([#27](https://github.com/Qix-/color-convert/pull/27))
-- Removed: `xxx2xxx()` and `xxx2xxxRaw()` functions
-([#27](https://github.com/Qix-/color-convert/pull/27))
-- Removed: `convert()` class
-([#27](https://github.com/Qix-/color-convert/pull/27))
-- Changed: all functions to lookup dictionary
-([#27](https://github.com/Qix-/color-convert/pull/27))
-- Changed: `ansi` to `ansi256`
-([#27](https://github.com/Qix-/color-convert/pull/27))
-- Fixed: argument grouping for functions requiring only one argument
-([#27](https://github.com/Qix-/color-convert/pull/27))
-
-# 0.6.0 - 2015-07-23
-
-- Added: methods to handle
-[ANSI](https://en.wikipedia.org/wiki/ANSI_escape_code#Colors) 16/256 colors:
-  - rgb2ansi16
-  - rgb2ansi
-  - hsl2ansi16
-  - hsl2ansi
-  - hsv2ansi16
-  - hsv2ansi
-  - hwb2ansi16
-  - hwb2ansi
-  - cmyk2ansi16
-  - cmyk2ansi
-  - keyword2ansi16
-  - keyword2ansi
-  - ansi162rgb
-  - ansi162hsl
-  - ansi162hsv
-  - ansi162hwb
-  - ansi162cmyk
-  - ansi162keyword
-  - ansi2rgb
-  - ansi2hsl
-  - ansi2hsv
-  - ansi2hwb
-  - ansi2cmyk
-  - ansi2keyword
-([#18](https://github.com/harthur/color-convert/pull/18))
-
-# 0.5.3 - 2015-06-02
-
-- Fixed: hsl2hsv does not return `NaN` anymore when using `[0,0,0]`
-([#15](https://github.com/harthur/color-convert/issues/15))
-
----
-
-Check out commit logs for older releases
 ©/index.js≈¨const conversions = require('./conversions');
 const route = require('./route');
 
@@ -1185,24 +1206,3 @@ models.forEach(fromModel => {
 });
 
 module.exports = convert;
-®/LICENSE≈?Copyright (c) 2011-2016 Heather Arthur <fayearthur@gmail.com>
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-

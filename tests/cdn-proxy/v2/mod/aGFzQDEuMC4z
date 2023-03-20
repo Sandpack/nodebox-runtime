@@ -1,43 +1,18 @@
-Ö¨/LICENSE-MIT≈$Copyright (c) 2013 Thiago de Arruda
+Ö≠/src/index.jsƒÅ'use strict';
 
-Permission is hereby granted, free of charge, to any person
-obtaining a copy of this software and associated documentation
-files (the "Software"), to deal in the Software without
-restriction, including without limitation the rights to use,
-copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following
-conditions:
+var bind = require('function-bind');
 
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
+module.exports = bind.call(Function.call, Object.prototype.hasOwnProperty);
+Æ/test/index.js≈K'use strict';
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-OTHER DEALINGS IN THE SOFTWARE.
-™/README.mdƒÔ# has
+var test = require('tape');
+var has = require('../');
 
-> Object.prototype.hasOwnProperty.call shortcut
-
-## Installation
-
-```sh
-npm install --save has
-```
-
-## Usage
-
-```js
-var has = require('has');
-
-has({}, 'hasOwnProperty'); // false
-has(Object.prototype, 'hasOwnProperty'); // true
-```
+test('has', function (t) {
+  t.equal(has({}, 'hasOwnProperty'), false, 'object literal does not have own property "hasOwnProperty"');
+  t.equal(has(Object.prototype, 'hasOwnProperty'), true, 'Object.prototype has own property "hasOwnProperty"');
+  t.end();
+});
 ≠/package.json≈Û{
   "name": "has",
   "description": "Object.prototype.hasOwnProperty.call shortcut",
@@ -86,18 +61,43 @@ has(Object.prototype, 'hasOwnProperty'); // true
     "test": "tape test"
   }
 }
-≠/src/index.jsƒÅ'use strict';
+™/README.mdƒÔ# has
 
-var bind = require('function-bind');
+> Object.prototype.hasOwnProperty.call shortcut
 
-module.exports = bind.call(Function.call, Object.prototype.hasOwnProperty);
-Æ/test/index.js≈K'use strict';
+## Installation
 
-var test = require('tape');
-var has = require('../');
+```sh
+npm install --save has
+```
 
-test('has', function (t) {
-  t.equal(has({}, 'hasOwnProperty'), false, 'object literal does not have own property "hasOwnProperty"');
-  t.equal(has(Object.prototype, 'hasOwnProperty'), true, 'Object.prototype has own property "hasOwnProperty"');
-  t.end();
-});
+## Usage
+
+```js
+var has = require('has');
+
+has({}, 'hasOwnProperty'); // false
+has(Object.prototype, 'hasOwnProperty'); // true
+```
+¨/LICENSE-MIT≈$Copyright (c) 2013 Thiago de Arruda
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.

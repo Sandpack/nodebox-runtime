@@ -1,13 +1,4 @@
-…«/index.d.tsÅLdeclare namespace ieee754 {
-    export function read(
-        buffer: Uint8Array, offset: number, isLE: boolean, mLen: number,
-        nBytes: number): number;
-    export function write(
-        buffer: Uint8Array, value: number, offset: number, isLE: boolean,
-        mLen: number, nBytes: number): void;
-  }
-  
-  export = ieee754;­/package.jsonÅª{
+…­/package.jsonÅª{
   "name": "ieee754",
   "description": "Read/write IEEE754 floating point numbers from/to a Buffer or array-like object",
   "version": "1.2.1",
@@ -59,68 +50,6 @@
     }
   ]
 }
-¨/LICENSEÅ¹Copyright 2008 Fair Oaks Labs, Inc.
-
-Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-
-3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-ª/README.mdÅs# ieee754 [![travis][travis-image]][travis-url] [![npm][npm-image]][npm-url] [![downloads][downloads-image]][downloads-url] [![javascript style guide][standard-image]][standard-url]
-
-[travis-image]: https://img.shields.io/travis/feross/ieee754/master.svg
-[travis-url]: https://travis-ci.org/feross/ieee754
-[npm-image]: https://img.shields.io/npm/v/ieee754.svg
-[npm-url]: https://npmjs.org/package/ieee754
-[downloads-image]: https://img.shields.io/npm/dm/ieee754.svg
-[downloads-url]: https://npmjs.org/package/ieee754
-[standard-image]: https://img.shields.io/badge/code_style-standard-brightgreen.svg
-[standard-url]: https://standardjs.com
-
-[![saucelabs][saucelabs-image]][saucelabs-url]
-
-[saucelabs-image]: https://saucelabs.com/browser-matrix/ieee754.svg
-[saucelabs-url]: https://saucelabs.com/u/ieee754
-
-### Read/write IEEE754 floating point numbers from/to a Buffer or array-like object.
-
-## install
-
-```
-npm install ieee754
-```
-
-## methods
-
-`var ieee754 = require('ieee754')`
-
-The `ieee754` object has the following functions:
-
-```
-ieee754.read = function (buffer, offset, isLE, mLen, nBytes)
-ieee754.write = function (buffer, value, offset, isLE, mLen, nBytes)
-```
-
-The arguments mean the following:
-
-- buffer = the buffer
-- offset = offset into the buffer
-- value = value to set (only for `write`)
-- isLe = is little endian?
-- mLen = mantissa length
-- nBytes = number of bytes
-
-## what is ieee754?
-
-The IEEE Standard for Floating-Point Arithmetic (IEEE 754) is a technical standard for floating-point computation. [Read more](http://en.wikipedia.org/wiki/IEEE_floating_point).
-
-## license
-
-BSD 3 Clause. Copyright (c) 2008, Fair Oaks Labs, Inc.
 ©/index.jsÅj/*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
@@ -206,3 +135,75 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
   buffer[offset + i - d] |= s * 128
 }
+¨/LICENSEÅ¹Copyright 2008 Fair Oaks Labs, Inc.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ª/README.mdÅs# ieee754 [![travis][travis-image]][travis-url] [![npm][npm-image]][npm-url] [![downloads][downloads-image]][downloads-url] [![javascript style guide][standard-image]][standard-url]
+
+[travis-image]: https://img.shields.io/travis/feross/ieee754/master.svg
+[travis-url]: https://travis-ci.org/feross/ieee754
+[npm-image]: https://img.shields.io/npm/v/ieee754.svg
+[npm-url]: https://npmjs.org/package/ieee754
+[downloads-image]: https://img.shields.io/npm/dm/ieee754.svg
+[downloads-url]: https://npmjs.org/package/ieee754
+[standard-image]: https://img.shields.io/badge/code_style-standard-brightgreen.svg
+[standard-url]: https://standardjs.com
+
+[![saucelabs][saucelabs-image]][saucelabs-url]
+
+[saucelabs-image]: https://saucelabs.com/browser-matrix/ieee754.svg
+[saucelabs-url]: https://saucelabs.com/u/ieee754
+
+### Read/write IEEE754 floating point numbers from/to a Buffer or array-like object.
+
+## install
+
+```
+npm install ieee754
+```
+
+## methods
+
+`var ieee754 = require('ieee754')`
+
+The `ieee754` object has the following functions:
+
+```
+ieee754.read = function (buffer, offset, isLE, mLen, nBytes)
+ieee754.write = function (buffer, value, offset, isLE, mLen, nBytes)
+```
+
+The arguments mean the following:
+
+- buffer = the buffer
+- offset = offset into the buffer
+- value = value to set (only for `write`)
+- isLe = is little endian?
+- mLen = mantissa length
+- nBytes = number of bytes
+
+## what is ieee754?
+
+The IEEE Standard for Floating-Point Arithmetic (IEEE 754) is a technical standard for floating-point computation. [Read more](http://en.wikipedia.org/wiki/IEEE_floating_point).
+
+## license
+
+BSD 3 Clause. Copyright (c) 2008, Fair Oaks Labs, Inc.
+«/index.d.tsÅLdeclare namespace ieee754 {
+    export function read(
+        buffer: Uint8Array, offset: number, isLE: boolean, mLen: number,
+        nBytes: number): number;
+    export function write(
+        buffer: Uint8Array, value: number, offset: number, isLE: boolean,
+        mLen: number, nBytes: number): void;
+  }
+  
+  export = ieee754;

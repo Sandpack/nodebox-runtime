@@ -1,71 +1,38 @@
-��/.travis.yml�+language: node_js
-node_js:
-  - 0.6
-  - 0.8
-�/test/non_unicode.js�var test = require('tape');
-var archy = require('../');
-
-test('beep', function (t) {
-    var s = archy({
-      label : 'beep',
-      nodes : [
-        'ity',
-        {
-          label : 'boop',
-          nodes : [
-            {
-              label : 'o_O',
-              nodes : [
-                {
-                  label : 'oh',
-                  nodes : [ 'hello', 'puny' ]
-                },
-                'human'
-              ]
-            },
-            'party!'
-          ]
-        }
-      ]
-    }, '', { unicode : false });
-    t.equal(s, [
-        'beep',
-        '+-- ity',
-        '`-- boop',
-        '  +-- o_O',
-        '  | +-- oh',
-        '  | | +-- hello',
-        '  | | `-- puny',
-        '  | `-- human',
-        '  `-- party!',
-        ''
-    ].join('\n'));
-    t.end();
-});
-�/examples/beep.js��var archy = require('../');
-var s = archy({
-  label : 'beep',
-  nodes : [
-    'ity',
-    {
-      label : 'boop',
-      nodes : [
-        {
-          label : 'o_O',
-          nodes : [
-            {
-              label : 'oh',
-              nodes : [ 'hello', 'puny' ]
-            },
-            'human'
-          ]
-        },
-        'party\ntime!'
-      ]
-    }
-  ]
-});
-console.log(s);
+��/index.js�tmodule.exports = function archy (obj, prefix, opts) {
+    if (prefix === undefined) prefix = '';
+    if (!opts) opts = {};
+    var chr = function (s) {
+        var chars = {
+            '│' : '|',
+            '└' : '`',
+            '├' : '+',
+            '─' : '-',
+            '┬' : '-'
+        };
+        return opts.unicode === false ? chars[s] : s;
+    };
+    
+    if (typeof obj === 'string') obj = { label : obj };
+    
+    var nodes = obj.nodes || [];
+    var lines = (obj.label || '').split('\n');
+    var splitter = '\n' + prefix + (nodes.length ? chr('│') : ' ') + ' ';
+    
+    return prefix
+        + lines.join(splitter) + '\n'
+        + nodes.map(function (node, ix) {
+            var last = ix === nodes.length - 1;
+            var more = node.nodes && node.nodes.length;
+            var prefix_ = prefix + (last ? ' ' : chr('│')) + ' ';
+            
+            return prefix
+                + (last ? chr('└') : chr('├')) + chr('─')
+                + (more ? chr('┬') : chr('─')) + ' '
+                + archy(node, prefix_, opts).slice(prefix.length + 2)
+            ;
+        }).join('')
+    ;
+};
 �/package.json��{
     "name" : "archy",
     "version" : "1.0.0",
@@ -106,89 +73,6 @@ console.log(s);
     },
     "license" : "MIT"
 }
-�/LICENSE�1This software is released under the MIT license:
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-�/examples/multi_line.js��var archy = require('../');
-
-var s = archy({
-  label : 'beep\none\ntwo',
-  nodes : [
-    'ity',
-    {
-      label : 'boop',
-      nodes : [
-        {
-          label : 'o_O\nwheee',
-          nodes : [
-            {
-              label : 'oh',
-              nodes : [ 'hello', 'puny\nmeat' ]
-            },
-            'creature'
-          ]
-        },
-        'party\ntime!'
-      ]
-    }
-  ]
-});
-console.log(s);
-�/test/beep.js�Bvar test = require('tape');
-var archy = require('../');
-
-test('beep', function (t) {
-    var s = archy({
-      label : 'beep',
-      nodes : [
-        'ity',
-        {
-          label : 'boop',
-          nodes : [
-            {
-              label : 'o_O',
-              nodes : [
-                {
-                  label : 'oh',
-                  nodes : [ 'hello', 'puny' ]
-                },
-                'human'
-              ]
-            },
-            'party!'
-          ]
-        }
-      ]
-    });
-    t.equal(s, [
-        'beep',
-        '├── ity',
-        '└─┬ boop',
-        '  ├─┬ o_O',
-        '  │ ├─┬ oh',
-        '  │ │ ├── hello',
-        '  │ │ └── puny',
-        '  │ └── human',
-        '  └── party!',
-        ''
-    ].join('\n'));
-    t.end();
-});
 �/readme.markdown��# archy
 
 Render nested hierarchies `npm ls` style with unicode pipes.
@@ -277,41 +161,28 @@ npm install archy
 # license
 
 MIT
-�/index.js�tmodule.exports = function archy (obj, prefix, opts) {
-    if (prefix === undefined) prefix = '';
-    if (!opts) opts = {};
-    var chr = function (s) {
-        var chars = {
-            '│' : '|',
-            '└' : '`',
-            '├' : '+',
-            '─' : '-',
-            '┬' : '-'
-        };
-        return opts.unicode === false ? chars[s] : s;
-    };
-    
-    if (typeof obj === 'string') obj = { label : obj };
-    
-    var nodes = obj.nodes || [];
-    var lines = (obj.label || '').split('\n');
-    var splitter = '\n' + prefix + (nodes.length ? chr('│') : ' ') + ' ';
-    
-    return prefix
-        + lines.join(splitter) + '\n'
-        + nodes.map(function (node, ix) {
-            var last = ix === nodes.length - 1;
-            var more = node.nodes && node.nodes.length;
-            var prefix_ = prefix + (last ? ' ' : chr('│')) + ' ';
-            
-            return prefix
-                + (last ? chr('└') : chr('├')) + chr('─')
-                + (more ? chr('┬') : chr('─')) + ' '
-                + archy(node, prefix_, opts).slice(prefix.length + 2)
-            ;
-        }).join('')
-    ;
-};
+�/LICENSE�1This software is released under the MIT license:
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+�/.travis.yml�+language: node_js
+node_js:
+  - 0.6
+  - 0.8
 �/test/multi_line.js��var test = require('tape');
 var archy = require('../');
 
@@ -353,6 +224,135 @@ test('multi-line', function (t) {
         '  │ └── creature',
         '  └── party',
         '      time!',
+        ''
+    ].join('\n'));
+    t.end();
+});
+�/test/non_unicode.js�var test = require('tape');
+var archy = require('../');
+
+test('beep', function (t) {
+    var s = archy({
+      label : 'beep',
+      nodes : [
+        'ity',
+        {
+          label : 'boop',
+          nodes : [
+            {
+              label : 'o_O',
+              nodes : [
+                {
+                  label : 'oh',
+                  nodes : [ 'hello', 'puny' ]
+                },
+                'human'
+              ]
+            },
+            'party!'
+          ]
+        }
+      ]
+    }, '', { unicode : false });
+    t.equal(s, [
+        'beep',
+        '+-- ity',
+        '`-- boop',
+        '  +-- o_O',
+        '  | +-- oh',
+        '  | | +-- hello',
+        '  | | `-- puny',
+        '  | `-- human',
+        '  `-- party!',
+        ''
+    ].join('\n'));
+    t.end();
+});
+�/examples/beep.js��var archy = require('../');
+var s = archy({
+  label : 'beep',
+  nodes : [
+    'ity',
+    {
+      label : 'boop',
+      nodes : [
+        {
+          label : 'o_O',
+          nodes : [
+            {
+              label : 'oh',
+              nodes : [ 'hello', 'puny' ]
+            },
+            'human'
+          ]
+        },
+        'party\ntime!'
+      ]
+    }
+  ]
+});
+console.log(s);
+�/examples/multi_line.js��var archy = require('../');
+
+var s = archy({
+  label : 'beep\none\ntwo',
+  nodes : [
+    'ity',
+    {
+      label : 'boop',
+      nodes : [
+        {
+          label : 'o_O\nwheee',
+          nodes : [
+            {
+              label : 'oh',
+              nodes : [ 'hello', 'puny\nmeat' ]
+            },
+            'creature'
+          ]
+        },
+        'party\ntime!'
+      ]
+    }
+  ]
+});
+console.log(s);
+�/test/beep.js�Bvar test = require('tape');
+var archy = require('../');
+
+test('beep', function (t) {
+    var s = archy({
+      label : 'beep',
+      nodes : [
+        'ity',
+        {
+          label : 'boop',
+          nodes : [
+            {
+              label : 'o_O',
+              nodes : [
+                {
+                  label : 'oh',
+                  nodes : [ 'hello', 'puny' ]
+                },
+                'human'
+              ]
+            },
+            'party!'
+          ]
+        }
+      ]
+    });
+    t.equal(s, [
+        'beep',
+        '├── ity',
+        '└─┬ boop',
+        '  ├─┬ o_O',
+        '  │ ├─┬ oh',
+        '  │ │ ├── hello',
+        '  │ │ └── puny',
+        '  │ └── human',
+        '  └── party!',
         ''
     ].join('\n'));
     t.end();

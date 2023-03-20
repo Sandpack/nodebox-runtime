@@ -1,4 +1,880 @@
-Ž°/test/indexOf.jsÅ;'use strict'
+Ž«/LICENSE.mdÅÀThe MIT License (MIT)
+=====================
+
+Copyright (c) 2013-2019 bl contributors
+----------------------------------
+
+*bl contributors listed at <https://github.com/rvagg/bl#contributors>*
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+°/BufferList.d.tsÅ,†export type BufferListAcceptedTypes =
+  | Buffer
+  | BufferList
+  | Uint8Array
+  | BufferListAcceptedTypes[]
+  | string
+  | number;
+
+export interface BufferListConstructor {
+  new (initData?: BufferListAcceptedTypes): BufferList;
+  (initData?: BufferListAcceptedTypes): BufferList;
+
+  /**
+   * Determines if the passed object is a BufferList. It will return true
+   * if the passed object is an instance of BufferList or BufferListStream
+   * and false otherwise.
+   *
+   * N.B. this won't return true for BufferList or BufferListStream instances
+   * created by versions of this library before this static method was added.
+   *
+   * @param other
+   */
+
+  isBufferList(other: unknown): boolean;
+}
+
+interface BufferList {
+  prototype: Object
+
+  /**
+   * Get the length of the list in bytes. This is the sum of the lengths
+   * of all of the buffers contained in the list, minus any initial offset
+   * for a semi-consumed buffer at the beginning. Should accurately
+   * represent the total number of bytes that can be read from the list.
+   */
+
+  length: number;
+
+  /**
+   * Adds an additional buffer or BufferList to the internal list.
+   * this is returned so it can be chained.
+   *
+   * @param buffer
+   */
+
+  append(buffer: BufferListAcceptedTypes): this;
+
+  /**
+   * Will return the byte at the specified index.
+   * @param index
+   */
+
+  get(index: number): number;
+
+  /**
+   * Returns a new Buffer object containing the bytes within the
+   * range specified. Both start and end are optional and will
+   * default to the beginning and end of the list respectively.
+   *
+   * If the requested range spans a single internal buffer then a
+   * slice of that buffer will be returned which shares the original
+   * memory range of that Buffer. If the range spans multiple buffers
+   * then copy operations will likely occur to give you a uniform Buffer.
+   *
+   * @param start
+   * @param end
+   */
+
+  slice(start?: number, end?: number): Buffer;
+
+  /**
+   * Returns a new BufferList object containing the bytes within the
+   * range specified. Both start and end are optional and will default
+   * to the beginning and end of the list respectively.
+   *
+   * No copies will be performed. All buffers in the result share
+   * memory with the original list.
+   *
+   * @param start
+   * @param end
+   */
+
+  shallowSlice(start?: number, end?: number): this;
+
+  /**
+   * Copies the content of the list in the `dest` buffer, starting from
+   * `destStart` and containing the bytes within the range specified
+   * with `srcStart` to `srcEnd`.
+   *
+   * `destStart`, `start` and `end` are optional and will default to the
+   * beginning of the dest buffer, and the beginning and end of the
+   * list respectively.
+   *
+   * @param dest
+   * @param destStart
+   * @param srcStart
+   * @param srcEnd
+   */
+
+  copy(
+    dest: Buffer,
+    destStart?: number,
+    srcStart?: number,
+    srcEnd?: number
+  ): Buffer;
+
+  /**
+   * Performs a shallow-copy of the list. The internal Buffers remains the
+   * same, so if you change the underlying Buffers, the change will be
+   * reflected in both the original and the duplicate.
+   *
+   * This method is needed if you want to call consume() or pipe() and
+   * still keep the original list.
+   *
+   * @example
+   *
+   * ```js
+   * var bl = new BufferListStream();
+   * bl.append('hello');
+   * bl.append(' world');
+   * bl.append('\n');
+   * bl.duplicate().pipe(process.stdout, { end: false });
+   *
+   * console.log(bl.toString())
+   * ```
+   */
+
+  duplicate(): this;
+
+  /**
+   * Will shift bytes off the start of the list. The number of bytes
+   * consumed don't need to line up with the sizes of the internal
+   * Buffersâ€”initial offsets will be calculated accordingly in order
+   * to give you a consistent view of the data.
+   *
+   * @param bytes
+   */
+
+  consume(bytes?: number): void;
+
+  /**
+   * Will return a string representation of the buffer. The optional
+   * `start` and `end` arguments are passed on to `slice()`, while
+   * the encoding is passed on to `toString()` of the resulting Buffer.
+   *
+   * See the [`Buffer#toString()`](http://nodejs.org/docs/latest/api/buffer.html#buffer_buf_tostring_encoding_start_end)
+   * documentation for more information.
+   *
+   * @param encoding
+   * @param start
+   * @param end
+   */
+
+  toString(encoding?: string, start?: number, end?: number): string;
+
+  /**
+   * Will return the byte at the specified index. indexOf() method
+   * returns the first index at which a given element can be found
+   * in the BufferList, or -1 if it is not present.
+   *
+   * @param value
+   * @param byteOffset
+   * @param encoding
+   */
+
+  indexOf(
+    value: string | number | Uint8Array | BufferList | Buffer,
+    byteOffset?: number,
+    encoding?: string
+  ): number;
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readDoubleBE: Buffer['readDoubleBE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readDoubleLE: Buffer['readDoubleLE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readFloatBE: Buffer['readFloatBE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readFloatLE: Buffer['readFloatLE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readInt32BE: Buffer['readInt32BE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readInt32LE: Buffer['readInt32LE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readUInt32BE: Buffer['readUInt32BE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readUInt32LE: Buffer['readUInt32LE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readInt16BE: Buffer['readInt16BE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are
+   * implemented and will operate across internal Buffer boundaries transparently.
+   *
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
+   * documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readInt16LE: Buffer['readInt16LE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are
+   * implemented and will operate across internal Buffer boundaries transparently.
+   *
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
+   * documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readUInt16BE: Buffer['readUInt16BE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are
+   * implemented and will operate across internal Buffer boundaries transparently.
+   *
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
+   * documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readUInt16LE: Buffer['readUInt16LE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are
+   * implemented and will operate across internal Buffer boundaries transparently.
+   *
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
+   * documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readInt8: Buffer['readInt8'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are
+   * implemented and will operate across internal Buffer boundaries transparently.
+   *
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
+   * documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readUInt8: Buffer['readUInt8'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are
+   * implemented and will operate across internal Buffer boundaries transparently.
+   *
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
+   * documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readIntBE: Buffer['readIntBE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are
+   * implemented and will operate across internal Buffer boundaries transparently.
+   *
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
+   * documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readIntLE: Buffer['readIntLE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are
+   * implemented and will operate across internal Buffer boundaries transparently.
+   *
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
+   * documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readUIntBE: Buffer['readUIntBE'];
+
+  /**
+   * All of the standard byte-reading methods of the Buffer interface are
+   * implemented and will operate across internal Buffer boundaries transparently.
+   *
+   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
+   * documentation for how these work.
+   *
+   * @param offset
+   */
+
+  readUIntLE: Buffer['readUIntLE'];
+}
+
+/**
+ * No arguments are required for the constructor, but you can initialise
+ * the list by passing in a single Buffer object or an array of Buffer
+ * objects.
+ *
+ * `new` is not strictly required, if you don't instantiate a new object,
+ * it will be done automatically for you so you can create a new instance
+ * simply with:
+ *
+ * ```js
+ * const { BufferList } = require('bl')
+ * const bl = BufferList()
+ *
+ * // equivalent to:
+ *
+ * const { BufferList } = require('bl')
+ * const bl = new BufferList()
+ * ```
+ */
+
+declare const BufferList: BufferListConstructor;
+ª/README.mdÅ1q# bl *(BufferList)*
+
+[![Build Status](https://api.travis-ci.com/rvagg/bl.svg?branch=master)](https://travis-ci.com/rvagg/bl/)
+
+**A Node.js Buffer list collector, reader and streamer thingy.**
+
+[![NPM](https://nodei.co/npm/bl.svg)](https://nodei.co/npm/bl/)
+
+**bl** is a storage object for collections of Node Buffers, exposing them with the main Buffer readable API. Also works as a duplex stream so you can collect buffers from a stream that emits them and emit buffers to a stream that consumes them!
+
+The original buffers are kept intact and copies are only done as necessary. Any reads that require the use of a single original buffer will return a slice of that buffer only (which references the same memory as the original buffer). Reads that span buffers perform concatenation as required and return the results transparently.
+
+```js
+const { BufferList } = require('bl')
+
+const bl = new BufferList()
+bl.append(Buffer.from('abcd'))
+bl.append(Buffer.from('efg'))
+bl.append('hi')                     // bl will also accept & convert Strings
+bl.append(Buffer.from('j'))
+bl.append(Buffer.from([ 0x3, 0x4 ]))
+
+console.log(bl.length) // 12
+
+console.log(bl.slice(0, 10).toString('ascii')) // 'abcdefghij'
+console.log(bl.slice(3, 10).toString('ascii')) // 'defghij'
+console.log(bl.slice(3, 6).toString('ascii'))  // 'def'
+console.log(bl.slice(3, 8).toString('ascii'))  // 'defgh'
+console.log(bl.slice(5, 10).toString('ascii')) // 'fghij'
+
+console.log(bl.indexOf('def')) // 3
+console.log(bl.indexOf('asdf')) // -1
+
+// or just use toString!
+console.log(bl.toString())               // 'abcdefghij\u0003\u0004'
+console.log(bl.toString('ascii', 3, 8))  // 'defgh'
+console.log(bl.toString('ascii', 5, 10)) // 'fghij'
+
+// other standard Buffer readables
+console.log(bl.readUInt16BE(10)) // 0x0304
+console.log(bl.readUInt16LE(10)) // 0x0403
+```
+
+Give it a callback in the constructor and use it just like **[concat-stream](https://github.com/maxogden/node-concat-stream)**:
+
+```js
+const { BufferListStream } = require('bl')
+const fs = require('fs')
+
+fs.createReadStream('README.md')
+  .pipe(BufferListStream((err, data) => { // note 'new' isn't strictly required
+    // `data` is a complete Buffer object containing the full data
+    console.log(data.toString())
+  }))
+```
+
+Note that when you use the *callback* method like this, the resulting `data` parameter is a concatenation of all `Buffer` objects in the list. If you want to avoid the overhead of this concatenation (in cases of extreme performance consciousness), then avoid the *callback* method and just listen to `'end'` instead, like a standard Stream.
+
+Or to fetch a URL using [hyperquest](https://github.com/substack/hyperquest) (should work with [request](http://github.com/mikeal/request) and even plain Node http too!):
+
+```js
+const hyperquest = require('hyperquest')
+const { BufferListStream } = require('bl')
+
+const url = 'https://raw.github.com/rvagg/bl/master/README.md'
+
+hyperquest(url).pipe(BufferListStream((err, data) => {
+  console.log(data.toString())
+}))
+```
+
+Or, use it as a readable stream to recompose a list of Buffers to an output source:
+
+```js
+const { BufferListStream } = require('bl')
+const fs = require('fs')
+
+var bl = new BufferListStream()
+bl.append(Buffer.from('abcd'))
+bl.append(Buffer.from('efg'))
+bl.append(Buffer.from('hi'))
+bl.append(Buffer.from('j'))
+
+bl.pipe(fs.createWriteStream('gibberish.txt'))
+```
+
+## API
+
+  * <a href="#ctor"><code><b>new BufferList([ buf ])</b></code></a>
+  * <a href="#isBufferList"><code><b>BufferList.isBufferList(obj)</b></code></a>
+  * <a href="#length"><code>bl.<b>length</b></code></a>
+  * <a href="#append"><code>bl.<b>append(buffer)</b></code></a>
+  * <a href="#get"><code>bl.<b>get(index)</b></code></a>
+  * <a href="#indexOf"><code>bl.<b>indexOf(value[, byteOffset][, encoding])</b></code></a>
+  * <a href="#slice"><code>bl.<b>slice([ start[, end ] ])</b></code></a>
+  * <a href="#shallowSlice"><code>bl.<b>shallowSlice([ start[, end ] ])</b></code></a>
+  * <a href="#copy"><code>bl.<b>copy(dest, [ destStart, [ srcStart [, srcEnd ] ] ])</b></code></a>
+  * <a href="#duplicate"><code>bl.<b>duplicate()</b></code></a>
+  * <a href="#consume"><code>bl.<b>consume(bytes)</b></code></a>
+  * <a href="#toString"><code>bl.<b>toString([encoding, [ start, [ end ]]])</b></code></a>
+  * <a href="#readXX"><code>bl.<b>readDoubleBE()</b></code>, <code>bl.<b>readDoubleLE()</b></code>, <code>bl.<b>readFloatBE()</b></code>, <code>bl.<b>readFloatLE()</b></code>, <code>bl.<b>readInt32BE()</b></code>, <code>bl.<b>readInt32LE()</b></code>, <code>bl.<b>readUInt32BE()</b></code>, <code>bl.<b>readUInt32LE()</b></code>, <code>bl.<b>readInt16BE()</b></code>, <code>bl.<b>readInt16LE()</b></code>, <code>bl.<b>readUInt16BE()</b></code>, <code>bl.<b>readUInt16LE()</b></code>, <code>bl.<b>readInt8()</b></code>, <code>bl.<b>readUInt8()</b></code></a>
+  * <a href="#ctorStream"><code><b>new BufferListStream([ callback ])</b></code></a>
+
+--------------------------------------------------------
+<a name="ctor"></a>
+### new BufferList([ Buffer | Buffer array | BufferList | BufferList array | String ])
+No arguments are _required_ for the constructor, but you can initialise the list by passing in a single `Buffer` object or an array of `Buffer` objects.
+
+`new` is not strictly required, if you don't instantiate a new object, it will be done automatically for you so you can create a new instance simply with:
+
+```js
+const { BufferList } = require('bl')
+const bl = BufferList()
+
+// equivalent to:
+
+const { BufferList } = require('bl')
+const bl = new BufferList()
+```
+
+--------------------------------------------------------
+<a name="isBufferList"></a>
+### BufferList.isBufferList(obj)
+Determines if the passed object is a `BufferList`. It will return `true` if the passed object is an instance of `BufferList` **or** `BufferListStream` and `false` otherwise.
+
+N.B. this won't return `true` for `BufferList` or `BufferListStream` instances created by versions of this library before this static method was added.
+
+--------------------------------------------------------
+<a name="length"></a>
+### bl.length
+Get the length of the list in bytes. This is the sum of the lengths of all of the buffers contained in the list, minus any initial offset for a semi-consumed buffer at the beginning. Should accurately represent the total number of bytes that can be read from the list.
+
+--------------------------------------------------------
+<a name="append"></a>
+### bl.append(Buffer | Buffer array | BufferList | BufferList array | String)
+`append(buffer)` adds an additional buffer or BufferList to the internal list. `this` is returned so it can be chained.
+
+--------------------------------------------------------
+<a name="get"></a>
+### bl.get(index)
+`get()` will return the byte at the specified index.
+
+--------------------------------------------------------
+<a name="indexOf"></a>
+### bl.indexOf(value[, byteOffset][, encoding])
+`get()` will return the byte at the specified index.
+`indexOf()` method returns the first index at which a given element can be found in the BufferList, or -1 if it is not present.
+
+--------------------------------------------------------
+<a name="slice"></a>
+### bl.slice([ start, [ end ] ])
+`slice()` returns a new `Buffer` object containing the bytes within the range specified. Both `start` and `end` are optional and will default to the beginning and end of the list respectively.
+
+If the requested range spans a single internal buffer then a slice of that buffer will be returned which shares the original memory range of that Buffer. If the range spans multiple buffers then copy operations will likely occur to give you a uniform Buffer.
+
+--------------------------------------------------------
+<a name="shallowSlice"></a>
+### bl.shallowSlice([ start, [ end ] ])
+`shallowSlice()` returns a new `BufferList` object containing the bytes within the range specified. Both `start` and `end` are optional and will default to the beginning and end of the list respectively.
+
+No copies will be performed. All buffers in the result share memory with the original list.
+
+--------------------------------------------------------
+<a name="copy"></a>
+### bl.copy(dest, [ destStart, [ srcStart [, srcEnd ] ] ])
+`copy()` copies the content of the list in the `dest` buffer, starting from `destStart` and containing the bytes within the range specified with `srcStart` to `srcEnd`. `destStart`, `start` and `end` are optional and will default to the beginning of the `dest` buffer, and the beginning and end of the list respectively.
+
+--------------------------------------------------------
+<a name="duplicate"></a>
+### bl.duplicate()
+`duplicate()` performs a **shallow-copy** of the list. The internal Buffers remains the same, so if you change the underlying Buffers, the change will be reflected in both the original and the duplicate. This method is needed if you want to call `consume()` or `pipe()` and still keep the original list.Example:
+
+```js
+var bl = new BufferListStream()
+
+bl.append('hello')
+bl.append(' world')
+bl.append('\n')
+
+bl.duplicate().pipe(process.stdout, { end: false })
+
+console.log(bl.toString())
+```
+
+--------------------------------------------------------
+<a name="consume"></a>
+### bl.consume(bytes)
+`consume()` will shift bytes *off the start of the list*. The number of bytes consumed don't need to line up with the sizes of the internal Buffers&mdash;initial offsets will be calculated accordingly in order to give you a consistent view of the data.
+
+--------------------------------------------------------
+<a name="toString"></a>
+### bl.toString([encoding, [ start, [ end ]]])
+`toString()` will return a string representation of the buffer. The optional `start` and `end` arguments are passed on to `slice()`, while the `encoding` is passed on to `toString()` of the resulting Buffer. See the [Buffer#toString()](http://nodejs.org/docs/latest/api/buffer.html#buffer_buf_tostring_encoding_start_end) documentation for more information.
+
+--------------------------------------------------------
+<a name="readXX"></a>
+### bl.readDoubleBE(), bl.readDoubleLE(), bl.readFloatBE(), bl.readFloatLE(), bl.readInt32BE(), bl.readInt32LE(), bl.readUInt32BE(), bl.readUInt32LE(), bl.readInt16BE(), bl.readInt16LE(), bl.readUInt16BE(), bl.readUInt16LE(), bl.readInt8(), bl.readUInt8()
+
+All of the standard byte-reading methods of the `Buffer` interface are implemented and will operate across internal Buffer boundaries transparently.
+
+See the <b><code>[Buffer](http://nodejs.org/docs/latest/api/buffer.html)</code></b> documentation for how these work.
+
+--------------------------------------------------------
+<a name="ctorStream"></a>
+### new BufferListStream([ callback | Buffer | Buffer array | BufferList | BufferList array | String ])
+**BufferListStream** is a Node **[Duplex Stream](http://nodejs.org/docs/latest/api/stream.html#stream_class_stream_duplex)**, so it can be read from and written to like a standard Node stream. You can also `pipe()` to and from a **BufferListStream** instance.
+
+The constructor takes an optional callback, if supplied, the callback will be called with an error argument followed by a reference to the **bl** instance, when `bl.end()` is called (i.e. from a piped stream). This is a convenient method of collecting the entire contents of a stream, particularly when the stream is *chunky*, such as a network stream.
+
+Normally, no arguments are required for the constructor, but you can initialise the list by passing in a single `Buffer` object or an array of `Buffer` object.
+
+`new` is not strictly required, if you don't instantiate a new object, it will be done automatically for you so you can create a new instance simply with:
+
+```js
+const { BufferListStream } = require('bl')
+const bl = BufferListStream()
+
+// equivalent to:
+
+const { BufferListStream } = require('bl')
+const bl = new BufferListStream()
+```
+
+N.B. For backwards compatibility reasons, `BufferListStream` is the **default** export when you `require('bl')`:
+
+```js
+const { BufferListStream } = require('bl')
+// equivalent to:
+const BufferListStream = require('bl')
+```
+
+--------------------------------------------------------
+
+## Contributors
+
+**bl** is brought to you by the following hackers:
+
+ * [Rod Vagg](https://github.com/rvagg)
+ * [Matteo Collina](https://github.com/mcollina)
+ * [Jarett Cruger](https://github.com/jcrugzz)
+
+<a name="license"></a>
+## License &amp; copyright
+
+Copyright (c) 2013-2019 bl contributors (listed above).
+
+bl is licensed under the MIT license. All rights not explicitly granted in the MIT license are reserved. See the included LICENSE.md file for more details.
+°/test/convert.jsÅa'use strict'
+
+const tape = require('tape')
+const { BufferList, BufferListStream } = require('../')
+const { Buffer } = require('buffer')
+
+tape('convert from BufferList to BufferListStream', (t) => {
+  const data = Buffer.from(`TEST-${Date.now()}`)
+  const bl = new BufferList(data)
+  const bls = new BufferListStream(bl)
+  t.ok(bl.slice().equals(bls.slice()))
+  t.end()
+})
+
+tape('convert from BufferListStream to BufferList', (t) => {
+  const data = Buffer.from(`TEST-${Date.now()}`)
+  const bls = new BufferListStream(data)
+  const bl = new BufferList(bls)
+  t.ok(bl.slice().equals(bls.slice()))
+  t.end()
+})
+­/package.jsonÅø{
+  "name": "bl",
+  "version": "5.1.0",
+  "description": "Buffer List: collect buffers and access with a standard readable Buffer interface, streamable too!",
+  "license": "MIT",
+  "main": "bl.js",
+  "scripts": {
+    "lint": "standard *.js test/*.js",
+    "test": "npm run lint && npm run test:types && node test/test.js | faucet",
+    "test:ci": "npm run lint && node test/test.js && npm run test:types",
+    "test:types": "tsc --allowJs --noEmit test/test.js",
+    "build": "true"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rvagg/bl.git"
+  },
+  "homepage": "https://github.com/rvagg/bl",
+  "authors": [
+    "Rod Vagg <rod@vagg.org> (https://github.com/rvagg)",
+    "Matteo Collina <matteo.collina@gmail.com> (https://github.com/mcollina)",
+    "Jarett Cruger <jcrugzz@gmail.com> (https://github.com/jcrugzz)"
+  ],
+  "keywords": [
+    "buffer",
+    "buffers",
+    "stream",
+    "awesomesauce"
+  ],
+  "dependencies": {
+    "buffer": "^6.0.3",
+    "inherits": "^2.0.4",
+    "readable-stream": "^3.4.0"
+  },
+  "devDependencies": {
+    "@types/readable-stream": "^2.3.13",
+    "faucet": "~0.0.1",
+    "standard": "^17.0.0",
+    "tape": "^5.2.2",
+    "typescript": "~4.7.3"
+  },
+  "release": {
+    "branches": [
+      "master"
+    ],
+    "plugins": [
+      [
+        "@semantic-release/commit-analyzer",
+        {
+          "preset": "conventionalcommits",
+          "releaseRules": [
+            {
+              "breaking": true,
+              "release": "major"
+            },
+            {
+              "revert": true,
+              "release": "patch"
+            },
+            {
+              "type": "feat",
+              "release": "minor"
+            },
+            {
+              "type": "fix",
+              "release": "patch"
+            },
+            {
+              "type": "chore",
+              "release": "patch"
+            },
+            {
+              "type": "docs",
+              "release": "patch"
+            },
+            {
+              "type": "test",
+              "release": "patch"
+            },
+            {
+              "scope": "no-release",
+              "release": false
+            }
+          ]
+        }
+      ],
+      [
+        "@semantic-release/release-notes-generator",
+        {
+          "preset": "conventionalcommits",
+          "presetConfig": {
+            "types": [
+              {
+                "type": "feat",
+                "section": "Features"
+              },
+              {
+                "type": "fix",
+                "section": "Bug Fixes"
+              },
+              {
+                "type": "chore",
+                "section": "Trivial Changes"
+              },
+              {
+                "type": "docs",
+                "section": "Trivial Changes"
+              },
+              {
+                "type": "test",
+                "section": "Tests"
+              }
+            ]
+          }
+        }
+      ],
+      "@semantic-release/changelog",
+      "@semantic-release/npm",
+      "@semantic-release/github",
+      "@semantic-release/git"
+    ]
+  }
+}
+«/index.d.tsÅ
+
+import { Duplex } from "readable-stream";
+import {
+  BufferList as BL,
+  BufferListConstructor,
+  BufferListAcceptedTypes,
+} from "./BufferList";
+
+type BufferListStreamInit =
+  | ((err: Error, buffer: Buffer) => void)
+  | BufferListAcceptedTypes;
+
+interface BufferListStreamConstructor {
+  new (initData?: BufferListStreamInit): BufferListStream;
+  (callback?: BufferListStreamInit): BufferListStream;
+
+  /**
+   * Determines if the passed object is a BufferList. It will return true
+   * if the passed object is an instance of BufferList or BufferListStream
+   * and false otherwise.
+   *
+   * N.B. this won't return true for BufferList or BufferListStream instances
+   * created by versions of this library before this static method was added.
+   *
+   * @param other
+   */
+
+  isBufferList(other: unknown): boolean;
+
+  /**
+   * Rexporting BufferList and BufferListStream to fix
+   * issue with require/commonjs import and "export = " below.
+   */
+
+  BufferList: BufferListConstructor;
+  BufferListStream: BufferListStreamConstructor;
+}
+
+interface BufferListStream extends Duplex, BL {
+  prototype: BufferListStream & BL;
+}
+
+/**
+ * BufferListStream is a Node Duplex Stream, so it can be read from
+ * and written to like a standard Node stream. You can also pipe()
+ * to and from a BufferListStream instance.
+ *
+ * The constructor takes an optional callback, if supplied, the
+ * callback will be called with an error argument followed by a
+ * reference to the bl instance, when bl.end() is called
+ * (i.e. from a piped stream).
+ *
+ * This is a convenient method of collecting the entire contents of
+ * a stream, particularly when the stream is chunky, such as a network
+ * stream.
+ *
+ * Normally, no arguments are required for the constructor, but you can
+ * initialise the list by passing in a single Buffer object or an array
+ * of Buffer object.
+ *
+ * `new` is not strictly required, if you don't instantiate a new object,
+ * it will be done automatically for you so you can create a new instance
+ * simply with:
+ *
+ * ```js
+ * const { BufferListStream } = require('bl');
+ * const bl = BufferListStream();
+ *
+ * // equivalent to:
+ *
+ * const { BufferListStream } = require('bl');
+ * const bl = new BufferListStream();
+ * ```
+ *
+ * N.B. For backwards compatibility reasons, BufferListStream is the default
+ * export when you `require('bl')`:
+ *
+ * ```js
+ * const { BufferListStream } = require('bl')
+ *
+ * // equivalent to:
+ *
+ * const BufferListStream = require('bl')
+ * ```
+ */
+
+declare const BufferListStream: BufferListStreamConstructor;
+
+export = BufferListStream;
+°/test/indexOf.jsÅ;'use strict'
 
 const tape = require('tape')
 const BufferList = require('../')
@@ -490,6 +1366,38 @@ tape('indexOf the entire nodejs10 buffer test suite', (t) => {
 
   t.end()
 })
+µ/test/isBufferList.jsÅ4'use strict'
+
+const tape = require('tape')
+const { BufferList, BufferListStream } = require('../')
+const { Buffer } = require('buffer')
+
+tape('isBufferList positives', (t) => {
+  t.ok(BufferList.isBufferList(new BufferList()))
+  t.ok(BufferList.isBufferList(new BufferListStream()))
+
+  t.end()
+})
+
+tape('isBufferList negatives', (t) => {
+  const types = [
+    null,
+    undefined,
+    NaN,
+    true,
+    false,
+    {},
+    [],
+    Buffer.alloc(0),
+    [Buffer.alloc(0)]
+  ]
+
+  for (const obj of types) {
+    t.notOk(BufferList.isBufferList(obj))
+  }
+
+  t.end()
+})
 ®/BufferList.jsÅ%4'use strict'
 
 const { Buffer } = require('buffer')
@@ -886,991 +1794,23 @@ BufferList.isBufferList = function isBufferList (b) {
 }
 
 module.exports = BufferList
-«/LICENSE.mdÅÀThe MIT License (MIT)
-=====================
+­/CHANGELOG.mdÅø## [5.1.0](https://github.com/rvagg/bl/compare/v5.0.0...v5.1.0) (2022-10-18)
 
-Copyright (c) 2013-2019 bl contributors
-----------------------------------
 
-*bl contributors listed at <https://github.com/rvagg/bl#contributors>*
+### Features
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+* added integrated TypeScript typings ([#108](https://github.com/rvagg/bl/issues/108)) ([433ff89](https://github.com/rvagg/bl/commit/433ff8942f47fab8a5c9d13b2c00989ccf8d0710))
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-ª/README.mdÅ1q# bl *(BufferList)*
+### Bug Fixes
 
-[![Build Status](https://api.travis-ci.com/rvagg/bl.svg?branch=master)](https://travis-ci.com/rvagg/bl/)
+* windows support in tests ([387dfaf](https://github.com/rvagg/bl/commit/387dfaf9b2bca7849f12785436ceb01e42adac2c))
 
-**A Node.js Buffer list collector, reader and streamer thingy.**
 
-[![NPM](https://nodei.co/npm/bl.svg)](https://nodei.co/npm/bl/)
+### Trivial Changes
 
-**bl** is a storage object for collections of Node Buffers, exposing them with the main Buffer readable API. Also works as a duplex stream so you can collect buffers from a stream that emits them and emit buffers to a stream that consumes them!
-
-The original buffers are kept intact and copies are only done as necessary. Any reads that require the use of a single original buffer will return a slice of that buffer only (which references the same memory as the original buffer). Reads that span buffers perform concatenation as required and return the results transparently.
-
-```js
-const { BufferList } = require('bl')
-
-const bl = new BufferList()
-bl.append(Buffer.from('abcd'))
-bl.append(Buffer.from('efg'))
-bl.append('hi')                     // bl will also accept & convert Strings
-bl.append(Buffer.from('j'))
-bl.append(Buffer.from([ 0x3, 0x4 ]))
-
-console.log(bl.length) // 12
-
-console.log(bl.slice(0, 10).toString('ascii')) // 'abcdefghij'
-console.log(bl.slice(3, 10).toString('ascii')) // 'defghij'
-console.log(bl.slice(3, 6).toString('ascii'))  // 'def'
-console.log(bl.slice(3, 8).toString('ascii'))  // 'defgh'
-console.log(bl.slice(5, 10).toString('ascii')) // 'fghij'
-
-console.log(bl.indexOf('def')) // 3
-console.log(bl.indexOf('asdf')) // -1
-
-// or just use toString!
-console.log(bl.toString())               // 'abcdefghij\u0003\u0004'
-console.log(bl.toString('ascii', 3, 8))  // 'defgh'
-console.log(bl.toString('ascii', 5, 10)) // 'fghij'
-
-// other standard Buffer readables
-console.log(bl.readUInt16BE(10)) // 0x0304
-console.log(bl.readUInt16LE(10)) // 0x0403
-```
-
-Give it a callback in the constructor and use it just like **[concat-stream](https://github.com/maxogden/node-concat-stream)**:
-
-```js
-const { BufferListStream } = require('bl')
-const fs = require('fs')
-
-fs.createReadStream('README.md')
-  .pipe(BufferListStream((err, data) => { // note 'new' isn't strictly required
-    // `data` is a complete Buffer object containing the full data
-    console.log(data.toString())
-  }))
-```
-
-Note that when you use the *callback* method like this, the resulting `data` parameter is a concatenation of all `Buffer` objects in the list. If you want to avoid the overhead of this concatenation (in cases of extreme performance consciousness), then avoid the *callback* method and just listen to `'end'` instead, like a standard Stream.
-
-Or to fetch a URL using [hyperquest](https://github.com/substack/hyperquest) (should work with [request](http://github.com/mikeal/request) and even plain Node http too!):
-
-```js
-const hyperquest = require('hyperquest')
-const { BufferListStream } = require('bl')
-
-const url = 'https://raw.github.com/rvagg/bl/master/README.md'
-
-hyperquest(url).pipe(BufferListStream((err, data) => {
-  console.log(data.toString())
-}))
-```
-
-Or, use it as a readable stream to recompose a list of Buffers to an output source:
-
-```js
-const { BufferListStream } = require('bl')
-const fs = require('fs')
-
-var bl = new BufferListStream()
-bl.append(Buffer.from('abcd'))
-bl.append(Buffer.from('efg'))
-bl.append(Buffer.from('hi'))
-bl.append(Buffer.from('j'))
-
-bl.pipe(fs.createWriteStream('gibberish.txt'))
-```
-
-## API
-
-  * <a href="#ctor"><code><b>new BufferList([ buf ])</b></code></a>
-  * <a href="#isBufferList"><code><b>BufferList.isBufferList(obj)</b></code></a>
-  * <a href="#length"><code>bl.<b>length</b></code></a>
-  * <a href="#append"><code>bl.<b>append(buffer)</b></code></a>
-  * <a href="#get"><code>bl.<b>get(index)</b></code></a>
-  * <a href="#indexOf"><code>bl.<b>indexOf(value[, byteOffset][, encoding])</b></code></a>
-  * <a href="#slice"><code>bl.<b>slice([ start[, end ] ])</b></code></a>
-  * <a href="#shallowSlice"><code>bl.<b>shallowSlice([ start[, end ] ])</b></code></a>
-  * <a href="#copy"><code>bl.<b>copy(dest, [ destStart, [ srcStart [, srcEnd ] ] ])</b></code></a>
-  * <a href="#duplicate"><code>bl.<b>duplicate()</b></code></a>
-  * <a href="#consume"><code>bl.<b>consume(bytes)</b></code></a>
-  * <a href="#toString"><code>bl.<b>toString([encoding, [ start, [ end ]]])</b></code></a>
-  * <a href="#readXX"><code>bl.<b>readDoubleBE()</b></code>, <code>bl.<b>readDoubleLE()</b></code>, <code>bl.<b>readFloatBE()</b></code>, <code>bl.<b>readFloatLE()</b></code>, <code>bl.<b>readInt32BE()</b></code>, <code>bl.<b>readInt32LE()</b></code>, <code>bl.<b>readUInt32BE()</b></code>, <code>bl.<b>readUInt32LE()</b></code>, <code>bl.<b>readInt16BE()</b></code>, <code>bl.<b>readInt16LE()</b></code>, <code>bl.<b>readUInt16BE()</b></code>, <code>bl.<b>readUInt16LE()</b></code>, <code>bl.<b>readInt8()</b></code>, <code>bl.<b>readUInt8()</b></code></a>
-  * <a href="#ctorStream"><code><b>new BufferListStream([ callback ])</b></code></a>
-
---------------------------------------------------------
-<a name="ctor"></a>
-### new BufferList([ Buffer | Buffer array | BufferList | BufferList array | String ])
-No arguments are _required_ for the constructor, but you can initialise the list by passing in a single `Buffer` object or an array of `Buffer` objects.
-
-`new` is not strictly required, if you don't instantiate a new object, it will be done automatically for you so you can create a new instance simply with:
-
-```js
-const { BufferList } = require('bl')
-const bl = BufferList()
-
-// equivalent to:
-
-const { BufferList } = require('bl')
-const bl = new BufferList()
-```
-
---------------------------------------------------------
-<a name="isBufferList"></a>
-### BufferList.isBufferList(obj)
-Determines if the passed object is a `BufferList`. It will return `true` if the passed object is an instance of `BufferList` **or** `BufferListStream` and `false` otherwise.
-
-N.B. this won't return `true` for `BufferList` or `BufferListStream` instances created by versions of this library before this static method was added.
-
---------------------------------------------------------
-<a name="length"></a>
-### bl.length
-Get the length of the list in bytes. This is the sum of the lengths of all of the buffers contained in the list, minus any initial offset for a semi-consumed buffer at the beginning. Should accurately represent the total number of bytes that can be read from the list.
-
---------------------------------------------------------
-<a name="append"></a>
-### bl.append(Buffer | Buffer array | BufferList | BufferList array | String)
-`append(buffer)` adds an additional buffer or BufferList to the internal list. `this` is returned so it can be chained.
-
---------------------------------------------------------
-<a name="get"></a>
-### bl.get(index)
-`get()` will return the byte at the specified index.
-
---------------------------------------------------------
-<a name="indexOf"></a>
-### bl.indexOf(value[, byteOffset][, encoding])
-`get()` will return the byte at the specified index.
-`indexOf()` method returns the first index at which a given element can be found in the BufferList, or -1 if it is not present.
-
---------------------------------------------------------
-<a name="slice"></a>
-### bl.slice([ start, [ end ] ])
-`slice()` returns a new `Buffer` object containing the bytes within the range specified. Both `start` and `end` are optional and will default to the beginning and end of the list respectively.
-
-If the requested range spans a single internal buffer then a slice of that buffer will be returned which shares the original memory range of that Buffer. If the range spans multiple buffers then copy operations will likely occur to give you a uniform Buffer.
-
---------------------------------------------------------
-<a name="shallowSlice"></a>
-### bl.shallowSlice([ start, [ end ] ])
-`shallowSlice()` returns a new `BufferList` object containing the bytes within the range specified. Both `start` and `end` are optional and will default to the beginning and end of the list respectively.
-
-No copies will be performed. All buffers in the result share memory with the original list.
-
---------------------------------------------------------
-<a name="copy"></a>
-### bl.copy(dest, [ destStart, [ srcStart [, srcEnd ] ] ])
-`copy()` copies the content of the list in the `dest` buffer, starting from `destStart` and containing the bytes within the range specified with `srcStart` to `srcEnd`. `destStart`, `start` and `end` are optional and will default to the beginning of the `dest` buffer, and the beginning and end of the list respectively.
-
---------------------------------------------------------
-<a name="duplicate"></a>
-### bl.duplicate()
-`duplicate()` performs a **shallow-copy** of the list. The internal Buffers remains the same, so if you change the underlying Buffers, the change will be reflected in both the original and the duplicate. This method is needed if you want to call `consume()` or `pipe()` and still keep the original list.Example:
-
-```js
-var bl = new BufferListStream()
-
-bl.append('hello')
-bl.append(' world')
-bl.append('\n')
-
-bl.duplicate().pipe(process.stdout, { end: false })
-
-console.log(bl.toString())
-```
-
---------------------------------------------------------
-<a name="consume"></a>
-### bl.consume(bytes)
-`consume()` will shift bytes *off the start of the list*. The number of bytes consumed don't need to line up with the sizes of the internal Buffers&mdash;initial offsets will be calculated accordingly in order to give you a consistent view of the data.
-
---------------------------------------------------------
-<a name="toString"></a>
-### bl.toString([encoding, [ start, [ end ]]])
-`toString()` will return a string representation of the buffer. The optional `start` and `end` arguments are passed on to `slice()`, while the `encoding` is passed on to `toString()` of the resulting Buffer. See the [Buffer#toString()](http://nodejs.org/docs/latest/api/buffer.html#buffer_buf_tostring_encoding_start_end) documentation for more information.
-
---------------------------------------------------------
-<a name="readXX"></a>
-### bl.readDoubleBE(), bl.readDoubleLE(), bl.readFloatBE(), bl.readFloatLE(), bl.readInt32BE(), bl.readInt32LE(), bl.readUInt32BE(), bl.readUInt32LE(), bl.readInt16BE(), bl.readInt16LE(), bl.readUInt16BE(), bl.readUInt16LE(), bl.readInt8(), bl.readUInt8()
-
-All of the standard byte-reading methods of the `Buffer` interface are implemented and will operate across internal Buffer boundaries transparently.
-
-See the <b><code>[Buffer](http://nodejs.org/docs/latest/api/buffer.html)</code></b> documentation for how these work.
-
---------------------------------------------------------
-<a name="ctorStream"></a>
-### new BufferListStream([ callback | Buffer | Buffer array | BufferList | BufferList array | String ])
-**BufferListStream** is a Node **[Duplex Stream](http://nodejs.org/docs/latest/api/stream.html#stream_class_stream_duplex)**, so it can be read from and written to like a standard Node stream. You can also `pipe()` to and from a **BufferListStream** instance.
-
-The constructor takes an optional callback, if supplied, the callback will be called with an error argument followed by a reference to the **bl** instance, when `bl.end()` is called (i.e. from a piped stream). This is a convenient method of collecting the entire contents of a stream, particularly when the stream is *chunky*, such as a network stream.
-
-Normally, no arguments are required for the constructor, but you can initialise the list by passing in a single `Buffer` object or an array of `Buffer` object.
-
-`new` is not strictly required, if you don't instantiate a new object, it will be done automatically for you so you can create a new instance simply with:
-
-```js
-const { BufferListStream } = require('bl')
-const bl = BufferListStream()
-
-// equivalent to:
-
-const { BufferListStream } = require('bl')
-const bl = new BufferListStream()
-```
-
-N.B. For backwards compatibility reasons, `BufferListStream` is the **default** export when you `require('bl')`:
-
-```js
-const { BufferListStream } = require('bl')
-// equivalent to:
-const BufferListStream = require('bl')
-```
-
---------------------------------------------------------
-
-## Contributors
-
-**bl** is brought to you by the following hackers:
-
- * [Rod Vagg](https://github.com/rvagg)
- * [Matteo Collina](https://github.com/mcollina)
- * [Jarett Cruger](https://github.com/jcrugzz)
-
-<a name="license"></a>
-## License &amp; copyright
-
-Copyright (c) 2013-2019 bl contributors (listed above).
-
-bl is licensed under the MIT license. All rights not explicitly granted in the MIT license are reserved. See the included LICENSE.md file for more details.
-«/index.d.tsÅ
-
-import { Duplex } from "readable-stream";
-import {
-  BufferList as BL,
-  BufferListConstructor,
-  BufferListAcceptedTypes,
-} from "./BufferList";
-
-type BufferListStreamInit =
-  | ((err: Error, buffer: Buffer) => void)
-  | BufferListAcceptedTypes;
-
-interface BufferListStreamConstructor {
-  new (initData?: BufferListStreamInit): BufferListStream;
-  (callback?: BufferListStreamInit): BufferListStream;
-
-  /**
-   * Determines if the passed object is a BufferList. It will return true
-   * if the passed object is an instance of BufferList or BufferListStream
-   * and false otherwise.
-   *
-   * N.B. this won't return true for BufferList or BufferListStream instances
-   * created by versions of this library before this static method was added.
-   *
-   * @param other
-   */
-
-  isBufferList(other: unknown): boolean;
-
-  /**
-   * Rexporting BufferList and BufferListStream to fix
-   * issue with require/commonjs import and "export = " below.
-   */
-
-  BufferList: BufferListConstructor;
-  BufferListStream: BufferListStreamConstructor;
-}
-
-interface BufferListStream extends Duplex, BL {
-  prototype: BufferListStream & BL;
-}
-
-/**
- * BufferListStream is a Node Duplex Stream, so it can be read from
- * and written to like a standard Node stream. You can also pipe()
- * to and from a BufferListStream instance.
- *
- * The constructor takes an optional callback, if supplied, the
- * callback will be called with an error argument followed by a
- * reference to the bl instance, when bl.end() is called
- * (i.e. from a piped stream).
- *
- * This is a convenient method of collecting the entire contents of
- * a stream, particularly when the stream is chunky, such as a network
- * stream.
- *
- * Normally, no arguments are required for the constructor, but you can
- * initialise the list by passing in a single Buffer object or an array
- * of Buffer object.
- *
- * `new` is not strictly required, if you don't instantiate a new object,
- * it will be done automatically for you so you can create a new instance
- * simply with:
- *
- * ```js
- * const { BufferListStream } = require('bl');
- * const bl = BufferListStream();
- *
- * // equivalent to:
- *
- * const { BufferListStream } = require('bl');
- * const bl = new BufferListStream();
- * ```
- *
- * N.B. For backwards compatibility reasons, BufferListStream is the default
- * export when you `require('bl')`:
- *
- * ```js
- * const { BufferListStream } = require('bl')
- *
- * // equivalent to:
- *
- * const BufferListStream = require('bl')
- * ```
- */
-
-declare const BufferListStream: BufferListStreamConstructor;
-
-export = BufferListStream;
-°/test/convert.jsÅa'use strict'
-
-const tape = require('tape')
-const { BufferList, BufferListStream } = require('../')
-const { Buffer } = require('buffer')
-
-tape('convert from BufferList to BufferListStream', (t) => {
-  const data = Buffer.from(`TEST-${Date.now()}`)
-  const bl = new BufferList(data)
-  const bls = new BufferListStream(bl)
-  t.ok(bl.slice().equals(bls.slice()))
-  t.end()
-})
-
-tape('convert from BufferListStream to BufferList', (t) => {
-  const data = Buffer.from(`TEST-${Date.now()}`)
-  const bls = new BufferListStream(data)
-  const bl = new BufferList(bls)
-  t.ok(bl.slice().equals(bls.slice()))
-  t.end()
-})
-·/.github/dependabot.ymlÅMversion: 2
-updates:
-  - package-ecosystem: 'github-actions'
-    directory: '/'
-    schedule:
-      interval: 'daily'
-    commit-message:
-      prefix: 'chore'
-      include: 'scope'
-  - package-ecosystem: 'npm'
-    directory: '/'
-    schedule:
-      interval: 'daily'
-    commit-message:
-      prefix: 'chore'
-      include: 'scope'
-­/package.jsonÅø{
-  "name": "bl",
-  "version": "5.1.0",
-  "description": "Buffer List: collect buffers and access with a standard readable Buffer interface, streamable too!",
-  "license": "MIT",
-  "main": "bl.js",
-  "scripts": {
-    "lint": "standard *.js test/*.js",
-    "test": "npm run lint && npm run test:types && node test/test.js | faucet",
-    "test:ci": "npm run lint && node test/test.js && npm run test:types",
-    "test:types": "tsc --allowJs --noEmit test/test.js",
-    "build": "true"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/rvagg/bl.git"
-  },
-  "homepage": "https://github.com/rvagg/bl",
-  "authors": [
-    "Rod Vagg <rod@vagg.org> (https://github.com/rvagg)",
-    "Matteo Collina <matteo.collina@gmail.com> (https://github.com/mcollina)",
-    "Jarett Cruger <jcrugzz@gmail.com> (https://github.com/jcrugzz)"
-  ],
-  "keywords": [
-    "buffer",
-    "buffers",
-    "stream",
-    "awesomesauce"
-  ],
-  "dependencies": {
-    "buffer": "^6.0.3",
-    "inherits": "^2.0.4",
-    "readable-stream": "^3.4.0"
-  },
-  "devDependencies": {
-    "@types/readable-stream": "^2.3.13",
-    "faucet": "~0.0.1",
-    "standard": "^17.0.0",
-    "tape": "^5.2.2",
-    "typescript": "~4.7.3"
-  },
-  "release": {
-    "branches": [
-      "master"
-    ],
-    "plugins": [
-      [
-        "@semantic-release/commit-analyzer",
-        {
-          "preset": "conventionalcommits",
-          "releaseRules": [
-            {
-              "breaking": true,
-              "release": "major"
-            },
-            {
-              "revert": true,
-              "release": "patch"
-            },
-            {
-              "type": "feat",
-              "release": "minor"
-            },
-            {
-              "type": "fix",
-              "release": "patch"
-            },
-            {
-              "type": "chore",
-              "release": "patch"
-            },
-            {
-              "type": "docs",
-              "release": "patch"
-            },
-            {
-              "type": "test",
-              "release": "patch"
-            },
-            {
-              "scope": "no-release",
-              "release": false
-            }
-          ]
-        }
-      ],
-      [
-        "@semantic-release/release-notes-generator",
-        {
-          "preset": "conventionalcommits",
-          "presetConfig": {
-            "types": [
-              {
-                "type": "feat",
-                "section": "Features"
-              },
-              {
-                "type": "fix",
-                "section": "Bug Fixes"
-              },
-              {
-                "type": "chore",
-                "section": "Trivial Changes"
-              },
-              {
-                "type": "docs",
-                "section": "Trivial Changes"
-              },
-              {
-                "type": "test",
-                "section": "Tests"
-              }
-            ]
-          }
-        }
-      ],
-      "@semantic-release/changelog",
-      "@semantic-release/npm",
-      "@semantic-release/github",
-      "@semantic-release/git"
-    ]
-  }
-}
-°/BufferList.d.tsÅ,†export type BufferListAcceptedTypes =
-  | Buffer
-  | BufferList
-  | Uint8Array
-  | BufferListAcceptedTypes[]
-  | string
-  | number;
-
-export interface BufferListConstructor {
-  new (initData?: BufferListAcceptedTypes): BufferList;
-  (initData?: BufferListAcceptedTypes): BufferList;
-
-  /**
-   * Determines if the passed object is a BufferList. It will return true
-   * if the passed object is an instance of BufferList or BufferListStream
-   * and false otherwise.
-   *
-   * N.B. this won't return true for BufferList or BufferListStream instances
-   * created by versions of this library before this static method was added.
-   *
-   * @param other
-   */
-
-  isBufferList(other: unknown): boolean;
-}
-
-interface BufferList {
-  prototype: Object
-
-  /**
-   * Get the length of the list in bytes. This is the sum of the lengths
-   * of all of the buffers contained in the list, minus any initial offset
-   * for a semi-consumed buffer at the beginning. Should accurately
-   * represent the total number of bytes that can be read from the list.
-   */
-
-  length: number;
-
-  /**
-   * Adds an additional buffer or BufferList to the internal list.
-   * this is returned so it can be chained.
-   *
-   * @param buffer
-   */
-
-  append(buffer: BufferListAcceptedTypes): this;
-
-  /**
-   * Will return the byte at the specified index.
-   * @param index
-   */
-
-  get(index: number): number;
-
-  /**
-   * Returns a new Buffer object containing the bytes within the
-   * range specified. Both start and end are optional and will
-   * default to the beginning and end of the list respectively.
-   *
-   * If the requested range spans a single internal buffer then a
-   * slice of that buffer will be returned which shares the original
-   * memory range of that Buffer. If the range spans multiple buffers
-   * then copy operations will likely occur to give you a uniform Buffer.
-   *
-   * @param start
-   * @param end
-   */
-
-  slice(start?: number, end?: number): Buffer;
-
-  /**
-   * Returns a new BufferList object containing the bytes within the
-   * range specified. Both start and end are optional and will default
-   * to the beginning and end of the list respectively.
-   *
-   * No copies will be performed. All buffers in the result share
-   * memory with the original list.
-   *
-   * @param start
-   * @param end
-   */
-
-  shallowSlice(start?: number, end?: number): this;
-
-  /**
-   * Copies the content of the list in the `dest` buffer, starting from
-   * `destStart` and containing the bytes within the range specified
-   * with `srcStart` to `srcEnd`.
-   *
-   * `destStart`, `start` and `end` are optional and will default to the
-   * beginning of the dest buffer, and the beginning and end of the
-   * list respectively.
-   *
-   * @param dest
-   * @param destStart
-   * @param srcStart
-   * @param srcEnd
-   */
-
-  copy(
-    dest: Buffer,
-    destStart?: number,
-    srcStart?: number,
-    srcEnd?: number
-  ): Buffer;
-
-  /**
-   * Performs a shallow-copy of the list. The internal Buffers remains the
-   * same, so if you change the underlying Buffers, the change will be
-   * reflected in both the original and the duplicate.
-   *
-   * This method is needed if you want to call consume() or pipe() and
-   * still keep the original list.
-   *
-   * @example
-   *
-   * ```js
-   * var bl = new BufferListStream();
-   * bl.append('hello');
-   * bl.append(' world');
-   * bl.append('\n');
-   * bl.duplicate().pipe(process.stdout, { end: false });
-   *
-   * console.log(bl.toString())
-   * ```
-   */
-
-  duplicate(): this;
-
-  /**
-   * Will shift bytes off the start of the list. The number of bytes
-   * consumed don't need to line up with the sizes of the internal
-   * Buffersâ€”initial offsets will be calculated accordingly in order
-   * to give you a consistent view of the data.
-   *
-   * @param bytes
-   */
-
-  consume(bytes?: number): void;
-
-  /**
-   * Will return a string representation of the buffer. The optional
-   * `start` and `end` arguments are passed on to `slice()`, while
-   * the encoding is passed on to `toString()` of the resulting Buffer.
-   *
-   * See the [`Buffer#toString()`](http://nodejs.org/docs/latest/api/buffer.html#buffer_buf_tostring_encoding_start_end)
-   * documentation for more information.
-   *
-   * @param encoding
-   * @param start
-   * @param end
-   */
-
-  toString(encoding?: string, start?: number, end?: number): string;
-
-  /**
-   * Will return the byte at the specified index. indexOf() method
-   * returns the first index at which a given element can be found
-   * in the BufferList, or -1 if it is not present.
-   *
-   * @param value
-   * @param byteOffset
-   * @param encoding
-   */
-
-  indexOf(
-    value: string | number | Uint8Array | BufferList | Buffer,
-    byteOffset?: number,
-    encoding?: string
-  ): number;
-
-  /**
-   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
-   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
-   *
-   * @param offset
-   */
-
-  readDoubleBE: Buffer['readDoubleBE'];
-
-  /**
-   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
-   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
-   *
-   * @param offset
-   */
-
-  readDoubleLE: Buffer['readDoubleLE'];
-
-  /**
-   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
-   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
-   *
-   * @param offset
-   */
-
-  readFloatBE: Buffer['readFloatBE'];
-
-  /**
-   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
-   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
-   *
-   * @param offset
-   */
-
-  readFloatLE: Buffer['readFloatLE'];
-
-  /**
-   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
-   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
-   *
-   * @param offset
-   */
-
-  readInt32BE: Buffer['readInt32BE'];
-
-  /**
-   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
-   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
-   *
-   * @param offset
-   */
-
-  readInt32LE: Buffer['readInt32LE'];
-
-  /**
-   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
-   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
-   *
-   * @param offset
-   */
-
-  readUInt32BE: Buffer['readUInt32BE'];
-
-  /**
-   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
-   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
-   *
-   * @param offset
-   */
-
-  readUInt32LE: Buffer['readUInt32LE'];
-
-  /**
-   * All of the standard byte-reading methods of the Buffer interface are implemented and will operate across internal Buffer boundaries transparently.
-   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html) documentation for how these work.
-   *
-   * @param offset
-   */
-
-  readInt16BE: Buffer['readInt16BE'];
-
-  /**
-   * All of the standard byte-reading methods of the Buffer interface are
-   * implemented and will operate across internal Buffer boundaries transparently.
-   *
-   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
-   * documentation for how these work.
-   *
-   * @param offset
-   */
-
-  readInt16LE: Buffer['readInt16LE'];
-
-  /**
-   * All of the standard byte-reading methods of the Buffer interface are
-   * implemented and will operate across internal Buffer boundaries transparently.
-   *
-   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
-   * documentation for how these work.
-   *
-   * @param offset
-   */
-
-  readUInt16BE: Buffer['readUInt16BE'];
-
-  /**
-   * All of the standard byte-reading methods of the Buffer interface are
-   * implemented and will operate across internal Buffer boundaries transparently.
-   *
-   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
-   * documentation for how these work.
-   *
-   * @param offset
-   */
-
-  readUInt16LE: Buffer['readUInt16LE'];
-
-  /**
-   * All of the standard byte-reading methods of the Buffer interface are
-   * implemented and will operate across internal Buffer boundaries transparently.
-   *
-   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
-   * documentation for how these work.
-   *
-   * @param offset
-   */
-
-  readInt8: Buffer['readInt8'];
-
-  /**
-   * All of the standard byte-reading methods of the Buffer interface are
-   * implemented and will operate across internal Buffer boundaries transparently.
-   *
-   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
-   * documentation for how these work.
-   *
-   * @param offset
-   */
-
-  readUInt8: Buffer['readUInt8'];
-
-  /**
-   * All of the standard byte-reading methods of the Buffer interface are
-   * implemented and will operate across internal Buffer boundaries transparently.
-   *
-   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
-   * documentation for how these work.
-   *
-   * @param offset
-   */
-
-  readIntBE: Buffer['readIntBE'];
-
-  /**
-   * All of the standard byte-reading methods of the Buffer interface are
-   * implemented and will operate across internal Buffer boundaries transparently.
-   *
-   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
-   * documentation for how these work.
-   *
-   * @param offset
-   */
-
-  readIntLE: Buffer['readIntLE'];
-
-  /**
-   * All of the standard byte-reading methods of the Buffer interface are
-   * implemented and will operate across internal Buffer boundaries transparently.
-   *
-   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
-   * documentation for how these work.
-   *
-   * @param offset
-   */
-
-  readUIntBE: Buffer['readUIntBE'];
-
-  /**
-   * All of the standard byte-reading methods of the Buffer interface are
-   * implemented and will operate across internal Buffer boundaries transparently.
-   *
-   * See the [Buffer](http://nodejs.org/docs/latest/api/buffer.html)
-   * documentation for how these work.
-   *
-   * @param offset
-   */
-
-  readUIntLE: Buffer['readUIntLE'];
-}
-
-/**
- * No arguments are required for the constructor, but you can initialise
- * the list by passing in a single Buffer object or an array of Buffer
- * objects.
- *
- * `new` is not strictly required, if you don't instantiate a new object,
- * it will be done automatically for you so you can create a new instance
- * simply with:
- *
- * ```js
- * const { BufferList } = require('bl')
- * const bl = BufferList()
- *
- * // equivalent to:
- *
- * const { BufferList } = require('bl')
- * const bl = new BufferList()
- * ```
- */
-
-declare const BufferList: BufferListConstructor;
-Ù'/.github/workflows/test-and-release.ymlÅname: Test & Maybe Release
-on: [push, pull_request]
-jobs:
-  test:
-    strategy:
-      fail-fast: false
-      matrix:
-        node: [14.x, 16.x, 18.x, lts/*, current]
-        os: [macos-latest, ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-      - name: Use Node.js ${{ matrix.node }}
-        uses: actions/setup-node@v3.5.1
-        with:
-          node-version: ${{ matrix.node }}
-      - name: Install Dependencies
-        run: |
-          npm install --no-progress
-      - name: Run tests
-        run: |
-          npm config set script-shell bash
-          npm run test:ci
-  release:
-    name: Release
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: Setup Node.js
-        uses: actions/setup-node@v3.5.1
-        with:
-          node-version: 14
-      - name: Install dependencies
-        run: |
-          npm install --no-progress --no-package-lock --no-save
-      - name: Build
-        run: |
-          npm run build
-      - name: Install plugins
-        run: |
-          npm install \
-            @semantic-release/commit-analyzer \
-            conventional-changelog-conventionalcommits \
-            @semantic-release/release-notes-generator \
-            @semantic-release/npm \
-            @semantic-release/github \
-            @semantic-release/git \
-            @semantic-release/changelog \
-            --no-progress --no-package-lock --no-save
-      - name: Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npx semantic-release
-
-µ/test/isBufferList.jsÅ4'use strict'
-
-const tape = require('tape')
-const { BufferList, BufferListStream } = require('../')
-const { Buffer } = require('buffer')
-
-tape('isBufferList positives', (t) => {
-  t.ok(BufferList.isBufferList(new BufferList()))
-  t.ok(BufferList.isBufferList(new BufferListStream()))
-
-  t.end()
-})
-
-tape('isBufferList negatives', (t) => {
-  const types = [
-    null,
-    undefined,
-    NaN,
-    true,
-    false,
-    {},
-    [],
-    Buffer.alloc(0),
-    [Buffer.alloc(0)]
-  ]
-
-  for (const obj of types) {
-    t.notOk(BufferList.isBufferList(obj))
-  }
-
-  t.end()
-})
+* GH Actions, Dependabot, auto-release, remove Travis ([997f058](https://github.com/rvagg/bl/commit/997f058357de8f2a7f66998e80a72b491835573f))
+* **no-release:** bump standard from 16.0.4 to 17.0.0 ([#112](https://github.com/rvagg/bl/issues/112)) ([078bfe3](https://github.com/rvagg/bl/commit/078bfe33390d125297b1c946e5989c4aa9228961))
 ­/test/test.jsÅYõ// @ts-check
 'use strict'
 
@@ -2785,23 +2725,67 @@ tape('destroy with error', function (t) {
     t.notOk(data, 'no data')
   }))
 })
-­/CHANGELOG.mdÅø## [5.1.0](https://github.com/rvagg/bl/compare/v5.0.0...v5.1.0) (2022-10-18)
+Ù'/.github/workflows/test-and-release.ymlÅname: Test & Maybe Release
+on: [push, pull_request]
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [14.x, 16.x, 18.x, lts/*, current]
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v3.5.1
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Install Dependencies
+        run: |
+          npm install --no-progress
+      - name: Run tests
+        run: |
+          npm config set script-shell bash
+          npm run test:ci
+  release:
+    name: Release
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v3.5.1
+        with:
+          node-version: 14
+      - name: Install dependencies
+        run: |
+          npm install --no-progress --no-package-lock --no-save
+      - name: Build
+        run: |
+          npm run build
+      - name: Install plugins
+        run: |
+          npm install \
+            @semantic-release/commit-analyzer \
+            conventional-changelog-conventionalcommits \
+            @semantic-release/release-notes-generator \
+            @semantic-release/npm \
+            @semantic-release/github \
+            @semantic-release/git \
+            @semantic-release/changelog \
+            --no-progress --no-package-lock --no-save
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx semantic-release
 
-
-### Features
-
-* added integrated TypeScript typings ([#108](https://github.com/rvagg/bl/issues/108)) ([433ff89](https://github.com/rvagg/bl/commit/433ff8942f47fab8a5c9d13b2c00989ccf8d0710))
-
-
-### Bug Fixes
-
-* windows support in tests ([387dfaf](https://github.com/rvagg/bl/commit/387dfaf9b2bca7849f12785436ceb01e42adac2c))
-
-
-### Trivial Changes
-
-* GH Actions, Dependabot, auto-release, remove Travis ([997f058](https://github.com/rvagg/bl/commit/997f058357de8f2a7f66998e80a72b491835573f))
-* **no-release:** bump standard from 16.0.4 to 17.0.0 ([#112](https://github.com/rvagg/bl/issues/112)) ([078bfe3](https://github.com/rvagg/bl/commit/078bfe33390d125297b1c946e5989c4aa9228961))
 ¦/bl.jsÅû'use strict'
 
 const DuplexStream = require('readable-stream').Duplex
@@ -2886,3 +2870,19 @@ BufferListStream.isBufferList = BufferList.isBufferList
 module.exports = BufferListStream
 module.exports.BufferListStream = BufferListStream
 module.exports.BufferList = BufferList
+·/.github/dependabot.ymlÅMversion: 2
+updates:
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'daily'
+    commit-message:
+      prefix: 'chore'
+      include: 'scope'
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'daily'
+    commit-message:
+      prefix: 'chore'
+      include: 'scope'

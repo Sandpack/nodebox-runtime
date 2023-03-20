@@ -1,4 +1,95 @@
-ÑÆ/dist/index.js≈>=var __defProp = Object.defineProperty;
+Ñ®/LICENSE≈CThe MIT License (MIT)
+
+Copyright (c) 2018-present, Yuxi (Evan) You
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+≠/package.json≈°{
+  "name": "@vuepress/markdown",
+  "version": "2.0.0-beta.53",
+  "description": "Markdown package of VuePress",
+  "keywords": [
+    "vuepress",
+    "markdown"
+  ],
+  "homepage": "https://github.com/vuepress",
+  "bugs": {
+    "url": "https://github.com/vuepress/vuepress-next/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vuepress/vuepress-next.git"
+  },
+  "license": "MIT",
+  "author": "meteorlxy",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@mdit-vue/plugin-component": "^0.11.1",
+    "@mdit-vue/plugin-frontmatter": "^0.11.1",
+    "@mdit-vue/plugin-headers": "^0.11.1",
+    "@mdit-vue/plugin-sfc": "^0.11.1",
+    "@mdit-vue/plugin-title": "^0.11.1",
+    "@mdit-vue/plugin-toc": "^0.11.1",
+    "@mdit-vue/shared": "^0.11.0",
+    "@mdit-vue/types": "^0.11.0",
+    "@types/markdown-it": "^12.2.3",
+    "@types/markdown-it-emoji": "^2.0.2",
+    "@vuepress/shared": "2.0.0-beta.53",
+    "@vuepress/utils": "2.0.0-beta.53",
+    "markdown-it": "^13.0.1",
+    "markdown-it-anchor": "^8.6.5",
+    "markdown-it-emoji": "^2.0.2",
+    "mdurl": "^1.0.1"
+  },
+  "devDependencies": {
+    "@types/mdurl": "^1.0.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "tsup": {
+    "clean": true,
+    "dts": "./src/index.ts",
+    "entry": [
+      "./src/index.ts"
+    ],
+    "format": [
+      "esm"
+    ],
+    "outDir": "./dist",
+    "sourcemap": false,
+    "target": "es2020",
+    "tsconfig": "../tsconfig.dts.json"
+  },
+  "scripts": {
+    "build": "tsup",
+    "clean": "rimraf dist"
+  }
+}Æ/dist/index.js≈>=var __defProp = Object.defineProperty;
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -559,97 +650,6 @@ export {
   titlePlugin,
   tocPlugin
 };
-≠/package.json≈°{
-  "name": "@vuepress/markdown",
-  "version": "2.0.0-beta.53",
-  "description": "Markdown package of VuePress",
-  "keywords": [
-    "vuepress",
-    "markdown"
-  ],
-  "homepage": "https://github.com/vuepress",
-  "bugs": {
-    "url": "https://github.com/vuepress/vuepress-next/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/vuepress/vuepress-next.git"
-  },
-  "license": "MIT",
-  "author": "meteorlxy",
-  "type": "module",
-  "exports": {
-    ".": "./dist/index.js",
-    "./package.json": "./package.json"
-  },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
-  "dependencies": {
-    "@mdit-vue/plugin-component": "^0.11.1",
-    "@mdit-vue/plugin-frontmatter": "^0.11.1",
-    "@mdit-vue/plugin-headers": "^0.11.1",
-    "@mdit-vue/plugin-sfc": "^0.11.1",
-    "@mdit-vue/plugin-title": "^0.11.1",
-    "@mdit-vue/plugin-toc": "^0.11.1",
-    "@mdit-vue/shared": "^0.11.0",
-    "@mdit-vue/types": "^0.11.0",
-    "@types/markdown-it": "^12.2.3",
-    "@types/markdown-it-emoji": "^2.0.2",
-    "@vuepress/shared": "2.0.0-beta.53",
-    "@vuepress/utils": "2.0.0-beta.53",
-    "markdown-it": "^13.0.1",
-    "markdown-it-anchor": "^8.6.5",
-    "markdown-it-emoji": "^2.0.2",
-    "mdurl": "^1.0.1"
-  },
-  "devDependencies": {
-    "@types/mdurl": "^1.0.2"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "tsup": {
-    "clean": true,
-    "dts": "./src/index.ts",
-    "entry": [
-      "./src/index.ts"
-    ],
-    "format": [
-      "esm"
-    ],
-    "outDir": "./dist",
-    "sourcemap": false,
-    "target": "es2020",
-    "tsconfig": "../tsconfig.dts.json"
-  },
-  "scripts": {
-    "build": "tsup",
-    "clean": "rimraf dist"
-  }
-}®/LICENSE≈CThe MIT License (MIT)
-
-Copyright (c) 2018-present, Yuxi (Evan) You
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
 ∞/dist/index.d.ts≈	import { SfcPluginOptions } from '@mdit-vue/plugin-sfc';
 export { MarkdownSfcBlocks, SfcPluginOptions, sfcPlugin } from '@mdit-vue/plugin-sfc';
 import { MarkdownItEnv } from '@mdit-vue/types';

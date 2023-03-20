@@ -67,6 +67,105 @@ the licensed code:
   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
   DEALINGS IN THE SOFTWARE.
+™/README.md≈q# fs.realpath
+
+A backwards-compatible fs.realpath for Node v6 and above
+
+In Node v6, the JavaScript implementation of fs.realpath was replaced
+with a faster (but less resilient) native implementation.  That raises
+new and platform-specific errors and cannot handle long or excessively
+symlink-looping paths.
+
+This module handles those cases by detecting the new errors and
+falling back to the JavaScript implementation.  On versions of Node
+prior to v6, it has no effect.
+
+## USAGE
+
+```js
+var rp = require('fs.realpath')
+
+// async version
+rp.realpath(someLongAndLoopingPath, function (er, real) {
+  // the ELOOP was handled, but it was a bit slower
+})
+
+// sync version
+var real = rp.realpathSync(someLongAndLoopingPath)
+
+// monkeypatch at your own risk!
+// This replaces the fs.realpath/fs.realpathSync builtins
+rp.monkeypatch()
+
+// un-do the monkeypatching
+rp.unmonkeypatch()
+```
+©/index.js≈module.exports = realpath
+realpath.realpath = realpath
+realpath.sync = realpathSync
+realpath.realpathSync = realpathSync
+realpath.monkeypatch = monkeypatch
+realpath.unmonkeypatch = unmonkeypatch
+
+var fs = require('fs')
+var origRealpath = fs.realpath
+var origRealpathSync = fs.realpathSync
+
+var version = process.version
+var ok = /^v[0-5]\./.test(version)
+var old = require('./old.js')
+
+function newError (er) {
+  return er && er.syscall === 'realpath' && (
+    er.code === 'ELOOP' ||
+    er.code === 'ENOMEM' ||
+    er.code === 'ENAMETOOLONG'
+  )
+}
+
+function realpath (p, cache, cb) {
+  if (ok) {
+    return origRealpath(p, cache, cb)
+  }
+
+  if (typeof cache === 'function') {
+    cb = cache
+    cache = null
+  }
+  origRealpath(p, cache, function (er, result) {
+    if (newError(er)) {
+      old.realpath(p, cache, cb)
+    } else {
+      cb(er, result)
+    }
+  })
+}
+
+function realpathSync (p, cache) {
+  if (ok) {
+    return origRealpathSync(p, cache)
+  }
+
+  try {
+    return origRealpathSync(p, cache)
+  } catch (er) {
+    if (newError(er)) {
+      return old.realpathSync(p, cache)
+    } else {
+      throw er
+    }
+  }
+}
+
+function monkeypatch () {
+  fs.realpath = realpath
+  fs.realpathSync = realpathSync
+}
+
+function unmonkeypatch () {
+  fs.realpath = origRealpath
+  fs.realpathSync = origRealpathSync
+}
 ß/old.js≈!^// Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -370,102 +469,3 @@ exports.realpath = function realpath(p, cache, cb) {
     start();
   }
 };
-©/index.js≈module.exports = realpath
-realpath.realpath = realpath
-realpath.sync = realpathSync
-realpath.realpathSync = realpathSync
-realpath.monkeypatch = monkeypatch
-realpath.unmonkeypatch = unmonkeypatch
-
-var fs = require('fs')
-var origRealpath = fs.realpath
-var origRealpathSync = fs.realpathSync
-
-var version = process.version
-var ok = /^v[0-5]\./.test(version)
-var old = require('./old.js')
-
-function newError (er) {
-  return er && er.syscall === 'realpath' && (
-    er.code === 'ELOOP' ||
-    er.code === 'ENOMEM' ||
-    er.code === 'ENAMETOOLONG'
-  )
-}
-
-function realpath (p, cache, cb) {
-  if (ok) {
-    return origRealpath(p, cache, cb)
-  }
-
-  if (typeof cache === 'function') {
-    cb = cache
-    cache = null
-  }
-  origRealpath(p, cache, function (er, result) {
-    if (newError(er)) {
-      old.realpath(p, cache, cb)
-    } else {
-      cb(er, result)
-    }
-  })
-}
-
-function realpathSync (p, cache) {
-  if (ok) {
-    return origRealpathSync(p, cache)
-  }
-
-  try {
-    return origRealpathSync(p, cache)
-  } catch (er) {
-    if (newError(er)) {
-      return old.realpathSync(p, cache)
-    } else {
-      throw er
-    }
-  }
-}
-
-function monkeypatch () {
-  fs.realpath = realpath
-  fs.realpathSync = realpathSync
-}
-
-function unmonkeypatch () {
-  fs.realpath = origRealpath
-  fs.realpathSync = origRealpathSync
-}
-™/README.md≈q# fs.realpath
-
-A backwards-compatible fs.realpath for Node v6 and above
-
-In Node v6, the JavaScript implementation of fs.realpath was replaced
-with a faster (but less resilient) native implementation.  That raises
-new and platform-specific errors and cannot handle long or excessively
-symlink-looping paths.
-
-This module handles those cases by detecting the new errors and
-falling back to the JavaScript implementation.  On versions of Node
-prior to v6, it has no effect.
-
-## USAGE
-
-```js
-var rp = require('fs.realpath')
-
-// async version
-rp.realpath(someLongAndLoopingPath, function (er, real) {
-  // the ELOOP was handled, but it was a bit slower
-})
-
-// sync version
-var real = rp.realpathSync(someLongAndLoopingPath)
-
-// monkeypatch at your own risk!
-// This replaces the fs.realpath/fs.realpathSync builtins
-rp.monkeypatch()
-
-// un-do the monkeypatching
-rp.unmonkeypatch()
-```

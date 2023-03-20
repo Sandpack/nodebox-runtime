@@ -1,154 +1,45 @@
-ä™/README.md≈'# @fastify/error
-
-![CI](https://github.com/fastify/fastify-error/workflows/CI/badge.svg)
-[![NPM version](https://img.shields.io/npm/v/@fastify/error.svg?style=flat)](https://www.npmjs.com/package/@fastify/error)
-[![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](https://standardjs.com/)
-
-A small utility, used by Fastify itself, for generating consistent error objects across your codebase and plugins.
-
-### Install
-```
-npm i @fastify/error
-```
-
-### Usage
-
-The module exports a function that you can use for consistent error objects, it takes 4 parameters:
-
-```
-createError(code, message [, statusCode [, Base]])
-```
-
-- `code` (`string`, required) - The error code, you can access it later with `error.code`. For consistency, we recommend prefixing plugin error codes with `FST_`
-- `message` (`string`, required) - The error message. You can also use interpolated strings for formatting the message.
-- `statusCode` (`number`, optional) - The status code that Fastify will use if the error is sent via HTTP.
-- `Base` (`Error`, optional) - The base error object that will be used. (eg `TypeError`, `RangeError`)
-
-```js
-const createError = require('@fastify/error')
-const CustomError = createError('ERROR_CODE', 'message')
-console.log(new CustomError())
-```
-
-How to use an interpolated string:
-```js
-const createError = require('@fastify/error')
-const CustomError = createError('ERROR_CODE', 'Hello %s')
-console.log(new CustomError('world')) // error.message => 'Hello world'
-```
-
-## License
-
-Licensed under [MIT](./LICENSE).
-∑/.github/dependabot.yml≈version: 2
-updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 10
-
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
-±/types/index.d.ts≈õdeclare function createError<C extends string, SC extends number>(code: C, message: string, statusCode: SC, Base?: Error): createError.FastifyErrorConstructor<{ code: C; statusCode: SC }>;
-declare function createError<C extends string>(code: C, message: string, statusCode?: number, Base?: Error): createError.FastifyErrorConstructor<{ code: C; }>;
-
-type CreateError = typeof createError;
-
-declare namespace createError {
-  export interface FastifyError extends Error {
-    code: string;
-    name: string;
-    statusCode?: number;
-  }
-
-  export interface FastifyErrorConstructor<E extends { code: string; statusCode?: number } = { code: string; statusCode?: number }> {
-    new (a?: any, b?: any, c?: any): FastifyError & E;
-    (a?: any, b?: any, c?: any): FastifyError & E;
-    readonly prototype: FastifyError & E;
-  }
-
-  export const createError: CreateError
-  export { createError as default }
-}
-
-export = createError
-©/index.js≈5'use strict'
-
-const { inherits, format } = require('util')
-
-function createError (code, message, statusCode = 500, Base = Error) {
-  if (!code) throw new Error('Fastify error code must not be empty')
-  if (!message) throw new Error('Fastify error message must not be empty')
-
-  code = code.toUpperCase()
-
-  function FastifyError (a, b, c) {
-    if (!new.target) {
-      return new FastifyError(...arguments)
+ä≠/package.json≈Ë{
+  "name": "@fastify/error",
+  "version": "3.2.0",
+  "description": "A small utility, used by Fastify itself, for generating consistent error objects across your codebase and plugins.",
+  "main": "index.js",
+  "types": "types/index.d.ts",
+  "scripts": {
+    "lint": "standard",
+    "test": "npm run test:unit && npm run test:typescript",
+    "test:unit": "tap",
+    "test:typescript": "tsd"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fastify/fastify-error.git"
+  },
+  "keywords": [
+    "fastify",
+    "error",
+    "utility",
+    "plugin"
+  ],
+  "author": "Tomas Della Vedova",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fastify/fastify-error/issues"
+  },
+  "homepage": "https://github.com/fastify/fastify-error#readme",
+  "devDependencies": {
+    "standard": "^17.0.0",
+    "tap": "^16.0.0",
+    "tsd": "^0.25.0"
+  },
+  "tsd": {
+    "compilerOptions": {
+      "esModuleInterop": true
     }
-    Error.captureStackTrace(this, FastifyError)
-    this.name = 'FastifyError'
-    this.code = code
-
-    // more performant than spread (...) operator
-    switch (arguments.length) {
-      case 3:
-        this.message = format(message, a, b, c)
-        break
-      case 2:
-        this.message = format(message, a, b)
-        break
-      case 1:
-        this.message = format(message, a)
-        break
-      case 0:
-        this.message = message
-        break
-      default:
-        this.message = format(message, ...arguments)
-    }
-
-    this.statusCode = statusCode || undefined
+  },
+  "publishConfig": {
+    "access": "public"
   }
-  FastifyError.prototype[Symbol.toStringTag] = 'Error'
-
-  FastifyError.prototype.toString = function () {
-    return `${this.name} [${this.code}]: ${this.message}`
-  }
-
-  inherits(FastifyError, Base)
-
-  return FastifyError
 }
-
-module.exports = createError
-module.exports.default = createError
-module.exports.createError = createError
-®/LICENSE≈(MIT License
-
-Copyright (c) 2020 Fastify
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
 ≥/test/index.test.js≈˙'use strict'
 
 /* eslint no-prototype-builtins: 0 */
@@ -305,68 +196,116 @@ test('Create the error without the new keyword', t => {
   t.equal(err.statusCode, 500)
   t.ok(err.stack)
 })
-π/.github/workflows/ci.yml≈name: CI
+©/index.js≈5'use strict'
 
-on:
-  push:
-    paths-ignore:
-      - 'docs/**'
-      - '*.md'
-  pull_request:
-    paths-ignore:
-      - 'docs/**'
-      - '*.md'
+const { inherits, format } = require('util')
 
-jobs:
-  test:
-    uses: fastify/workflows/.github/workflows/plugins-ci.yml@v3
-    with:
-      license-check: true
-      lint: true
-≠/package.json≈Ë{
-  "name": "@fastify/error",
-  "version": "3.2.0",
-  "description": "A small utility, used by Fastify itself, for generating consistent error objects across your codebase and plugins.",
-  "main": "index.js",
-  "types": "types/index.d.ts",
-  "scripts": {
-    "lint": "standard",
-    "test": "npm run test:unit && npm run test:typescript",
-    "test:unit": "tap",
-    "test:typescript": "tsd"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/fastify/fastify-error.git"
-  },
-  "keywords": [
-    "fastify",
-    "error",
-    "utility",
-    "plugin"
-  ],
-  "author": "Tomas Della Vedova",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/fastify/fastify-error/issues"
-  },
-  "homepage": "https://github.com/fastify/fastify-error#readme",
-  "devDependencies": {
-    "standard": "^17.0.0",
-    "tap": "^16.0.0",
-    "tsd": "^0.25.0"
-  },
-  "tsd": {
-    "compilerOptions": {
-      "esModuleInterop": true
+function createError (code, message, statusCode = 500, Base = Error) {
+  if (!code) throw new Error('Fastify error code must not be empty')
+  if (!message) throw new Error('Fastify error message must not be empty')
+
+  code = code.toUpperCase()
+
+  function FastifyError (a, b, c) {
+    if (!new.target) {
+      return new FastifyError(...arguments)
     }
-  },
-  "publishConfig": {
-    "access": "public"
+    Error.captureStackTrace(this, FastifyError)
+    this.name = 'FastifyError'
+    this.code = code
+
+    // more performant than spread (...) operator
+    switch (arguments.length) {
+      case 3:
+        this.message = format(message, a, b, c)
+        break
+      case 2:
+        this.message = format(message, a, b)
+        break
+      case 1:
+        this.message = format(message, a)
+        break
+      case 0:
+        this.message = message
+        break
+      default:
+        this.message = format(message, ...arguments)
+    }
+
+    this.statusCode = statusCode || undefined
   }
+  FastifyError.prototype[Symbol.toStringTag] = 'Error'
+
+  FastifyError.prototype.toString = function () {
+    return `${this.name} [${this.code}]: ${this.message}`
+  }
+
+  inherits(FastifyError, Base)
+
+  return FastifyError
 }
-ß/.taprcƒfiles:
-  - test/**/*.test.js∂/types/index.test-d.ts≈#import createError, { FastifyError, FastifyErrorConstructor } from '..'
+
+module.exports = createError
+module.exports.default = createError
+module.exports.createError = createError
+®/LICENSE≈(MIT License
+
+Copyright (c) 2020 Fastify
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+∑/.github/dependabot.yml≈version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+±/types/index.d.ts≈õdeclare function createError<C extends string, SC extends number>(code: C, message: string, statusCode: SC, Base?: Error): createError.FastifyErrorConstructor<{ code: C; statusCode: SC }>;
+declare function createError<C extends string>(code: C, message: string, statusCode?: number, Base?: Error): createError.FastifyErrorConstructor<{ code: C; }>;
+
+type CreateError = typeof createError;
+
+declare namespace createError {
+  export interface FastifyError extends Error {
+    code: string;
+    name: string;
+    statusCode?: number;
+  }
+
+  export interface FastifyErrorConstructor<E extends { code: string; statusCode?: number } = { code: string; statusCode?: number }> {
+    new (a?: any, b?: any, c?: any): FastifyError & E;
+    (a?: any, b?: any, c?: any): FastifyError & E;
+    readonly prototype: FastifyError & E;
+  }
+
+  export const createError: CreateError
+  export { createError as default }
+}
+
+export = createError
+∂/types/index.test-d.ts≈#import createError, { FastifyError, FastifyErrorConstructor } from '..'
 import { expectType } from 'tsd'
 
 const CustomError = createError('ERROR_CODE', 'message')
@@ -384,3 +323,64 @@ expectType<FastifyError & { code: 'OTHER_CODE'; statusCode: 400 }>(typed)
 expectType<'OTHER_CODE'>(typed.code)
 expectType<string>(typed.message)
 expectType<400>(typed.statusCode)
+ß/.taprcƒfiles:
+  - test/**/*.test.jsπ/.github/workflows/ci.yml≈name: CI
+
+on:
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+
+jobs:
+  test:
+    uses: fastify/workflows/.github/workflows/plugins-ci.yml@v3
+    with:
+      license-check: true
+      lint: true
+™/README.md≈'# @fastify/error
+
+![CI](https://github.com/fastify/fastify-error/workflows/CI/badge.svg)
+[![NPM version](https://img.shields.io/npm/v/@fastify/error.svg?style=flat)](https://www.npmjs.com/package/@fastify/error)
+[![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](https://standardjs.com/)
+
+A small utility, used by Fastify itself, for generating consistent error objects across your codebase and plugins.
+
+### Install
+```
+npm i @fastify/error
+```
+
+### Usage
+
+The module exports a function that you can use for consistent error objects, it takes 4 parameters:
+
+```
+createError(code, message [, statusCode [, Base]])
+```
+
+- `code` (`string`, required) - The error code, you can access it later with `error.code`. For consistency, we recommend prefixing plugin error codes with `FST_`
+- `message` (`string`, required) - The error message. You can also use interpolated strings for formatting the message.
+- `statusCode` (`number`, optional) - The status code that Fastify will use if the error is sent via HTTP.
+- `Base` (`Error`, optional) - The base error object that will be used. (eg `TypeError`, `RangeError`)
+
+```js
+const createError = require('@fastify/error')
+const CustomError = createError('ERROR_CODE', 'message')
+console.log(new CustomError())
+```
+
+How to use an interpolated string:
+```js
+const createError = require('@fastify/error')
+const CustomError = createError('ERROR_CODE', 'Hello %s')
+console.log(new CustomError('world')) // error.message => 'Hello world'
+```
+
+## License
+
+Licensed under [MIT](./LICENSE).

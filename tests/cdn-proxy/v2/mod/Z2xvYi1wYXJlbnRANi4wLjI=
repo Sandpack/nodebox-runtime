@@ -1,148 +1,4 @@
-Ñ®/LICENSE≈YThe ISC License
-
-Copyright (c) 2015, 2019 Elan Shanker, 2021 Blaine Bublitz <blaine.bublitz@gmail.com>, Eric Schoffstall <yo@contra.io> and other contributors
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted, provided that the above
-copyright notice and this permission notice appear in all copies.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
-IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-©/index.js≈N'use strict';
-
-var isGlob = require('is-glob');
-var pathPosixDirname = require('path').posix.dirname;
-var isWin32 = require('os').platform() === 'win32';
-
-var slash = '/';
-var backslash = /\\/g;
-var escaped = /\\([!*?|[\](){}])/g;
-
-/**
- * @param {string} str
- * @param {Object} opts
- * @param {boolean} [opts.flipBackslashes=true]
- */
-module.exports = function globParent(str, opts) {
-  var options = Object.assign({ flipBackslashes: true }, opts);
-
-  // flip windows path separators
-  if (options.flipBackslashes && isWin32 && str.indexOf(slash) < 0) {
-    str = str.replace(backslash, slash);
-  }
-
-  // special case for strings ending in enclosure containing path separator
-  if (isEnclosure(str)) {
-    str += slash;
-  }
-
-  // preserves full path in case of trailing path separator
-  str += 'a';
-
-  // remove path parts that are globby
-  do {
-    str = pathPosixDirname(str);
-  } while (isGlobby(str));
-
-  // remove escape chars and return result
-  return str.replace(escaped, '$1');
-};
-
-function isEnclosure(str) {
-  var lastChar = str.slice(-1);
-
-  var enclosureStart;
-  switch (lastChar) {
-    case '}':
-      enclosureStart = '{';
-      break;
-    case ']':
-      enclosureStart = '[';
-      break;
-    default:
-      return false;
-  }
-
-  var foundIndex = str.indexOf(enclosureStart);
-  if (foundIndex < 0) {
-    return false;
-  }
-
-  return str.slice(foundIndex + 1, -1).includes(slash);
-}
-
-function isGlobby(str) {
-  if (/\([^()]+$/.test(str)) {
-    return true;
-  }
-  if (str[0] === '{' || str[0] === '[') {
-    return true;
-  }
-  if (/[^\\][{[]/.test(str)) {
-    return true;
-  }
-  return isGlob(str);
-}
-≠/package.json≈{
-  "name": "glob-parent",
-  "version": "6.0.2",
-  "description": "Extract the non-magic parent path from a glob string.",
-  "author": "Gulp Team <team@gulpjs.com> (https://gulpjs.com/)",
-  "contributors": [
-    "Elan Shanker (https://github.com/es128)",
-    "Blaine Bublitz <blaine.bublitz@gmail.com>"
-  ],
-  "repository": "gulpjs/glob-parent",
-  "license": "ISC",
-  "engines": {
-    "node": ">=10.13.0"
-  },
-  "main": "index.js",
-  "files": [
-    "LICENSE",
-    "index.js"
-  ],
-  "scripts": {
-    "lint": "eslint .",
-    "pretest": "npm run lint",
-    "test": "nyc mocha --async-only"
-  },
-  "dependencies": {
-    "is-glob": "^4.0.3"
-  },
-  "devDependencies": {
-    "eslint": "^7.0.0",
-    "eslint-config-gulp": "^5.0.0",
-    "expect": "^26.0.1",
-    "mocha": "^7.1.2",
-    "nyc": "^15.0.1"
-  },
-  "nyc": {
-    "reporter": [
-      "lcov",
-      "text-summary"
-    ]
-  },
-  "prettier": {
-    "singleQuote": true
-  },
-  "keywords": [
-    "glob",
-    "parent",
-    "strip",
-    "path",
-    "dirname",
-    "directory",
-    "base",
-    "wildcard"
-  ]
-}
-™/README.md≈f<p align="center">
+Ñ™/README.md≈f<p align="center">
   <a href="https://gulpjs.com">
     <img height="257" width="114" src="https://raw.githubusercontent.com/gulpjs/artwork/master/gulp-2x.png">
   </a>
@@ -276,3 +132,147 @@ ISC
 [expand-braces]: https://github.com/jonschlinkert/expand-braces
 [expand-brackets]: https://github.com/jonschlinkert/expand-brackets
 <!-- prettier-ignore-end -->
+≠/package.json≈{
+  "name": "glob-parent",
+  "version": "6.0.2",
+  "description": "Extract the non-magic parent path from a glob string.",
+  "author": "Gulp Team <team@gulpjs.com> (https://gulpjs.com/)",
+  "contributors": [
+    "Elan Shanker (https://github.com/es128)",
+    "Blaine Bublitz <blaine.bublitz@gmail.com>"
+  ],
+  "repository": "gulpjs/glob-parent",
+  "license": "ISC",
+  "engines": {
+    "node": ">=10.13.0"
+  },
+  "main": "index.js",
+  "files": [
+    "LICENSE",
+    "index.js"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "nyc mocha --async-only"
+  },
+  "dependencies": {
+    "is-glob": "^4.0.3"
+  },
+  "devDependencies": {
+    "eslint": "^7.0.0",
+    "eslint-config-gulp": "^5.0.0",
+    "expect": "^26.0.1",
+    "mocha": "^7.1.2",
+    "nyc": "^15.0.1"
+  },
+  "nyc": {
+    "reporter": [
+      "lcov",
+      "text-summary"
+    ]
+  },
+  "prettier": {
+    "singleQuote": true
+  },
+  "keywords": [
+    "glob",
+    "parent",
+    "strip",
+    "path",
+    "dirname",
+    "directory",
+    "base",
+    "wildcard"
+  ]
+}
+©/index.js≈N'use strict';
+
+var isGlob = require('is-glob');
+var pathPosixDirname = require('path').posix.dirname;
+var isWin32 = require('os').platform() === 'win32';
+
+var slash = '/';
+var backslash = /\\/g;
+var escaped = /\\([!*?|[\](){}])/g;
+
+/**
+ * @param {string} str
+ * @param {Object} opts
+ * @param {boolean} [opts.flipBackslashes=true]
+ */
+module.exports = function globParent(str, opts) {
+  var options = Object.assign({ flipBackslashes: true }, opts);
+
+  // flip windows path separators
+  if (options.flipBackslashes && isWin32 && str.indexOf(slash) < 0) {
+    str = str.replace(backslash, slash);
+  }
+
+  // special case for strings ending in enclosure containing path separator
+  if (isEnclosure(str)) {
+    str += slash;
+  }
+
+  // preserves full path in case of trailing path separator
+  str += 'a';
+
+  // remove path parts that are globby
+  do {
+    str = pathPosixDirname(str);
+  } while (isGlobby(str));
+
+  // remove escape chars and return result
+  return str.replace(escaped, '$1');
+};
+
+function isEnclosure(str) {
+  var lastChar = str.slice(-1);
+
+  var enclosureStart;
+  switch (lastChar) {
+    case '}':
+      enclosureStart = '{';
+      break;
+    case ']':
+      enclosureStart = '[';
+      break;
+    default:
+      return false;
+  }
+
+  var foundIndex = str.indexOf(enclosureStart);
+  if (foundIndex < 0) {
+    return false;
+  }
+
+  return str.slice(foundIndex + 1, -1).includes(slash);
+}
+
+function isGlobby(str) {
+  if (/\([^()]+$/.test(str)) {
+    return true;
+  }
+  if (str[0] === '{' || str[0] === '[') {
+    return true;
+  }
+  if (/[^\\][{[]/.test(str)) {
+    return true;
+  }
+  return isGlob(str);
+}
+®/LICENSE≈YThe ISC License
+
+Copyright (c) 2015, 2019 Elan Shanker, 2021 Blaine Bublitz <blaine.bublitz@gmail.com>, Eric Schoffstall <yo@contra.io> and other contributors
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.

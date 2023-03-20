@@ -127,89 +127,6 @@ export {
   warn,
   withSpinner
 };
-¨/LICENSEÅCThe MIT License (MIT)
-
-Copyright (c) 2018-present, Yuxi (Evan) You
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-°/dist/index.d.tsÅ@export { default as chalk } from 'chalk';
-export { default as debug } from 'debug';
-export { default as fs } from 'fs-extra';
-export { globby } from 'globby';
-export { default as hash } from 'hash-sum';
-import { Ora } from 'ora';
-export { default as ora } from 'ora';
-export { default as path } from 'upath';
-import { HeadConfig, HeadAttrsConfig } from '@vuepress/shared';
-
-declare const getDirname: (importMetaUrl: string) => string;
-
-/**
- * A helper for dynamically importing a file path
- *
- * We need to use `pathToFileURL` to transform file path wo compat with windows
- */
-declare const importFile: <T>(filePath: string) => Promise<T>;
-/**
- * A wrapper of `importFile` and returns the default export
- */
-declare const importFileDefault: <T>(filePath: string) => Promise<T>;
-
-/**
- * Format millisecond
- */
-declare const formatMs: (ms: number) => string;
-
-/**
- * Check if `child` is a sub path of `parent` or not. Return `true` if
- * they are the same path
- */
-declare const isChildPath: (child: string, parent: string) => boolean;
-
-declare const info: (...args: any[]) => void;
-declare const tip: (...args: any[]) => void;
-declare const success: (...args: any[]) => void;
-declare const warn: (...args: any[]) => void;
-declare const error: (...args: any[]) => void;
-declare const createError: (message?: string | undefined) => Error;
-declare const logger: {
-    info: (...args: any[]) => void;
-    tip: (...args: any[]) => void;
-    success: (...args: any[]) => void;
-    warn: (...args: any[]) => void;
-    error: (...args: any[]) => void;
-    createError: (message?: string | undefined) => Error;
-};
-
-/**
- * Render head config to string
- */
-declare const renderHead: ([tag, attrs, innerHTML,]: HeadConfig) => string;
-
-/**
- * Render head attrs config to string
- */
-declare const renderHeadAttrs: (attrs: HeadAttrsConfig) => string;
-
-declare const withSpinner: (msg: string) => <T>(target: (spinner?: Ora) => Promise<T>) => Promise<T>;
-
-export { createError, error, formatMs, getDirname, importFile, importFileDefault, info, isChildPath, logger, renderHead, renderHeadAttrs, success, tip, warn, withSpinner };
 ­/package.jsonÅ2{
   "name": "@vuepress/utils",
   "version": "2.0.0-beta.53",
@@ -272,4 +189,86 @@ export { createError, error, formatMs, getDirname, importFile, importFileDefault
     "build": "tsup",
     "clean": "rimraf dist"
   }
-}
+}°/dist/index.d.tsÅ@export { default as chalk } from 'chalk';
+export { default as debug } from 'debug';
+export { default as fs } from 'fs-extra';
+export { globby } from 'globby';
+export { default as hash } from 'hash-sum';
+import { Ora } from 'ora';
+export { default as ora } from 'ora';
+export { default as path } from 'upath';
+import { HeadConfig, HeadAttrsConfig } from '@vuepress/shared';
+
+declare const getDirname: (importMetaUrl: string) => string;
+
+/**
+ * A helper for dynamically importing a file path
+ *
+ * We need to use `pathToFileURL` to transform file path wo compat with windows
+ */
+declare const importFile: <T>(filePath: string) => Promise<T>;
+/**
+ * A wrapper of `importFile` and returns the default export
+ */
+declare const importFileDefault: <T>(filePath: string) => Promise<T>;
+
+/**
+ * Format millisecond
+ */
+declare const formatMs: (ms: number) => string;
+
+/**
+ * Check if `child` is a sub path of `parent` or not. Return `true` if
+ * they are the same path
+ */
+declare const isChildPath: (child: string, parent: string) => boolean;
+
+declare const info: (...args: any[]) => void;
+declare const tip: (...args: any[]) => void;
+declare const success: (...args: any[]) => void;
+declare const warn: (...args: any[]) => void;
+declare const error: (...args: any[]) => void;
+declare const createError: (message?: string | undefined) => Error;
+declare const logger: {
+    info: (...args: any[]) => void;
+    tip: (...args: any[]) => void;
+    success: (...args: any[]) => void;
+    warn: (...args: any[]) => void;
+    error: (...args: any[]) => void;
+    createError: (message?: string | undefined) => Error;
+};
+
+/**
+ * Render head config to string
+ */
+declare const renderHead: ([tag, attrs, innerHTML,]: HeadConfig) => string;
+
+/**
+ * Render head attrs config to string
+ */
+declare const renderHeadAttrs: (attrs: HeadAttrsConfig) => string;
+
+declare const withSpinner: (msg: string) => <T>(target: (spinner?: Ora) => Promise<T>) => Promise<T>;
+
+export { createError, error, formatMs, getDirname, importFile, importFileDefault, info, isChildPath, logger, renderHead, renderHeadAttrs, success, tip, warn, withSpinner };
+¨/LICENSEÅCThe MIT License (MIT)
+
+Copyright (c) 2018-present, Yuxi (Evan) You
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.

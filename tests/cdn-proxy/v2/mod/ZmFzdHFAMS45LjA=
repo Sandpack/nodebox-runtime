@@ -1,81 +1,4 @@
-ã´/index.d.ts≈rdeclare function fastq<C, T = any, R = any>(context: C, worker: fastq.worker<C, T, R>, concurrency: number): fastq.queue<T, R>
-declare function fastq<C, T = any, R = any>(worker: fastq.worker<C, T, R>, concurrency: number): fastq.queue<T, R>
-
-declare namespace fastq {
-  type worker<C, T = any, R = any> = (this: C, task: T, cb: fastq.done<R>) => void
-  type done<R = any> = (err: Error | null, result?: R) => void
-  type errorHandler<T = any> = (err: Error, task: T) => void
-
-  interface queue<T = any, R = any> {
-    push(task: T, done: done<R>): void
-    unshift(task: T, done: done<R>): void
-    pause(): any
-    resume(): any
-    idle(): boolean
-    length(): number
-    getQueue(): T[]
-    kill(): any
-    killAndDrain(): any
-    error(handler: errorHandler): void
-    concurrency: number
-    drain(): any
-    empty: () => void
-    saturated: () => void
-  }
-}
-
-export = fastq
-π/.github/workflows/ci.yml≈çname: ci
-
-on: [push, pull_request]
-
-jobs:
-  legacy:
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: ['0.10', '0.12', 4.x, 6.x, 8.x]
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Use Node.js
-        uses: actions/setup-node@v1
-        with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: Install
-        run: |
-          npm install --production && npm install tape
-
-      - name: Run tests
-        run: |
-          npm run legacy
-
-  test:
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [10.x, 12.x, 13.x, 14.x, 15.x]
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Use Node.js
-        uses: actions/setup-node@v1
-        with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: Install
-        run: |
-          npm install
-
-      - name: Run tests
-        run: |
-          npm run test
-´/example.jsƒ—'use strict'
+ã´/example.jsƒ—'use strict'
 
 var queue = require('./')(worker, 1)
 
@@ -86,373 +9,6 @@ queue.push(42, function (err, result) {
 
 function worker (arg, cb) {
   cb(null, 42 * 2)
-}
-∞/test/example.ts≈iimport * as fastq from '../'
-
-// Basic example
-
-const queue = fastq(worker, 1)
-
-queue.push('world', (err, result) => {
-  if (err) throw err
-  console.log('the result is', result)
-})
-
-queue.concurrency
-
-queue.drain()
-
-queue.empty = () => undefined
-
-console.log('the queue tasks are', queue.getQueue())
-
-queue.idle()
-
-queue.kill()
-
-queue.killAndDrain()
-
-queue.length
-
-queue.pause()
-
-queue.resume()
-
-queue.saturated = () => undefined
-
-queue.unshift('world', (err, result) => {
-  if (err) throw err
-  console.log('the result is', result)
-})
-
-function worker(task: any, cb: fastq.done) {
-  cb(null, 'hello ' + task)
-}
-
-// Generics example
-
-interface GenericsContext {
-  base: number;
-}
-
-const genericsQueue = fastq<GenericsContext, number, string>({ base: 6 }, genericsWorker, 1)
-
-genericsQueue.push(7, (err, done) => {
-  if (err) throw err
-  console.log('the result is', done)
-})
-
-genericsQueue.unshift(7, (err, done) => {
-  if (err) throw err
-  console.log('the result is', done)
-})
-
-function genericsWorker(this: GenericsContext, task: number, cb: fastq.done<string>) {
-  cb(null, 'the meaning of life is ' + (this.base * task))
-}
-©/bench.js≈£'use strict'
-
-var max = 1000000
-var fastqueue = require('./')(worker, 1)
-var async = require('async')
-var neo = require('neo-async')
-var asyncqueue = async.queue(worker, 1)
-var neoqueue = neo.queue(worker, 1)
-
-function bench (func, done) {
-  var key = max + '*' + func.name
-  var count = -1
-
-  console.time(key)
-  end()
-
-  function end () {
-    if (++count < max) {
-      func(end)
-    } else {
-      console.timeEnd(key)
-      if (done) {
-        done()
-      }
-    }
-  }
-}
-
-function benchFastQ (done) {
-  fastqueue.push(42, done)
-}
-
-function benchAsyncQueue (done) {
-  asyncqueue.push(42, done)
-}
-
-function benchNeoQueue (done) {
-  neoqueue.push(42, done)
-}
-
-function worker (arg, cb) {
-  setImmediate(cb)
-}
-
-function benchSetImmediate (cb) {
-  worker(42, cb)
-}
-
-function runBench (done) {
-  async.eachSeries([
-    benchSetImmediate,
-    benchFastQ,
-    benchNeoQueue,
-    benchAsyncQueue
-  ], bench, done)
-}
-
-runBench(runBench)
-©/queue.js≈Î'use strict'
-
-var reusify = require('reusify')
-
-function fastqueue (context, worker, concurrency) {
-  if (typeof context === 'function') {
-    concurrency = worker
-    worker = context
-    context = null
-  }
-
-  var cache = reusify(Task)
-  var queueHead = null
-  var queueTail = null
-  var _running = 0
-  var errorHandler = null
-
-  var self = {
-    push: push,
-    drain: noop,
-    saturated: noop,
-    pause: pause,
-    paused: false,
-    concurrency: concurrency,
-    running: running,
-    resume: resume,
-    idle: idle,
-    length: length,
-    getQueue: getQueue,
-    unshift: unshift,
-    empty: noop,
-    kill: kill,
-    killAndDrain: killAndDrain,
-    error: error
-  }
-
-  return self
-
-  function running () {
-    return _running
-  }
-
-  function pause () {
-    self.paused = true
-  }
-
-  function length () {
-    var current = queueHead
-    var counter = 0
-
-    while (current) {
-      current = current.next
-      counter++
-    }
-
-    return counter
-  }
-
-  function getQueue () {
-    var current = queueHead
-    var tasks = []
-
-    while (current) {
-      tasks.push(current.value)
-      current = current.next
-    }
-
-    return tasks
-  }
-
-  function resume () {
-    if (!self.paused) return
-    self.paused = false
-    for (var i = 0; i < self.concurrency; i++) {
-      _running++
-      release()
-    }
-  }
-
-  function idle () {
-    return _running === 0 && self.length() === 0
-  }
-
-  function push (value, done) {
-    var current = cache.get()
-
-    current.context = context
-    current.release = release
-    current.value = value
-    current.callback = done || noop
-    current.errorHandler = errorHandler
-
-    if (_running === self.concurrency || self.paused) {
-      if (queueTail) {
-        queueTail.next = current
-        queueTail = current
-      } else {
-        queueHead = current
-        queueTail = current
-        self.saturated()
-      }
-    } else {
-      _running++
-      worker.call(context, current.value, current.worked)
-    }
-  }
-
-  function unshift (value, done) {
-    var current = cache.get()
-
-    current.context = context
-    current.release = release
-    current.value = value
-    current.callback = done || noop
-
-    if (_running === self.concurrency || self.paused) {
-      if (queueHead) {
-        current.next = queueHead
-        queueHead = current
-      } else {
-        queueHead = current
-        queueTail = current
-        self.saturated()
-      }
-    } else {
-      _running++
-      worker.call(context, current.value, current.worked)
-    }
-  }
-
-  function release (holder) {
-    if (holder) {
-      cache.release(holder)
-    }
-    var next = queueHead
-    if (next) {
-      if (!self.paused) {
-        if (queueTail === queueHead) {
-          queueTail = null
-        }
-        queueHead = next.next
-        next.next = null
-        worker.call(context, next.value, next.worked)
-        if (queueTail === null) {
-          self.empty()
-        }
-      } else {
-        _running--
-      }
-    } else if (--_running === 0) {
-      self.drain()
-    }
-  }
-
-  function kill () {
-    queueHead = null
-    queueTail = null
-    self.drain = noop
-  }
-
-  function killAndDrain () {
-    queueHead = null
-    queueTail = null
-    self.drain()
-    self.drain = noop
-  }
-
-  function error (handler) {
-    errorHandler = handler
-  }
-}
-
-function noop () {}
-
-function Task () {
-  this.value = null
-  this.callback = noop
-  this.next = null
-  this.release = noop
-  this.context = null
-  this.errorHandler = null
-
-  var self = this
-
-  this.worked = function worked (err, result) {
-    var callback = self.callback
-    var errorHandler = self.errorHandler
-    var val = self.value
-    self.value = null
-    self.callback = noop
-    if (self.errorHandler) {
-      errorHandler(err, val)
-    }
-    callback.call(self.context, err, result)
-    self.release(self)
-  }
-}
-
-module.exports = fastqueue
-≠/package.json≈{
-  "name": "fastq",
-  "version": "1.9.0",
-  "description": "Fast, in memory work queue",
-  "main": "queue.js",
-  "scripts": {
-    "lint": "standard --verbose | snazzy",
-    "unit": "nyc --lines 100 --branches 100 --functions 100 --check-coverage --reporter=text tape test/test.js",
-    "coverage": "nyc --reporter=html --reporter=cobertura --reporter=text tape test/test.js",
-    "test:report": "npm run lint && npm run unit:report",
-    "test": "npm run lint && npm run unit && npm run typescript",
-    "typescript": "tsc --project ./test/tsconfig.json",
-    "legacy": "tape test/test.js"
-  },
-  "pre-commit": [
-    "test"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/mcollina/fastq.git"
-  },
-  "keywords": [
-    "fast",
-    "queue",
-    "async",
-    "worker"
-  ],
-  "author": "Matteo Collina <hello@matteocollina.com>",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/mcollina/fastq/issues"
-  },
-  "homepage": "https://github.com/mcollina/fastq#readme",
-  "devDependencies": {
-    "async": "^3.1.0",
-    "neo-async": "^2.6.1",
-    "nyc": "^15.0.0",
-    "pre-commit": "^1.2.2",
-    "snazzy": "^8.0.0",
-    "standard": "^15.0.0",
-    "tape": "^5.0.0",
-    "typescript": "^4.0.2"
-  },
-  "dependencies": {
-    "reusify": "^1.0.4"
-  }
 }
 ™/README.md≈u# fastq
 
@@ -662,6 +218,474 @@ ISC
 [npm-url]: https://badge.fury.io/js/fastq
 [david-badge]: https://david-dm.org/mcollina/fastq.svg
 [david-url]: https://david-dm.org/mcollina/fastq
+©/bench.js≈£'use strict'
+
+var max = 1000000
+var fastqueue = require('./')(worker, 1)
+var async = require('async')
+var neo = require('neo-async')
+var asyncqueue = async.queue(worker, 1)
+var neoqueue = neo.queue(worker, 1)
+
+function bench (func, done) {
+  var key = max + '*' + func.name
+  var count = -1
+
+  console.time(key)
+  end()
+
+  function end () {
+    if (++count < max) {
+      func(end)
+    } else {
+      console.timeEnd(key)
+      if (done) {
+        done()
+      }
+    }
+  }
+}
+
+function benchFastQ (done) {
+  fastqueue.push(42, done)
+}
+
+function benchAsyncQueue (done) {
+  asyncqueue.push(42, done)
+}
+
+function benchNeoQueue (done) {
+  neoqueue.push(42, done)
+}
+
+function worker (arg, cb) {
+  setImmediate(cb)
+}
+
+function benchSetImmediate (cb) {
+  worker(42, cb)
+}
+
+function runBench (done) {
+  async.eachSeries([
+    benchSetImmediate,
+    benchFastQ,
+    benchNeoQueue,
+    benchAsyncQueue
+  ], bench, done)
+}
+
+runBench(runBench)
+≥/test/tsconfig.jsonƒö{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "noEmit": true,
+    "strict": true
+  },
+  "files": [
+    "./example.ts"
+  ]
+}
+´/index.d.ts≈rdeclare function fastq<C, T = any, R = any>(context: C, worker: fastq.worker<C, T, R>, concurrency: number): fastq.queue<T, R>
+declare function fastq<C, T = any, R = any>(worker: fastq.worker<C, T, R>, concurrency: number): fastq.queue<T, R>
+
+declare namespace fastq {
+  type worker<C, T = any, R = any> = (this: C, task: T, cb: fastq.done<R>) => void
+  type done<R = any> = (err: Error | null, result?: R) => void
+  type errorHandler<T = any> = (err: Error, task: T) => void
+
+  interface queue<T = any, R = any> {
+    push(task: T, done: done<R>): void
+    unshift(task: T, done: done<R>): void
+    pause(): any
+    resume(): any
+    idle(): boolean
+    length(): number
+    getQueue(): T[]
+    kill(): any
+    killAndDrain(): any
+    error(handler: errorHandler): void
+    concurrency: number
+    drain(): any
+    empty: () => void
+    saturated: () => void
+  }
+}
+
+export = fastq
+π/.github/workflows/ci.yml≈çname: ci
+
+on: [push, pull_request]
+
+jobs:
+  legacy:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: ['0.10', '0.12', 4.x, 6.x, 8.x]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install
+        run: |
+          npm install --production && npm install tape
+
+      - name: Run tests
+        run: |
+          npm run legacy
+
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [10.x, 12.x, 13.x, 14.x, 15.x]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install
+        run: |
+          npm install
+
+      - name: Run tests
+        run: |
+          npm run test
+®/LICENSE≈˝Copyright (c) 2015-2020, Matteo Collina <matteo.collina@gmail.com>
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+©/queue.js≈Î'use strict'
+
+var reusify = require('reusify')
+
+function fastqueue (context, worker, concurrency) {
+  if (typeof context === 'function') {
+    concurrency = worker
+    worker = context
+    context = null
+  }
+
+  var cache = reusify(Task)
+  var queueHead = null
+  var queueTail = null
+  var _running = 0
+  var errorHandler = null
+
+  var self = {
+    push: push,
+    drain: noop,
+    saturated: noop,
+    pause: pause,
+    paused: false,
+    concurrency: concurrency,
+    running: running,
+    resume: resume,
+    idle: idle,
+    length: length,
+    getQueue: getQueue,
+    unshift: unshift,
+    empty: noop,
+    kill: kill,
+    killAndDrain: killAndDrain,
+    error: error
+  }
+
+  return self
+
+  function running () {
+    return _running
+  }
+
+  function pause () {
+    self.paused = true
+  }
+
+  function length () {
+    var current = queueHead
+    var counter = 0
+
+    while (current) {
+      current = current.next
+      counter++
+    }
+
+    return counter
+  }
+
+  function getQueue () {
+    var current = queueHead
+    var tasks = []
+
+    while (current) {
+      tasks.push(current.value)
+      current = current.next
+    }
+
+    return tasks
+  }
+
+  function resume () {
+    if (!self.paused) return
+    self.paused = false
+    for (var i = 0; i < self.concurrency; i++) {
+      _running++
+      release()
+    }
+  }
+
+  function idle () {
+    return _running === 0 && self.length() === 0
+  }
+
+  function push (value, done) {
+    var current = cache.get()
+
+    current.context = context
+    current.release = release
+    current.value = value
+    current.callback = done || noop
+    current.errorHandler = errorHandler
+
+    if (_running === self.concurrency || self.paused) {
+      if (queueTail) {
+        queueTail.next = current
+        queueTail = current
+      } else {
+        queueHead = current
+        queueTail = current
+        self.saturated()
+      }
+    } else {
+      _running++
+      worker.call(context, current.value, current.worked)
+    }
+  }
+
+  function unshift (value, done) {
+    var current = cache.get()
+
+    current.context = context
+    current.release = release
+    current.value = value
+    current.callback = done || noop
+
+    if (_running === self.concurrency || self.paused) {
+      if (queueHead) {
+        current.next = queueHead
+        queueHead = current
+      } else {
+        queueHead = current
+        queueTail = current
+        self.saturated()
+      }
+    } else {
+      _running++
+      worker.call(context, current.value, current.worked)
+    }
+  }
+
+  function release (holder) {
+    if (holder) {
+      cache.release(holder)
+    }
+    var next = queueHead
+    if (next) {
+      if (!self.paused) {
+        if (queueTail === queueHead) {
+          queueTail = null
+        }
+        queueHead = next.next
+        next.next = null
+        worker.call(context, next.value, next.worked)
+        if (queueTail === null) {
+          self.empty()
+        }
+      } else {
+        _running--
+      }
+    } else if (--_running === 0) {
+      self.drain()
+    }
+  }
+
+  function kill () {
+    queueHead = null
+    queueTail = null
+    self.drain = noop
+  }
+
+  function killAndDrain () {
+    queueHead = null
+    queueTail = null
+    self.drain()
+    self.drain = noop
+  }
+
+  function error (handler) {
+    errorHandler = handler
+  }
+}
+
+function noop () {}
+
+function Task () {
+  this.value = null
+  this.callback = noop
+  this.next = null
+  this.release = noop
+  this.context = null
+  this.errorHandler = null
+
+  var self = this
+
+  this.worked = function worked (err, result) {
+    var callback = self.callback
+    var errorHandler = self.errorHandler
+    var val = self.value
+    self.value = null
+    self.callback = noop
+    if (self.errorHandler) {
+      errorHandler(err, val)
+    }
+    callback.call(self.context, err, result)
+    self.release(self)
+  }
+}
+
+module.exports = fastqueue
+∞/test/example.ts≈iimport * as fastq from '../'
+
+// Basic example
+
+const queue = fastq(worker, 1)
+
+queue.push('world', (err, result) => {
+  if (err) throw err
+  console.log('the result is', result)
+})
+
+queue.concurrency
+
+queue.drain()
+
+queue.empty = () => undefined
+
+console.log('the queue tasks are', queue.getQueue())
+
+queue.idle()
+
+queue.kill()
+
+queue.killAndDrain()
+
+queue.length
+
+queue.pause()
+
+queue.resume()
+
+queue.saturated = () => undefined
+
+queue.unshift('world', (err, result) => {
+  if (err) throw err
+  console.log('the result is', result)
+})
+
+function worker(task: any, cb: fastq.done) {
+  cb(null, 'hello ' + task)
+}
+
+// Generics example
+
+interface GenericsContext {
+  base: number;
+}
+
+const genericsQueue = fastq<GenericsContext, number, string>({ base: 6 }, genericsWorker, 1)
+
+genericsQueue.push(7, (err, done) => {
+  if (err) throw err
+  console.log('the result is', done)
+})
+
+genericsQueue.unshift(7, (err, done) => {
+  if (err) throw err
+  console.log('the result is', done)
+})
+
+function genericsWorker(this: GenericsContext, task: number, cb: fastq.done<string>) {
+  cb(null, 'the meaning of life is ' + (this.base * task))
+}
+≠/package.json≈{
+  "name": "fastq",
+  "version": "1.9.0",
+  "description": "Fast, in memory work queue",
+  "main": "queue.js",
+  "scripts": {
+    "lint": "standard --verbose | snazzy",
+    "unit": "nyc --lines 100 --branches 100 --functions 100 --check-coverage --reporter=text tape test/test.js",
+    "coverage": "nyc --reporter=html --reporter=cobertura --reporter=text tape test/test.js",
+    "test:report": "npm run lint && npm run unit:report",
+    "test": "npm run lint && npm run unit && npm run typescript",
+    "typescript": "tsc --project ./test/tsconfig.json",
+    "legacy": "tape test/test.js"
+  },
+  "pre-commit": [
+    "test"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mcollina/fastq.git"
+  },
+  "keywords": [
+    "fast",
+    "queue",
+    "async",
+    "worker"
+  ],
+  "author": "Matteo Collina <hello@matteocollina.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mcollina/fastq/issues"
+  },
+  "homepage": "https://github.com/mcollina/fastq#readme",
+  "devDependencies": {
+    "async": "^3.1.0",
+    "neo-async": "^2.6.1",
+    "nyc": "^15.0.0",
+    "pre-commit": "^1.2.2",
+    "snazzy": "^8.0.0",
+    "standard": "^15.0.0",
+    "tape": "^5.0.0",
+    "typescript": "^4.0.2"
+  },
+  "dependencies": {
+    "reusify": "^1.0.4"
+  }
+}
 ≠/test/test.js≈,Ç'use strict'
 
 var test = require('tape')
@@ -1216,27 +1240,3 @@ test('push with worker throwing error', function (t) {
     t.match(err.message, /test error/, 'error message should be "test error"')
   })
 })
-≥/test/tsconfig.jsonƒö{
-  "compilerOptions": {
-    "target": "es6",
-    "module": "commonjs",
-    "noEmit": true,
-    "strict": true
-  },
-  "files": [
-    "./example.ts"
-  ]
-}
-®/LICENSE≈˝Copyright (c) 2015-2020, Matteo Collina <matteo.collina@gmail.com>
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted, provided that the above
-copyright notice and this permission notice appear in all copies.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
