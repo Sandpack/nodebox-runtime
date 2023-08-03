@@ -39,7 +39,7 @@
     "esbuild-register": "^3.4.1",
     "eslint": "^8.28.0",
     "node-fetch": "^2.6.7",
-    "vite": "^2.9.12"
+    "vite": "^2.9.16"
   },
   "devDependencies": {
     "@fastify/static": "^6.4.0",
