@@ -7,7 +7,11 @@ test('loads circular esm imports', async ({ runTestServer, emulatorUrl, page }) 
   const logs: Array<string> = [];
   page.on('console', (message) => {
     if (message.type() === 'log') {
-      logs.push(message.text());
+      const text = message.text();
+      if (text.includes('emulator')) {
+        return;
+      }
+      logs.push(text.trim());
     }
   });
 
@@ -41,6 +45,10 @@ test('loads circular esm imports', async ({ runTestServer, emulatorUrl, page }) 
     });
 
     const shellProcess = emulator.shell.create();
+    shellProcess.stdout.on('data', (data) => {
+      // eslint-disable-next-line no-console
+      console.log(data);
+    });
     await shellProcess.runCommand('node', ['index.mjs']);
   }, emulatorUrl);
 

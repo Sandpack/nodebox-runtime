@@ -30,6 +30,10 @@ console.log(link.hostname)
     });
 
     const shellProcess = emulator.shell.create();
+    shellProcess.stdout.on('data', (data) => {
+      // eslint-disable-next-line no-console
+      console.log(data.trim());
+    });
     await shellProcess.runCommand('node', ['index.js']);
   }, emulatorUrl);
 
@@ -42,11 +46,9 @@ console.log(link.hostname)
 test('warns on executing code that uses unsupported binding', async ({ runTestServer, emulatorUrl, page }) => {
   await runTestServer();
 
-  const warnings: Array<string> = [];
+  const logs: Array<string> = [];
   page.on('console', (message) => {
-    if (message.type() === 'warning') {
-      warnings.push(message.text());
-    }
+    logs.push(message.text());
   });
 
   await page.evaluate(async (emulatorUrl) => {
@@ -66,15 +68,22 @@ foo('bar')
     });
 
     const shellProcess = emulator.shell.create();
+    shellProcess.stderr.on('data', (data) => {
+      console.error(data.trim());
+    });
+    shellProcess.stdout.on('data', (data) => {
+      // eslint-disable-next-line no-console
+      console.log(data.trim());
+    });
     await shellProcess.runCommand('node', ['index.js']);
   }, emulatorUrl);
 
   await waitFor(() => {
     // Must print a warning whenever accessing a valid process binding
     // that does not have a corresponding patched module on our side.
-    expect(warnings).toEqual([
-      `"process.binding("zlib")" is not yet implemented. Please file an issue on GitHub if you rely on this feature.`,
-    ]);
+    expect(logs).toContain(
+      `"process.binding("zlib")" is not yet implemented. Please file an issue on GitHub if you rely on this feature.`
+    );
   });
 });
 
@@ -106,6 +115,13 @@ process.binding('invalid-binding-module')
     });
 
     const shellProcess = emulator.shell.create();
+    shellProcess.stderr.on('data', (data) => {
+      console.error(data.trim());
+    });
+    shellProcess.stdout.on('data', (data) => {
+      // eslint-disable-next-line no-console
+      console.log(data.trim());
+    });
     await shellProcess.runCommand('node', ['index.js']);
   }, emulatorUrl);
 

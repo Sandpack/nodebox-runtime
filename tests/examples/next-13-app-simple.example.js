@@ -66,6 +66,13 @@ module.exports = nextConfig;`,
 
   // Run the Vite app.
   const shellProcess = emulator.shell.create();
+  shellProcess.stderr.on('data', (data) => {
+    console.error(data);
+  });
+  shellProcess.stdout.on('data', (data) => {
+    // eslint-disable-next-line no-console
+    console.log(data);
+  });
   return await shellProcess.runCommand('next', ['dev'], {
     env: {
       NEXT_IGNORE_INCORRECT_LOCKFILE: 'true',

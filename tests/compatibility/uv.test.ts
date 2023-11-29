@@ -28,6 +28,13 @@ console.log(uv.errname(-50))
     });
 
     const shellProcess = emulator.shell.create();
+    shellProcess.stderr.on('data', (data) => {
+      console.error(data.trim());
+    });
+    shellProcess.stdout.on('data', (data) => {
+      // eslint-disable-next-line no-console
+      console.log(data.trim());
+    });
     await shellProcess.runCommand('node', ['index.js']);
   }, emulatorUrl);
 

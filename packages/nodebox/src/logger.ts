@@ -32,8 +32,7 @@ export function createDebug(scope: Scope) {
         return '';
       };
       const cleanMessage = message.replace(/\[.+\]:/, '');
-
-      console.log(`${COLOR_SCOPE[scope]}${scope}:${direction()}${DEFAULT}:${cleanMessage}`, ...data);
+      console.debug(`${COLOR_SCOPE[scope]}${scope}:${direction()}${DEFAULT}:${cleanMessage}`, ...data);
     }
   };
 }

@@ -46,6 +46,13 @@ console.log('[nested-child]:', require('worker_threads').threadId)
     });
 
     const shell = emulator.shell.create();
+    shell.stderr.on('data', (data) => {
+      console.error(data.trim());
+    });
+    shell.stdout.on('data', (data) => {
+      // eslint-disable-next-line no-console
+      console.log(data.trim());
+    });
     await shell.runCommand('node', ['parent.js']);
   }, emulatorUrl);
 
@@ -99,6 +106,13 @@ console.log('child.workerData:', workerData)
     });
 
     const shell = emulator.shell.create();
+    shell.stderr.on('data', (data) => {
+      console.error(data.trim());
+    });
+    shell.stdout.on('data', (data) => {
+      // eslint-disable-next-line no-console
+      console.log(data.trim());
+    });
     await shell.runCommand('node', ['parent.js']);
   }, emulatorUrl);
 
@@ -140,6 +154,13 @@ console.log('child.isMainThread:', isMainThread)
     });
 
     const shell = emulator.shell.create();
+    shell.stderr.on('data', (data) => {
+      console.error(data.trim());
+    });
+    shell.stdout.on('data', (data) => {
+      // eslint-disable-next-line no-console
+      console.log(data.trim());
+    });
     await shell.runCommand('node', ['parent.js']);
   }, emulatorUrl);
 
@@ -189,6 +210,13 @@ console.log('child.stackSizeMb:', resourceLimits.stackSizeMb)
     });
 
     const shell = emulator.shell.create();
+    shell.stderr.on('data', (data) => {
+      console.error(data.trim());
+    });
+    shell.stdout.on('data', (data) => {
+      // eslint-disable-next-line no-console
+      console.log(data.trim());
+    });
     await shell.runCommand('node', ['parent.js']);
   }, emulatorUrl);
 
@@ -242,6 +270,13 @@ parentPort.once('message', (data) => {
     });
 
     const shell = emulator.shell.create();
+    shell.stderr.on('data', (data) => {
+      console.error(data.trim());
+    });
+    shell.stdout.on('data', (data) => {
+      // eslint-disable-next-line no-console
+      console.log(data.trim());
+    });
     await shell.runCommand('node', ['parent.js']);
   }, emulatorUrl);
 
@@ -302,6 +337,13 @@ process.exit(0)
     });
 
     const shell = emulator.shell.create();
+    shell.stderr.on('data', (data) => {
+      console.error(data.trim());
+    });
+    shell.stdout.on('data', (data) => {
+      // eslint-disable-next-line no-console
+      console.log(data.trim());
+    });
     await shell.runCommand('node', ['parent.js']);
   }, emulatorUrl);
 
@@ -342,7 +384,7 @@ import { Worker, getEnvironmentData, setEnvironmentData } from 'worker_threads'
 setEnvironmentData('hello', 'world')
 const worker = new Worker('./child.js')
 
-// Parent is the main thread and must have no env data available.
+// Parent is the main thread, which also receives the env data in Node.js
 console.log('parent (get):', getEnvironmentData('hello'))
         `,
       'child.js': `
@@ -354,11 +396,123 @@ console.log('child (get):', getEnvironmentData('hello'))
     });
 
     const shell = emulator.shell.create();
+    shell.stderr.on('data', (data) => {
+      console.error(data.trim());
+    });
+    shell.stdout.on('data', (data) => {
+      // eslint-disable-next-line no-console
+      console.log(data.trim());
+    });
     await shell.runCommand('node', ['parent.js']);
   }, emulatorUrl);
 
   await waitForExpect(() => {
-    expect(logs).toContain('parent (get): undefined');
+    expect(logs).toContain('parent (get): world');
     expect(logs).toContain('child (get): world');
+  });
+});
+
+test('spawn worker_thread from inside a worker_thread', async ({ runTestServer, page, emulatorUrl }) => {
+  await runTestServer();
+
+  const logs: Array<string> = [];
+  page.on('console', (msg) => logs.push(msg.text()));
+
+  await page.evaluate(async (emulatorUrl) => {
+    const { Nodebox } = window;
+
+    const emulator = new Nodebox({
+      runtimeUrl: emulatorUrl,
+      iframe: document.getElementById('frame') as HTMLIFrameElement,
+    });
+
+    await emulator.connect();
+
+    await emulator.fs.init({
+      'parent.js': `
+import { Worker, getEnvironmentData, setEnvironmentData } from 'worker_threads'
+setEnvironmentData('hello', 'world')
+const worker = new Worker('./child.js')
+// Parent is the main thread, should have the same env data as the child.
+console.log('parent (get):', getEnvironmentData('hello'))
+        `,
+      'child.js': `
+  import { Worker, getEnvironmentData } from 'worker_threads'
+  const worker = new Worker('./child-two.js')
+  
+  // Child must be able to get env data set by the parent worker.
+  console.log('child (get):', getEnvironmentData('hello'))
+        `,
+      'child-two.js': `
+  import { getEnvironmentData } from 'worker_threads'
+  
+  // Child must be able to get env data set by the parent worker.
+  console.log('child-two (get):', getEnvironmentData('hello'))
+        `,
+    });
+
+    const shell = emulator.shell.create();
+    shell.stderr.on('data', (data) => {
+      console.error(data.trim());
+    });
+    shell.stdout.on('data', (data) => {
+      // eslint-disable-next-line no-console
+      console.log(data.trim());
+    });
+    await shell.runCommand('node', ['parent.js']);
+  }, emulatorUrl);
+
+  await waitForExpect(() => {
+    expect(logs).toContain('parent (get): world');
+    expect(logs).toContain('child (get): world');
+    expect(logs).toContain('child-two (get): world');
+  });
+});
+
+test('evaluates given code when "eval" is set to true', async ({ runTestServer, page, emulatorUrl }) => {
+  await runTestServer();
+
+  const logs: Array<string> = [];
+  page.on('console', (msg) => logs.push(msg.text()));
+
+  await page.evaluate(async (emulatorUrl) => {
+    const { Nodebox } = window;
+
+    const emulator = new Nodebox({
+      runtimeUrl: emulatorUrl,
+      iframe: document.getElementById('frame') as HTMLIFrameElement,
+    });
+
+    await emulator.connect();
+
+    await emulator.fs.init({
+      'worker.js': `
+import { Worker } from 'worker_threads'
+
+const worker = new Worker(\`
+console.log('eval: hello')
+console.log('__dirname', __dirname)
+console.log('__filename', __filename)
+\`, { eval: true })
+        `,
+    });
+
+    const shell = emulator.shell.create();
+    shell.stderr.on('data', (data) => {
+      console.error(data.trim());
+    });
+    shell.stdout.on('data', (data) => {
+      // eslint-disable-next-line no-console
+      console.log(data.trim());
+    });
+
+    await shell.runCommand('node', ['worker.js']);
+  }, emulatorUrl);
+
+  await waitForExpect(() => {
+    expect(logs).toContain('eval: hello');
+    // These globals are set to specific values in eval worker mode.
+    expect(logs).toContain('__dirname .');
+    expect(logs).toContain('__filename [eval]');
   });
 });

@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.1.9](https://github.com/Sandpack/nodebox-internal/compare/nodebox-v0.1.8...nodebox-v0.1.9) (2023-11-29)
+
+
+### Bug Fixes
+
+* force a new release ([5b50af9](https://github.com/Sandpack/nodebox-internal/commit/5b50af93a58a3ddf6bcc9ce001f92cc7711e4702))
+
+## [0.1.8](https://github.com/codesandbox/nodebox-internal/compare/nodebox-v0.1.7...nodebox-v0.1.8) (2023-05-19)
+
+
+### Bug Fixes
+
+* **package.json:** update outvariant dependency to 1.4.0 in all packages ([#378](https://github.com/codesandbox/nodebox-internal/issues/378)) ([1e2658f](https://github.com/codesandbox/nodebox-internal/commit/1e2658f68764373e95b3ee90973a68886d708139))
+
+## [0.1.7](https://github.com/codesandbox/nodebox-internal/compare/nodebox-v0.1.6...nodebox-v0.1.7) (2023-03-30)
+
+
+### Features
+
+* Add `INTERNAL_NODEBOX_DEV` to improve debugging experience ([#372](https://github.com/codesandbox/nodebox-internal/issues/372)) ([f78ebd3](https://github.com/codesandbox/nodebox-internal/commit/f78ebd377a3d8de35bf3a4fafc12fc4c6c83b255))
+* **console:** Implement Console class ([#370](https://github.com/codesandbox/nodebox-internal/issues/370)) ([265e194](https://github.com/codesandbox/nodebox-internal/commit/265e1942ee97a159b1fb3c238f19f0f6725c42f5))
+
 ## [0.1.6](https://github.com/codesandbox/nodebox-internal/compare/nodebox-v0.1.5...nodebox-v0.1.6) (2023-03-07)
 
 
